@@ -1752,71 +1752,22 @@
             $canfocus.eq(index).focus();
         }
     });
-    //if ($('#tblProductData').length) {
-    //    $('#tblProductData tbody').sortable({
-    //        items: 'tr',
-    //        handle: 'td', // Drag anywhere within a row
-    //        stop: function (event, ui) {
-    //            // Get the new row order
-    //            var rowOrder = [];
-    //            // Collect the IDs of rows after drag-and-drop reorder
-    //            $('#tblProductData tbody tr').each(function () {
-    //                console.log("Order change : ",$(this).find('td').eq(0).text())
-    //                rowOrder.push($(this).find('td').eq(0).text());  // Get the ID from the first column
-    //            });
-    //            ReorderSerialNo();
-    //        }
-    //    });
-    //}
     if ($('#tblProductData').length) {
-        // 1. Get the DataTables instance (assuming ProductTable is the global variable for it)
-        var table = $('#tblProductData').DataTable(); // Using 'table' for local scope
-
         $('#tblProductData tbody').sortable({
             items: 'tr',
-            handle: 'td',
+            handle: 'td', // Drag anywhere within a row
             stop: function (event, ui) {
-                // Get the IDs in the new visual order (this is correct)
+                // Get the new row order
                 var rowOrder = [];
-                table.rows().every(function (index) {
-                    // Get the ID from the first column of the row's data
-                    rowOrder.push(this.data()[0]);
+                // Collect the IDs of rows after drag-and-drop reorder
+                $('#tblProductData tbody tr').each(function () {
+                    console.log("Order change : ",$(this).find('td').eq(0).text())
+                    rowOrder.push($(this).find('td').eq(0).text());  // Get the ID from the first column
                 });
-
-                // --- THE CRITICAL FIX ---
-
-                // 1. Get the current page and position, so we can return to it later
-                var page = table.page();
-
-                // 2. Iterate over the newly ordered <tr> elements and move the DataTables internal data.
-                //    This effectively re-sorts the internal data array to match the DOM.
-                table.rows().nodes().each(function (node, index) {
-                    // Get the DataTables API row object for the current <tr> element (node)
-                    var row = table.row(node);
-
-                    // Remove the row's data from its current internal position
-                    var rowData = row.data();
-
-                    // Get the new index of the row in the visual DOM order (0, 1, 2, ...)
-                    // The 'index' variable here is provided by the $.each() loop over the nodes.
-
-                    // Remove the row from its old position and re-insert it at the end
-                    // We do this to force DataTables to reconstruct its internal order.
-                    table.row(row).remove();
-                    table.row.add(rowData);
-                });
-
-                // 3. Re-draw the table to apply the internal changes, maintaining the current page.
-                table.draw(false);
-
-                // 4. Update Serial Numbers (if needed)
-                // Call ReorderSerialNo() here. The next block shows the implementation.
                 ReorderSerialNo();
-
-                console.log("DataTables internal order has been successfully refreshed.");
             }
         });
-    }
+    }    
     $('#tblProductData tbody').on('click', 'tr', function () {
         //alert('Row index: ' + ProductTable.row(this).index());
         var tttselrid = ProductTable.row(this).index()
