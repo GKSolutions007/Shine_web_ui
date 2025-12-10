@@ -1,0 +1,729 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@*<script src="~/Scripts/Validation.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    /*each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }*/
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 60%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    @Html.HiddenFor(model => model.ChildURL1, new { @autocomplete = "off", @class = "form-control", @id = "txtChildBankAccURL" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div style="padding-bottom:10px;">
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+
+    <div id="dvMainTable">
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th></th>
+                        <th align="right" colspan="10">
+                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:0;">Bank Account ID</th>
+                    <th style="text-align:center;font-size: 12px;width:20%;">Ref No</th>
+                    <th style="text-align:center;font-size: 12px;width:30%;">Bank Account</th>
+                    <th style="text-align:center;font-size: 12px;width:20%;">Starting No</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">No.of Leaves</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">Active</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px" align="center">
+                        <div id="dvAssign" style="width:100%;padding-bottom:7px">
+                            <div class="col-sm-12 col-md-6 col-lg-6">
+                                <table class="table" id="tblData" style="width:100%">
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                            <span class="form-label">
+                                                <input tabindex="1" type="text" id="txtRefNo" class="form-control FormclrField" placeholder="" />
+                                                <label class="labelup">Ref.No *</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorRefNo" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                            <span class="form-label">
+                                                <select tabindex="2" id="cmbAccNo" class="form-control"></select>
+                                                <label class="labelup">Bank A/c No *</label>
+                                            </span>
+
+                                            <div class="clrdiv" id="dvErrorAccNo" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" width="50%">
+                                            <span class="form-label">
+                                                <input tabindex="3" type="number" id="txtStartingNo" class="form-control FormclrField" placeholder="" maxlength="6"
+                                                       oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                                                <label class="labelup">Starting No *</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorStartingNo" style="color:red"></div>
+                                        </td>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" width="50%">
+                                            <span class="form-label">
+                                                <input tabindex="4" type="number" id="txtNoofleaves" class="form-control FormclrField" placeholder="" maxlength="3" min="1"
+                                                       oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength);  }" />
+                                                <label class="labelup">No.of Leaves *</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorNoofleaves" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none" colspan="2">
+                                            <label for="chkActive">Active :</label>
+                                            <input tabindex="5" type="checkbox" id="chkActive" checked disabled />
+                                            <div class="clrdiv" id="dvErrorActive" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                            <div class="col-sm-12 col-md-6 col-lg-6">
+                                <table id="tblChequeleaves" class="table table-bordered" width="100%">
+                                    <thead>
+                                        <tr class="trclrforcolheader">
+                                            <th style="text-align:center;font-size: 12px;width:10%;">#</th>
+                                            <th style="text-align:center;font-size: 12px;width:50%;">Cheque No</th>
+                                            <th style="text-align:center;font-size: 12px;width:40%;">Status</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                            <span class="form-label">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <div style="padding-top:0px" align="right" class="row">
+                        <div class="col-sm-12 col-md-12 col-lg-12">
+                            <button tabindex="7" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                            <button tabindex="6" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                            <button tabindex="8" type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0, 1], "visible": false, searchable: false }, { "targets": [6,7,8], "class": "text-center" }],
+    });
+    var TableChqs = $('#tblChequeleaves').DataTable({
+        "bSearchable": true,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": true,
+        "bFilter": false,
+        scrollY: "200px",
+        scrollX: true,
+        scrollCollapse: true,
+    });
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    function CloseForm() {
+        modal.style.display = "none";
+    }
+
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    var Aurl = '@Session["APIurl"]';
+    if ($("#txtAddID").val() == 0) {
+        $("#trAdd").hide();
+        $("#btnAdd").hide();
+    }
+    if ($("#txtModifyID").val() == 0) {
+        Table.column(7).visible(false);
+    }
+    if ($("#txtViewID").val() == 0) {
+        Table.column(8).visible(false);
+    }
+    if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
+        $("#dvMainTable").hide();
+    }
+
+    function displayResult(item) {
+        $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
+    }
+
+    var arrData = [];
+
+
+    var UID = '@Session["LoginUserID"]';
+    var nMode = 1;
+    var FID = $("#txtFormID").val();
+    var arrStatus = [];
+    GetData(5,"");
+    GetData(7, "");
+    GetData(8, "");
+    //GetData(3);
+    function GetData(dMode, Value ="") {
+        $.ajax({
+            url: Aurl + "chequebook/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: dMode, Name: Value },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (dMode == 5) {
+                    //Table.draw().clear();
+                    arrData = [];
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            //arrData[i] = items.Refno
+                            var al = {
+                                "label": items.Refno,
+                                "id": items.ID,
+                            }
+                            arrData.push(al);
+                            //Table.row.add([
+                            //    items.ID,
+                            //    items.BankAccID,
+                            //    items.Refno,
+                            //    items.BankAccName,
+                            //    items.StartingNo,
+                            //    items.NoofLeaves,
+                            //    items.Active == "True" ? "Yes" : "No",
+                            //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
+                            //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>'
+                            //]).draw(false);
+                        });
+                        var searchValue = '';
+                        if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+                            searchValue = $('#tblMasterData').DataTable().search(); // get current search term
+                        }
+                        $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: true,
+                            destroy: true,
+                            data: data,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "BankAccID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "Refno", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "BankAccName", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "StartingNo", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "NoofLeaves", "autoWidth": true, className: "dt-body-center" },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = value.Active == "True" ? "Yes" : "No";// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
+                                        return _action;
+                                    }
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }, "visible": $("#txtModifyID").val() == 0 ? false : true
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                        return _action;
+                                    }, "visible": $("#txtViewID").val() == 0 ? false : true
+                                },
+                            ],
+                            initComplete: function () {
+                                // Re-apply search value after table is fully initialized
+                                this.api().search(searchValue).draw();
+                            }
+                        });
+                        Table = $('#tblMasterData').DataTable();
+                        $("#txtRefNo").autocomplete({
+                            minLength: 0,
+                            source: arrData,
+                            //autoFocus: true,
+                            //focus: function (event, ui) {
+                            //    $("#txtName").val(ui.item.label);
+                            //    return false;
+                            //},
+                            select: function (event, ui) {
+                                $("#txtRefNo").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+
+
+                        //var txtName = $('#txtRefNo');
+                        //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
+                        //autocomplete.data('typeahead').source = null;
+                        //autocomplete.data('typeahead').source = arrData;
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+                else if (dMode == 6) {
+                    TableChqs.draw().clear();
+                    var anyStatus5 = false;
+                    $.each(data, function (i, items) {
+                        var enbordisb = (items.Status == 5 || nMode == 3) ? "disabled" : "";
+                        if (!anyStatus5)
+                            anyStatus5 = items.Status == 5;
+                        var clscmb = "clscmbsts" + (i);
+                        var Selc = '<select ' + enbordisb + ' id=' + items.ChequeNo + ' class="form-control ' + clscmb + '"> ';
+                        var arrstslen = items.Status == 5 ? arrStatus.length : (arrStatus.length - 1);
+                        for (var j = 0; j < arrstslen; j++) {
+                                Selc += '<option value="' + arrStatus[j].ID + '">' + arrStatus[j].Status + '</option> '
+                        }
+                        Selc += ' </select>';
+                        TableChqs.row.add([
+                            (i + 1),
+                            items.ChequeNo,
+                            Selc,
+                        ]).draw(false);
+                        $("#" + items.ChequeNo).val(items.Status)
+                    });
+                    //if (anyStatus5) {
+                    $("#chkActive,.FormclrField,#cmbAccNo").prop("disabled", anyStatus5);
+                    //}
+                }
+                else if (dMode == 7) {
+                    $('#cmbAccNo').find("option").remove();
+                    $('#cmbAccNo').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select Account --",
+                        class: ""
+                    }));
+                    $.each(data, function (i, items) {
+                        $('#cmbAccNo').append($('<option/>', {
+                            value: items.ID,
+                            text: items.ChequeNo,
+                        }));
+                    });
+                }
+                else if (dMode == 8) {
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            var liststs = {
+                                "ID": items.ID,
+                                "Status": items.ChequeNo
+                            }
+                            arrStatus.push(liststs);
+                        });
+                    }
+                }
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    $("#txtStartingNo").keyup(function (e) {
+        var val = e.target.value;
+        $("#txtNoofleaves").prop("disabled", true);
+        $("#txtNoofleaves").val("");
+        TableChqs.draw().clear(); TableChqs.draw().clear();
+        if (val.length == 6) {
+            $("#txtNoofleaves").prop("disabled", false);
+        }
+    });
+    $("#txtNoofleaves").focusout(function () {
+        TableChqs.draw().clear(); TableChqs.draw().clear();
+        var startNo = parseInt($("#txtStartingNo").val());
+        var count = parseInt($("#txtNoofleaves").val());
+        var IsDisable = nMode == 1 ? "disabled" : "";
+        for (var i = 0; i < count; i++) {
+            var ChqNo = (startNo + i);
+            var clscmb = "clscmbsts" + (i);
+            var Selc = '<select ' + IsDisable +' id=' + ChqNo + ' class="form-control ' + clscmb + '">';
+            for (var j = 0; j < (arrStatus.length - 1); j++) {
+                Selc += '<option value="' + arrStatus[j].ID + '">' + arrStatus[j].Status + '</option> '
+            }
+            Selc += ' </select>';
+            TableChqs.row.add([
+                (i + 1),
+                ChqNo,
+                Selc
+            ]).draw(false);
+            $("#" + ChqNo).val(1);
+        }
+    });
+    $("#btnAdd").click(function () {
+        nMode = 1;
+        TableChqs.draw().clear();
+        $("#chkActive,#btnSave,#cmbAccNo,#btnClear,.FormclrField").prop("disabled", false);
+        $("#txtNoofleaves").prop("disabled", true);
+        $("#cmbAccNo").val(0);
+        $("#lblPopupheading").text("Add " + $("#MainHeading").text());
+        modal.style.display = "block";
+        ClearForm();
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        TableChqs.draw().clear();
+        $(".FormclrField").val("");
+        $("#cmbAccNo").val(0)
+        $("#chkActive").prop("checked", true);
+        $("#chkActive").prop("disabled", nMode != 2);
+        $(".clrdiv").html("");
+        $("#txtRefNo").focus();
+        TableChqs.draw().clear();
+        if (nMode != 1)
+            modal.style.display = "none";
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        var IsValid = true;
+        if ($("#txtRefNo").val() == "") {
+            IsValid = false;
+            $("#dvErrorRefNo").html("Name should not be empty");
+            showErrorSnackbar("Name should not be empty");
+        }
+        if ($("#txtStartingNo").val() == "") {
+            IsValid = false;
+            $("#dvErrorStartingNo").html("Starting No should not be empty");
+            showErrorSnackbar("Starting No should not be empty");
+        }
+        console.log(parseInt($("#txtNoofleaves").val()));
+        if ($("#txtNoofleaves").val() == "") {
+            IsValid = false;
+            $("#dvErrorNoofleaves").html("No.of leaves should not be empty");
+            showErrorSnackbar("No.of leaves should not be empty");
+        }
+        else if (parseInt($("#txtNoofleaves").val()) <= 0) {
+                IsValid = false;
+                $("#dvErrorNoofleaves").html("No.of leaves should be greater than zero");
+                showErrorSnackbar("No.of leaves should be greater than zero");
+            }
+
+        if ($("#cmbAccNo").val() == 0) {
+            $("#dvErrorAccNo").html("Select Bank Account");
+            showErrorSnackbar("Select Bank Account");
+            IsValid = false;
+        }
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $(".clrdiv").html("");
+        var lstvData = [];
+        $('#tblChequeleaves tr td select').each(function (i, items) {
+            var singlelist = {
+                "ChequeNo": items.id,
+                "Status": items.value,
+            }
+            lstvData.push(singlelist);
+        });
+        var lstMaster = {
+            "Mode": nMode,
+            "ID": $("#txtID").val(),
+            "Refno": $("#txtRefNo").val(),
+            "BankAccID": $("#cmbAccNo").val(),
+            "StartingNo": $("#txtStartingNo").val(),
+            "NoofLeaves": $("#txtNoofleaves").val(),
+            "Active": $("#chkActive").is(":checked") ? 1 : 0,
+            "UserID": UID,
+            "CBDetails": lstvData
+        };
+        $.ajax({
+            url: Aurl + "chequebook/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(lstMaster),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        ClearForm();
+                        GetData(5, "");
+                        modal.style.display = "none";
+                    }
+                    else {
+                        $("#dvErrorName").html(items.Message);
+                        showErrorSnackbar(items.Message);
+                    }
+                });
+            }, error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    $('#tblMasterData tbody').on('click', '.clsView', function () {
+        $(".clrdiv").html("");
+        nMode = 3;
+        $("#lblPopupheading").text("View " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+        var BankAccID = rowdata.BankAccID;//[1];
+        var RefNo = rowdata.Refno;//[2];
+        var BankAccName = rowdata.BankAccName;//[3];
+        var StartNo = rowdata.StartingNo;//[4];
+        var Noofleaves = rowdata.NoofLeaves;//[5];
+        var Active = rowdata.Active;//[6];
+        GetData(6, ID);
+        $("#txtID").val(ID), $("#txtRefNo").val(RefNo), $("#cmbAccNo").val(BankAccID), $("#txtStartingNo").val(StartNo), $("#txtNoofleaves").val(Noofleaves),
+            $("#chkActive").prop("checked", Active == "Yes" || Active == "True");
+        $(".FormclrField,#cmbAccNo").prop("disabled", true);
+        $("#chkActive,#btnSave,#btnClear,#cmbAccNo").prop("disabled", true);
+        $("#tblChequeleaves").prop("disabled", true);
+        modal.style.display = "block";
+    });
+
+    $('#tblMasterData tbody').on('click', '.clsEdit', function () {
+        nMode = 2;
+        $(".clrdiv").html("");
+        $("#lblPopupheading").text("Edit " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+        var BankAccID = rowdata.BankAccID;//[1];
+        var RefNo = rowdata.Refno;//[2];
+        var BankAccName = rowdata.BankAccName;//[3];
+        var StartNo = rowdata.StartingNo;//[4];
+        var Noofleaves = rowdata.NoofLeaves;//[5];
+        var Active = rowdata.Active;//[6];
+        GetData(6, ID);      
+        $("#txtID").val(ID), $("#txtRefNo").val(RefNo), $("#cmbAccNo").val(BankAccID), $("#txtStartingNo").val(StartNo), $("#txtNoofleaves").val(Noofleaves),
+            $("#chkActive").prop("checked", Active == "Yes" || Active == "True");
+        //$(".FormclrField").prop("disabled", false);
+
+        $("#btnSave,#cmbAccNo").prop("disabled", false);
+        $("#btnClear").prop("disabled", true);
+        $("#tblChequeleaves").prop("disabled", false);
+        modal.style.display = "block";
+
+    });    
+    window.addEventListener('keydown', function (event) {
+        // Check if the F8 key is pressed (key code 119)
+        if (event.keyCode === 119) {
+            var url = $("#txtChildBankAccURL").val();
+            if (url != "") {
+                var id = event.target.id;
+                if (id == "cmbAccNo") {
+                    $("#lbliframeheading").text("Bank");
+                    document.getElementById("ifrSMG").src = url + "&ParFFID=cmbAccNo";
+                    // Prevent default action if any (e.g., browser F8 behavior)
+                    event.preventDefault();
+                    // Open the modal when F8 is pressed
+                    modaliframe.style.display = "block";
+                }
+            }
+            else {
+                showErrorSnackbar("Dependancy info not found");
+            }
+        }
+    });
+</script>

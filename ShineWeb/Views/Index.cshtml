@@ -1,0 +1,769 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="https://cdn.datatables.net/fixedcolumns/5.0.4/css/fixedColumns.dataTables.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+@*<script src="~/Scripts/jquery-3.7.1.js"></script>*@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/Validation.js"></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/5.0.4/js/dataTables.fixedColumns.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/5.0.4/js/fixedColumns.dataTables.js"></script>
+
+<style>
+    each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 65%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control", @id = "txtID" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div style="padding-bottom:10px;">
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+    <div id="dvMainTable">
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th></th>
+                        <th align="right" colspan="10">
+                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Code</th>
+                    <th style="text-align:center;font-size: 12px;width:20%;">Name</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">Bill Add 1</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">Bill Add 2</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">Bill Add 3</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Contact Person</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">Phone No</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">Mobile No</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">Email ID</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">StateID</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">If Reg</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">GSTIN</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body" style="overflow:auto">
+                    <div style="padding-top:2px">
+                        <div style="padding-top:2px; width:100%" class="col-sm-12 col-md-12 col-lg-12">
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <table class="table" style="width:100%">
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                            <span class="form-label">
+                                                <input tabindex="1" type="text" id="txtCode" class="form-control FormclrField" placeholder="" />
+                                                <label class="labelup">Branch Code *</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorCode" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                            <span class="form-label">
+                                                <input tabindex="2" type="text" id="txtName" class="form-control FormclrField" placeholder="" />
+                                                <label class="labelup">Branch Name *</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorName" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                            <span class="form-label">
+                                                <input tabindex="3" type="text" id="txtContactPerson" class="form-control FormclrField" placeholder="" />
+                                                <label class="labelup">Contact Person</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorContactPerson" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px">
+
+                                            <span class="form-label">
+                                                <input tabindex="4" type="number" id="txtMobileNo" class="form-control FormclrField" placeholder="" maxlength="12"
+                                                       oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                                                <label class="labelup">Mobile No</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorMobileNo" style="color:red"></div>
+                                        </td>
+                                        <td style="border:none;padding-left:12px;padding-right:7px">
+                                            <span class="form-label">
+                                                <input tabindex="5" type="number" id="txtPhoneNo" class="form-control FormclrField" placeholder="" maxlength="12"
+                                                       oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                                                <label class="labelup">Phone No</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorPhoneNo" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                            <span class="form-label">
+                                                <input tabindex="6" type="text" id="txtEMail" class="form-control FormclrField" placeholder="" />
+                                                <label class="labelup">E-Mail ID</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorEMail" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div style="padding-bottom:2px" class="col-sm-6 col-md-6 col-lg-6">
+                                <table class="table" width="100%">
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                            <span class="form-label">
+                                                <input tabindex="7" type="text" class="form-control FormclrField" id="txtAddress1" placeholder="" />
+                                                <label class="labelup">Address 1</label>
+
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorAddress1" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                            <span class="form-label">
+                                                <input tabindex="8" type="text" class="form-control FormclrField" id="txtAddress2" placeholder="" />
+                                                <label class="labelup">Address 2</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorAddress2" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                            <span class="form-label">
+                                                <input tabindex="9" type="text" class="form-control FormclrField" id="txtAddress3" placeholder="" />
+                                                <label class="labelup">Address 3</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorAddress3" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" width="50%">
+
+                                            <span class="form-label">
+                                                <select tabindex="10" id="cmbStateName" class="form-control"></select>
+                                                <label class="labelup">State Name</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorStateName" style="color:red"></div>
+                                        </td>
+                                        <td style="border:none;padding-left:12px;padding-right:7px" width="50%">
+
+                                            <span class="form-label">
+                                                <input tabindex="11" type="text" class="form-control FormclrField" id="txtGSTIN" placeholder="" maxlength="15" />
+                                                <label class="labelup">GSTIN</label>
+                                            </span>
+                                            <div class="clrdiv" id="dvErrorGSTIN" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="right" style="border:none" width="40%">
+                                            <label for="chkActive">Active :</label>
+                                        </td>
+                                        <td style="border:none">
+                                            <input tabindex="12" type="checkbox" id="chkActive" checked disabled />
+                                            <div class="clrdiv" id="dvErrorActive" style="color:red"></div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <div style="padding-top:0px" align="right">
+                        <button tabindex="14" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button tabindex="13" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        <button tabindex="15" type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.js"></script>
+
+<script type="text/javascript">
+    var Table = $('#tblMasterData').DataTable({
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": false,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0, 3, 4, 5, 9, 10, 11], "visible": false, searchable: false }],
+    });
+    function displayResult(item) {
+        $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
+    }
+    var Aurl = '@Session["APIurl"]';
+    if ($("#txtAddID").val() == 0) {
+        $("#trAdd").hide();
+        $("#btnAdd").hide();
+    }
+    if ($("#txtModifyID").val() == 0) {
+        Table.column(14).visible(false);
+    }
+    if ($("#txtViewID").val() == 0) {
+        //$(".clsVariant").hide();
+        Table.column(15).visible(false);
+    }
+    if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
+        $("#dvMainTable").hide();
+    }
+    var UID = '@Session["LoginUserID"]';
+    var nMode = 1;
+    var FID = $("#txtFormID").val();
+    GetData(3);
+    GetData(5);
+    var arrCodeData = [], arrNameData = [];
+    function GetData(nMode) {
+        $.ajax({
+            url: Aurl + "branchoffice/get",
+            type: 'get',
+            contentType: 'json',
+            data: { FormID: FID, Mode: nMode, Name: "" },
+            success: function (data) {
+                if (data.length > 0) {
+                    if (nMode == 3) {
+                        arrCodeData = [], arrNameData = [];
+                        Table.draw().clear();
+                        $.each(data, function (i, items) {
+                            var al = {
+                                "label": items.Code,
+                                "id": items.ID,
+                            }
+                            arrCodeData.push(al);
+                            al = {
+                                "label": items.Name,
+                                "id": items.ID,
+                            }
+                            arrNameData.push(al);
+                            //arrCodeData[i] = items.Code;
+                            //arrNameData[i] = items.Name;
+                            Table.row.add([
+                                items.ID,
+                                items.Code,
+                                items.Name,
+                                items.Billadd1,
+                                items.Billadd2,
+                                items.Billadd3,
+                                items.ContactPerson,
+                                items.Ph1,
+                                items.Mob1,
+                                items.Email,
+                                items.StateID,
+                                items.IfRegister,
+                                items.GSTIN,
+                                items.Active == "True" ? "Yes" : "No",
+                                '<p> <span class="glyphicon glyphicon-pencil clsEdit" title="Edit" style="cursor: pointer;"></span></p>',
+                                '<p><span class="glyphicon glyphicon-eye-open clsView" title="View" style="cursor: pointer;"></span></p>'
+                            ]).draw(false);
+                        });
+                        //var txtName = $('#txtCode');
+                        //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
+                        //autocomplete.data('typeahead').source = null;
+                        //autocomplete.data('typeahead').source = arrCodeData;
+                        //txtName = $('#txtName');
+                        //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
+                        //autocomplete.data('typeahead').source = null;
+                        //autocomplete.data('typeahead').source = arrNameData;
+
+                        $("#txtName").autocomplete({
+                            minLength: 0,
+                            source: arrNameData,
+                            //autoFocus: true,
+                            //focus: function (event, ui) {
+                            //    $("#txtName").val(ui.item.label);
+                            //    return false;
+                            //},
+                            select: function (event, ui) {
+                                $("#txtName").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+                        $("#txtCode").autocomplete({
+                            minLength: 0,
+                            source: arrCodeData,
+                            //autoFocus: true,
+                            //focus: function (event, ui) {
+                            //    $("#txtName").val(ui.item.label);
+                            //    return false;
+                            //},
+                            select: function (event, ui) {
+                                $("#txtCode").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+
+                    }
+                    else {
+                        $('#cmbStateName').find("option").remove();
+                        $('#cmbStateName').append($('<option/>', {
+                            value: 0,
+                            text: "-- Selec State Name --",
+                            class: ""
+                        }));
+                        $.each(data, function (i, items) {
+                            $('#cmbStateName').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        });
+                    }
+                }
+                else {
+                    alert("No Records Found");
+                }
+            }
+        });
+    }
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    $('#btnClose').click(function (e) {
+        modal.style.display = "none";
+    });
+    $("#btnAdd").click(function () {
+        nMode = 1;
+        $("#chkActive,#btnSave,#cmbStateName,#btnClear,.FormclrField").prop("disabled", false);
+        $("#cmbStateName").val(0);
+        $("#lblPopupheading").text("Add " + $("#MainHeading").text());
+        modal.style.display = "block";
+        ClearForm();
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $(".FormclrField").val("");
+        $("#cmbTax").val(0)
+        $("#chkActive").prop("checked", true);
+        $("#chkActive").prop("disabled", nMode != 2);
+        $(".clrdiv").html("");
+        $("#txtCode").focus();
+        if (nMode != 1)
+            modal.style.display = "none";
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        var IsValid = true, ChkFormation = true;
+        if ($("#txtName").val() == "") {
+            IsValid = false;
+            $("#dvErrorName").html("Name should not be empty");
+        }
+        if ($("#txtCode").val() == "") {
+            IsValid = false;
+            $("#dvErrorCode").html("Code should not be empty");
+        }
+        ChkFormation = MobilenoValidation($("#txtMobileNo"), $("#dvErrorMobileNo"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = PhonenoValidation($("#txtPhoneNo"), $("#dvErrorPhoneNo"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = GSTINValidation($("#txtGSTIN"), $("#dvErrorGSTIN"));
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = EmailValidation($("#txtEMail"), $("#dvErrorEMail"));
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+    function SaveData() {
+        $(".clrdiv").html("");
+        var lstMaster = {
+            "FormID": FID,
+            "Mode": nMode,
+            "ID": $("#txtID").val(),
+            "Code": $("#txtCode").val(),
+            "Name": $("#txtName").val(),
+            "Billadd1": $("#txtAddress1").val(),
+            "Billadd2": $("#txtAddress2").val(),
+            "Billadd3": $("#txtAddress3").val(),
+            "ContactPerson": $("#txtContactPerson").val(),
+            "Ph1": $("#txtPhoneNo").val(),
+            "Mob1": $("#txtMobileNo").val(),
+            "Email": $("#txtEMail").val(),
+            "StateID": $("#cmbStateName").val(),
+            "GSTIN": $("#txtGSTIN").val(),
+            "Active": $("#chkActive").is(":checked") ? 1 : 0,
+            "UserID": UID
+        };
+            $.ajax({
+                url: Aurl + "branchoffice/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(lstMaster),
+                cache: false,
+                processData: false,
+                success: function (data) {
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            alert(items.Message);
+                            ClearForm();
+                            GetData(3);
+                            modal.style.display = "none";
+                        }
+                        else if (items.Message == "Code") {
+                            $("#dvErrorCode").html("Code Already Exists");
+                        }
+                        else if (items.Message == "Name") {
+                            $("#dvErrorName").html("Name Already Exists");
+                        }
+                        else if (items.Message == "AccountName") {
+                            $("#dvErrorName").html("Account Name Already Exists in another master");
+                        }
+                        else {
+                            //$("#divErrorOnCode").html(items.Message);
+                            alert(items.Message);
+                        }
+                    });
+                }
+            });
+    }
+    $('#tblMasterData tbody').on('click', '.clsView', function () {
+        nMode = 3;
+        $(".clrdiv").html("");
+        $("#lblPopupheading").text("View " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata[0];
+        var Code = rowdata[1];
+        var Name = rowdata[2];
+        var Billadd1 = rowdata[3];
+        var Billadd2 = rowdata[4];
+        var Billadd3 = rowdata[5];
+        var ContactPerson = rowdata[6];
+        var Ph1 = rowdata[7];
+        var Mob1 = rowdata[8];
+        var Email = rowdata[9];
+        var StateID = rowdata[10];
+        var IfRegister = rowdata[11];
+        var GSTIN = rowdata[12];
+        var Active = rowdata[13];
+
+        $("#txtID").val(ID), $("#txtCode").val(Code), $("#txtName").val(Name), $("#txtAddress1").val(Billadd1), $("#txtAddress2").val(Billadd2),
+            $("#txtAddress3").val(Billadd3), $("#txtContactPerson").val(ContactPerson), $("#txtPhoneNo").val(Ph1), $("#txtMobileNo").val(Mob1),
+            $("#txtEMail").val(Email), $("#cmbStateName").val(StateID), $("#txtGSTIN").val(GSTIN), $("#chkActive").prop("checked", Active == "Yes"),
+
+
+        $(".FormclrField").prop("disabled", true);
+        $("#chkActive,#btnSave,#btnClear,#cmbStateName").prop("disabled", true);
+        modal.style.display = "block";
+    });
+
+    $('#tblMasterData tbody').on('click', '.clsEdit', function () {
+        nMode = 2;
+        $(".clrdiv").html("");
+        $("#lblPopupheading").text("Edit " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata[0];
+        var Code = rowdata[1];
+        var Name = rowdata[2];
+        var Billadd1 = rowdata[3];
+        var Billadd2 = rowdata[4];
+        var Billadd3 = rowdata[5];
+        var ContactPerson = rowdata[6];
+        var Ph1 = rowdata[7];
+        var Mob1 = rowdata[8];
+        var Email = rowdata[9];
+        var StateID = rowdata[10];
+        var IfRegister = rowdata[11];
+        var GSTIN = rowdata[12];
+        var Active = rowdata[13];
+
+        $("#txtID").val(ID), $("#txtCode").val(Code), $("#txtName").val(Name), $("#txtAddress1").val(Billadd1), $("#txtAddress2").val(Billadd2),
+            $("#txtAddress3").val(Billadd3), $("#txtContactPerson").val(ContactPerson), $("#txtPhoneNo").val(Ph1), $("#txtMobileNo").val(Mob1),
+            $("#txtEMail").val(Email), $("#cmbStateName").val(StateID), $("#txtGSTIN").val(GSTIN), $("#chkActive").prop("checked", Active == "Yes"),
+
+        $(".FormclrField").prop("disabled", false);
+        $("#chkActive,#btnSave,#cmbStateName").prop("disabled", false);
+        $("#btnClear").prop("disabled", true);
+        modal.style.display = "block";
+
+    });
+    var cfFocus = '@Session["ConfirmFocus"]';
+    function ConfirmDialogMsg(message) {
+        var IsAccepted = false;
+        $(".ui-dialog-titlebar-close").hide();
+        $('<div></div>').appendTo('body')
+            .html('<div><h6>' + message + '</h6></div>')
+            .dialog({
+                modal: true,
+                closeOnEscape: true,
+                title: 'Confirm Popup',
+                zIndex: 100,
+                autoOpen: true,
+                width: '300px',
+                resizable: true,
+                close: false,
+                open: function () {
+                    $(this).closest(".ui-dialog")
+                        .find(".ui-dialog-titlebar-close")
+                        .removeClass("ui-dialog-titlebar-close")
+                        .html("x");
+                },
+                buttons: [
+                    {
+                        text: "Yes",
+                        class: "btn btn-success clsYes",
+                        click: function () {
+                            $(this).dialog("close");
+                            SaveData();
+                        },
+                    },
+                    {
+                        text: "No",
+                        class: "btn btn-danger clsNo cfforeclr",
+                        click: function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                ],
+            });
+        if (cfFocus == 1) {
+            $(".clsYes").focus();
+        }
+        else {
+            $(".clsNo").focus();
+        }
+    };
+    function ClearConfirmDialogMsg(message) {
+        var IsAccepted = false;
+        $(".ui-dialog-titlebar-close").hide();
+        $('<div></div>').appendTo('body')
+            .html('<div><h6>' + message + '</h6></div>')
+            .dialog({
+                modal: true,
+                closeOnEscape: true,
+                title: 'Confirm Popup',
+                zIndex: 100,
+                autoOpen: true,
+                width: '300px',
+                resizable: true,
+                close: false,
+                open: function () {
+                    $(this).closest(".ui-dialog")
+                        .find(".ui-dialog-titlebar-close")
+                        .removeClass("ui-dialog-titlebar-close")
+                        .html("x");
+                },
+                buttons: [
+                    {
+                        text: "Yes",
+                        class: "btn btn-success clsclrYes",
+                        click: function () {
+                            $(this).dialog("close");
+                            ClearForm();
+                        },
+                    },
+                    {
+                        text: "No",
+                        class: "btn btn-danger clsclrNo",
+                        click: function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                ],
+            });
+        if (cfFocus == 1) {
+            $(".clsclrYes").focus();
+        }
+        else {
+            $(".clsclrNo").focus();
+        }
+    };
+    //$('input, select').on('keydown', function (e) {
+    //    if (e.key === "Enter") {
+    //        e.preventDefault(); // Prevent default behavior
+    //        let $next = $(this).nextAll('input, select').first(); // Find the next input or select
+    //        if ($next.length) {
+    //            $next.focus(); // Focus the next element
+    //        }
+    //    }
+    //});
+</script>
+

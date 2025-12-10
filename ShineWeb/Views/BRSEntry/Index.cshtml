@@ -1,0 +1,685 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    .gdInput {
+        width: 100%;
+        height: 25px;
+        border-width: 0 0 0.1px 0;
+        border-color: #e0d6d6;
+    }
+
+    /*each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }*/
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        /*overflow: auto;*/ /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            /* overflow: auto;*/
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            /*overflow: auto;*/
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div id="dvMainTable">
+
+        <div class="row">           
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <table>
+                    <tr>
+                        <td style="padding-right:5px;">
+                            <span class="form-label">
+                                <select class="form-control FormfilterclrField" id="cmbBankAccNo"><option value="0">Select Account No</option></select>
+                                <label class="labelup" for="txtCode"> Account No* </label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBankAccNo" class="clrdivs"></div>
+                        </td>
+                        <td style="padding-right:5px;">
+                            <span class="form-label">
+                                <input class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
+                                <label class="labelup" for="txtCode"> Party</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFParty" class="clrdivs"></div>
+                        </td>
+                        <td>
+                            <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
+                        </td>
+                        <td style="padding-right:5px;">
+                            <span class="form-label">
+                                <input class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                                <label class="labelup" for="txtCode"> From</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFFrom" class="clrdivs"></div>
+                        </td>
+                        <td style="padding-right:5px;">
+
+                            <span class="form-label">
+                                <input class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                                <label class="labelup" for="txtCode"> To</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
+                        </td>
+                        <td style="padding-right:5px;">
+                            <input style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowBlank">
+                            <label for="chkShowBlank" style="font-size:14px;">Show blank only</label>
+                        </td>
+                        <td>
+                            <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <table class="table table-bordered" id="tblMasterData" width="100%">
+                    <thead>                        
+                        <tr class="trclrforcolheader">
+                            <th style="text-align:center;font-size: 12px;width:0%;">JVID</th>
+                            <th style="text-align:center;font-size: 12px;width:0%;">AccID</th>
+                            <th style="text-align:center;font-size: 12px;width:0%;">DocValue</th>
+                            <th style="text-align:center;font-size: 12px;width:0%;">Date</th>
+                            <th style="text-align:center;font-size: 12px;width:2%;">#</th>
+                            <th style="text-align:center;font-size: 12px;width:9%;">BRS Date</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;">Doc Date</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;">Doc ID</th>
+                            <th style="text-align:center;font-size: 12px;width:12%;">Transaction</th>
+                            <th style="text-align:center;font-size: 12px;width:15%;">Account Name</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;">Debit</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;">Credit</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;">Cheque No</th>
+                            <th style="text-align:center;font-size: 12px;width:20%;">Cheque Info</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <td colspan="12">
+                                <b style="color:brown"> Hint :</b> 'Space' - Assign Doc Date,&ensp; ';'(semi-colon) - Assign Doc Date + 1,&ensp; 'D' - Assign Above Date
+                            </td>                            
+                            <td colspan="2">
+                                <div style="padding-top:0px" align="right">
+                                    <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                                    <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" style="color:darkgreen">
+
+    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0,1,2,3], "visible": false, searchable: false }, { "targets": [1], "class": "text-center" },
+            { "targets": [3], "class": "text-right" }],
+        "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {            
+            if (aData[8] == "Opening Balance") {
+                $('td', nRow).css('color', 'Blue');
+                $('td', nRow).css("font-weight", "bold");
+            } else if (aData[8] == "Total") {
+                $('td', nRow).css('color', 'Brown');
+                $('td', nRow).css("font-weight", "bold");
+            } else if (aData[8] == "Closing Balance") {
+                $('td', nRow).css('color', 'darkgreen');
+                $('td', nRow).css("font-weight", "bold");
+            }
+        },
+    });
+
+    var Aurl = '@Session["APIurl"]';
+    var UID = '@Session["LoginUserID"]';
+    var DecVal = '@Session["DecimalValues"]';
+    GetData(1);
+    var arrParty = [], arrBankAccountData = [], DefBankAcc = 0;
+    function GetData(nMode) {
+        var strBankAcc = $("#cmbBankAccNo").val(), strParty = $("#txtFilterParty").val(), dFrom = $("#dtpFFrom").val(),
+            dTo = $("#dtpFTo").val(), chkshow = $("#chkShowBlank").is(":checked") ? "1" : "0";
+        $.ajax({
+            url: Aurl + "brsdata/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, AccNo: strBankAcc, Party: strParty, FromDate: dFrom, ToDate: dTo, Showblank: chkshow },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    $('#cmbBankAccNo').find("option").remove();
+                    $('#cmbBankAccNo').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    arrParty = [], defbank = "", defIfsc = "", DefBankAcc = 0;
+                    $.each(data, function (i, items) {
+                        if (items.FType == 2) {
+                            var ven = {
+                                "label": items.Name,
+                                "name": items.Name,
+                                "code": items.Code,
+                                "id": items.ID,
+                            }
+                            arrParty.push(ven);
+                        }
+                        if (items.FType == 1) {
+                            var BADetails = (items.Name).split('|');
+                            var BAInfo = {
+                                "ID": items.ID,
+                                "AccNo": BADetails[0],
+                                "Bank": BADetails[1],
+                                "Branch": BADetails[2],
+                                "IFSC": BADetails[3],
+                                "MICR": BADetails[4],
+                                "DefYN": BADetails[5],
+                            }
+                            if (BADetails[5] == "1") {
+                                DefBankAcc = items.ID;
+                            }
+                            arrBankAccountData.push(BAInfo);
+
+                            $('#cmbBankAccNo').append($('<option/>', {
+                                value: items.ID,
+                                text: BADetails[0],
+                            }));
+                        }
+                    });      
+                    SetAutlistforFields();
+                    $("#cmbBankAccNo").val(DefBankAcc);
+                } else if (nMode == 2) {
+                    if (data.length > 0) {
+                        var accdata = eval(data);
+                        Table.draw().clear(); Table.draw().clear();     
+                        var cr = 0, dr = 0;
+                        //$.each(accdata, function (i, items) {
+                        //    var brsdate = items.BRSDate;
+                        //    var constdate = "";
+                        //    if (brsdate != "" && brsdate != null) {
+                        //        var gt = new Date(brsdate);
+                        //        var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
+                        //        var dat = gt.getDate() >= 10 ? gt.getDate() : '0' + (gt.getDate());
+                        //        constdate = gt.getFullYear() + "-" + mon + "-" + dat;
+                        //    }
+                        //    Table.row.add([
+                        //        items.JVID, items.AccountID, items.DocValue, items.Date,
+                        //        (i + 1),
+                        //        items.DocID == "" ? '' : '<input type="date" name ="BRSDate" class="gdInput dgvBRSDate" id="dtpBRSDate' + i + '" value="' + constdate +'"/>',
+                        //        items.DocDate, items.DocID, items.TransName, items.AccountName,
+                        //        items.Debit, items.Credit, items.ChequeNo, items.ChequeInfo,
+                        //    ]).draw(false);
+                        //});
+                        var billjsdata = eval(data);
+                        $('#tblMasterData').DataTable({
+                            pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: true,
+                            destroy: true,
+                            data: billjsdata,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            pageLength: ItemsperPage, // default page size
+                            lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            columns: [
+                                { "data": "JVID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                                { "data": "AccountID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                                { "data": "DocValue", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                                { "data": "Date", "autoWidth": true, "visible": false, className: "dt-body-left" },//1
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = (meta.row + 1);
+                                        var _action = rowIndex;
+                                        return _action;
+                                    },
+                                },
+                                {
+                                    className: "dt-body-left",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = (meta.row + 1);
+                                        var brsdate = value.BRSDate;
+                                            var constdate = "";
+                                            if (brsdate != "" && brsdate != null) {
+                                                var gt = new Date(brsdate);
+                                                var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
+                                                var dat = gt.getDate() >= 10 ? gt.getDate() : '0' + (gt.getDate());
+                                                constdate = gt.getFullYear() + "-" + mon + "-" + dat;
+                                            }
+                                        var _action = value.DocID == "" ? '' : '<input type="date" name ="BRSDate" class="gdInput dgvBRSDate" id="dtpBRSDate' + rowIndex + '" value="' + constdate + '"/>';
+                                        return _action;
+                                    },
+                                },
+                                { "data": "DocDate", "autoWidth": true, className: "dt-body-left" },//3
+                                { "data": "DocID", "autoWidth": true, className: "dt-body-left" },//4
+                                { "data": "TransName", "autoWidth": true, className: "dt-body-left" },//5
+                                { "data": "AccountName", "autoWidth": true, className: "dt-body-left" },//6                            
+                                { "data": "Debit", "autoWidth": true, className: "dt-body-right" },//9
+                                { "data": "Credit", "autoWidth": true, className: "dt-body-right" },//5
+                                { "data": "ChequeNo", "autoWidth": true, className: "dt-body-left" },//6                                                        
+                                { "data": "ChequeInfo", "autoWidth": true, className: "dt-body-left" },//10                                                           
+                            ],
+
+                        });
+                        Table = $('#tblMasterData').DataTable();                        
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+            }
+            , error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    var nGrid1CurrentRowIndex = -1;
+    $('#tblMasterData tbody').on('focusin', 'tr', function () {
+        nGrid1CurrentRowIndex = Table.row(this).index()
+    });
+    $('#tblMasterData tbody').on('keydown', '.dgvBRSDate', function (e) {
+        var kyc = e.keyCode;
+        //showErrorSnackbar("D : " + kyc);
+        var val = e.target.value;
+        if (kyc == "32") {//Space : Assign Transdate
+            e.preventDefault();
+            //showErrorSnackbar("Key Down Space Pressed, Value : " + val);            
+            var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
+            var CurrRowDocID = currrowdata.JVID;//[0];
+            $("#tblMasterData tbody tr").each(function () {
+                var rowData = Table.row($(this)).data();
+                var RowDocID = rowData.JVID;//[0];
+                var TranDate = rowData.Date;//[3];
+                if (CurrRowDocID == RowDocID) {
+                    $(this).find("input").each(function (index) {
+                        const fieldName = $(this).attr("name");
+                        const fieldID = $(this).attr("id");
+                        if (fieldName == "BRSDate") {
+                            var gt = new Date(TranDate);
+                            var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
+                            var dat = gt.getDate() >= 10 ? gt.getDate() : '0' + (gt.getDate());
+                            const constdate = gt.getFullYear() + "-" + mon + "-" + dat;
+                            //showErrorSnackbar(constdate);
+                            $(this).val(constdate);
+                        }
+                    });
+                }
+            });
+        }
+        if (kyc == "68") {//D : 
+            e.preventDefault();
+            var AboveDate = "";
+            var currrowdata = Table.row(nGrid1CurrentRowIndex - 1).data();
+            var CurrRowDocID = currrowdata.JVID;//[0];
+            $("#tblMasterData tbody tr").each(function () {
+                var rowData = Table.row($(this)).data();
+                var RowDocID = rowData.JVID;//[0];
+                var TranDate = rowData.Date;//[3];
+                if (CurrRowDocID == RowDocID) {
+                    $(this).find("input").each(function (index) {
+                        const fieldName = $(this).attr("name");
+                        const fieldID = $(this).attr("id");
+                        if (fieldName == "BRSDate") {
+                            AboveDate = $(this).val();
+                        }
+                    });
+                }
+            });
+            if (AboveDate != "") {
+                //showSuccessSnackbar("Above date is : " + AboveDate);
+                var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
+                var CurrRowDocID = currrowdata.JVID;//[0];
+                $("#tblMasterData tbody tr").each(function () {
+                    var rowData = Table.row($(this)).data();
+                    var RowDocID = rowData.JVID;//[0];
+                    var TranDate = rowData.Date;//[3];
+                    if (CurrRowDocID == RowDocID) {
+                        $(this).find("input").each(function (index) {
+                            const fieldName = $(this).attr("name");
+                            const fieldID = $(this).attr("id");
+                            if (fieldName == "BRSDate") {
+                                $(this).val(AboveDate);
+                            }
+                        });
+                    }
+                });
+            }else {
+                showErrorSnackbar("No date found");
+            }
+
+        }
+        if (kyc == "186") {//";" : Add One Day from Trans Date
+            e.preventDefault();
+            //showErrorSnackbar("Key Down Space Pressed, Value : " + val);            
+            var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
+            var CurrRowDocID = currrowdata.JVID;//[0];
+            $("#tblMasterData tbody tr").each(function () {
+                var rowData = Table.row($(this)).data();
+                var RowDocID = rowData.JVID;//[0];
+                var TranDate = rowData.Date;//[3];
+                if (CurrRowDocID == RowDocID) {
+                    $(this).find("input").each(function (index) {
+                        const fieldName = $(this).attr("name");
+                        const fieldID = $(this).attr("id");
+                        if (fieldName == "BRSDate") {
+                            var gt = new Date(TranDate);
+                            var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
+                            var dat = gt.getDate() >= 10 ? gt.getDate() + 1 : '0' + (gt.getDate() + 1);
+                            const constdate = gt.getFullYear() + "-" + mon + "-" + dat;
+                            //showErrorSnackbar(constdate);
+                            $(this).val(constdate);
+                        }
+                    });
+                }
+            });
+        }
+    });
+    function SetAutlistforFields(defvalue) {
+        $("#txtFilterParty").autocomplete({
+            minLength: 0, autoFocus: true,
+            source: arrParty,
+            select: function (event, ui) {
+                $("#txtFilterParty").val(ui.item.name);
+                return false;
+            },
+        }).autocomplete("instance")._renderItem = function (ul, item) {
+            return $("<li class='each'>")
+                .append("<div class='acItem'><span class='name'>" +
+                    item.label + "</span></div>")
+                .appendTo(ul);
+        };
+    }
+    setDate("dtpFFrom", 0);
+    setDate("dtpFTo", 0);
+    function setDate1(FieldID,Type) {
+    $.ajax({
+         url: "@Url.Action("setdate", "Home")",
+        type: 'get',
+        contentType: 'json',
+        data: { TypeID: Type },
+        success: function (data) {
+            $.each(data, function (i, items) {
+                $("#" + FieldID).attr("max", items.MaxDate);
+                $("#" + FieldID).attr("min", items.MinDate);
+                $("#" + FieldID).val(items.Value);
+            });
+        }, error: function (data) {
+            if (data.status == "401") {
+                var msg = data.responseJSON.Message;
+                //showErrorSnackbar(msg + " Logout and Login again.");
+            }
+        }
+    })
+    }
+    $('#btnFilter').click(function (e) {
+        GetFilterData(1);
+    });
+    function GetFilterData(ClickType = 0) {
+        var IsValid = true;
+        $(".clrdivs").html("");
+        if ($("#cmbBankAccNo").val() == 0) {
+            IsValid = false;
+            $("#divErrBankAccNo").html("Select Account No");
+        }
+        if ($("#txtFilterParty").val() != "") {
+            var pd = arrParty.filter(t => t.name == $("#txtFilterParty").val().trim());
+            const exists = pd.length > 0;
+            if (!exists) {
+                IsValid = false;
+                $("#divErrFParty").html("Select Party Name from list");
+            }
+        }
+        if ($("#dtpFFrom").val() == "") {
+            IsValid = false;
+            $("#divErrFFrom").html("From date should not be empty");
+        }
+        if ($("#dtpFTo").val() == "") {
+            IsValid = false;
+            $("#divErrFTo").html("To date should not be empty");
+        }
+        if ($("#dtpFFrom").val() > $("#dtpFTo").val()) {
+            IsValid = false;
+            $("#divErrFFrom").html("From date should be lessthan To Date");
+        }
+        if (IsValid) {//rdoDraftTableData
+            GetData(2);
+        }
+    }
+    $('input[type=date]').focusin(function (e) {
+        $(this).select();
+    });    
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        SetFilterDate();
+        $(".clrdiv").html("");
+        Table.draw().clear(); Table.draw().clear();     
+        GetData(1);
+    }
+    var listTrans = [];
+    function addAccountsinArray() {
+        listTrans = [];
+        $("#tblMasterData tbody tr").each(function () {
+            var allValues = {}, nJVID = 0, dtpDocDate = 0, dtpBRSDate = '', nDocID = '';
+            rowdata = Table.row($(this)).data();
+            nJVID = rowdata.JVID;//[0];
+            nDocValue = rowdata.DocValue;//[2];
+            dtpDocDate = rowdata.Date;//[3];
+            $(this).find("input").each(function (index) {
+                const fieldName = $(this).attr("name");
+                const fieldID = $(this).attr("id");
+                if (fieldName == "BRSDate") {
+                    dtpBRSDate = $(this).val();
+                }
+            });
+            if (nJVID > 0) {
+                allValues = {
+                    "JVID": nJVID,
+                    "DocDate": dtpDocDate,
+                    "BRSDate": dtpBRSDate,
+                    "DocValue": nDocValue
+                };
+                listTrans.push(allValues);
+            }
+        });
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+
+        addAccountsinArray();
+        if (cfFocus != 3) {
+            ConfirmDialogMsg("Do you want to save data?");
+        } else {
+            SaveData();
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        //var lstMaster = {
+        //    "Mode": 1,
+        //    "ID": $("#txtID").val(),
+        //    "DocDate": $("#dtpDate").val(),
+        //    "UserID": UID,
+        //    "lstCollPayDtl": AccArray
+        //};
+        $.ajax({
+            url: Aurl + "brsdata/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(listTrans),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        ClearForm();
+                        showSuccessSnackbar(items.Message);
+                    }
+                    else {
+                        $("#dvErrorName").html(items.Message);
+                        showErrorSnackbar(items.Message);
+                        //alert(items.Message);
+                    }
+                });
+            },
+            error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }    
+</script>

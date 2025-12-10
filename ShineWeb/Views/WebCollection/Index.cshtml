@@ -1,0 +1,819 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<header>
+    <link rel="stylesheet" href="~/Content/index.css">
+</header>
+
+<style>
+    .gdInput {
+        width: 100%;
+        height: 25px;
+        border-width: 0 0 0.1px 0;
+        border-color: #e0d6d6;
+    }
+
+    th, td {
+        white-space: nowrap;
+    }
+
+    .trtext-line {
+        border: none;
+        border-bottom: 1px #000000;
+    }
+
+    div.dataTables_wrapper {
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .modalBatch {
+        display: none;
+        position: fixed;
+        z-index: 10;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto;
+            padding: 10px;
+            border: 1px solid #888;
+            width: 75%;
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%;
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .modalProdInfo {
+        display: none;
+        position: fixed;
+        z-index: 10;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    @@media only screen and (min-width: 600px) {
+        .modalProdInfo-content {
+            background-color: #ffffff;
+            margin: 3% auto;
+            padding: 10px;
+            border: 1px solid #888;
+            width: 40%;
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalProdInfo-content {
+            background-color: #ffffff;
+            margin: 10% auto;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%;
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+
+    .closePinfo {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closePinfo:hover,
+        .closePinfo:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.5s;
+            font-size: 17px;
+        }
+
+            .tab button:hover {
+                background-color: #ddd;
+            }
+
+            .tab button.active {
+                background-color: #ccc;
+            }
+
+    .tabcontent {
+        display: none;
+        border: none;
+        border-top: none;
+    }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    .labelupfortextarea {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -18%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    .footerAction {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        width: 85%;
+        color: white;
+        background-color: azure;
+    }
+
+    .clsProd {
+        position: fixed;
+        right: 1%;
+        bottom: 8%;
+        width: 30%;
+        height: 45%;
+        color: black;
+        background-color: #c2f6b5;
+        z-index: 1000;
+    }
+/*
+    .each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }*/
+
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div id="dvMain">
+        <div class="row">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+                <table width="100%">
+                    <tr>
+                        <td style="border:none;" width="15%">
+                            <span class="form-label">
+                                <select class="form-control FormclrcmbField" id="cmbBeatName">
+                                    <option value="0">Select</option>
+                                </select>
+                                <label class="labelup"> Beat</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBeat" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;" width="15%">
+                            <span class="form-label">
+                                <select class="form-control FormclrcmbField" id="cmbSalesManName">
+                                    <option value="0">Select</option>
+                                </select>
+                                <label class="labelup"> Salesman</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrSalesman" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;" width="25%">
+                            <span class="form-label">
+                                <input hidden id="txtCustomerID" class="FormclrField" />
+                                <input class="form-control FormclrField" id="txtCustomer" />
+                                <label class="labelup"> Customer</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrCustomer" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;" width="15%">
+                            <span class="form-label">
+                                <select class="form-control FormclrcmbField" id="cmbPaymode">
+                                    <option value="0">Select</option>
+                                </select>
+                                <label class="labelup"> Payment Mode</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPaymode" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;" width="10%">
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="date" id="dtpChequeDate" style="font-size:14px" />
+                                <label class="labelup" for="txtCode">Cheque Date</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrChequeDate" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;padding-left:7px" width="10%">
+                            <input type="checkbox" id="chkAllowDate" />
+                            <label for="chkAllowDate">Allow Date</label>
+                        </td>
+                        <td style="border:none;" width="10%">
+                            <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-filter" style="color: white"></span>&#x2009;Filter</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 col-md-12 col-lg-12" style="padding-right:35px;">
+                <table class="table table-bordered  row-border order-column" id="tblCollectionData" width="100%">
+                    <thead>
+                        <tr>
+                            <th colspan="5" style="text-align:center;border:none">
+                                Cash ₹ : <label id="lblCash" style="color:brown;font-size:16px;" class="lblPMValuecount"> 0.00 / 0</label>
+                            </th>
+                            <th colspan="3" style="text-align: center; border: none">
+                                Cheque ₹ : <label id="lblCheque" style="color:brown;font-size:16px;" class="lblPMValuecount"> 0.00 / 0</label>
+                            </th>
+                            <th colspan="4" style="text-align: center; border: none">
+                                Bank Transfer ₹ : <label id="lblBankTransfer" style="color:brown;font-size:16px;" class="lblPMValuecount"> 0.00 / 0</label>
+                            </th>
+                        </tr>
+                        <tr>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ID</th>
+                            <th style="text-align:center;font-size: 12px;width:3%;" class="trclrforcolheader"><input id="chkSelectAll" type="checkbox" /></th>
+                            <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Date</th>
+                            <th style="text-align:center;font-size: 12px;width:12%;" class="trclrforcolheader">Beat</th>
+                            <th style="text-align:center;font-size: 12px;width:12%;" class="trclrforcolheader">Salesman</th>
+                            <th style="text-align:center;font-size: 12px;width:16%;" class="trclrforcolheader">Customer</th>
+                            <th style="text-align:center;font-size: 12px;width:12%;" class="trclrforcolheader">Payment Mode</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Amount</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Cheque Date</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Ref/Cheque No</th>
+                            <th style="text-align:center;font-size: 12px;width:3%;" class="trclrforcolheader"><span class="glyphicon glyphicon-eye-open" style="font-size:14px"></span></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
+
+
+        <div class="footerAction modal-footer">
+            <table style="width:100%">
+                <tr>
+                    <td align="left" style="width:10%">
+                        <button type="button" style="bottom:0;left:0" class="btn btn-warning" id="btnCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>
+                    </td>
+                    <td align="right" style="width:90%">
+                        <div style="padding-right:20px" align="right">
+                            <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                            <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:100%;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Invoices</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px">
+                        <table class="table table-bordered  row-border order-column" id="tblInvoiceData" width="100%">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
+                                    <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Doc ID</th>
+                                    <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Date</th>
+                                    <th style="text-align:center;font-size: 12px;width:15%;" class="trclrforcolheader">Ref No</th>
+                                    <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Net ₹</th>
+                                    <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Adjust ₹</th>
+                                    <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Other Charge</th>                                    
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>                   
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button type="button" class="btn btn-warning" id="btnPopupClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+    //document.body.style.zoom = "85%";
+    var CollectionTable = $('#tblCollectionData').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: true,
+        scrollY: "350px",
+        scrollX: true,
+        scrollCollapse: true,
+        order: [[1, 'asc']],
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, ordering: false }, { "targets": [1], "class": "text-center" }]
+    });
+    var InvoiceTable = $('#tblInvoiceData').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: true,
+        scrollY: "350px",
+        scrollX: true,
+        scrollCollapse: true,
+        //"columnDefs": [{ "targets": [0], "visible": false, searchable: false, ordering: false }, { "targets": [1], "class": "text-center" }]
+    });
+    
+    var UID = '@Session["LoginUserID"]';
+    var Aurl = '@Session["APIurl"]';
+    var DecVal = '@Session["DecimalValues"]';
+    var DefBranch = '@Session["DefaultBranch"]';
+    var BatchMode = 0;
+    var nTransMode = 1, nIsDraft = 0;
+    //GetData(1);
+    var RtnDisp = 1;
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }   
+    $('#btnPopupClose').click(function (e) {
+        modal.style.display = "none";
+    });
+    if ($("#txtReurnPricePerm").val() == 0) {
+        RtnDisp = 0;
+    }
+    $('input[type=number]').focusin(function (e) {
+        $(this).select();
+    });
+    setTodayDate();
+    function setTodayDate() {
+        var dt = new Date()
+        const formatted = dt.toISOString().split('T')[0];
+        $("#dtpChequeDate").val(formatted);
+    }
+    var EditRowID = -1;
+    GetData(1, "");
+    GetFilterData(2);
+    GetFilterData(3);
+    var arrParty = [];    
+    function GetData(nMode, strID = null) {
+        $.ajax({
+            url: Aurl + "webcollection/getdata",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, ID: strID, UserID: UID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    arrParty = [];
+                    $('#cmbBeatName,#cmbSalesManName,#cmbPaymode').find("option").remove();
+                    $('#cmbBeatName,#cmbSalesManName').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $('#cmbPaymode').append($('<option/>', {
+                        value: 0,
+                        text: "All",
+                    }));
+                    $.each(data, function (i, items) {
+                        if (items.FType == 1) {
+                            $('#cmbSalesManName').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 2) {
+                            $('#cmbBeatName').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 3) {
+                            var al = {
+                                "label": items.Code + " | " + items.Name,
+                                "name": items.Name,
+                                "code": items.Code,
+                                "id": items.ID,
+                            }
+                            arrParty.push(al);
+                        }
+                        if (items.FType == 4) {
+                            $('#cmbPaymode').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+
+                    });
+                    $("#txtCustomer").autocomplete({
+                        minLength: 0, autoFocus: true,
+                        source: arrParty,
+                        select: function (event, ui) {
+                            $("#txtCustomer").val(ui.item.name);
+                            $("#txtCustomerID").val(ui.item.id);
+                            return false;
+                        },
+                    }).autocomplete("instance")._renderItem = function (ul, item) {
+                        return $("<li class='each'>")
+                            .append("<div class='acItem'><span class='name'>" +
+                                item.label + "</span><br><span class='desc'>")
+                            .appendTo(ul);
+                    };
+                }
+                else if (nMode == 4) {
+                    showSuccessSnackbar("Cancelled successfully");
+                    GetFilterData(2);
+                    GetFilterData(3);
+                }
+                else if (nMode == 5) {
+                    $("#btnSave").prop("disabled", false);
+                    //showSuccessSnackbar("Cancelled successfully");
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            //alert(items.Message);
+                            showSuccessSnackbar(items.Message);
+                            ClearForm();
+                        }
+                        else {
+                            //$("#dvErrorName").html(items.Message);
+                            //alert(items.Message);
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+
+                }
+                else if (nMode == 8) {
+                    InvoiceTable.draw().clear();
+                    $.each(data, function (i, items) {
+                        InvoiceTable.row.add([
+                            (i+1),
+                            items.Docid,
+                            items.Docdate,
+                            items.Refno,
+                            items.NetAmt,
+                            items.Amtadj,
+                            items.Ohtercharges                          
+                        ]).draw(false);
+                    });
+                }
+            }, error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }    
+    function GetFilterData(nMode) {//arrVendorName,divErrFTo,divErrFFrom,divErrFParty
+        var IsValid = true;
+        $(".clrdivs").html("");
+        //rdoCustomer,rdoProduct       
+        if (nMode == 3) // for filter
+        {            
+            if ($("#txtCustomer").val() != "") {
+                var pd = arrParty.filter(t => t.name == $("#txtCustomer").val().trim());
+                const exists = pd.length > 0;
+                if (!exists) {
+                    IsValid = false;
+                    $("#divErrCustomer").html("Select Customer Name from list");
+                }                
+            }
+        }
+        else if (nMode == 2)// for label value
+        {
+            if ($("#txtCustomer").val() != "") {
+                var pd = arrParty.filter(t => t.name == $("#txtCustomer").val().trim());
+                const exists = pd.length > 0;
+                if (!exists) {
+                    IsValid = false;
+                    $("#divErrCustomer").html("Select Customer Name from list");
+                }
+            }
+        }
+        if (IsValid) {
+            //$('#cmbBeatName,#cmbSalesManName,#cmbPaymode')
+            var strBeat = $('#cmbBeatName').val(), strSalesman = $('#cmbSalesManName').val(), strPaymode = $('#cmbPaymode').val(),
+                strCustomer = $("#txtCustomerID").val(), strChqDate = $("#dtpChequeDate").val(), strAllowDate = $("#chkAllowDate").is(":checked") ? 1 : 0;
+            $.ajax({
+                url: Aurl + "webcollection/filterdata",
+                type: 'get',
+                contentType: 'json',
+                data: {
+                    Mode: nMode, ID: strBeat, SalesmanID: strSalesman,
+                    CustomerID: strCustomer, PayModeID: strPaymode,
+                    ChequeDate: strChqDate, AllowDate: strAllowDate
+                },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    if (nMode == 2) {                        
+                        $.each(data, function (i, items) {                            
+                            $("#lblCash").text(items.CashValue);
+                            $("#lblCheque").text(items.ChequeValue);
+                            $("#lblBankTransfer").text(items.BankTransferValue);
+                        });
+                    }
+                    else if (nMode == 3) {
+                        var custjsdata = data;
+                        console.log(custjsdata);
+                        $('#tblCollectionData').DataTable({
+                            scrollY: "250px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: false,
+                            destroy: true,
+                            data: custjsdata,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID
+                                        var _action = '<input type="checkbox" id="' + checkboxId + '"  name="CustomerCheck" style="" />';
+                                        return _action;
+                                    },
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = (meta.row + 1);
+                                        var _action = rowIndex;
+                                        return _action;
+                                    },
+                                },
+                                { "data": "Date", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "BeatName", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "SalesManName", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "CustomerName", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "Paymentmode", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "collectedamt", "autoWidth": true, className: "dt-body-left" }, 
+                                { "data": "Chequedate", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "Chequeno", "autoWidth": true, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var checkboxId = 'dgvCustCode_' + rowIndex;//value.CustomerID
+                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                        return _action;
+                                    },
+                                },                                
+                            ],
+                        });
+                        CollectionTable = $('#tblCollectionData').DataTable();
+                        if (custjsdata.length == 0) {
+                            showErrorSnackbar("No data found");
+                        }                    
+                    }
+                }
+            });
+        }
+    }
+    $(document).on("click", "#chkSelectAll", function () {
+        var IsChk = $('#chkSelectAll').is(':checked');
+        //alert(IsChk);
+        $('#tblCollectionData tr td input').each(function (i, items) {
+            items.checked = IsChk;
+        });
+    });
+    $("#btnClear").click(function () {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    $("#btnFilter").click(function () {
+        GetFilterData(2);
+        GetFilterData(3)
+    });
+    
+    $("#btnCancel").click(function () {
+        var checkeditems = $('#tblCollectionData tbody input[type=checkbox]:checked');
+        if (checkeditems.length > 0) {
+            var SelIDs = "";
+            checkeditems.each(function () {
+                var row = $(this).closest('tr'); // Find the parent row
+                var rowData = $('#tblCollectionData').DataTable().row(row).data(); // Get full row data
+                //CheckedInvoices.push(rowData);
+                SelIDs += rowData.ID + ",";                
+            });            
+            var conf = confirm("Do you want to cancel?");
+            if (conf) {
+                var TrimID = SelIDs.substring(0, SelIDs.length - 1);
+                GetData(4, TrimID);
+            }
+        }
+        else {
+            showErrorSnackbar("Select anyone data");
+        }
+    });
+    
+    function ClearForm() {
+        $(".FormclrField").val("");
+        $(".FormclrcmbField").val(0);
+        setTodayDate();
+        $(".clrdivs").html("");
+        $(".lblPMValuecount").text("0.00 / 0");
+        CollectionTable.draw().clear();
+        CollectionTable.draw().clear();
+        GetFilterData(2);
+        GetFilterData(3);
+        GetData(1);
+    }
+    function SaveValidation() {
+        var IsValid = true;
+        var checkeditems = $('#tblCollectionData tbody input[type=checkbox]:checked');
+        if (checkeditems.length == 0) {
+            showErrorSnackbar("Select anyone Data");
+            IsValid = false;
+        }
+        return IsValid;
+    }
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        var SelIDs = "";
+        var checkeditems = $('#tblCollectionData tbody input[type=checkbox]:checked');
+        checkeditems.each(function () {
+            var row = $(this).closest('tr'); // Find the parent row
+            var rowData = $('#tblCollectionData').DataTable().row(row).data(); // Get full row data
+            //CheckedInvoices.push(rowData);
+            SelIDs += rowData.ID + ",";
+        });
+        var TrimID = SelIDs.substring(0, SelIDs.length - 1);
+        GetData(5, TrimID);
+    }
+    $("#btnSave").click(function () {
+        if (SaveValidation()) {
+            if (cfFocus != 3) {
+                ConfirmDialogMsg("Do you want to save data?");
+            } else {
+                SaveData();
+            }
+        }
+    });
+    $('#tblCollectionData tbody').on('click', '.clsView', function (e) {
+        $(".clrdivs").html("");
+        rowdata = CollectionTable.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];        
+        InvoiceTable.draw().clear();
+        InvoiceTable.draw().clear();
+        //showSuccessSnackbar("ID : " + ID);
+        GetData(8, ID);
+        modal.style.display = "block";
+    });
+</script>

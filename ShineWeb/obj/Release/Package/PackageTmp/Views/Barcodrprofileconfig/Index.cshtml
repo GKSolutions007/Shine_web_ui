@@ -1,0 +1,380 @@
+﻿@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/chosen.min.css" rel="stylesheet" />
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/jquery-1.11.1.min.js"></script>
+<script src="~/Scripts/bootstrap_3.3.7.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/datatable.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/chosen.jquery.min.js"></script>
+<script src="~/Scripts/jquerychoose.min.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/Scripts/Validation.js"></script>
+
+
+<style>
+    .gdInput {
+        width: 100%;
+        height: 30px;
+        border-width: 0 0 0.1px 0;
+        border-color: #e0d6d6;
+        border-radius: 5px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .input-error {
+        border: 2px solid red !important;
+        background-color: #ffe6e6;
+    }
+</style>
+<body>
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <div class="toastBox"></div>
+    <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    <div style="padding-right:25px">
+        <table class="table table-bordered" id="tblBarcodeProfiles" width="100%">
+            <thead>
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:9%;">Profile Name</th>
+                    <th style="text-align:center;font-size: 12px;width:9%;">PRN File</th>
+                    <th style="text-align:center;font-size: 12px;width:8%;">Height</th>
+                    <th style="text-align:center;font-size: 12px;width:12%;">Width</th>
+                    <th style="text-align:center;font-size: 12px;width:20%;">No.of Rows</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="6" align="right">
+                        <div style="padding-top:0px" align="right">
+                            <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                            <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        </div>
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @*<button  id="btnBarPrint" class="btn btn-info">Print</button>*@
+</body>
+<script>
+    var Aurl = '@Session["APIurl"]';
+      var UID = '@Session["LoginUserID"]';
+    var Table = $('#tblBarcodeProfiles').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false },
+            { "targets": [1], "width": "40%" }, { "targets": [2], "width": "20%" },{ "targets": [3, 4, 5], "width": "10%" }],
+    });
+    var arrProfiles = [], arrFilenames = [], prns = "",rowid = 0;
+    $("#btnAdd").click(function () {
+        Table.row.add([
+            0,
+            '<input name = "ProfileName" class="gdInput clsProfileName" id="txtProfileName' + rowid +'" value="" title="Profile Name"/>',
+            '<select name = "FileName" class="gdInput" id="txtFileName' + rowid +'">' + prns +'</select>',
+            '<input min="0" type="number" step="any" name ="Width" id="txtWidth' + rowid +'" class="gdInput" value="0"/><br>' ,
+            '<input min="0" type="number" step="any" name ="Height" id="txtHeight' + rowid +'" class="gdInput" value="0"/>',//
+            '<input min="0" type="number" step="any" name ="NoofRows" id="txtNoofRows' + rowid +'" class="gdInput" value="0"/>',//
+        ]).draw(false);
+        rowid++;
+    });
+    InitialDatas();
+    function InitialDatas() {
+        arrProfiles = [], arrFilenames = [], prns = "", rowid = 0;
+        $.ajax({
+            url: Aurl + "barcodeprofiles/initialDatas",
+            type: 'GET',
+            contentType: 'JSON',
+            data: {},
+            async: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                console.log(data)
+                Table.draw().clear();
+                arrProfiles = data[0].BarcodeProfiles;
+                arrFilenames = data[0].FileNames;
+                arrProfileNames = data[0].ConfigNames;
+                arrFontNames = data[0].FontNames;
+                $.each(arrFilenames, function (i, items) {
+                    prns += '<option value="' + items.FileName + '">' + items.FileName + '</option>'
+                });
+                $.each(arrProfiles, function (i, items) {
+                    Table.row.add([
+                        items.ID,
+                        '<input name = "ProfileName" class="gdInput clsProfileName" id="txtProfileName' + rowid + '" value="' + items.ProfileName +'" title="Profile Name"/>',
+                        '<select name = "FileName" class="gdInput" id="txtFileName' + rowid + '">' + prns + '</select>',
+                        '<input min="0" type="number" step="any" name ="Width" id="txtWidth' + rowid + '" class="gdInput" value="' + items.Width +'"/><br>',
+                        '<input min="0" type="number" step="any" name ="Height" id="txtHeight' + rowid + '" class="gdInput" value="' + items.Height +'"/>',
+                        '<input min="0" maxlength="2" type="number" step="any" name ="NoofRows" id="txtNoofRows' + rowid + '" class="gdInput" value="' + items.NoofRows +'"/>',
+                    ]).draw(false);
+                    $("#txtFileName" + rowid).val(items.FileName);
+                    rowid++;
+                });
+
+            }
+        });
+    }
+    $('#tblBarcodeProfiles').on('input', 'input[name="NoofRows"]', function () {
+        // Remove anything after a decimal
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 2);
+    });
+    $('#tblBarcodeProfiles').on('input', '.clsProfileName', function () {
+        const currentVal = $(this).val().trim().toLowerCase();
+        let duplicate = false;
+
+        // Loop through all other profile name inputs
+        $('.clsProfileName').not(this).each(function () {
+            if ($(this).val().trim().toLowerCase() === currentVal && currentVal !== '') {
+                duplicate = true;
+                return false; // stop loop
+            }
+        });
+
+        // Show validation feedback
+        if (duplicate) {
+            $(this).addClass('input-error'); // optional: red border
+            $(this).attr('title', 'Duplicate Profile Name not allowed');
+            showErrorSnackbar("Profile Name already given");
+        } else {
+            $(this).removeClass('input-error');
+            $(this).attr('title', 'Profile Name');
+        }
+    });
+    $('#btnClear').on('click', function () {
+        if (ClearcfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        InitialDatas();
+    }
+    $('#btnSave').on('click', function () {
+        $(".clrdiv").html("");
+        if (cfFocus != 3) {
+            ConfirmDialogMsg("Do you want to save data?");
+        } else {
+            SaveData();
+        }
+    });
+    function SaveData(){
+        let valid = true;
+        let profileNames = [];
+        let ProfileDetails = [];
+        // Clear any previous validation styling
+        $('.gdInput').removeClass('input-error');
+        $("#btnSave").prop("disabled", true);
+        // Loop through each row in the DataTable
+        $('#tblBarcodeProfiles tbody tr').each(function () {
+            rowdata = Table.row($(this)).data();
+            const id = rowdata[0];// $(this).find('td:first').text().trim(); // Assuming first column is ID
+            const profileName = $(this).find('input[name="ProfileName"]').val()?.trim();
+            const fileName = $(this).find('select[name="FileName"]').val();
+            const width = $(this).find('input[name="Width"]').val();
+            const height = $(this).find('input[name="Height"]').val();
+            const noOfRows = $(this).find('input[name="NoofRows"]').val();
+
+            // Profile Name validation
+            if (!profileName) {
+                $(this).find('input[name="ProfileName"]').addClass('input-error').attr('title', 'Profile Name cannot be empty');
+                valid = false;
+            } else if (profileNames.includes(profileName.toLowerCase())) {
+                $(this).find('input[name="ProfileName"]').addClass('input-error').attr('title', 'Duplicate Profile Name not allowed');
+                valid = false;
+            } else {
+                profileNames.push(profileName.toLowerCase());
+            }
+
+            // File Name validation
+            if (!fileName || fileName === '0') {
+                $(this).find('select[name="FileName"]').addClass('input-error').attr('title', 'Select a File Name');
+                valid = false;
+            }
+
+            // Width validation (must be positive)
+            if (!width || isNaN(width) || parseFloat(width) <= 0) {
+                $(this).find('input[name="Width"]').addClass('input-error').attr('title', 'Enter valid Width');
+                valid = false;
+            }
+
+            // Height validation (must be positive)
+            if (!height || isNaN(height) || parseFloat(height) <= 0) {
+                $(this).find('input[name="Height"]').addClass('input-error').attr('title', 'Enter valid Height');
+                valid = false;
+            }
+
+            // No of Rows validation (must be integer 1–99)
+            if (!noOfRows || isNaN(noOfRows) || !/^\d+$/.test(noOfRows) || parseInt(noOfRows) <= 0 || parseInt(noOfRows) > 99) {
+                $(this).find('input[name="NoofRows"]').addClass('input-error').attr('title', 'Enter valid No. of Rows (1–99)');
+                valid = false;
+            }
+            if (valid) {
+                ProfileDetails.push({
+                    ID: id || 0,
+                    ProfileName: profileName,
+                    FileName: fileName,
+                    Width: parseFloat(width),
+                    Height: parseFloat(height),
+                    NoofRows: parseInt(noOfRows),
+                    UID: UID
+                });
+            }
+        });
+
+        if (!valid) {
+            $("#btnSave").prop("disabled", false);
+            showErrorSnackbar('Please correct highlighted fields before saving.');
+            // Focus first invalid field for better UX
+            $('.input-error').first().focus();
+            return false;
+        }
+        if (valid) {
+            $.ajax({
+                url: Aurl + "barcodeprofiles/saveprofiles",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(ProfileDetails),
+                async: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (response) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(response, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            InitialDatas();
+                        }
+                        else {
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                },
+                error: function (xhr) {
+                    $("#btnSave").prop("disabled", false);
+                    //console.error('❌ Save failed:', xhr.responseText);
+                }
+            });
+        }
+    }
+</script>
+<script src="~/Scripts/qz-tray.js"></script>
+<script>
+    async function printOutFile() {
+        try {
+            // connect if not already active
+            if (!qz.websocket.isActive()) {
+                await qz.websocket.connect();
+            }
+
+            // optional: pick specific printer
+            // const printers = await qz.printers.find();
+            // const printerName = printers[0];
+            const printerName = "Citizen CL-E321"; // default printer
+
+            // create print config
+            const config = qz.configs.create(printerName);
+
+            // your .out file URL
+            const fileUrl = "https://www.gksapp.in/gksbak/test/TempSpool.out";
+            const win = window.open(fileUrl, '_blank');
+            win.onload = function () {
+                win.focus();
+                win.print();
+            };
+            // print raw text or file
+            //await qz.print(config, [{ type: 'raw', data: fileUrl }]);
+            const config1 = qz.configs.create(await qz.printers.getDefault());
+
+            await qz.print(config1, [{ type: 'raw', data: "^XA^FO50,50^ADN,36,20^FDHello ZPL!^FS^XZ" }]);
+
+            alert("Print successful!");
+        } catch (err) {
+            console.error(err);
+            alert("Print error: " + err);
+        }
+    }
+    async function printOutFile1() {
+        try {
+            if (!qz.websocket.isActive()) await qz.websocket.connect();
+
+            const defaultPrinter = await qz.printers.getDefault();
+            const config = qz.configs.create(defaultPrinter);
+
+            const fileUrl = "https://localhost:44326/PDF/TempSpool.out";
+
+            // Choose correct type manually after checking .out content
+            await qz.print(config, [{ type: 'raw', data: "HELLO TEST PRINT\n" }]);
+
+            alert("Print command sent to " + defaultPrinter);
+        } catch (err) {
+            console.error(err);
+            alert("Print error: " + err);
+        }
+    }
+    function printRemoteFile(url) {
+
+        const printWindow = window.open('', '_blank');
+        fetch(url)
+            .then(response => response.text())
+            .then(text => {
+                printWindow.document.open();
+                printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print File</title>
+            <style>
+              pre {
+                font-family: "Courier New", monospace;
+                font-size: 12px;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+              }
+            </style>
+          </head>
+          <body onload="window.print(); window.close();">
+            <pre>${text.replace(/[&<>]/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;'
+                }[c]))}</pre>
+          </body>
+        </html>
+      `);
+                printWindow.document.close();
+            });
+    }
+
+</script>
+
+<button onclick="printRemoteFile('https://www.gksapp.in/gksbak/test/TempSpool.out');">Print .OUT File</button>

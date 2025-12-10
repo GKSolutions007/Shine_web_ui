@@ -1,0 +1,437 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];   
+}
+
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@*<script src="~/Scripts/Validation.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+
+    each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        /*overflow: auto;*/ /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            /* overflow: auto;*/
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            /*overflow: auto;*/
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+    .labelupfortextarea {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -27%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control", @id = "txtID" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>    
+    <div id="dvMainTable">
+        <table class="table" width="100%">
+            <tr>
+                <td style="border:none;width:20%">
+                    <span class="form-label">
+                        <select class="form-control FormclrcmbField" id="cmbTransaction"><option value="0">Select</option></select>
+                        <label class="labelup"> Transaction</label>
+                    </span>
+                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrTransaction" class="clrdiv"></div>
+                </td>
+                <td style="border:none;width:20%">
+                    <span class="form-label">
+                        <select class="form-control FormclrcmbField" id="cmbProfile"><option value="0">Profile</option></select>
+                        <label class="labelup"> Profile</label>
+                    </span>
+                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProfile" class="clrdiv"></div>
+                </td>
+                <td style="border:none;padding-left:12px;padding-right:7px;width:30%">
+                    <div>
+                        <span class="form-label">
+                            <textarea tabindex="7" class="form-control FormclrField" id="txtDocIDs" placeholder="" rows="2"></textarea>
+                            <label class="labelupfortextarea">Doc ID</label>
+                        </span>
+                        <a href="javascript:void(0)" id="btnCommonDocFilter" style="float:right">Document Filter</a>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrDocIDs" class="clrdiv"></div>
+                    </div>
+                </td>
+                <td style="border:none;width:30%">
+                    <div style="padding-top:0px" align="left">
+                        <button tabindex="4" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button tabindex="3" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-print"> Print</span></button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td width="100%" align="center" style="font-size:14px;" colspan="4">
+                    <div align="center" id="dvProgImg" hidden>
+                        <img src="~/dist/themes/default/throbber.gif" /><label style="padding-left:10px;color:brown"> Printing data is processing. Please wait...</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:black" id="lblPopupheading"><b>Form Name</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px">
+                        <div id="dvAssign" style="width:100%;padding-bottom:7px">
+                           
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button tabindex="4" type="button" class="btn btn-danger" id="btnBTClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button tabindex="3" type="button" class="btn btn-success" id="btnBTSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        <button tabindex="5" type="button" class="btn btn-warning" id="btnBTClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+
+    var Aurl = '@Session["APIurl"]';
+    var UID = '@Session["LoginUserID"]';
+    var RID = '@Session["RoleID"]';
+    var nMode = 1;
+    var FID = $("#txtFormID").val();
+    GetData(1);
+    var arrTrans = [], arrProfiles = [];
+    function GetData(nMode) {
+        $.ajax({
+            url: Aurl + "transactionprint/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, Name: "" },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    if (nMode == 1) {
+                        arrTrans = [], arrProfiles = [];
+                        $('#cmbTransaction,#cmbProfile').find("option").remove();
+                        $('#cmbTransaction').append($('<option/>', {
+                            value: 0,
+                            text: "-- Select --",
+                        }));
+                        $.each(data, function (i, items) {
+                            if (items.FType == 1) {
+                                var al = {
+                                    "Transaction": items.Name,
+                                    "TransID": items.ID,
+                                }
+                                arrTrans.push(al);
+                                $('#cmbTransaction').append($('<option/>', {
+                                    value: items.ID,
+                                    text: items.Name,
+                                }));
+                            }
+                            else if(items.FType == 2) {
+                                var al = {
+                                    "ProfileName": items.Name,
+                                    "ProfileID": items.ID,
+                                    "TransID":items.Code
+                                }
+                                arrProfiles.push(al);
+                            }
+                        });
+                    }
+
+                }
+                else {
+                    showErrorSnackbar("No Records Found");
+                }
+            }
+            , error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    $('#cmbTransaction').change(function (e) {
+        $('#cmbProfile').find("option").remove();
+        var ID = e.target.value;
+        var Profiles = arrProfiles.filter(a => a.TransID == ID);
+        if (Profiles.length > 0) {
+            for (var i = 0; i < Profiles.length; i++) {
+                $('#cmbProfile').append($('<option/>', {
+                    value: Profiles[i].ProfileID,
+                    text: Profiles[i].ProfileName,
+                }));
+            }
+        } else {
+            showErrorSnackbar("No profiles found");
+        }
+        
+    });
+
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+
+    $('#btnClear').click(function (e) {
+        if (ClearcfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        GetData(1);
+        $(".clrdiv").html("");
+        $("#txtDocIDs").val("");
+        $("#dvProgImg").hide();
+        $("#cmbTransaction").focus();
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        var IsValid = true;
+        if ($("#cmbTransaction").val() == 0) {
+            IsValid = false;
+            $("#divErrTransaction").html("Select Transaction");
+            showErrorSnackbar("Select Transaction");
+        }
+        if ($("#cmbProfile").val() == 0 || $("#cmbProfile").val() == "" || $("#cmbProfile").val() == null) {
+            IsValid = false;
+            $("#divErrProfile").html("Select Profile");
+            showErrorSnackbar("Select Profile");
+        }
+        if ($("#txtDocIDs").val() == "") {
+            IsValid = false;
+            $("#divErrDocIDs").html("Doc ID should not be empty");
+            showErrorSnackbar("Doc ID should not be empty");
+        }
+        if (IsValid) {
+            if (cfFocus != 3) {
+                ConfirmDialogMsg("Do you want to print data?");
+            } else {
+                SaveData();
+            }
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $(".clrdiv").html("");
+        $("#dvProgImg").show();
+        var strTransID = $("#cmbTransaction").val();
+        var nConfigID = $("#cmbProfile").val();
+        var strDocs = $("#txtDocIDs").val();
+        $.ajax({
+            url: '@Url.Action("GeneratePrint", "TransactionPrint")',
+            type: 'GET',
+            datatype: 'json',
+            data: { TransID: strTransID, ConfigID: nConfigID, DocValue: strDocs },
+            success: function (data) {                
+                $("#btnSave").prop("disabled", false);
+                if (data.length > 0) {                   
+                    printEmbedDocument(myurl + "/Group PDF/" + data);
+                    showSuccessSnackbar("Print Initialized");
+                    
+                } else {
+                    showErrorSnackbar('PDF File not generate. Try Again');
+                }
+                $("#dvProgImg").hide();
+            },
+            error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    $("#dvProgImg").hide();
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+     var myurl = '@Session["url"]';
+ function printEmbedDocument(testlink) {
+     let ifr = document.createElement("iframe");
+     ifr.style.position = 'absolute';
+     ifr.style.width = "0px";
+     ifr.style.height = "0px";
+     ifr.style.border = "none";
+     ifr.src = testlink;
+     ifr.onload = function () {
+         ifr.contentWindow.focus();
+         ifr.contentWindow.print();
+         //setTimeout(() => document.body.rsemoveChild(ifr), 1000);
+     }
+     document.body.appendChild(ifr);
+    }
+    $("#btnCommonDocFilter").click(function () {
+        var tid = parseInt($("#cmbTransaction").val());
+
+        if (tid > 0) {
+            $("#dtpCommonDocFilterType").prop("disabled", true);
+            if ([2, 3, 4, 5].includes(tid)) {//enable only for Invoice,Bill,SR,PR
+                $("#dtpCommonDocFilterType").prop("disabled", false);
+            } else {
+                $("#dtpCommonDocFilterType").val(1);
+            }
+            modalFilterModal.style.display = "block";
+            $("#txtcommonfilterapplyfieldid").val("txtDocIDs");
+            $("#txtcommonfilterapplytransid").val(tid);
+
+            //$("#txtCommonDocFilterRange").val("24,3242,343");
+        }
+        else {
+            showErrorSnackbar("Select Transaction");
+        }
+    });  
+</script>

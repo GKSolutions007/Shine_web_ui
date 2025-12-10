@@ -1,0 +1,1009 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<header>
+    <link rel="stylesheet" href="~/Content/index.css">
+</header>
+
+<style>
+    .gdInput {
+        width: 100%;
+        height: 25px;
+        border-width: 0 0 0.1px 0;
+        border-color: #e0d6d6;
+    }
+
+    th, td {
+        white-space: nowrap;
+    }
+
+    .trtext-line {
+        border: none;
+        border-bottom: 1px #000000;
+    }
+
+    div.dataTables_wrapper {
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .modalBatch {
+        display: none;
+        position: fixed;
+        z-index: 10;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto;
+            padding: 10px;
+            border: 1px solid #888;
+            width: 75%;
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%;
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .modalProdInfo {
+        display: none;
+        position: fixed;
+        z-index: 10;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    @@media only screen and (min-width: 600px) {
+        .modalProdInfo-content {
+            background-color: #ffffff;
+            margin: 3% auto;
+            padding: 10px;
+            border: 1px solid #888;
+            width: 40%;
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalProdInfo-content {
+            background-color: #ffffff;
+            margin: 10% auto;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%;
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+
+    .closePinfo {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closePinfo:hover,
+        .closePinfo:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.5s;
+            font-size: 17px;
+        }
+
+            .tab button:hover {
+                background-color: #ddd;
+            }
+
+            .tab button.active {
+                background-color: #ccc;
+            }
+
+    .tabcontent {
+        display: none;
+        border: none;
+        border-top: none;
+    }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    .labelupfortextarea {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -18%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    .footerAction {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        width: 85%;
+        color: white;
+        background-color: azure;
+    }
+
+    .clsProd {
+        position: fixed;
+        right: 1%;
+        bottom: 8%;
+        width: 30%;
+        height: 45%;
+        color: black;
+        background-color: #c2f6b5;
+        z-index: 1000;
+    }
+
+    .each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .ui-menu {
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.EnableReturnPrice, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtReurnPricePerm" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div id="dvMain">
+        <div class="row">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+                <table width="100%">                    
+                    <tr>
+                        <td style="border:none;" width="15%">
+                            <span class="form-label">
+                                <input class="form-control FormclrField" id="txtBeat" />
+                                <label class="labelup"> Beat</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBeat" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;" width="15%">
+                            <span class="form-label">
+                                <input class="form-control FormclrField" id="txtSalesman" />
+                                <label class="labelup"> Salesman</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrSalesman" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;" width="25%">
+                            <span class="form-label">
+                                <input class="form-control FormclrField" id="txtCustomer" />
+                                <label class="labelup"> Customer</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrCustomer" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;" width="10%">
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="date" id="txtAsonDate" />
+                                <label class="labelup"> As on Date</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrAsonDate" class="clrdivs"></div>
+                        </td>
+                        <td style="border:none;" width="5%">
+                            <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-filter" style="color: white"></span>&#x2009;Filter</button>
+                        </td>
+                        <td style="border:none;" width="20%">
+                        </td>
+                        <td style="border:none;" width="10%">
+                            <span class="form-label">
+                                <input class="gdInput FormclrField" type="date" id="dtpDate" style="font-size:14px" oninput="javascript: if (this.value > this.max) { this.value = this.max; }" />
+                                @*<label class="labelup" for="txtCode">Date *</label>*@
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrDate" class="clrdivs"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 col-md-12 col-lg-12" style="padding-right:35px;">
+                <table class="table table-bordered  row-border order-column" id="tblProductData" width="100%">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">InventoryID</th>
+                            <th style="text-align:center;font-size: 12px;width:3%;" class="trclrforcolheader"><span class="glyphicon glyphicon-check"></span></th>
+                            <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
+                            <th style="text-align:center;font-size: 12px;width:5%;" class="trclrforcolheader">Trans Date</th>
+                            <th style="text-align:center;font-size: 12px;width:9%;" class="trclrforcolheader">Batch No</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">PKD</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Expiry</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">ABS Qty</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Purchase ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:9%;" class="trclrforcolheader">Sales ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:9%;" class="trclrforcolheader">ECP ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:9%;" class="trclrforcolheader">SPL ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:9%;" class="trclrforcolheader">Return ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:9%;" class="trclrforcolheader">MRP Incl ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:9%;" class="trclrforcolheader">MRP Excl ₹</th>
+                        </tr>
+                    </thead>
+                    <tfoot id="trFooter">
+                        <tr>
+                            <td align="right" colspan="7">
+                                <label> Total :</label>
+                            </td>
+                            <td align="right"><label id="lblPTQty" style="text-align:right" class="lblPT">0.00</label></td>
+                            <td align="right" colspan="7"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
+
+
+        <div class="footerAction modal-footer">
+            <div style="padding-right:20px" align="right">
+                <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+
+
+<script type="text/javascript">
+    //document.body.style.zoom = "85%";
+    $(".FormBtField").prop("disabled", true);
+    var ProductTable = $('#tblProductData').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        scrollY: "350px",
+        scrollX: true,
+        scrollCollapse: true,
+        order: [[1, 'asc']],
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, ordering: false }, { "targets": [1], "class": "text-center" }
+            , { "targets": [3,4, 5, 6, 7, 10, 8, 9, 11,12,13,14], "width": "7%" }, { "targets": [1,2], "width": "2%" }],
+    });
+    $(".trItemName").prop("disabled", true);
+    var UID = '@Session["LoginUserID"]';
+    var Aurl = '@Session["APIurl"]';
+    var DecVal = '@Session["DecimalValues"]';
+    var DefBranch = '@Session["DefaultBranch"]';
+    var BatchMode = 0;
+    var nTransMode = 1, nIsDraft = 0;
+    var qtyonly = $("#chkQtyonly").is(":checked") ? 1 : 0;
+    //GetData(1);
+    var RtnDisp = 1;
+    if ($("#txtReurnPricePerm").val() == 0) {
+        RtnDisp = 0;
+    }
+    $('input[type=number]').focusin(function (e) {
+        $(this).select();
+    });
+
+        function SetTagZero() {
+        var inputs = $(".txtsettag");
+        for (var i = 0; i < inputs.length; i++) {
+            var field = $(inputs[i]);
+            var FID = field[0].id;
+            updateInputColumn(FID, "0");
+        }
+    }
+function updateInputColumn(inputID, netValue) {
+    //const label = document.getElementById(`dgvProdGross${rowId}`);
+    const input = document.getElementById(inputID);
+    var value = netValue != "" ? netValue : 0;
+    input.setAttribute('txttag', parseFloat(value).toFixed(4));
+    input.value = parseFloat(value).toFixed(DecVal);
+    input.title = netValue;
+    }
+    function updateLabelColumn(labelID, netValue) {
+        //const label = document.getElementById(`dgvProdGross${rowId}`);
+        const input = document.getElementById(labelID);
+        var value = netValue != "" ? netValue : 0;
+        input.setAttribute('lbltag', parseFloat(value).toFixed(4));
+        input.innerText = parseFloat(value).toFixed(DecVal);
+        input.title = netValue;
+    }
+    $(".txtsettag").focusin(function (e) {
+        var id = e.target.id;
+        const val = document.getElementById(id).getAttribute("txttag");
+        $("#" + id).val(val);
+        $("#" + id).select();
+    });
+    $(".txtsettag").blur(function (e) {
+        var val = e.target.value;
+        var id = e.target.id;
+        updateInputColumn(id, val);
+    });
+    $('#tblProductData tbody').on('focusin', 'td>.txtsettag', function (e) {
+        // .clsdgvTag
+        var id = e.target.id;
+        var name = e.target.name;
+        var value = e.target.value;
+        //getTagValue(id, name);
+        const val = document.getElementById(id).getAttribute("txttag");
+        $("#" + id).val(val);
+        $("#" + id).select();
+        batgridchanges = false;
+    });
+    var batgridchanges = false;
+    $('#tblProductData tbody').on('blur', 'td>.txtsettag', function (e) {
+        // .clsdgvTag
+        var id = e.target.id;
+        var name = e.target.name;
+        var value = e.target.value;
+        //setTagValue(id, name, value);
+        if (!batgridchanges) {
+            updateInputColumn(id, e.target.value);
+        }
+        //CalculateBatchGrid();
+    });
+    var BatchRID = 0, ProductRID = 0;
+
+    function ReorderSerialNo() {
+        var sNo = 0;
+        $("#tblProductData tbody tr").each(function () {
+            $(this).find("p").each(function (index) {
+                vals = (sNo + 1);
+                $(this).text(vals);
+            });
+            sNo++;
+        });
+        //$("#tblProductData").DataTable().ajax.reload();
+    }
+    $("#tblProductData").change(function (e) {
+        var id = e.target.id;
+        var name = e.target.name;
+        var val = e.target.value;
+        var inptype = e.target.type;
+        batgridchanges = true;
+        if (name != "BatchNo" && name != "PKD" && name != "Expiry" && name != "CheckBatch" && name != "MRP")
+        {
+            updateInputColumn(id, val);
+        }
+        if (name == "CheckBatch")
+        {
+            $("#tblProductData tbody tr").each(function () {
+                var allValues = {};
+                var chk = true;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    if (fieldName == "CheckBatch") {
+                        chk = $(this).is(":checked")//.val();
+                    }
+                    else
+                    {
+                        if (fieldName != "PurchasePrice" && fieldName != "ActQty" && fieldName != "ReturnPrice" && fieldName != "MRPExcl") {
+                            $(this).prop("disabled", !chk);
+                        } else if (fieldName == "ReturnPrice" && RtnDisp == 1) {
+                            $(this).prop("disabled", !chk);
+                        }
+                    }
+                });
+            });
+        }
+    });
+    //
+    $('#tblProductData tbody').on('change', '.dgvProdMRP', function (e) {
+        var id = e.target.id;
+        var name = e.target.name;
+        var val = e.target.value;
+        var inptype = e.target.type;
+        var TaxPern = parseFloat($('#txtHTaxPern').val());
+        var TP = (TaxPern / 100) + 1;
+        batgridchanges = true;
+        var currrowdata = ProductTable.row(nCurrentRowIndex).data();
+        var CurrRowInvID = currrowdata[0];
+        $("#tblProductData tbody tr").each(function () {
+            var rowdata = ProductTable.row($(this)).data();
+            var GridInvID = rowdata[0];
+            var InclMRP = 0;
+            if (CurrRowInvID == GridInvID) {
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "MRP") {
+                        InclMRP = val;
+                        updateInputColumn(fieldID, val);
+                        //return true;
+                    }
+                    if (fieldName == "MRPExcl") {
+                        var ExclMrp = InclMRP / TP;
+                        updateInputColumn(fieldID, ExclMrp);
+                    }
+                });
+            }
+        });
+
+    });
+    function Scrolltoid(id) {
+        window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: "smooth" });
+
+    }
+
+    var nCurrentRowIndex = -1;
+    $('#tblProductData tbody').on('focusin', 'tr', function () {
+        nCurrentRowIndex = ProductTable.row(this).index()
+    });
+
+    var EditRowID = -1;
+    $('#txtTaxName,#txtUOMName').prop("disabled", true);
+    $("#trFooter").hide();
+    var EditRowID = -1;
+    GetData(1, "");
+    var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempBatch = [];
+    var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
+    var prodids = 0;
+    function GetData(nMode, strID = null) {
+        $.ajax({
+            url: Aurl + "productpricechange/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, BranchID: $("#cmbBranch").val(), ProdID: strID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    TempAL = [];
+                    $('#cmbBranch').find("option").remove();
+                    $('#cmbBranch').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        if (items.FType == 1) {
+                            $('#cmbBranch').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 2) {
+                            var al = {
+                                "label": items.Code + " | " + items.Name,
+                                "name": items.Name,
+                                "code": items.Code,
+                                "id": items.ID,
+                            }
+                            TempAL.push(al);
+                        }
+                    });
+                    $("#cmbBranch").val(DefBranch);
+                    $("#txtProdName").autocomplete({
+                        minLength: 0, autoFocus: true,
+                        source: TempAL,
+                        select: function (event, ui) {
+                            $("#txtProdName").val(ui.item.Name);
+                            $("#txtHProdID").val(ui.item.id);
+                            if ($("#cmbBranch").val() > 0) {
+                                //var qtyonly = $("#chkQtyonly").is(":checked") ? 1 : 0;
+                                GetData(3, ui.item.id);
+                            }
+                            else {
+                                showErrorSnackbar("Select Branch");
+                                $('#txtProdName').val("");
+                                $("#cmbBranch").focus();
+                            }
+                            return false;
+                        },
+                    }).autocomplete("instance")._renderItem = function (ul, item) {
+                        return $("<li class='each'>")
+                            .append("<div class='acItem'><span class='name'>" +
+                                item.label + "</span><br><span class='desc'>")
+                            .appendTo(ul);
+                        };
+                    if (TempAL.length == 0) {
+                        $("#divErrProduct").html("No Items/Stock found in this branch");
+                        showErrorSnackbar("No Items/Stock found in this branch");
+                    } else {
+                        $("#divErrProduct").html("");
+                    }
+                }
+                else if (nMode == 2) {
+                    TempAL = [];
+                    //if (data.length > 0)
+                    {
+                        var tpn = "";
+                        $.each(data, function (i, items) {
+                            //arrProdCode[i] = items.Code;
+                            //arrProdName[i] = items.Name;
+                            //arrProdCodeName[i] = items.Code + "|" + items.Name;
+                            //tpn = items.Name;
+                            var al = {
+                                "label": items.Value + " | " + items.Name,
+                                "name": items.Name,
+                                "code": items.Value,
+                                "id": items.ID,
+                            }
+                            TempAL.push(al);
+                        });
+                        $("#txtProdName").autocomplete({
+                            minLength: 0, autoFocus: true,
+                            source: TempAL,
+                            select: function (event, ui) {
+                                $("#txtProdName").val(ui.item.Name);
+                                $("#txtHProdID").val(ui.item.id);
+
+                                if ($("#cmbBranch").val() > 0) {
+                                    //var qtyonly = $("#chkQtyonly").is(":checked") ? 1 : 0;
+                                    GetData(3, ui.item.id);
+                                }
+                                else {
+                                    showErrorSnackbar("Select Branch");
+                                    $('#txtProdName').val("");
+                                    $("#cmbBranch").focus();
+                                }
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span><br><span class='desc'>")
+                                .appendTo(ul);
+                        };
+                    }
+                    if (TempAL.length == 0) {
+                        $("#divErrProduct").html("No Items/Stock found in this branch");
+                        showErrorSnackbar("No Items/Stock found in this branch");
+                    } else {
+                        $("#divErrProduct").html("");
+                    }
+                }
+                else if (nMode == 3) {
+                    ProductTable.draw().clear();
+                    ProductRID = 0;
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            $('#txtHProdID').val(items.ID);
+                            $('#txtProdName').val(items.Name);
+                            $('#txtTaxName').val(items.TaxName);
+                            $('#txtHTaxPern').val(items.GSTPern);
+                            $('#txtUOMName').val(items.BaseUOMName);
+                            var BatEnable = items.TrackBatch == "True" ? "" : "disabled";
+                            var PDKEnable = items.TrackPDK == "True" ? "" : "disabled";
+                            var TotQty = 0;
+                            var TPern = parseFloat($("#txtHTaxPern").val());
+                            var TaxPern = (TPern / 100) + 1;
+
+                            $.each(items.lstProdPrice, function (i, itemsProd) {
+                                TotQty += parseFloat(itemsProd.ActualQty);
+                                ProductTable.row.add([
+                                    itemsProd.InventoryID,
+                                    '<input type="checkbox" style="border:none;height:15px;width:15px;" name="CheckBatch" />',
+                                    '<p style="font-size:14px;">' + (i + 1) + '</p>',
+                                    itemsProd.TransDate,
+                                    '<input name="BatchNo" class="gdInput" value="' + itemsProd.BatchNo + '" title="' + itemsProd.BatchNo + '" disabled />',
+                                    '<input name="PKD" type="date" class="gdInput" value="' + itemsProd.PKD + '" title="' + itemsProd.PKD + '" disabled />',
+                                    '<input name="Expiry" type="date" class="gdInput" value="' + itemsProd.Expiry + '" title="' + itemsProd.Expiry + '" disabled />',
+                                    '<input min="0" txttag="' + itemsProd.ActualQty + '" title="' + itemsProd.ActualQty + '" type="number" step="any" id="dgvProdQty' + ProductRID + '" name ="ActQty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.ActualQty).toFixed(DecVal) + '" disabled/>',
+                                    '<input min="0" txttag="' + itemsProd.PurchasePrice + '" title="' + itemsProd.PurchasePrice + '" type="number" step="any" id="dgvProdPurchasePrice' + ProductRID + '" name="PurchasePrice" class="gdInput txtsettag" value="' + parseFloat(itemsProd.PurchasePrice).toFixed(DecVal) + '" disabled/>',
+                                    '<input min="0" txttag="' + itemsProd.SalePrice + '" title="' + itemsProd.SalePrice + '" type="number" step="any" id="dgvProdSalePrice' + ProductRID + '" name="SalePrice" class="gdInput txtsettag" value="' + parseFloat(itemsProd.SalePrice).toFixed(DecVal) + '" disabled/>',
+                                    '<input min="0" txttag="' + itemsProd.ECP + '" title="' + itemsProd.ECP + '" type="number" step="any" id="dgvProdECPPrice' + ProductRID + '" name="ECP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.ECP).toFixed(DecVal) + '" disabled/>',
+                                    '<input min="0" txttag="' + itemsProd.SPLPrice + '" title="' + itemsProd.SPLPrice + '" type="number" step="any" id="dgvProdSPLPrice' + ProductRID + '" name="SPLPrice" class="gdInput txtsettag" value="' + parseFloat(itemsProd.SPLPrice).toFixed(DecVal) + '" disabled/>',
+                                    '<input min="0" txttag="' + itemsProd.ReturnPrice + '" title="' + itemsProd.ReturnPrice + '" type="number" step="any" id="dgvProdReturnPrice' + ProductRID + '" name="ReturnPrice" class="gdInput txtsettag" value="' + parseFloat(itemsProd.ReturnPrice).toFixed(DecVal) + '" disabled/>',// ' + RtnDisp +'
+                                    '<input min="0" txttag="' + itemsProd.MRP + '" title="' + itemsProd.MRP + '" type="number" step="any" id="dgvProdMRP' + ProductRID + '" name="MRP" class="gdInput txtsettag dgvProdMRP" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" disabled/>',
+                                    '<input min="0" txttag="' + itemsProd.MRPExcl + '" title="' + itemsProd.MRPExcl + '" type="number" step="any" id="dgvProdMRPExcl' + ProductRID + '" name="MRPExcl" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRPExcl).toFixed(DecVal) + '" disabled/>',
+                                ]).draw(false);
+                                ProductRID++;
+                                ProductTable.column(4).visible(items.TrackBatch == "True");
+                                ProductTable.column(5).visible(items.TrackPDK == "True");
+                                ProductTable.column(6).visible(items.TrackPDK == "True");
+                                $("#trFooter").show();
+                                $("#lblPTQty").text(TotQty.toFixed(DecVal));
+
+                            });
+                            var isChk = $("#chkInclusive").is(":checked");
+                            if (isChk)
+                                ChkInclusiveAction();
+                        });
+                    }
+                }
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    function ChkInclusiveAction() {
+        var isChk = $("#chkInclusive").is(":checked");
+        let result = [];
+        var dTotQty = 0, dFreeTotQty = 0, dDmgTotQty = 0, dPPrice = 0, dQty = 0, dFreeQty = 0, dDmgQty = 0, dQtyTotValue = 0, dDmgQtyTotValue = 0;
+        var TPern = parseFloat($("#txtHTaxPern").val());
+        var TaxPern = (TPern / 100) + 1;
+        $("#tblProductData tbody tr").each(function () {
+            var allValues = {};
+            $(this).find("input[type=number]").each(function (index) {
+                const fieldName = $(this).attr("name");
+                const fieldID = $(this).attr("id");
+                const fullValue = document.getElementById(fieldID).getAttribute('txttag');
+                if (fieldName == "PurchasePrice") {
+                    var Price = parseFloat(fullValue);
+                    var SumValue = 0;
+                    if (isChk) {
+                        SumValue = parseFloat(Price * TaxPern);
+                    }
+                    else {
+                        SumValue = parseFloat(Price / TaxPern);
+                    }
+                    updateInputColumn(fieldID, SumValue);
+                }
+                else if (fieldName == "SalePrice") {
+                    var Price = parseFloat(fullValue);
+                    var SumValue = 0;
+                    if (isChk) {
+                        SumValue = parseFloat(Price * TaxPern);
+                    }
+                    else {
+                        SumValue = parseFloat(Price / TaxPern);
+                    }
+                    updateInputColumn(fieldID, SumValue);
+                }
+                else if (fieldName == "ECP") {
+                    var Price = parseFloat(fullValue);
+                    var SumValue = 0;
+                    if (isChk) {
+                        SumValue = parseFloat(Price * TaxPern);
+                    }
+                    else {
+                        SumValue = parseFloat(Price / TaxPern);
+                    }
+                    updateInputColumn(fieldID, SumValue);
+                }
+                else if (fieldName == "SPLPrice") {
+                    var Price = parseFloat(fullValue);
+                    var SumValue = 0;
+                    if (isChk) {
+                        SumValue = parseFloat(Price * TaxPern);
+                    }
+                    else {
+                        SumValue = parseFloat(Price / TaxPern);
+                    }
+                    updateInputColumn(fieldID, SumValue);
+                }
+                else if (fieldName == "ReturnPrice") {
+                    var Price = parseFloat(fullValue);
+                    var SumValue = 0;
+                    if (isChk) {
+                        SumValue = parseFloat(Price * TaxPern);
+                    }
+                    else {
+                        SumValue = parseFloat(Price / TaxPern);
+                    }
+                    updateInputColumn(fieldID, SumValue);
+                }
+            });
+        })
+
+    }
+    $("#chkInclusive").click(function () {
+        ChkInclusiveAction();
+    });
+    $("#cmbBranch").change(function (e) {
+        $('#txtHTaxPern,#txtUOMName,#txtProdName,#txtHProdID,#txtTaxName').val("");
+        $("#divErrProduct").html("");
+        ProductTable.draw().clear(); ProductTable.draw().clear();
+        $("#lblPTQty").text("0.00");
+        GetData(2, "");
+    });
+
+    $("#btnClear").click(function () {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $(".FormclrField").val("");
+        $(".FormclrcmbField").val(0);
+        $(".clrdivs").html("");
+        $("#lblPTQty").text("0.00");
+        $('#txtHTaxPern,#txtUOMName,#txtProdName,#txtHProdID,#txtTaxName').val("");
+        ProductTable.draw().clear();
+        ProductTable.draw().clear();
+        $("#cmbBranch").val(DefBranch);
+        $("#chkInclusive").prop("checked", false);
+        GetData(1);
+    }
+
+    function SaveValidation() {
+        var IsValid = true;
+        $(".clrdivs").html("");
+        if ($("#cmbBranch ").val() == 0) {
+            IsValid = false;
+            $("#divErrBranch").html("Select Branch");
+            showErrorSnackbar("Select branch");
+        }
+        if (ProductTable.rows().count() == 0) {
+            IsValid = false;
+            $("#divErrProduct").html("Add atleat one product in Grid");
+            showErrorSnackbar("Add atleat one product in Grid");
+        }
+        var CheckAnyBatch = false;
+        $("#tblProductData tbody tr").each(function () {
+            $(this).find("input[type=checkbox]").each(function (index) {
+                var chks = $(this).is(":checked");
+                if (chks) {
+                    CheckAnyBatch = true;
+                }
+            });
+        });
+        if (!CheckAnyBatch) {
+            showErrorSnackbar("Select any one batch to change price");
+            IsValid = false;
+        }
+        return IsValid;
+    }
+
+    var ProductArray = [];
+    function addProdinArray() {
+        ProductArray = [];
+        var nInventoryID = 0, strBatchNo = "", strPKD = "", strExpirty = "", dPurchasePrice = 0, dSalesPrice = 0, dECP = 0,
+            nProdID = 0, dMRP = 0, dSPL = 0, dReturnPrice = 0;
+
+            $("#tblProductData tbody tr").each(function () {
+                var allValues = {};
+                rowdata = ProductTable.row($(this)).data();
+                //var Rtn = rowdata[11];
+                //var rtnfield = $(Rtn);
+                nInventoryID = rowdata[0];
+                var CheckAnyBatch = false;
+                $(this).find("input[type=checkbox]").each(function (index) {
+                    var chks = $(this).is(":checked");
+                    if (chks) {
+                        CheckAnyBatch = true;
+                    }
+                });
+
+                if (CheckAnyBatch) {
+                    $(this).find("input").each(function (index) {
+                        const fieldName = $(this).attr("name");
+                        const fieldID = $(this).attr("id");
+                        if (fieldName == "BatchNo") {
+                            strBatchNo = $(this).val();
+                        }
+                        if (fieldName == "PKD") {
+                            strPKD = $(this).val();
+                        }
+                        if (fieldName == "Expiry") {
+                            strExpirty = $(this).val();
+                        }
+                        if (fieldName == "PurchasePrice") {
+                            dPurchasePrice = $(this).attr("txttag");
+                        }
+                        if (fieldName == "SalePrice") {
+                            dSalesPrice = $(this).attr("txttag");
+                        }
+                        if (fieldName == "ECP") {
+                            dECP = $(this).attr("txttag");
+                        }
+                        if (fieldName == "SPLPrice") {
+                            dSPLPrice = $(this).attr("txttag");
+                        }
+                        if (fieldName == "ReturnPrice") {
+                            dReturnPrice = $(this).attr("txttag");
+                        }
+                        if (fieldName == "MRP") {
+                            dMRP = $(this).attr("txttag");
+                        }
+                    });
+
+                    var listProds = {
+                        "InventoryID": nInventoryID,
+                        "ECP": dECP,
+                        "MRP": dMRP,
+                        "PKD": strPKD,
+                        "Expiry": strExpirty,
+                        "BatchNo": strBatchNo,
+                        "PurchasePrice": dPurchasePrice,
+                        "ReturnPrice": dReturnPrice,
+                        "SPLPrice": dSPLPrice,
+                        "SalePrice": dSalesPrice,
+                    }
+                    ProductArray.push(listProds);
+                }
+            });
+    }
+    function SaveData() {
+        if (SaveValidation()) {
+            $("#btnSave").prop("disabled", true);
+            addProdinArray();
+            var isChk = $("#chkInclusive").is(":checked") ? 1 : 0;
+            var listTrans = {
+                "ID": $("#txtID").val(),
+                "BranchID": $("#cmbBranch").val(),
+                "GSTPern": $("#txtHTaxPern").val(),
+                "TrackInventory": isChk,
+                "CBy": UID,
+                "lstProdPrice": ProductArray
+            }
+            $.ajax({
+                url: Aurl + "productpricechange/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(listTrans),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            ClearForm();
+                        }
+                        else {
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                }, error: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+        }
+    }
+    $("#btnSave").click(function () {
+        nIsDraft = 0;
+        if (cfFocus != 3) {
+            ConfirmDialogMsg("Do you want to save data?");
+        } else {
+            SaveData();
+        }
+    });    
+</script>

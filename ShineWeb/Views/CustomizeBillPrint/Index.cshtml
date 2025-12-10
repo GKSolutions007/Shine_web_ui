@@ -1,0 +1,383 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@*<script src="~/Scripts/Validation.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+  
+
+    .upload-box {
+        background-color: #fff;
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        width: 500px;
+        text-align: center;
+        padding: 30px;
+        margin-left : 20%;
+        transition: 0.3s;
+        cursor: pointer;
+    }
+
+        .upload-box.dragover {
+            border-color: #007bff;
+            background-color: #e6f2ff;
+        }
+
+    .icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+
+    p {
+        margin: 10px 0;
+        color: #555;
+    }
+
+    .browse {
+        color: #007bff;
+        font-weight: bold;
+        text-decoration: underline;
+    }
+
+    .filename {
+        margin-top: 15px;
+        font-weight: bold;
+        color: #333;
+        word-break: break-word;
+    }
+
+    .actions {
+        margin-top: 20px;
+        display: none; /* hidden until file selected */
+        margin-left: 30%;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        margin: 5px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .upload-btn {
+        background-color: #007bff;
+        color: #fff;
+    }
+
+    .remove-btn {
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+    .info-box {
+        display: flex;
+        align-items: flex-start;
+        background-color: #e8f3ff; /* Light blue */
+        border-radius: 6px;
+        padding: 12px 16px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        color: #333;
+        max-width: 80%;
+    }
+
+    .info-icon {
+        width: 25px;
+        height: 25px;
+        margin-right: 10px;
+        flex-shrink: 0;
+        color: #0d6efd; /* Bootstrap blue */
+    }
+
+    .info-text a {
+        color: #0d6efd;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .info-text a:hover {
+            text-decoration: underline;
+        }
+</style>
+<style>
+    /* Snackbar container */
+    .RepLoadersnackbar {
+        visibility: hidden; /* hidden by default */
+        min-width: 250px;
+        background-color: #333;
+        color: #fff;
+        text-align: left;
+        border-radius: 8px;
+        padding: 12px 20px;
+        position: fixed;
+        top: 50px; /* ⬅️ instead of bottom */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    }
+
+        /* Show animation */
+        .RepLoadersnackbar.show {
+            visibility: visible;
+            animation: slideDown 0.3s, fadeout 0.3s 3s;
+        }
+
+    /* Slide from top */
+    @@keyframes slideDown {
+        from {
+            top: 0;
+            opacity: 0;
+        }
+
+        to {
+            top: 20px;
+            opacity: 1;
+        }
+    }
+
+    @@keyframes fadeout {
+        from {
+            top: 20px;
+            opacity: 1;
+        }
+
+        to {
+            top: 0;
+            opacity: 0;
+        }
+    }
+
+    /* Spinner */
+    .Reploader {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #4caf50;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+<body>
+    <div id="RepLoadersnackbar" class="RepLoadersnackbar">
+        <table>
+            <tr>
+                <td>
+                    <div class="Reploader"></div>
+                </td>
+                <td style="padding-left:10px;font-size:16px;">
+                    <span>Processing... Please wait</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+    @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div class="info-box">
+        <div class="info-icon"><span class="fa fa-info-circle"></span></div>
+        <div class="info-text">
+            Download the given template to enter the Customize Bill Print details and upload the same here.
+            <a href="javascript:void(0)" id="btnExportData">Customizebill_Template.xlsx</a>
+        </div>
+    </div><br />
+    <div class="upload-box" id="drop-area">
+        <input type="file" id="fileElem" accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+
+        <div class="icon">📁</div>
+        <p id="promptText">Drag & drop your file here<br>or <span class="browse">click to browse</span></p>
+        <p class="filename" id="filename"></p>
+    </div>
+
+    <!-- Action Buttons (initially hidden) -->
+    <div class="actions" id="actionButtons">
+        <button class="btn remove-btn" onclick="removeFile()">Remove</button>
+        <button class="btn upload-btn" onclick="uploadFile()">Upload</button>
+    </div>
+</body>
+<script>
+    var UID = '@Session["LoginUserID"]';
+    const dropArea = document.getElementById('drop-area');
+    const fileElem = document.getElementById('fileElem');
+    const filenameDisplay = document.getElementById('filename');
+    const promptText = document.getElementById('promptText');
+    const actionButtons = document.getElementById('actionButtons');
+
+    // Click anywhere in drop area to open file picker
+    dropArea.addEventListener('click', () => {
+        fileElem.click();
+    });
+
+    // Handle file selection
+    fileElem.addEventListener('change', handleFiles);
+
+    // Drag events
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.classList.remove('dragover');
+        fileElem.files = e.dataTransfer.files;
+        handleFiles();
+    });
+
+    function handleFiles() {
+        const file = fileElem.files[0];
+        if (file) {
+            filenameDisplay.textContent = `📄 ${file.name}`;
+            promptText.style.display = 'none';
+            actionButtons.style.display = 'block';
+        }
+    }
+
+    function removeFile() {
+        fileElem.value = '';
+        filenameDisplay.textContent = '';
+        promptText.style.display = 'block';
+        actionButtons.style.display = 'none';
+    }
+    $("#btnExportData").click(function () {
+        location.href = Aurl + 'customizebilltemplate';
+    });
+    function uploadFile() {
+        var fileUpload = $("#fileElem").get(0);
+        var files = fileUpload.files;
+        // Create FormData object
+        var File = new FormData();
+        if (files.length > 0) {
+            let sb = document.getElementById("RepLoadersnackbar");
+            sb.classList.add("show");
+                $("#btnLoadData").prop("disabled", true);
+                File.append(UID, files[0]);
+                for (var i = 0; i < files.length; i++) {
+                    File.append(files[i].name, files[i]);
+                }
+                $('#dvProgImg').show();
+                $('#dvImpComp').html("");
+                $.ajax({
+                    //url: '@Url.Action("LoadSelectFiledata", "Importexport")',
+                    url: Aurl + "uploadcustomizebillfile",
+                    type: 'POST',
+                    datatype: "JSON",
+                    data: File,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function (data) {
+                        sb.classList.remove("show");
+                        $("#btnLoadData").prop("disabled", false);
+                        if (data == "0") {
+                            showErrorSnackbar("No Records found");
+                        }
+                        if (data == "0.1") {
+                            showErrorSnackbar("No Records found in Header and Items Sheet");
+                        }
+                        if (data == "0.2") {
+                            showErrorSnackbar("No Records found in Header Sheet");
+                        }
+                        if (data == "0.3") {
+                            showErrorSnackbar("No Records found in Items Sheet");
+                        }
+                        else if (data == "1") {
+                            showErrorSnackbar("Choose any one file");
+                        }
+                        else if (data == "2") {
+                            showErrorSnackbar("Column Name mismatching in selected file");
+                        }
+                        else if (data == "21") {
+                            showErrorSnackbar("Column Name mismatching in Header and Items Sheet");
+                        }
+                        else if (data == "22") {
+                            showErrorSnackbar("Column Name mismatching in Header Sheet");
+                        }
+                        else if (data == "23") {
+                            showErrorSnackbar("Column Name mismatching in Items Sheet");
+                        }
+                        else {
+                            $.each(data, function (i, items) {
+                                $('#dvProgImg').hide();
+                                $('#dvmsg').show();
+                                $('#dvImpComp').html(items.Msg);
+
+                                if (items.ID == "0") {
+                                    location.href = Aurl + 'downloaderrordata?FPath=' + items.FilePath + "&FName=" + items.FileName;
+                                    showSuccessSnackbar(items.Msg);
+                                    fileElem.value = '';
+                                    filenameDisplay.textContent = '';
+                                    promptText.style.display = 'block';
+                                    actionButtons.style.display = 'none';
+                                }
+                                else if (items.ID == "2") {
+                                    showErrorSnackbar("Error : " + items.Msg);
+                                    $('#dvImpComp').css("color", "red");
+                                    $('#dvProgImg').hide();
+                                }
+                                else {
+                                    $('#dvImpComp').css("color", "red");
+                                    $('#lblTotCount').text("-");
+                                    $('#lblsaved').text("-");
+                                    $('#lblnotsaved').text("-");
+                                    //Table.clear().draw();
+                                    //location.href = 'Importexport/DownloadErrorData?FPath=' + items.FilePath + "&FName=" + items.FileName;
+                                    location.href = Aurl + 'downloaderrordata?FPath=' + items.FilePath + "&FName=" + items.FileName;
+                                    showErrorSnackbar("Error Occured");
+                                }
+                            });
+                        }
+                    }, error: function (data) {
+                        sb.classList.remove("show");
+                        $('#dvProgImg').hide();
+                        $("#btnLoadData").prop("disabled", false);
+                        showErrorSnackbar("Error Occured");
+                    }
+                });
+            } else {
+                showErrorSnackbar("Please select a file first.");
+            }
+        
+    }
+
+</script>

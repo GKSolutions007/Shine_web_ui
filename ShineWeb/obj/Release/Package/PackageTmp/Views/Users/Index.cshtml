@@ -1,0 +1,652 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@*<script src="~/Scripts/Validation.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    /*each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }*/
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+    
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    @Html.HiddenFor(model => model.ChildURL1, new { @autocomplete = "off", @class = "form-control", @id = "txtChildRoleURL" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div style="padding-bottom:10px;">
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+    <div id="dvMainTable">
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th></th>
+                        <th align="right" colspan="10">
+                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">User Name</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Mobile No</th>
+                    <th style="text-align:center;font-size: 12px;width:20%;">E-Mail ID</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Role</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px" align="center">
+                        <div id="dvAssign" style="width:80%;padding-bottom:7px">
+                            <table class="table" style="width:100%">
+                                <tr>
+                                    @*<td align="right" style="border:none">
+                                            <label>* User Name :</label>
+                                        </td>*@
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="1" type="text" id="txtUserName" class="form-control FormclrField" placeholder="" />
+                                            <label class="labelup">User Name *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorUserName" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    @*<td align="right" style="border:none">
+                                            <label>* Password :</label>
+                                        </td>*@
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="2" type="password" id="txtPassword" class="form-control FormclrField" placeholder="" />
+                                            <label class="labelup">Password *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorPassword" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    @*<td align="right" style="border:none">
+                                            <label>Mobile No :</label>
+                                        </td>*@
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="3" type="number" id="txtMobileNo" class="form-control FormclrField" placeholder="" maxlength="12"
+                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                                            <label class="labelup">Mobile No </label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorMobileNo" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    @*<td align="right" style="border:none">
+                                            <label>E-Mail ID :</label>
+                                        </td>*@
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="4" type="text" id="txtEMail" class="form-control FormclrField" placeholder="" />
+                                            <label class="labelup">E-Mail ID *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorEmailID" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    @*<td align="right" style="border:none">
+                                            <label>Role :</label>
+                                        </td>*@
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <select tabindex="5" id="cmbRole" class="form-control"></select>
+                                            <label class="labelup">Role</label>
+                                        </span>
+                                        <a href="javascript:void(0)" id="hrefNewRole" hidden>New Role</a>
+                                        <div class="clrdiv" id="dvErrorRole" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="right" style="border:none" width="40%">
+                                        <label for="chkActive">Active :</label>
+                                    </td>
+                                    <td style="border:none">
+                                        <input tabindex="6" type="checkbox" id="chkActive" checked disabled />
+                                        <div class="clrdiv" id="dvErrorActive" style="color:red"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button tabindex="8" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button tabindex="7" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        <button tabindex="9" type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false }, { "targets": [5,6,7], "class": "text-center" }],
+    });
+    var Aurl = '@Session["APIurl"]';
+    if ($("#txtAddID").val() == 0) {
+        $("#trAdd").hide();
+        $("#btnAdd").hide();
+    }
+    if ($("#txtModifyID").val() == 0) {
+        //Table.column(8).visible(false);
+    }
+    if ($("#txtViewID").val() == 0) {
+        //Table.column(9).visible(false);
+    }
+    if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
+        $("#dvMainTable").hide();
+    }
+    var arrData = [];
+    var UID = '@Session["LoginUserID"]';
+    var RID = '@Session["RoleID"]';
+    var nMode = 1;
+    var FID = $("#txtFormID").val();
+    GetData(3, "");
+    GetData(7, RID,0);
+    function GetData(nMode,strName,DepID = 0) {
+        $.ajax({
+            url: Aurl + "signup/get",
+            type: 'get',
+            contentType: 'json',
+            data: { FormID: FID, Mode: nMode, Name: strName },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 3) {
+                    arrData = [];
+                    //Table.draw().clear();
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            //arrData[i] = items.UserName;
+                            var al = {
+                                "label": items.UserName,
+                                "id": items.ID,
+                            }
+                            arrData.push(al);
+                            //Table.row.add([
+                            //    items.ID,
+                            //    items.Password,
+                            //    items.RoleID,
+                            //    items.UserName,
+                            //    items.Mobilenumber,
+                            //    items.EMailID,
+                            //    items.RoleName,
+                            //    items.Active == "True" ? "Yes" : "No",
+                            //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
+                            //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>'
+                            //]).draw(false);
+                        });
+                        var searchValue = '';
+                        if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+                            searchValue = $('#tblMasterData').DataTable().search(); // get current search term
+                        }
+                        $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: true,
+                            destroy: true,
+                            data: data,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "UserName", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "Mobilenumber", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "EMailID", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "RoleName", "autoWidth": true, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = value.Active == "True" ? "Yes" : "No";// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
+                                        return _action;
+                                    }
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }, "visible": $("#txtModifyID").val() == 0 ? false : true
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                        return _action;
+                                    }, "visible": $("#txtViewID").val() == 0 ? false : true
+                                },
+                            ],
+                            initComplete: function () {
+                                // Re-apply search value after table is fully initialized
+                                this.api().search(searchValue).draw();
+                            }
+                        });
+                        Table = $('#tblMasterData').DataTable();
+                        $("#txtUserName").autocomplete({
+                            minLength: 0,
+                            source: arrData,
+                            //autoFocus: true,
+                            //focus: function (event, ui) {
+                            //    $("#txtName").val(ui.item.label);
+                            //    return false;
+                            //},
+                            select: function (event, ui) {
+                                $("#txtUserName").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+                else if (nMode == 4) {
+                    $.each(data, function (i, items) {                       
+                        $("#txtID").val(items.ID);
+                        $("#txtUserName").val(items.UserName);
+                        $("#txtPassword").val(items.Password);
+                        $("#txtMobileNo").val(items.Mobilenumber);
+                        $("#txtEMail").val(items.EMailID);
+                        $("#cmbRole").val(items.RoleID);
+                        $("#chkActive").prop("checked", items.Active == "True");
+                    });                    
+                }
+                else if (nMode == 7) {
+                    $('#cmbRole').find("option").remove();
+                    $('#cmbRole').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select Role --",
+                        class: ""
+                    }));
+                    $.each(data, function (i, items) {
+                        $('#cmbRole').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                    });
+                    $('#cmbRole').val(DepID);
+                }
+
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    function displayResult(item) {
+        $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
+    }
+
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    function CloseForm() {
+        modal.style.display = "none";
+    }
+
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    
+    $("#btnAdd").click(function () {
+        nMode = 1;
+        $("#chkActive,#btnSave,#cmbRole,#btnClear,.FormclrField").prop("disabled", false);
+        $("#lblPopupheading").text("Add " + $("#MainHeading").text());
+        modal.style.display = "block";
+        ClearForm();
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $(".FormclrField").val("");
+        $("#chkActive").prop("checked", true);
+        $("#chkActive").prop("disabled", nMode != 2);
+        $(".clrdiv").html("");
+        $("#cmbRole").val();
+        $("#txtUserName").focus();
+        if (nMode != 1)
+            modal.style.display = "none";
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        var IsValid = true, ChkFormation = true;
+        if ($("#txtUserName").val() == "") {
+            IsValid = false;
+            $("#dvErrorUserName").html("User Name should not be empty");
+            showErrorSnackbar("User Name should not be empty");
+        }
+        if ($("#txtPassword").val() == "") {
+            IsValid = false;
+            $("#dvErrorPassword").html("Password should not be empty");
+            showErrorSnackbar("Password should not be empty");
+        }
+        ChkFormation = EmailValidation($("#txtEMail"), $("#dvErrorEmailID"), true);
+        if (!ChkFormation) {
+            IsValid = false;
+            //$("#dvErrorEmailID").html("E-Mail ID should not be empty");
+        }
+        ChkFormation = MobilenoValidation($("#txtMobileNo"), $("#dvErrorMobileNo"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $(".clrdiv").html("");
+        var lstMaster = {
+            "FormID": FID,
+            "Mode": nMode,
+            "ID": $("#txtID").val(),
+            "UserName": $("#txtUserName").val(),
+            "Password": $("#txtPassword").val(),
+            "RoleID": $("#cmbRole").val(),
+            "Mobilenumber": $("#txtMobileNo").val(),
+            "EMailID": $("#txtEMail").val(),
+            "Active": $("#chkActive").is(":checked") ? 1 : 0,
+            "UserID": UID
+        };
+            $.ajax({
+                url: Aurl + "signup/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(lstMaster),
+                cache: false,
+                processData: false,
+                success: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            ClearForm();
+                            GetData(3, "");
+                            modal.style.display = "none";
+                        }
+                        else if (items.Message == "UserName") {
+                            $("#dvErrorUserName").html("User Name already exists");
+                            showErrorSnackbar("User Name already exists");
+                        }
+                        else if (items.Message == "MobileNo") {
+                            $("#dvErrorMobileNo").html("Mobile No already exists");
+                            showErrorSnackbar("Mobile No already exists");
+                        }
+                        else if (items.Message == "EMailID") {
+                            $("#dvErrorEmailID").html("E-Mail ID already exists");
+                            showErrorSnackbar("E-Mail ID already exists");
+                        }
+                        else {
+                            //$("#dvErrorUserName").html(items.Message);
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                }, error: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+    }
+    $('#tblMasterData tbody').on('click', '.clsView', function () {
+        nMode = 3;
+        $(".clrdiv").html("");
+        $("#lblPopupheading").text("View " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+        GetData(4, ID);              
+        $(".FormclrField").prop("disabled", true);
+        $("#chkActive,#btnSave,#btnClear,#cmbRole").prop("disabled", true);
+        modal.style.display = "block";
+
+    });
+
+    $('#tblMasterData tbody').on('click', '.clsEdit', function () {
+        $(".clrdiv").html("");
+        nMode = 2;
+        rowdata = Table.row($(this).parents('tr')).data();
+        $("#lblPopupheading").text("Edit " + $("#MainHeading").text());
+        var ID = rowdata.ID;//[0];
+        GetData(4, ID);       
+        $(".FormclrField").prop("disabled", false);
+        $("#chkActive,#btnSave,#cmbRole").prop("disabled", false);
+        $("#btnClear").prop("disabled", true);
+        modal.style.display = "block";
+
+    });
+    window.addEventListener('keydown', function (event) {
+        // Check if the F8 key is pressed (key code 119)
+        if (event.keyCode === 119) {
+            var url = $("#txtChildRoleURL").val();
+            if (url != "") {//
+                var id = event.target.id;
+                if (id == "cmbRole") {
+                    $("#lbliframeheading").text("Role");
+                    document.getElementById("ifrSMG").src = url + "&ParFFID=cmbRole";;
+                    // Prevent default action if any (e.g., browser F8 behavior)
+                    event.preventDefault();
+                    // Open the modal when F8 is pressed
+                    modaliframe.style.display = "block";
+                }
+            }
+            else {
+                showErrorSnackbar("Dependancy info not found");
+            }
+        }
+    });
+    $("#hrefNewRole").click(function () {
+        var url = $("#txtChildRoleURL").val();
+        if (url != "") {
+            $("#lbliframeheading").text("User");
+            document.getElementById("ifrSMG").src = url;
+            modaliframe.style.display = "block";
+        }
+        else {
+            showErrorSnackbar("Dependancy info not found");
+        }
+    });
+</script>

@@ -1,0 +1,1351 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@*<script src="~/Scripts/Validation.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+   /* each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+*/
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        /*overflow: auto;*/ /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 75%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            /*overflow: auto;*/
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            /*overflow: auto;*/
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    /* Style the tab */
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+        /* Style the buttons inside the tab */
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-left: 12px;
+            transition: 0.5s;
+            font-size: 15px;
+            border-radius: 5px;
+        }
+
+            /* Change background color of buttons on hover */
+            .tab button:hover {
+                background-color: lightskyblue;
+            }
+
+            /* Create an active/current tablink class */
+            .tab button.active {
+                background-color: #ccc;
+            }
+
+    /* Style the tab content */
+    .tabcontent {
+        display: none;
+        /*padding: 6px 12px;*/
+        border: none;
+        border-top: none;
+    }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    /*  input:focus + .labelup,
+    input:not(:placeholder-shown) + .labelup, textarea:focus + .labelup, textarea:not(:placeholder-shown) + .labelup {
+        top: -35%;
+        font-size: .7em;
+        padding: 0 .3em;
+        background: #F9F9F9;
+        color: #000000;
+    }*/
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.DependFrom, new { @autocomplete = "off", @class = "form-control", @id = "txtDependFrom" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div style="padding-bottom:10px;">
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+    <div id="dvMainTable">
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th></th>
+                        <th align="right" colspan="10">
+                            <button id="btnAdd" class="btn btn-info" onclick="openTabs(event, 'CustomerDetails')"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Code</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Name</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">Phone No</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Mobile No</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">GSTIN</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">Rating</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                    <th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
+                        <span class="glyphicon glyphicon-pencil" style="font-size:16px">
+                        </span>
+                    </th>
+                    <th style="text-align:center;font-size: 12px;width:3%;" title="View">
+                        <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
+                        </span>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:100%;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px">
+                        <div id="dvAssign" style="width:100%;padding-bottom:2px">
+                            <div id="dvErrorDetail" style="background-color:white;border:thin;padding-bottom:3px;" hidden>
+                                <label id="lblSaveError" style="color:red;font-size:10px"></label>
+                            </div>
+                            <div class="tab">
+                                <button class="tablinks" id="tabCD" onclick="openTabs(event, 'CustomerDetails')">Vendor Details</button>
+                                <button class="tablinks" onclick="openTabs(event, 'Address')">Address</button>
+                                <button class="tablinks" onclick="openTabs(event, 'StatutoryDetails')">Statutory Details</button>
+                                <button class="tablinks" onclick="openTabs(event, 'OtherDetails')">Other Details</button>
+                            </div>
+                            <div id="CustomerDetails" class="tabcontent">
+                                <div class="col-sm-12 col-md-12 col-lg-12" style="padding-bottom:10px;">
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtCode" title="Vendor Code" placeholder="" autocomplete="on">
+                                                            <label class="labelup" for="txtCode">Vendor Code *</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCode" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" title="Vendor Name" id="txtName" placeholder="">
+                                                            <label class="labelup" for="txtName">Vendor Name *</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnName" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtContactperson" placeholder="">
+                                                            <label class="labelup" for="txtContactperson">Contact Person</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnContactperson" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="email" id="txtEMail" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnBAdd3')">
+                                                            <label class="labelup" for="txtEMail">E-Mail ID</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnEMail" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="number" id="txtPh1" placeholder="" maxlength="12"
+                                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                                            <label class="labelup" for="txtPh1">Phone No 1</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPh1" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="number" id="txtPh2" placeholder="" maxlength="12"
+                                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                                            <label class="labelup" for="txtPh2">Phone No 2</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPh2" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="number" id="txtMob1" placeholder="" maxlength="12"
+                                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                                            <label class="labelup" for="txtMob1">Mobile No 1</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnMob1" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="number" id="txtMob2" placeholder="" maxlength="12"
+                                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                                            <label class="labelup" for="txtMob2">Mobile No 2</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnMob2" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="number" id="txtOSValue" placeholder="" maxlength="12">
+                                                            <label class="labelup" for="txtOSValue">Outstanding Value</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnOSValue" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="number" id="txtOSCount" placeholder="" maxlength="12">
+                                                            <label class="labelup" for="txtOSCount">Outstanding Invoices</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCount" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="Address" class="tabcontent">
+                                <div class="col-sm-12 col-md-12 col-lg-12" style="padding-bottom:10px;">
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtBAdd1" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnBAdd1')">
+                                                            <label class="labelup" for="txtBAdd1">Billing Address 1*</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnBAdd1" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtBAdd2" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnBAdd2')">
+                                                            <label class="labelup" for="txtBAdd2">Billing Address 2</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnBAdd2" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtBAdd3" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnBAdd3')">
+                                                            <label class="labelup" for="txtBAdd3">Billing Address 3</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnBAdd3" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="border:none" colspan="2">
+                                                    <label for="chkIfSame" style="padding-right:10px">IF Same for Shipping </label><input style="width:15px;height:15px;" type="checkbox" id="chkIfSame" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtSAdd1" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnSAdd1')">
+                                                            <label class="labelup" for="txtSAdd1">Shipping Address 1*</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnSAdd1" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtSAdd2" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnSAdd2')">
+                                                            <label class="labelup" for="txtSAdd2">Shipping Address 2</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnSAdd2" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtSAdd3" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnSAdd3')">
+                                                            <label class="labelup" for="txtSAdd3">Shipping Address 3</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnSAdd3" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="number" id="txtPincode" placeholder="" maxlength="6"
+                                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                                            <label class="labelup" for="txtPincode">Pincode *</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPincode" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr" hidden>
+                                                <td style="border:none;padding-left:12px;padding-right:3px" width="75%">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtLocation" placeholder="">
+                                                            <label class="labelup" for="txtLocation">Location</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnLocation" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                                <td style="border:none">
+                                                    <button class="btn btn-info" title="Get Location"><span class="glyphicon glyphicon-map-marker"></span></button>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="StatutoryDetails" class="tabcontent">
+                                <div class="col-sm-12 col-md-12 col-lg-12" style="padding-bottom:10px;">
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtPAN" placeholder="" maxlength="10">
+                                                            <label class="labelup" for="txtPAN">PAN Number</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPAN" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="number" id="txtAadhaar" placeholder="" maxlength="12"
+                                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                                            <label class="labelup" for="txtAadhaar">Aadhaar Number</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnAadhaar" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtFSSAI" placeholder="" maxlength="14"
+                                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                                            <label class="labelup" for="txtFSSAI">FSSAI Number</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnFSSAI" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtDL20" placeholder="">
+                                                            <label class="labelup" for="txtDL20">D.L No 20</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnDL20" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtDL21" placeholder="">
+                                                            <label class="labelup" for="txtDL21">D.L No 21</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnDL21" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            @*<tr>
+                                                    <td style="border:none" colspan="2">
+                                                        <label for="chkIfReg" style="padding-right:10px">IF Register : </label><input style="width:15px;height:15px;" type="checkbox" id="chkIfReg" />
+                                                    </td>
+                                                </tr>*@
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <select id="cmbState" class="form-control FormclrcmbField"><option value="0">Select State</option></select>
+                                                            <label class="labelup">State Name</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnState" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <input class="form-control FormclrField" type="text" id="txtGSTIN" placeholder="" maxlength="15">
+                                                            <label class="labelup" for="txtGSTIN">GSTIN</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnGSTIN" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <select id="cmbTaxType" class="form-control FormclrcmbField"><option value="0">Select Tax Type</option></select>
+                                                            <label class="labelup">Tax Type</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnTaxType" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="OtherDetails" class="tabcontent">
+                                <div class="col-sm-12 col-md-12 col-lg-12" style="padding-bottom:10px;">
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <select id="cmbPayMode" class="form-control FormclrcmbField"><option value="0">Select Payment Mode</option></select>
+                                                            <label class="labelup">Payment Mode</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPayMode" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <select id="cmbCreditTerm" class="form-control FormclrcmbField"><option value="0">Select Credit Term</option></select>
+                                                            <label class="labelup">Credit Term</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCreditTerm" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <select id="cmbWeekCycle" class="form-control FormclrcmbField"><option value="0">Select Week Cycle</option></select>
+                                                            <label class="labelup">Week Cycle</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnWeekCycle" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+                                        <table class="table" style="width:100%">
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <span class="form-label">
+                                                            <select id="cmbRating" class="form-control FormclrcmbField"><option value="0">Select Rating</option></select>
+                                                            <label class="labelup">Ratings</label>
+                                                        </span>
+                                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnRating" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                @*<td align="right" style="border:none" width="50%"><label for="chkActive">Active : </label></td>*@
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <label for="chkActive">Active : </label>&emsp; <input type="checkbox" id="chkActive">
+                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnActive" class="clrdivs"></div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-12 col-md-4 col-lg-4">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="form-label">
+                        @*<input tabindex="1" hidden type="text" id="txtCode1" placeholder="">*@
+                        @*<label class="labelup" for="txtCode">Customer Code*</label>*@
+                    </span>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        <button type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+    //var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+    //    "bFilter": true,
+    //    "bSearchable": true,
+    //    "bInfo": true,
+    //    "bPaginate": true,
+    //    "ordering": false,
+    //    scrollY: "400px",
+    //    scrollX: true,
+    //    scrollCollapse: true,
+    //    "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [7, 8, 9], "class": "text-center" }],
+    //});
+
+    function openTabs(evt, TabName,opentype = 0) {
+
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(TabName).style.display = "block";
+        if (opentype == 0) {
+            evt.currentTarget.className += " active";
+        } else {
+            document.getElementById(TabName).className += " active";
+        }
+    }
+    var Aurl = '@Session["APIurl"]';
+    if ($("#txtAddID").val() == 0) {
+        $("#trAdd").hide();
+        $("#btnAdd").hide();
+    }
+    //if ($("#txtModifyID").val() == 0) {
+    //    Table.column(8).visible(false);
+    //}
+    //if ($("#txtViewID").val() == 0) {
+    //    Table.column(9).visible(false);
+    //}
+    if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
+        $("#dvMainTable").hide();
+    }
+
+    var UID = '@Session["LoginUserID"]';
+    var DefStateID = '@Session["StateID"]';
+    var nMode = 1;
+    var FID = $("#txtFormID").val();
+    var Table = $('#tblMasterData').DataTable();
+    AllVendorData();
+    function AllVendorData() {
+
+        $.ajax({
+            url: Aurl + "vendormaster/getalldata",
+            type: "GET",
+            datatype: "JSON",
+            xhrFields: {
+                withCredentials: true
+            },
+            data: { Mode: 3, Name: "" },
+            success: function (data) {
+                var vendorjsdata = eval(data);
+                var searchValue = '';
+                if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+                    searchValue = $('#tblMasterData').DataTable().search(); // get current search term
+                }
+                $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                    scrollY: "450px",
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: true,
+                    destroy: true,
+                    data: vendorjsdata,
+                    fixedColumns: false,
+                    searching: true,
+                    ordering: true,
+                    sorting: false,
+                    columns: [
+                        { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                        { "data": "Code", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "Name", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "CustomerType", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "Mob1", "autoWidth": true, className: "dt-body-right" },
+                        { "data": "GSTIN", "autoWidth": true, className: "dt-body-right" },
+                        { "data": "Ratings", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "Active", "autoWidth": true, className: "dt-body-center" },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
+                                return _action;
+                            }
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                return _action;
+                            },
+                            "visible": $("#txtModifyID").val() == 0 ? false : true
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                return _action;
+                            },
+                            "visible": $("#txtViewID").val() == 0 ? false : true
+                        }
+                    ],
+                    initComplete: function () {
+                        // Re-apply search value after table is fully initialized
+                        this.api().search(searchValue).draw();
+                    }
+
+                });
+                Table = $('#tblMasterData').DataTable();
+            }
+        });
+       
+    }
+    GetData(3);
+    GetData(5);
+    var arrCodeData = [], arrNameData = [];
+    function GetData(nMode, strName = null) {
+        $.ajax({
+            url: Aurl + "vendormaster/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, Name: strName },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 3)
+                {
+                    arrCodeData = [], arrNameData = [];
+                    if (data.length > 0)
+                    {
+                        $.each(data, function (i, items) {
+                            //arrCodeData[i] = items.Code;
+                            //arrNameData[i] = items.Name;
+                            var al = {
+                                "label": items.Code,
+                                "id": items.ID,
+                            }
+                            arrCodeData.push(al);
+                            al = {
+                                "label": items.Name,
+                                "id": items.ID,
+                            }
+                            arrNameData.push(al);
+                            //Table.row.add([
+                            //    items.ID,
+                            //    items.Code,
+                            //    items.Name,
+                            //    items.CustomerType,
+                            //    items.Mob1,
+                            //    items.GSTIN,
+                            //    items.Ratings,
+                            //    items.Active == "True" ? "Yes" : "No",
+                            //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
+                            //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>'
+                            //]).draw(false);
+                        });
+                        $("#txtCode").autocomplete({
+                            minLength: 0,
+                            source: arrCodeData,
+                            //autoFocus: true,
+                            //focus: function (event, ui) {
+                            //    $("#txtName").val(ui.item.label);
+                            //    return false;
+                            //},
+                            select: function (event, ui) {
+                                $("#txtCode").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+                        $("#txtName").autocomplete({
+                            minLength: 0,
+                            source: arrNameData,
+                            //autoFocus: true,
+                            //focus: function (event, ui) {
+                            //    $("#txtName").val(ui.item.label);
+                            //    return false;
+                            //},
+                            select: function (event, ui) {
+                                $("#txtName").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+                else if (nMode == 4) {
+                    $.each(data, function (i, items) {
+                        $("#txtID").val(items.ID),
+                            $("#txtCode").val(items.Code),
+                            $("#txtName").val(items.Name),
+                            $("#cmbCustomerType").val(items.CustomerType),
+                            $("#cmbRating").val(items.Ratings),
+                            $("#txtBAdd1").val(items.Billadd1),
+                            $("#txtBAdd2").val(items.Billadd2),
+                            $("#txtBAdd3").val(items.Billadd3),
+                            $("#txtSAdd1").val(items.Shipadd1),
+                            $("#txtSAdd2").val(items.shipadd2),
+                            $("#txtSAdd3").val(items.Shipadd3),
+                            $("#txtPincode").val(items.Pincode),
+                            $("#txtContactperson").val(items.ContactPerson),
+                            $("#txtPh1").val(items.Ph1),
+                            $("#txtPh2").val(items.Ph2),
+                            $("#txtMob1").val(items.Mob1),
+                            $("#txtMob2").val(items.Mob2),
+                            $("#txtEMail").val(items.Email),
+                            $("#txtPAN").val(items.PANNumber),
+                            $("#txtAadhaar").val(items.AadharNo),
+                            $("#txtDL20").val(items.DLNo20),
+                            $("#txtDL21").val(items.DLNo21),
+                            $("#txtFSSAI").val(items.FSSAINo),
+                            $("#cmbState").val(items.StateID),
+                            $("#txtGSTIN").val(items.GSTIN),
+                            $("#cmbCreditTerm").val(items.CreditTermID),
+                            $("#cmbPayMode").val(items.PaymentModeID),
+                            $("#cmbCreditTerm").prop("disabled", items.PaymentModeID != 7);
+                            $("#cmbTaxType").val(items.TaxTypeID),
+                            updateInputColumn("txtOSValue", items.OSValue),
+                        $("#txtOSCount").val(items.OverDueValue),
+                            $("#cmdPriceType").val(items.PriceTypeID),
+                            $("#txtOwnerName").val(items.OwnerName),
+                            $("#txtDiscPern").val(items.DiscountPern),
+                            $("#chkShowTP").prop("checked", items.TrackPoint == "True"),
+                            $("#chkApplyTCS").prop("checked", items.TCSTax == "True"),
+                            $("#cmbWeekCycle").val(items.WeekCycle),
+                            $("#txtLocation").val(items.Latitude),
+                            $("#txtDistance").val(items.Distance),
+                            $("#txtRemarks").val(items.Remark),
+                            $("#chkActive").prop("checked", items.Active == "True");
+                    });
+                }
+                else if (nMode == 5) {
+                    $('#cmdPriceType,#cmbState,#cmbTaxType,#cmbPayMode,#cmbCreditTerm,#cmbRating,#cmbCustomerType,#cmbWeekCycle').find("option").remove();
+                    $('#cmdPriceType,#cmbState,#cmbTaxType,#cmbPayMode,#cmbCreditTerm,#cmbRating,#cmbCustomerType,#cmbWeekCycle').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    arrBeat = [], arrSalesman = [], narrBid = 0, narrSMid = 0;
+                    $.each(data, function (i, items) {
+                        if (items.FType == 1) {
+                            $('#cmbTaxType').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 2) {
+                            $('#cmbPayMode').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 3) {
+                            $('#cmbCreditTerm').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 4) {
+                            $('#cmbState').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 5) {
+                            $('#cmbRating').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 6) {
+                            $('#cmbWeekCycle').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                    });
+                    $('#cmbState').val(DefStateID);
+                }
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+            var DecVal = '@Session["DecimalValues"]';
+function updateInputColumn(inputID, netValue) {
+    //const label = document.getElementById(`dgvProdGross${rowId}`);
+    const input = document.getElementById(inputID);
+    var value = netValue != "" ? netValue : 0;
+    input.setAttribute('txttag', parseFloat(value).toFixed(4));
+    input.value = parseFloat(value).toFixed(DecVal);
+    input.title = netValue;
+}
+    $(".txtsettag").focusin(function (e) {
+        var id = e.target.id;
+        const val = document.getElementById(id).getAttribute("txttag");
+        $("#" + id).val(val);
+        $("#" + id).select();
+    });
+    $(".txtsettag").blur(function (e) {
+        var val = e.target.value;
+        var id = e.target.id;
+        updateInputColumn(id, val);
+    });
+    function displayResult(item) {
+        $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
+    }
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    function CloseForm() {
+        modal.style.display = "none";
+    }
+
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    $("#btnAdd").click(function (e) {
+        nMode = 1;
+        $("#btnSave,#btnClear,.FormclrField,.FormclrcmbField,#chkIfSame").prop("disabled", false);
+        $("#chkActive").prop("disabled", true);
+        $("#lblPopupheading").text("Add " + $("#MainHeading").text());
+        modal.style.display = "block";
+        openTabs(e, 'CustomerDetails', 1);
+        ClearForm();
+    });
+    $("#chkIfSame").click(function () {
+        var ischk = $("#chkIfSame").is(":checked");
+        if (ischk) {
+
+            $("#txtSAdd1").val($("#txtBAdd1").val()),
+                $("#txtSAdd2").val($("#txtBAdd2").val()),
+                $("#txtSAdd3").val($("#txtBAdd3").val());
+        }
+        else {
+            $("#txtSAdd1").val(""),
+                $("#txtSAdd2").val(""),
+                $("#txtSAdd3").val("");
+        }
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        ids = 0, Salesmanids = 0;
+        $(".FormclrField").val("");
+        $(".FormclrcmbField").val(0);
+        $("input[type=checkbox]").prop("checked", false);
+        $("#chkActive").prop("checked", true);
+        $("#chkActive").prop("disabled", nMode != 2);
+        $(".clrdiv,.clrdivs").html("");
+        $("#dvErrorDetail").hide();
+        $("#lblSaveError").html("");
+        $("#txtCode").focus();
+        if (nMode != 1)
+            modal.style.display = "none";
+        $('#cmbState').val(DefStateID);
+        $('#cmbTaxType').val(1);
+        $("#cmbCreditTerm").prop("disabled", true);
+        $("#txtOSCount,#txtOSValue").prop("disabled", true);
+    }
+    $("#cmbPayMode").change(function (e) {
+        $("#divErrorOnCreditTerm").html("");
+        $("#cmbCreditTerm").prop("disabled", true);
+        $("#cmbCreditTerm").val(0);
+        var selval = e.target.value;
+        if (selval == 7) {
+            $("#cmbCreditTerm").prop("disabled", false);
+        }
+    });
+    $('#cmbState').change(function (e) {
+        var selval = e.target.value;
+        if (selval != DefStateID & selval > 0) {
+            $('#cmbTaxType').val(2);
+        }
+        else
+        {
+            $('#cmbTaxType').val(1);
+        }
+    });
+    $("#btnSave").click(function () {
+        $(".clrdiv,.clrdivs").html("");
+        var IsValid = true, ChkFormation = true;
+        var Errors = "";
+        if ($("#txtCode").val() == "") {
+            IsValid = false;
+            $("#divErrorOnCode").html("Vendor Code should not be empty");
+            Errors += "Vendor Details : Vendor Code should not be empty<br/>";
+            showErrorSnackbar("Vendor Details : Vendor Code should not be empty");
+        }
+        if ($("#txtName").val() == "") {
+            IsValid = false;
+            $("#divErrorOnName").html("Vendor Name should not be empty");
+            Errors += "Vendor Details : Vendor Name should not be empty<br/>";
+            showErrorSnackbar("Vendor Details : Vendor Name should not be empty");
+        }
+        if ($("#cmbTaxType").val() == 0) {
+            IsValid = false;
+            $("#divErrorOnTaxType").html("Select Tax Type");
+            showErrorSnackbar("Select Tax Type");
+        }
+        if ($("#txtPincode").val().length != 6) {
+            IsValid = false;
+            $("#divErrorOnPincode").html("Invalid Pincode format(Enter 6 numeric)");
+            showErrorSnackbar("Invalid Pincode format(Enter 6 numeric)");
+        }
+        if ($("#cmbPayMode").val() == 7) {
+            if ($("#cmbCreditTerm").val() == 0) {
+                IsValid = false;
+                $("#divErrorOnCreditTerm").html("Select Credit Date");
+                showErrorSnackbar("Select Credit Date");
+            }
+        }
+        ChkFormation = PhonenoValidation($("#txtPh1"), $("#divErrorOnPh1"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = PhonenoValidation($("#txtPh2"), $("#divErrorOnPh2"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = MobilenoValidation($("#txtMob1"), $("#divErrorOnMob1"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = MobilenoValidation($("#txtMob2"), $("#divErrorOnMob2"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = EmailValidation($("#txtEMail"), $("#divErrorOnEMail"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = PANValidation($("#txtPAN"), $("#divErrorOnPAN"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        if ($("#txtAadhaar").val() != "") {
+            ChkFormation = AadharValidation($("#txtAadhaar"), $("#divErrorOnAadhaar"), false);
+            if (!ChkFormation) {
+                IsValid = false;
+            }
+        }
+        ChkFormation = FSSAIValidation($("#txtFSSAI"), $("#divErrorOnFSSAI"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = GSTINValidation($("#txtGSTIN"), $("#divErrorOnGSTIN"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+        else {
+            //$("#dvErrorDetail").show();
+            //$("#lblSaveError").html(Errors);
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $(".clrdivs").html("");
+        var name = $("#txtName").val();
+        var code = $("#txtCode").val();
+        var lstMaster = {
+            "Mode": nMode,
+            "ID": $("#txtID").val(),
+            "Code": $("#txtCode").val(),
+            "Name": $("#txtName").val(),
+            "CustomerType": $("#cmbCustomerType").val(),
+            "Ratings": $("#cmbRating").val(),
+            "Billadd1": $("#txtBAdd1").val(),
+            "Billadd2": $("#txtBAdd2").val(),
+            "Billadd3": $("#txtBAdd3").val(),
+            "Shipadd1": $("#txtSAdd1").val(),
+            "shipadd2": $("#txtSAdd2").val(),
+            "Shipadd3": $("#txtSAdd3").val(),
+            "Pincode": $("#txtPincode").val(),
+            "ContactPerson": $("#txtContactperson").val(),
+            "Ph1": $("#txtPh1").val(),
+            "Ph2": $("#txtPh2").val(),
+            "Mob1": $("#txtMob1").val(),
+            "Mob2": $("#txtMob2").val(),
+            "Email": $("#txtEMail").val(),
+            "PANNumber": $("#txtPAN").val(),
+            "AadharNo": $("#txtAadhaar").val(),
+            "DLNo20": $("#txtDL20").val(),
+            "DLNo21": $("#txtDL21").val(),
+            "FSSAINo": $("#txtFSSAI").val(),
+            "StateID": $("#cmbState").val(),
+            "GSTIN": $("#txtGSTIN").val(),
+            "CreditTermID": $("#cmbCreditTerm").val(),
+            "PaymentModeID": $("#cmbPayMode").val(),
+            "TaxTypeID": $("#cmbTaxType").val(),
+            "WeekCycle": $("#cmbWeekCycle").val(),
+            "Active": $("#chkActive").is(":checked") ? 1 : 0,
+            "UserID": UID,
+        };
+            $.ajax({
+                url: Aurl + "vendormaster/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(lstMaster),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            ClearForm();
+                            AllVendorData();
+                            GetData(3);
+                            modal.style.display = "none";
+                            var depfrom = $("#txtDependFrom").val();
+                            if (window.opener && !window.opener.closed) {
+                                if (depfrom == "0") {// PB
+                                    window.opener.GetData(1);
+                                    //setTimeout(() => { 
+                                        window.opener.GetData(3, code, 0);
+                                    //}, 500);
+                                    //window.opener.$('#txtHProds').val(name)
+                                }                               
+                                window.close();
+                            }
+                        }
+                        else if (items.Message == "Code") {
+                            $("#divErrorOnCode").html("Code Already Exists");
+                            showErrorSnackbar("Code Already Exists");
+                        }
+                        else if (items.Message == "Name") {
+                            $("#divErrorOnName").html("Name Already Exists");
+                            showErrorSnackbar("Name Already Exists");
+                        }
+                        else if (items.Message == "AccountName") {
+                            $("#divErrorOnName").html("Account Name Already Exists in another master");
+                            showErrorSnackbar("Account Name Already Exists in another master");
+                        }
+                        else if (items.Message == "OSPending") {
+                            //$("#divErrorOnName").html("Outstanding Amount Pending. Cannot Deactivate");
+                            showErrorSnackbar("Outstanding Amount Pending. Cannot Deactivate");
+                        }
+                        else {
+                            //$("#divErrorOnCode").html(items.Message);
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                }, error: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+    }
+    $('#tblMasterData tbody').on('click', '.clsView', function (e) {
+        nMode = 3;
+        $(".clrdivs").html("");
+        $("#lblPopupheading").text("View " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+
+        $("#txtID").val(ID);
+        openTabs(e, 'CustomerDetails',1);
+        GetData(4, ID);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("input[type=checkbox],#btnSave,#btnClear,#chkIfSame").prop("disabled", true);
+        $(".clrdivs").html("");
+        $("#dvErrorDetail").hide();
+        $("#lblSaveError").html("");
+        modal.style.display = "block";
+        $("#txtOSCount,#txtOSValue").prop("disabled", true);
+    });
+
+    $('#tblMasterData tbody').on('click', '.clsEdit', function (e) {
+        nMode = 2;
+        $(".clrdivs").html("");
+        openTabs(e, 'CustomerDetails',1);
+        $("#lblPopupheading").text("Edit " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+        $("#txtID").val(ID);
+        GetData(4, ID);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("input[type=checkbox],#chkActive,#btnSave").prop("disabled", false);
+        $("#btnClear").prop("disabled", true);
+        $(".clrdivs").html("");
+        $("#dvErrorDetail").hide();
+        $("#lblSaveError").html("");
+        modal.style.display = "block";
+        $("#txtOSCount,#txtOSValue").prop("disabled", true);
+    });    
+    if ($("#txtTransType").val() == "2") {
+        if ($("#txtID").val() > 0) {
+            nMode = 2;
+            $(".clrdiv").html("");
+
+            document.getElementById('CustomerDetails').style.display = "block";
+            document.getElementById("tabCD").className += " active";
+            //openTabs(e, 'ProductDetails', 1);
+            $("#lblPopupheading").text("Edit " + $("#MainHeading").text());
+            var ID = $("#txtID").val();
+            GetData(4, ID);
+            $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+            $("input[type=checkbox],#chkActive,#btnSave").prop("disabled", false);
+            $("#btnClear").prop("disabled", true);
+            modal.style.display = "block";
+            $(".clrdivs").html("");
+            $("#dvErrorDetail").hide();
+            $("#lblSaveError").html("");
+        }
+    }
+</script>

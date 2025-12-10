@@ -1,0 +1,396 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link href="~/Content/jquery-ui.css" rel="stylesheet" />*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/datatable.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    td {
+        font-size: 11px;
+    }
+
+    .gdInput {
+        width: 100%;
+        height: 25px;
+        border-width: 0 0 0.1px 0;
+        border-color: #e0d6d6;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        /*overflow: auto;*/ /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            /* overflow: auto;*/
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            /*overflow: auto;*/
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.8em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div id="dvMainTable">
+
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th colspan="4"></th>
+                        <th align="right">
+
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Code</th>
+                    <th style="text-align:center;font-size: 12px;width:40%;">Name</th>
+                    <th style="text-align:center;font-size: 12px;width:25%;">Category</th>
+                    <th style="text-align:center;font-size: 12px;width:20%;">
+                        Location
+                        <div class="input-group">
+                            <span class="form-label">
+                                <select class="form-control FormclrcmbField" id="cmbLocation"><option value="0">Select Location</option></select>
+                                @*<label class="labelup"> Location</label>*@
+                            </span>
+                            <span id="btnApplyAll" class="input-group-addon" style="cursor:pointer">Apply All</span>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="5" align="right">
+                        <div style="padding-top:0px" align="right">
+                            <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                            <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        </div>
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+
+    </div>
+</body>
+<script type="text/javascript">
+    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [1], width: "15%" }, { "targets": [2], width: "35%" }
+            , { "targets": [3], width: "25%" }, { "targets": [4], width: "25%" }],
+    });
+
+    var Aurl = '@Session["APIurl"]';
+    var UID = '@Session["LoginUserID"]';
+    var RID = '@Session["RoleID"]';
+    var nMode = 1;
+    GetData(1);
+    setTimeout(() => {
+        GetData(2);
+    }, 1000);
+    //GetData(2);
+    var arrLocation = [], strLocation = "";
+    function GetData(nMode) {
+        $.ajax({
+            url: Aurl + "updateproductlocation/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    if (data.length > 0) {
+                        //Table.draw().clear(); Table.draw().clear();
+                        $('#cmbLocation').find("option").remove();
+                        $('#cmbLocation').append($('<option/>', {
+                            value: 0,
+                            text: "-- Select --",
+                        }));
+                        arrLocation = [];
+                        strLocation = '<option value="0">-Select-</option>';
+                        $.each(data, function (i, items) {
+                            var al = {
+                                "name": items.Name,
+                                "id": items.ID,
+                            }
+                            arrLocation.push(al);
+                            $('#cmbLocation').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                            strLocation += '<option value="' + items.ID + '">' + items.Name + '</option>';
+                        });
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+                else if (nMode == 2) {
+                    var Prodjsdata = eval(data);
+                    $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                        scrollY: "400px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: false,
+                        destroy: true,
+                        data: Prodjsdata,
+                        fixedColumns: false,
+                        searching: true,
+                        ordering: true,
+                        sorting: false,
+                        columns: [
+                            { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                            { "data": "Code", "autoWidth": true, className: "dt-body-left" },
+                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },
+                            { "data": "CategoryID", "autoWidth": true, className: "dt-body-left" },
+                            {
+                                className: "dt-body-left",                               
+                                "mRender": function (data, type, value, meta) {
+                                    var rowIndex = meta.row;
+                                    var fId = 'dgvLocation_' + rowIndex;
+                                    var selectedLocationID = value.LocationID;
+
+                                    // Modify strLocation to add 'selected' to the matching option
+                                    var optionsHtml = strLocation.replace(
+                                        new RegExp('value="' + selectedLocationID + '"', 'g'),
+                                        'value="' + selectedLocationID + '" selected'
+                                    );
+
+                                    return "<select name='Location' class='gdInput dgvLocation' id='" + fId + "'>" + optionsHtml + "</select>";
+                                }
+                            },
+                        ],
+                        initComplete: function () {
+                            // Add a text input to each footer cell except the last column
+                            this.api().columns().every(function (index) {
+                                if (index !== this.columns().indexes().length - 1) { // exclude last column
+                                    var column = this;
+                                    const columnName = $(column.header()).text().trim();
+                                    console.log("Col : ", columnName);
+                                    var input = $('<label>' + columnName +'</label><br/><input type="text" placeholder="Search ' + columnName +'" class="form-control"/>')
+                                        .appendTo($(column.header()).empty())
+                                        .on('keyup change', function () {
+                                            column.search($(this).val()).draw();
+                                        });
+                                }
+                            });
+                        },
+                    });
+                    Table = $('#tblMasterData').DataTable();
+                }
+            }
+            , error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+
+    //$("#btnApplyAll").on('click', function () {
+    $(document).on('click', '#btnApplyAll', function () {
+        var selLocationID = $('#cmbLocation').val();
+        $("#tblMasterData tbody tr").each(function () {
+            $(this).find("select").each(function (index) {
+                $(this).val(selLocationID);
+            });
+        });
+    });
+    $('#btnClear').click(function (e) {
+        if (ClearcfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $("#cmbLocation").val(0);
+        GetData(1);
+
+        const table1 = $('#tblMasterData').DataTable();
+        // Clear column filters
+        table1.columns().every(function () {
+            const column = this;
+            const headerInput = $('input', column.header());
+            const footerInput = $('input', column.footer());
+            if (headerInput.length) headerInput.val('');
+            if (footerInput.length) footerInput.val('');
+            column.search('');
+        });
+        Table.search("").draw();
+        console.clear();
+        setTimeout(() => {
+            GetData(2);
+        }, 1000);
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        if (cfFocus != 3) {
+            ConfirmDialogMsg("Do you want to save data?");
+        } else {
+            SaveData();
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        var lstProd = [];
+        $(".clrdiv").html("");
+        $("#tblMasterData tbody tr").each(function () {
+            var allValues = {};
+            rowdata = Table.row($(this)).data();
+            var nProdID = rowdata.ID;
+            var nLocationID = 0;
+            $(this).find("select").each(function (index) {
+                nLocationID = $(this).val();
+            });
+            var loc = {
+                "ID": nProdID,
+                "LocationID": nLocationID,
+                "CBy": UID
+            }
+            lstProd.push(loc)
+        });
+        $.ajax({
+            url: Aurl + "updateproductlocation/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(lstProd),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        ClearForm();
+                    }
+                    else {
+                        showErrorSnackbar(items.Message);
+                        //alert(items.Message);
+                    }
+                });
+            },
+            error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+</script>

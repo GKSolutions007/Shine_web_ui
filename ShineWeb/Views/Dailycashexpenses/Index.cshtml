@@ -1,0 +1,563 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    .gdInput {
+        width: 100%;
+        height: 25px;
+        border-width: 0 0 0.1px 0;
+        border-color: #e0d6d6;
+    }
+    each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        /*overflow: auto;*/ /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            /* overflow: auto;*/
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            /*overflow: auto;*/
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.8em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    <div class="toastBox"></div>
+    <div class="row" style="padding-top:10px;">
+        <div class="col-xs-12 col-sm-12 col-md-10 col-lg-10">
+            <h4 id="MainHeading">@ViewData["FormName"]</h4>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2">
+            <div style="padding-left:50px;">
+                <span class="form-label">
+                    <input class="form-control FormclrField" type="date" id="dtpDate" oninput="javascript: if (this.value > this.max) { this.value = this.max; }" />
+                    <label class="labelup" for="txtCode"> Date</label>
+                </span>
+                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrDate" class="clrdiv"></div>
+            </div>
+            @*<input type="date" class="gdInput" id="dtpDate" />
+                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrDate" class="clrdiv"></div>*@
+        </div>
+    </div>
+    <hr />
+    <div id="dvMainTable">
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <input type="text" class="gdInput" name="CustomeFilter" id="txtCustomFilter" hidden />               
+                <table class="table table-bordered" id="tblMasterFAData" width="100%">
+                    <thead>
+                        <tr class="trclrforcolheader">
+                            <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                            <th style="text-align:center;font-size: 12px;width:2%;">#</th>
+                            <th style="text-align:center;font-size: 12px;width:48%;">Account Name</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;">Amount</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;">Ref No</th>
+                            <th style="text-align:center;font-size: 12px;width:30%;">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3">
+                            </td>
+                            <td align="right">
+                                <label id="lblTotal">0.00</label>
+                            </td>
+                            <td colspan="2">
+                                <div style="padding-top:0px" align="right">
+                                    <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                                    <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+</body>
+<script type="text/javascript">
+
+    var Table = $('#tblMasterFAData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        order: [[3, 'asc']],
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [1], "class": "text-center" },
+            { "targets": [3], "class": "text-right" }, { "targets": [2], width: "48%" }, { "targets": [3], width: "10%" }, { "targets": [4], width: "12%" }
+            , { "targets": [5], width: "30%" },
+            {
+                "targets": 3, // Amount column index
+                "className": "text-right",
+                render: function (data, type, row, meta) {
+                    if (type === 'sort') {
+                        // Extract value from the input HTML
+                        var input = $('<div>').html(data).find('input').val();
+                        console.log("Value - ", parseFloat(input) || 0);
+                        return parseFloat(input) || 0;
+                    }
+                    return data; // return raw HTML for display
+                }
+            },
+        ],
+    });
+    function bindLiveSortEvents() {
+        $('#tblMasterFAData tbody').on('keyup change', 'input', function () {
+            Table.draw(); // Redraw and re-sort the table
+        });
+    }
+    // Call it once on page load
+    //bindLiveSortEvents();
+    function filterme(searchValue) {
+        //var searchValue = $('#txtCustomFilter').val().trim();
+
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            var value = parseFloat(data[3]) || 0; // Convert first column to number
+            var category = data[2] || ''; // Get the second column value
+
+            //return (searchValue == "" || category.toUpperCase() == searchValue.toUpperCase());//value > 0 && 
+            return (category.includes(searchValue));
+        });
+
+        Table.draw();
+        $.fn.dataTable.ext.search.pop(); // Remove the filter after applying it
+    }
+    $('#txtCustomFilter').on('change', function (e) {
+        var val = e.target.value;
+        filterme(val);
+    });
+    var Aurl = '@Session["APIurl"]';
+    var UID = '@Session["LoginUserID"]';
+    var DecVal = '@Session["DecimalValues"]';
+    GetData();
+    function GetData() {
+        $.ajax({
+            url: Aurl + "dailycashexpenses/get",
+            type: 'get',
+            contentType: 'json',
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    var accdata = eval(data);
+                    Table.draw().clear(); Table.draw().clear();
+                    var billjsdata = eval(data);
+                    $('#tblMasterFAData').DataTable({
+                        pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                        scrollY: "450px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: true,
+                        destroy: true,
+                        data: billjsdata,
+                        fixedColumns: false,
+                        searching: true,
+                        ordering: true,
+                        sorting: false,
+                        pageLength: ItemsperPage, // default page size
+                        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                        columns: [
+                            { "data": "FAID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                            {
+                                className: "dt-body-center",
+                                "mRender": function (data, type, value, meta) {
+                                    var rowIndex = (meta.row + 1);
+                                    var _action = rowIndex;
+                                    return _action;
+                                },
+                            },
+                            { "data": "AccountName", "autoWidth": true, className: "dt-body-left" },//1
+                            {
+                                className: "dt-body-right",
+                                "mRender": function (data, type, value, meta) {
+                                    var rowIndex = (meta.row + 1);
+                                    var _action = rowIndex;
+                                    return '<input type="number" name ="Amount" txttag="0" class="gdInput txtsettag dgvAmount" value="" id="txtAmount' + rowIndex + '"/>';
+                                },
+                            },
+                            {
+                                className: "dt-body-left",
+                                "mRender": function (data, type, value, meta) {
+                                    var rowIndex = (meta.row + 1);
+                                    var _action = rowIndex;
+                                    return '<input type="text" name ="RefNo" class="gdInput" value="" id="txtRefNo' + rowIndex + '"/>';
+                                },
+                            },
+                            {
+                                className: "dt-body-left",
+                                "mRender": function (data, type, value, meta) {
+                                    var rowIndex = (meta.row + 1);
+                                    var _action = rowIndex;
+                                    return '<input type="text" name ="Remarks" class="gdInput" value="" id="txtRemarks' + rowIndex + '"/>';
+                                },
+                            },                            
+                        ],
+
+                    });
+                    Table = $('#tblMasterFAData').DataTable();                   
+                    //$.each(accdata, function (i, items) {
+                    //    var rdn = Math.random();
+                    //    Table.row.add([
+                    //        items.FAID,
+                    //        (i+1),
+                    //        items.AccountName,
+                    //        //'<input type="number" name ="Amount" txttag="0" class="gdInput txtsettag dgvAmount" value="" id="txtAmount' + i + '"/>',
+                    //        '<p contenteditable="true"></p>',
+                    //        '<input type="text" name ="RefNo" class="gdInput" value="" id="txtRefNo' + i +'"/>',
+                    //        '<input type="text" name ="Remarks" class="gdInput" value="" id="txtRemarks' + i +'"/>',
+                    //    ]).draw(false);
+                    //});
+                }
+                else {
+                    showErrorSnackbar("No Records Found");
+                }
+            }
+            , error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    $('#sortOrder').change(function () {
+        var direction = $(this).val(); // 'asc' or 'desc'
+        Table.order([3, direction]).draw(); // 0 is the column index
+    });
+    setDate("dtpDate", 0);
+    function setDate(FieldID,Type) {
+    $.ajax({
+         url: "@Url.Action("setdate", "Home")",
+        type: 'get',
+        contentType: 'json',
+        data: { TypeID: Type },
+        success: function (data) {
+            $.each(data, function (i, items) {
+                $("#" + FieldID).attr("max", items.MaxDate);
+                $("#" + FieldID).attr("min", items.MinDate);
+                $("#" + FieldID).val(items.Value);
+            });
+        }, error: function (data) {
+            if (data.status == "401") {
+                var msg = data.responseJSON.Message;
+                //showErrorSnackbar(msg + " Logout and Login again.");
+            }
+        }
+    })
+    }
+    $('input[type=number]').focusin(function (e) {
+        $(this).select();
+    });
+    function SetTagZero() {
+        var inputs = $(".txtsettag");
+        for (var i = 0; i < inputs.length; i++) {
+            var field = $(inputs[i]);
+            var FID = field[0].id;
+            if (FID != "")
+                updateInputColumn(FID, 0);
+        }
+        inputs = $(".lblsettag");
+        for (var i = 0; i < inputs.length; i++) {
+            var field = $(inputs[i]);
+            var FID = field[0].id;
+            if (FID != "") {
+                updateLabelColumn(FID, 0);
+            }
+        }
+    }
+    $('#tblMasterFAData tbody').on('focusin', 'td>.txtsettag', function (e) {
+        // .txtsettag
+        var id = e.target.id;
+        var name = e.target.name;
+        var value = e.target.value;
+        //getTagValue(id, name);
+        const val = document.getElementById(id).getAttribute("txttag");
+        $("#" + id).val(val);
+        $("#" + id).select();
+        gridchanges = false;
+    });
+    var batgridchanges = false;
+    $('#tblMasterFAData tbody').on('blur', 'td>.txtsettag', function (e) {
+        // .txtsettag
+        var id = e.target.id;
+        var name = e.target.name;
+        var value = e.target.value;
+        if (!gridchanges)
+            updateInputColumn(id, e.target.value);
+    });
+    function updateLabelColumn(labelID, netValue) {
+        //const label = document.getElementById(`dgvProdGross${rowId}`);
+        const label = document.getElementById(labelID);
+        label.setAttribute('lbltag', netValue.toFixed(4));
+        label.innerText = netValue.toFixed(DecVal);
+        label.title = netValue.toFixed(4);
+    }
+    function updateInputColumn(inputID, netValue) {
+        //const label = document.getElementById(`dgvProdGross${rowId}`);
+        const input = document.getElementById(inputID);
+        var value = netValue != "" ? netValue : 0;
+        input.setAttribute('txttag', parseFloat(value).toFixed(4));
+        input.value = parseFloat(value).toFixed(DecVal);
+        input.title = netValue;
+    }
+    var gridchanges = false;
+    $('#tblMasterFAData tbody').on('change', '.dgvAmount', function (e) {
+        var TotAmt = 0
+        gridchanges = true;
+        var id = e.target.id;
+        var name = e.target.name;
+        var value = e.target.value;
+        //showSuccessSnackbar("Value : " + value);
+        updateInputColumn(id, e.target.value);
+        $("#tblMasterFAData tbody tr").each(function () {
+            $(this).find("input").each(function (index) {
+                const fieldName = $(this).attr("name");
+                const fieldID = $(this).attr("id");                
+                if (fieldName == "Amount") {
+                    TotAmt += parseFloat($(this).attr("txttag"));
+                }
+            });
+        });
+        updateLabelColumn("lblTotal", TotAmt)
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        setDate("dtpDate", 0);
+        $(".clrdiv").html("");
+        $("#lblTotal").text("0.00");
+        GetData();
+    }
+    var AccArray = [];
+    function addAccountsinArray() {
+        AccArray = [];
+        $("#tblMasterFAData tbody tr").each(function () {
+            var allValues = {}, nFAID = 0, Amount = 0, strRefNo = '', strRemark = '';            
+            rowdata = Table.row($(this)).data();
+            nFAID = rowdata.FAID;//[0];
+            $(this).find("input").each(function (index) {
+                const fieldName = $(this).attr("name");
+                const fieldID = $(this).attr("id");
+                if (fieldName == "Amount") {
+                    Amount = parseFloat($(this).attr("txttag"));
+                }
+                if (fieldName == "RefNo") {
+                    strRefNo = $(this).val();
+                }
+                if (fieldName == "Remarks") {
+                    strRemark = $(this).val();
+                }
+            });
+            if (Amount > 0) {
+                allValues = {
+                    "FAID": nFAID,
+                    "CollAmt": Amount,
+                    "DocRef": strRefNo,
+                    "TransName": strRemark
+                };
+                AccArray.push(allValues);
+            }
+        });
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        $("#lblTotal").css("color", "black");
+        var IsValid = true;
+        if ($("#dtpDate").val() == "") {
+            IsValid = false;
+            $("#divErrDate").html("Select Date");
+            showErrorSnackbar("Select Date");
+        }
+        var value = document.getElementById("lblTotal").getAttribute("lbltag");
+        if (parseFloat(value) <= 0) {
+            IsValid = false;
+            $("#lblTotal").css("color", "red");
+            showErrorSnackbar("Enter value in any one account");
+        }        
+        if (IsValid) {
+            addAccountsinArray();
+            if (cfFocus != 3) {
+                ConfirmDialogMsg("Do you want to save data?");
+            } else {
+                SaveData();
+            }
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        var lstMaster = {
+            "Mode": 1,
+            "ID": $("#txtID").val(),
+            "DocDate": $("#dtpDate").val(),
+            "UserID": UID,
+            "lstCollPayDtl": AccArray
+        };
+        $.ajax({
+            url: Aurl + "dailycashexpenses/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(lstMaster),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        ClearForm();
+                        showSuccessSnackbar(items.Message);
+                    }
+                    else {
+                        $("#dvErrorName").html(items.Message);
+                        showErrorSnackbar(items.Message);
+                        //alert(items.Message);
+                    }
+                });
+            },
+            error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }    
+</script>

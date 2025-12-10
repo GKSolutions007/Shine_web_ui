@@ -1,0 +1,448 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title> @ViewBag.Title</title>
+    <link rel="SHORTCUT ICON" href="~/images/G_large_Transparent.png" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,100,300,500" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/font-awesome.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    @*<link href="~/Content/Site.css" rel="stylesheet" />
+        <link href="~/Content/navbar.css" rel="stylesheet" />*@
+    <style>
+        .dropdown-menu li {
+            position: relative;
+            color: white;
+            padding-bottom: 5px;
+        }
+
+        .dropdown-menu .dropdown-submenu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: -10px;
+            width: 200px;
+            padding-top: 10px;
+            padding-bottom: 5px;
+            color: darkblue;
+        }
+
+        .dropdown-menu .dropdown-submenu-left {
+            right: 100%;
+            left: auto;
+        }
+
+        .dropdown-menu > li:hover > .dropdown-submenu {
+            display: block;
+            background-color: white;
+            border-radius: 5px;
+        }
+        /* Fixed sidenav, full height */
+        .sidenav {
+            height: 100%;
+            width: 15%;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: black;
+            overflow-x: hidden;
+            padding-top: 50px;
+            color: white;
+        }
+
+            /* Style the sidenav links and the dropdown button */
+            .sidenav li, .dropdown-btn {
+                padding: 1px 1px 6px 16px;
+                text-decoration: none;
+                font-size: 14px;
+                color: white;
+                display: block;
+                border: none;
+                background: none;
+                width: 100%;
+                text-align: left;
+                cursor: pointer;
+                outline: none;
+                font-weight: bold;
+                font-family: 'Times New Roman';
+            }
+
+                /* On mouse-over */
+                .sidenav a:hover, .dropdown-btn:hover {
+                    color: #f1f1f1;
+                }
+
+        /* Main content */
+        .main {
+            top: 0px;
+            margin-left: 15%; /* Same as the width of the sidenav */
+            padding: 0px 1px;
+        }
+
+        /* Add an active class to the active dropdown button */
+        .active {
+            /*background-color: brown;*/
+            color: white;
+        }
+
+        /* Dropdown container (hidden by default). Optional: add a lighter background color and some left padding to change the design of the dropdown content */
+        .dropdown-container {
+            display: none;
+            background-color: #262626;
+            padding-left: 5px;
+            color: white;
+        }
+
+        /* Optional: Style the caret down icon */
+        .mendwn {
+            float: right;
+            padding-right: 8px;
+        }
+
+        /* Some media queries for responsiveness */
+        @@media screen and (max-height: 450px) {
+            .sidenav {
+                padding-top: 10px;
+            }
+
+                .sidenav li {
+                    font-size: 12px;
+                }
+        }
+
+        linkforecolor {
+            color: white;
+        }
+
+        .dvsearchmnu:hover {
+            background-color: antiquewhite
+        }
+    </style>
+</head>
+<body>
+
+    @{
+        string LayoutName = Convert.ToString(Session["NavBarVisible"]);
+        string User = Convert.ToString(Session["LoginUser"]);
+        string UIDs = Convert.ToString(Session["LoginUserID"]);
+        System.Data.DataTable dtParent = (System.Data.DataTable)Session["dtParent"];
+        System.Data.DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+        System.Data.DataTable dtCompany = (System.Data.DataTable)Session["dtCompany"];
+        string CompCode = dtCompany.Rows[0][1].ToString();
+        string CompName = dtCompany.Rows[0][2].ToString();
+        if (LayoutName == "LogOn")
+        {
+            <header id="LoginPage" class="navbar navbar-bright navbar-fixed-top" role="banner">
+                <div class="container">
+                    <div class="navbar-header">
+                        <a href="~/LogOn/Index" class="navbar-brand">Login Page</a>
+                    </div>
+                </div>
+            </header>
+        }
+        else if (LayoutName == "UserPermission")
+        {
+            <div class="sidenav">
+                <img src="~/Images/search-icon.png" id="icQS" onclick="focussearch();" data-toggle="modal" data-target="#myModal" style="padding-left:10px;width:35px;height:25px;position:fixed;right:0;top:0;z-index:10" title="Quick Search" />
+                <div style="top: 0; position: fixed; width: 100%;height:35px;" class="dvmainmenuheader">
+                    <!--<a href="~/Home" id="acompname" style="color:lightgreen;font-size:large"><img src="~/Images/G_large_Transparent.png" style="width:45px;height:35px" />-->@*<b> Shine Web</b>*@<!--</a>-->
+                    <table class="table">
+                        <tr>
+                            <td style="width:25%">
+                                <a href="~/Home" id="acompname" style="color:lightgreen;font-size:large"><img src="~/Images/G_large_Transparent.png" style="width:45px;height:35px" />@*<b> Shine Web</b>*@</a>
+                                <label style="color:brown;font-size:12px;">@CompName</label>
+                            </td>
+                            <td>
+                                <marquee style="color:red;font-size:12px;">@User</marquee>
+                            </td>
+                        </tr>
+                    </table>
+
+
+                </div>
+                @for (int iRow = 0; iRow < dtParent.Rows.Count; iRow++)
+                {
+                    int nParentID = Convert.ToInt32(dtParent.Rows[iRow]["MenuId"]);
+                    //int nTreeID = Convert.ToInt32(dtParent.Rows[iRow]["MenuTree"]);
+                    string strManuName = Convert.ToString(dtParent.Rows[iRow]["MenuName"]);
+                    string MainMenuEnc = Convert.ToString(dtParent.Rows[iRow]["EncMenuName"]);//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(strManuName));
+                    string ZeEnc = "jJOtHsRVwYECOhoiBc69dA==";//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+                    System.Data.DataRow[] dr = dtPermission.Select("MenuParentId=" + nParentID.ToString());
+                    //System.Data.DataRow[] dr = dtPermission.Select("MenuTree=" + nParentID.ToString());
+                    if (dr.Count() > 0)
+                    {
+
+                        if (strManuName == "Reports")
+                        {
+                            @Html.ActionLink("Reports", "index", "Reports", new { name = MainMenuEnc, strFormID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px;padding-bottom:50px", @title = User, @target = "_black" })
+                            continue;
+                        }
+                        else
+                        {
+                            <button class="dropdown-btn" style="font-size:16px;">@strManuName<i class="glyphicon glyphicon-chevron-down mendwn"></i></button>
+                        }
+                        @*<button class="dropdown-btn" style="font-size:16px;">@strManuName<i class="glyphicon glyphicon-chevron-down mendwn"></i></button>*@
+                        <div class="dropdown-container">
+                            <ul class="linkforecolor">
+                                @{
+                                    System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
+                                    st.Start();
+                                    for (int j = 0; j < dr.Length; j++)
+                                    {
+                                        int nChildParentID = Convert.ToInt32(dr[j]["MenuId"].ToString());
+                                        string displayName = dr[j]["MenuName"].ToString();
+                                        string controllerName = dr[j]["LocationName"].ToString();
+                                        string IsMenus = dr[j]["IsMenu"].ToString();
+                                        string FID = dr[j]["FormID"].ToString();
+                                        string EncDispName = dr[j]["EncMenuName"].ToString();//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(displayName));
+                                        string EncFID = dr[j]["EncFormID"].ToString();//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(FID));
+                                        string EncTypeID = "jJOtHsRVwYECOhoiBc69dA==";//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+                                        string EncTranID = "jJOtHsRVwYECOhoiBc69dA==";//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+
+                                        if (IsMenus == "1" && strManuName != "Reports")
+                                        {
+                                            <li>@Html.ActionLink(displayName, "Index", controllerName, new { name = EncDispName, strFormID = EncFID, TypeID = EncTypeID, TranID = EncTranID }, new { @style = "font-weight:bold;", @class = "linkforecolor" })</li>
+                                        }
+                                    }
+                                    st.Stop();
+                                    double sd = st.ElapsedMilliseconds;
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                }
+            <div class="dvmainmenuheader" style="bottom: 0; position: fixed; width: 15%;padding:15px;font-size:16px; ">
+                @Html.ActionLink("Upload File", "Index", "Uploadfile", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold", @title = User, @id = "algot" })
+                @Html.ActionLink("LogOut - " + User, "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold", @title = User, @id = "algot" })
+            </div>
+            </div>
+
+        }
+    }
+    <link href="~/Content/SlidePopup.css" rel="stylesheet" />
+    <div class="container">
+        <!-- The Modal -->
+        <div class="modal" id="myModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header" style="background-color:lightgoldenrodyellow">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Quick Search</h4>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <input type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction()" class="form-control" style="width: 90%; position: fixed;">
+                        <div id="myDropdown" class="dropdown-content" style="padding-top:30px;">
+
+                            @{
+                                if (Session["dtPermission"] != null)
+                                {
+                                    System.Data.DataRow[] drrr = dtPermission.Select("MenuChildLevel = 2", "MenuName");
+                                    if (drrr.Count() > 0)
+                                    {
+                                        for (int i = 0; i < drrr.Length; i++)
+                                        {
+                                            string EncName = Url.Encode(drrr[i]["EncMenuName"].ToString());//Url.Encode(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(drrr[i]["MenuName"].ToString()));
+                                            string EncFID = Url.Encode(drrr[i]["EncFormID"].ToString());//Url.Encode(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(drrr[i]["FormID"].ToString()));
+                                            string EncTypeID = Url.Encode("jJOtHsRVwYECOhoiBc69dA==");//Url.Encode(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+                                            string EncTranID = Url.Encode("jJOtHsRVwYECOhoiBc69dA==");//Url.Encode(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+                                            if (drrr[i]["IsMenu"].ToString() == "1")
+                                            {
+                                                string reflink = drrr[i]["LocationName"].ToString() + "?name=" + EncName + "&strFormID=" + EncFID + "&TypeID=" + EncTypeID + "&TranID=" + EncTranID;
+                                                <div class="dvsearchmnu">
+                                                    <a href="@reflink"> @drrr[i]["MenuName"].ToString() </a>
+                                                </div>
+
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        </div>
+                        @*</div>*@
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer" style="background-color:skyblue">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal" id="btnCloseQS">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div style="padding-right:15px;padding-left:15px;padding-top:30px;" class="main">
+
+        @RenderBody()
+        <hr />
+    </div>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    @* @Scripts.Render("~/bundles/jquery")
+        @Scripts.Render("~/bundles/bootstrap")*@
+</body>
+</html>
+@*<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>*@
+<script type="text/javascript">
+    function focussearch() {
+        //document.getElementById("myInput").focus();
+        $("#myInput").focus();
+    }
+    myFunction();
+    function myFunction() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+    var dropdown = document.getElementsByClassName("dropdown-btn");
+    var i;
+
+    for (i = 0; i < dropdown.length; i++)
+    {        
+        dropdown[i].addEventListener("click", function () {            
+            this.classList.toggle("active");
+            var dropdownContent = this.nextElementSibling;
+            var lastdropdownContent = this.previousElementSibling;
+            
+            if (dropdownContent.style.display === "block") {
+                dropdownContent.style.display = "none";
+                
+            } else {
+                dropdownContent.style.display = "block";               
+            }
+        });
+    }
+    function filterFunction() {
+        var input, filter, ul, li, a, i;
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+        div = document.getElementById("myDropdown");
+        a = div.getElementsByTagName("a");
+        for (i = 0; i < a.length; i++) {
+            txtValue = a[i].textContent || a[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                a[i].style.display = "";
+            } else {
+                a[i].style.display = "none";
+            }
+        }
+    }
+    var modalQS = document.getElementById("myModal");
+    var spanQS = document.getElementsByClassName("close")[0];
+    spanQS.onclick = function () {
+        modalQS.style.display = "none";
+    }
+    $('#btnCloseQS').click(function (e) {
+        modalQS.style.display = "none";
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F3") {            
+            document.getElementById("myModal").style.display = "block"
+            $('#myModal').modal('toggle');
+            focussearch();
+            event.preventDefault();
+        }
+        
+    });
+    $('input, select').on('keydown', function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault(); // Prevent default behavior
+            let $next = $(this).nextAll('input, select').first(); // Find the next input or select
+            if ($next.length) {
+                $next.focus(); // Focus the next element
+            }
+        }
+    });
+    //$(document).on('keydown', ':focusable', function (e) {
+    //    if (e.which == 13) {
+    //        if (e.target.localName != "button") {
+    //            e.preventDefault();
+    //            //var $canfocus = $(':focusable');
+    //            //var btn = $canfocus.button;                
+    //            //var index = $canfocus.index(this) + 1;                
+    //            //var tabindex = e.target.tabIndex;
+    //            ////index = tabindex;
+    //            //if (index >= $canfocus.length) index = 0;
+    //            //$canfocus.eq(index).focus();
+
+    //            let active = document.activeElement;
+    //            let target = $('[tabindex="' + (active.tabIndex + 1) + '"]');
+    //            if (target.length > 0) {
+    //                if (target[0].disabled) {
+    //                    target = $('[tabindex="' + (active.tabIndex + 2) + '"]');
+    //                    if (target[0].disabled) {
+    //                        target = $('[tabindex="' + (active.tabIndex + 3) + '"]');
+    //                    }
+    //                }
+    //                target.focus();
+    //            }
+    //        }
+    //    }
+    //    if (e.shiftKey && e.which == 13) {
+    //        e.preventDefault();
+    //        var $canfocus = $(':focusable');
+    //        var index = $canfocus.index(this) - 1;
+    //        if (index >= $canfocus.length) index = 0;
+    //        $canfocus.eq(index).focus();
+    //    }
+    //});
+    
+    var Aurl = '@Session["APIurl"]';
+
+    GetColorData(1, '@Session["ThemeID"]');
+    function GetColorData(nMode, strName = null) {
+        $.ajax({
+            url: Aurl + "colorsettings/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, Name: strName },
+            success: function (data) {
+                if (nMode == 1) {
+                    $.each(data, function (i, items) {
+                        $(".navbar-fixed-top,.sidenav,.dropdown-container,.dvmainmenuheader").css("background-color", items.MenuHeader);
+                        $("#acompname,#algot").css("color", items.CompanyNameColor);
+
+                        $(".btn-info").css("background-color", items.AddButton);
+                        
+                        $(".btn-primary").css("background-color", items.DraftButton);
+                        $(".btn-success").css("background-color", items.SaveButton);
+
+                        $(".btn-danger").css("background-color", items.ClearButton);
+
+                        $(".btn-warning").css("background-color", items.CloseButton);
+
+                        $(".clrforpdf").css("background-color", items.PDFButton);
+                        $(".clrforpreview").css("background-color", items.PreviewButton);
+                        $(".clrforpdf").css("color", "white");
+                        $(".clrforpreview").css("color", "white");
+                        $(".modal-header").css("background-color", items.PopupHeader);
+
+                        $(".modal-footer").css("background-color", items.PopupFooter);
+
+                        $(".clsclrYes,.clsYes").css("background-color", items.ConfirmPopupYes);
+
+                        $(".clsclrNo,.clsNo").css("background-color", items.ConfirmPopupNo);
+                        
+                        $("ul a").css("color", items.SubMenuColor);
+                        $(".dropdown-btn").css("color", items.MenuColor);
+                        $(".trclrforcolheader").css("background-color", items.GridHeaderBackGround);
+                        $(".trclrforcolheader").css("color", items.GridHeaderTextColor);
+                        $(".modal-title").css("color", items.PopupHeaderText);
+                        
+                    });
+                }
+            }
+        });
+    }
+</script>

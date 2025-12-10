@@ -1,0 +1,429 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@*<script src="~/Scripts/Validation.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+
+    each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        /*overflow: auto;*/ /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            /* overflow: auto;*/
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            /*overflow: auto;*/
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div class="row">
+        <div class="col-sm-12 col-md-4 col-lg-4" align="center">
+            <table class="table">
+                <tr>
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <span class="form-label">
+                            <select id="cmbModule" class="form-control"></select>
+                            <label class="labelup">Module</label>
+                        </span>
+                        <div class="clrdiv" id="dvErrorModule" style="color:red"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div style="padding-top:0px" align="center">
+                            <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                            <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-sm-12 col-md-5 col-lg-5">
+            <table class="table table-bordered" id="tblMasterData" width="100%">
+                <thead>
+                    <tr class="trclrforcolheader">
+                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                        <th style="text-align:center;font-size: 12px;width:3%;">#</th>
+                        <th style="text-align:center;font-size: 12px;width:67%;">Name</th>
+                        <th style="text-align:center;font-size: 12px;width:30%;">Order</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [1], "visible": false, searchable: false }],
+    });
+
+    var Aurl = '@Session["APIurl"]';
+    var UID = '@Session["LoginUserID"]';
+    var nMode = 1;
+    var FID = $("#txtFormID").val();
+    GetData(1,0);
+    var arrData = [];
+    function GetData(nMode,nMenuID) {
+        $.ajax({
+            url: Aurl + "menuorder/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, Name: nMenuID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    $('#cmbModule').find("option").remove();
+                    $('#cmbModule').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select Module --",
+                    }));
+                    $.each(data, function (i, items) {
+                        $('#cmbModule').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                    });
+                }
+                else if (nMode == 2) {
+                    //Table.draw().clear(); Table.draw().clear();
+                    if (data.length > 0) {                        
+                        //$.each(data, function (i, items) {
+                        //    Table.row.add([
+                        //        (i + 1),
+                        //        items.ID,
+                        //        items.Name,
+                        //        '<input type="number" class="form-control" value="' + items.Value +'" onkeypress="return isNumberKey(event)">'
+                        //    ]).draw(false);
+                        //});
+                        $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: true,
+                            destroy: true,
+                            data: data,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var _action = (rowIndex + 1);// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }
+                                },
+                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "Name", "autoWidth": true, className: "dt-body-left" },
+                                
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<input type="number" class="form-control" value="' + value.Value + '" onkeypress="return isNumberKey(event)">';
+                                        return _action;
+                                    }
+                                }                                
+                            ],
+                        });
+                        Table = $('#tblMasterData').DataTable();
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }                
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    $('input[type=number]').focusin(function (e) {
+        $(this).select();
+    });    
+    function isNumberKey(evt) {
+        var charCode = (evt.which) ? evt.which : evt.keyCode
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+    }
+    $('#cmbModule').change(function (e) {
+        var val = e.target.value;
+        if (val > 0) {
+            GetData(2, val);
+        }
+        else{
+            Table.draw().clear(); Table.draw().clear();
+        }
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $(".clrdiv").html("");
+        $("#cmbModule").val("0");
+        Table.draw().clear(); Table.draw().clear();
+        $("#cmbModule").focus();
+    }
+    
+    function ValidateOrder() {
+        var IsValid = true;
+        $("#tblMasterData tbody tr").each(function () {
+            var nOrder = 0;
+            rowdata = Table.row($(this)).data();
+            var valhasvalue = true;
+            $(this).css("color", "black");
+            $(this).find("input").each(function (index) {
+                $(this).css("border-color", "black");
+                if ($(this).val() == "") {
+                    IsValid = false;
+                    valhasvalue = false;
+                    $(this).css("border-color", "red");
+                }
+            });
+            if (!valhasvalue) {
+                $(this).css("color", "red");
+            }
+        });
+        return IsValid;
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        if ($("#cmbModule").val() > 0) {
+            if (ValidateOrder()) {
+                if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+            } else {
+                //alert("Order value should not be empty");
+                showErrorSnackbar("Order value should not be empty");
+            }
+        }
+        else {
+            $("#dvErrorModule").html("Select Module");
+            showErrorSnackbar("Select Module");
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $(".clrdiv").html("");
+        var listmenu = [];
+        $("#tblMasterData tbody tr").each(function () {
+            var nOrder = 0;
+            rowdata = Table.row($(this)).data();
+            var nMenuID = rowdata.ID;//[1];
+            var valhasvalue = true;
+            $(this).find("input").each(function (index) {
+                var lst = {
+                    "MenuID": nMenuID,
+                    "Order": $(this).val()
+                }
+                listmenu.push(lst);
+            });
+        });
+        var lstMaster = {
+            "Mode": 3,
+            "UserID": UID,
+            "lstMenus": listmenu
+        };
+        $.ajax({
+            url: Aurl + "menuorder/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(lstMaster),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        //alert(items.Message);
+                    }
+                    else {
+                        $("#dvErrorName").html(items.Message);
+                        //alert(items.Message);
+                    }
+                });
+            }, error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }    
+    $('input, select ,button, textarea').on('keydown', function (e) {
+        if (e.key === "Enter") {
+            if (e.target.localName != "button") {
+                e.preventDefault(); // Prevent default behavior
+                var nextinp = $('input,select,button, textarea').eq($('input,select,button, textarea').index(this) + 1);
+                if (nextinp.length) {
+                    if (nextinp[0].disabled) {
+                        nextinp = $('input,select,button, textarea').eq($('input,select,button, textarea').index(this) + 2);
+                    }
+                    nextinp.focus();
+                    nextinp.select();
+                }
+            }
+        }
+        if (e.shiftKey && e.which == 13) {
+            e.preventDefault();
+            var $canfocus = $(':focusable');
+            var index = $canfocus.index(this) - 1;
+            if (index >= $canfocus.length) index = 0;
+            $canfocus.eq(index).focus();
+        }
+    });
+</script>

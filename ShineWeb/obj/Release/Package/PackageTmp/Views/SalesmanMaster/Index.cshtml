@@ -1,0 +1,662 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@*<script src="~/Scripts/Validation.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+   /* each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+*/
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+   
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control", @id = "txtID" })
+    @Html.HiddenFor(model => model.ChildURL1, new { @autocomplete = "off", @class = "form-control", @id = "txtChildSMGrpURL" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div style="padding-bottom:10px;">
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+
+    <div id="dvMainTable">
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th></th>
+                        <th align="right" colspan="10">
+                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:30%;">Name</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;" title="Date of Birth">DOB</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;" title="Date of Join">DOJ</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Mobile No</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Salesman Group</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">Active</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px" align="center">
+                        <div id="dvAssign" style="width:80%;padding-bottom:2px">
+                            <table class="table" style="width:100%">
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="1" type="text" id="txtName" class="form-control FormclrField" placeholder="" />
+                                            <label class="labelup">Salesman Name *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorName" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2" align="right">
+                                        <span class="form-label">
+                                            <select tabindex="2" id="cmbSMGroup" class="form-control"></select>
+                                            <label class="labelup">Salesman Group</label>
+                                        </span>
+                                        <a href="javascript:void(0)" id="hrefNewgroup" hidden>New Group</a>
+                                        <div class="clrdiv" id="dvErrorSMGroup" style="color:red"></div>
+                                    </td>
+                                </tr>                                
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px">
+                                        @*<input tabindex="3" type="date" id="txtDOB" class="form-control FormclrField" />*@
+                                        <span class="form-label">
+                                            <input tabindex="3" type="date" id="txtDOB" class="form-control FormclrField" />
+                                            <label class="labelup">Date Of Birth</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorDOB" style="color:red"></div>
+                                    </td>
+                                    <td style="border:none;padding-left:12px;padding-right:7px">
+
+                                        <span class="form-label">
+                                            <input tabindex="4" type="date" id="txtDOJ" class="form-control FormclrField" />
+                                            <label class="labelup">Join Date</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorSAJ" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="5" type="number" id="txtMobileNo" class="form-control FormclrField" placeholder="" maxlength="12"
+                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                                            <label class="labelup">Mobile No</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorMobileNo" style="color:red"></div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px">
+
+                                        <span class="form-label">
+                                            <input tabindex="6" type="number" id="txtAadhaarNo" class="form-control FormclrField" placeholder="" maxlength="12"
+                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                                            <label class="labelup">Aadhaar No</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorAadhaarNo" style="color:red"></div>
+                                    </td>
+                                    <td style="border:none;padding-left:12px;padding-right:7px">
+
+                                        <span class="form-label">
+                                            <input tabindex="7" type="text" id="txtPANNo" class="form-control FormclrField" placeholder="" maxlength="10" />
+                                            <label class="labelup">PAN No</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorPANNo" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                        <span class="form-label">
+                                            <textarea tabindex="8" class="form-control FormclrField" rows="1" id="txtAddress" placeholder=""></textarea>
+                                            <label class="labelup">Address</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorAddress" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="right" style="border:none" width="40%">
+                                        <label for="chkActive">Active :</label>
+                                    </td>
+                                    <td style="border:none">
+                                        <input tabindex="9" type="checkbox" id="chkActive" checked disabled />
+                                        <div class="clrdiv" id="dvErrorActive" style="color:red"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button tabindex="11" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button tabindex="10" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        <button tabindex="12" type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+
+
+<script type="text/javascript">
+    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [6,7,8], "class": "text-center" }],
+    });
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth() + 1; //January is 0!
+    var yyyy = today.getFullYear();
+
+    if (dd < 10) {
+        dd = '0' + dd;
+    }
+
+    if (mm < 10) {
+        mm = '0' + mm;
+    }
+    var dobmin = (yyyy - 16) + '-' + mm + '-' + dd;
+    today = yyyy + '-' + mm + '-' + dd;
+    document.getElementById("txtDOJ").setAttribute("max", today);
+    document.getElementById("txtDOJ").setAttribute("min", dobmin);
+    document.getElementById("txtDOB").setAttribute("max", dobmin);
+    var Aurl = '@Session["APIurl"]';
+    if ($("#txtAddID").val() == 0) {
+        $("#trAdd").hide();
+        $("#btnAdd").hide();
+    }
+    
+    if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
+        $("#dvMainTable").hide();
+    }
+    var UID = '@Session["LoginUserID"]';
+    var nMode = 1;
+    var FID = $("#txtFormID").val();
+    GetData(3);
+    GetData(5);
+    function GetData(nMode,SelID = 0) {
+        $.ajax({
+            url: Aurl + "salesman/get",
+            type: 'get',
+            contentType: 'json',
+            data: { FormID: FID, Mode: nMode, Name: SelID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    if (nMode == 3) {
+                        var arrData = [];
+                        //Table.draw().clear();
+                        $.each(data, function (i, items) {
+                            var al = {
+                                "label": items.Name,
+                                "active": items.Active,
+                                "id": items.ID,
+                            }
+                            arrData.push(al);                            
+                        });
+                        var searchValue = '';
+                        if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+                            searchValue = $('#tblMasterData').DataTable().search(); // get current search term
+                        }
+                        $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: true,
+                            destroy: true,
+                            data: data,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "Name", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "DOB", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "DOJ", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "MobileNo", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "SalesmanGroupName", "autoWidth": true, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = value.Active == "True" ? "Yes" : "No";// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
+                                        return _action;
+                                    }
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }, "visible": $("#txtModifyID").val() == 0 ? false : true
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                        return _action;
+                                    }, "visible": $("#txtViewID").val() == 0 ? false : true
+                                },
+                            ],
+                            initComplete: function () {
+                                // Re-apply search value after table is fully initialized
+                                this.api().search(searchValue).draw();
+                            }
+                        });
+                        Table = $('#tblMasterData').DataTable();
+                        $("#txtName").autocomplete({
+                            minLength: 0,
+                            source: arrData,                            
+                            select: function (event, ui) {
+                                $("#txtName").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+                    }
+                    else if (nMode == 4) {                       
+                        $.each(data, function (i, items) {
+                            $("#txtID").val(items.ID);
+                            $("#txtName").val(items.Name);
+                            $("#txtDOB").val(items.DOB);
+                            $("#txtDOJ").val(items.DOJ);
+                            $("#txtMobileNo").val(items.MobileNo);
+                            $("#txtAadhaarNo").val(items.AadharNo);
+                            $("#txtPANNo").val(items.PANNumber);
+                            $("#txtAddress").val(items.Address);
+                            $("#cmbSMGroup").val(items.SalesmanGroupID);
+                            $("#chkActive").prop("checked", items.Active == "True");
+                        });
+                    }
+                    else if (nMode == 5) {
+                        $('#cmbSMGroup').find("option").remove();
+                        $('#cmbSMGroup').append($('<option/>', {
+                            value: 0,
+                            text: "-- Select Salesman Group --",
+                            class: ""
+                        }));
+                        $.each(data, function (i, items) {
+                            $('#cmbSMGroup').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        });
+                        $('#cmbSMGroup').val(SelID)
+                    }
+                }
+                else {
+                    showErrorSnackbar("No Records Found");
+                }
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    function CloseForm() {
+        modal.style.display = "none";
+    }
+
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    var modaliframe = document.getElementById("myModalfgiframe");
+    var spaniframe = document.getElementsByClassName("closefgiframe")[0];
+    spaniframe.onclick = function () {
+        modaliframe.style.display = "none";
+    }
+    
+    window.addEventListener('keydown', function (event) {
+        // Check if the F8 key is pressed (key code 119)
+        if (event.keyCode === 119) {
+            var url = $("#txtChildSMGrpURL").val();
+            if (url != "") {
+                var id = event.target.id;
+                if (id == "cmbSMGroup")
+                {
+                    $("#lbliframeheading").text("Salesman Group");
+                    document.getElementById("ifrSMG").src = url + "&ParFFID=cmbSMGroup";                
+                    // Prevent default action if any (e.g., browser F8 behavior)
+                    event.preventDefault();
+                    // Open the modal when F8 is pressed
+                    modaliframe.style.display = "block";
+                }
+            }
+            else {
+                showErrorSnackbar("Dependancy info not found");
+            }
+        }
+    });
+    $("#hrefNewgroup").click(function () {
+        var url = $("#txtChildSMGrpURL").val();
+        if (url != "") {
+            $("#lbliframeheading").text("Salesman Group");
+            document.getElementById("ifrSMG").src = url;
+            modaliframe.style.display = "block";
+        }
+        else {
+            showErrorSnackbar("Dependancy info not found");
+        }
+    });
+    $("#btnAdd").click(function () {
+        nMode = 1;
+        $("#chkActive,#btnSave,#cmbSMGroup,#btnClear,.FormclrField").prop("disabled", false);
+        $("#lblPopupheading").text("Add " + $("#MainHeading").text());
+        modal.style.display = "block";
+        ClearForm();
+        //$("#txtDOB,#txtDOJ").prop("disabled", true);
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $(".FormclrField").val("");
+        $("#cmbSMGroup").val(0)
+        $("#chkActive").prop("checked", true);
+        $("#chkActive").prop("disabled", nMode != 2);
+        $(".clrdiv").html("");
+        $("#txtName").focus();
+        GetData(5);
+        if (nMode != 1)
+            modal.style.display = "none";
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        var IsValid = true, ChkFormation = true;
+        if ($("#txtName").val() == "") {
+            IsValid = false;
+            $("#dvErrorName").html("Name should not be empty");
+            showErrorSnackbar("Name should not be empty");
+        }
+        ChkFormation = MobilenoValidation($("#txtMobileNo"), $("#dvErrorMobileNo"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = PANValidation($("#txtPANNo"), $("#dvErrorPANNo"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = AadharValidation($("#txtAadhaarNo"), $("#dvErrorAadhaarNo"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+    function SaveData() {
+        $(".clrdiv").html("");
+        $("#btnSave").prop("disabled", true);
+        var lstMaster = {
+            "FormID": FID,
+            "Mode": nMode,
+            "ID": $("#txtID").val(),
+            "Name": $("#txtName").val(),
+            "DOB": $("#txtDOB").val(),
+            "DOJ": $("#txtDOJ").val(),
+            "MobileNo": $("#txtMobileNo").val(),
+            "AadharNo": $("#txtAadhaarNo").val(),
+            "PANNumber": $("#txtPANNo").val(),
+            "Address": $("#txtAddress").val(),
+            "SalesmanGroupID": $("#cmbSMGroup").val(),
+            "Active": $("#chkActive").is(":checked") ? 1 : 0,
+            "UserID": UID
+        };
+            $.ajax({
+                /*url: "http://localhost:44396/api/singlemaster/save",*/
+                url: Aurl + "salesman/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(lstMaster),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            ClearForm();
+                            GetData(3);
+                            modal.style.display = "none";
+                        }
+                        else if (items.Message == "OSPending") {
+                            //$("#divErrorOnName").html("Outstanding Amount Pending. Cannot Deactivate");
+                            showErrorSnackbar("Outstanding Amount Pending. Cannot Deactivate");
+                        }
+                        else {
+                            $("#dvErrorName").html(items.Message);
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                }, error: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+    }
+    $('#tblMasterData tbody').on('click', '.clsView', function () {
+        nMode = 3;
+        $(".clrdiv").html("");
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+        GetData(4, ID);
+        $(".FormclrField").prop("disabled", true);
+        $("#chkActive,#btnSave,#btnClear,#cmbSMGroup").prop("disabled", true);
+        modal.style.display = "block";
+
+    });
+
+    $('#tblMasterData tbody').on('click', '.clsEdit', function () {
+        nMode = 2;
+        $(".clrdiv").html("");
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+        GetData(4, ID);
+        $(".FormclrField").prop("disabled", false);
+        $("#chkActive,#btnSave,#cmbSMGroup").prop("disabled", false);
+        $("#btnClear").prop("disabled", true);
+        modal.style.display = "block";
+
+    });    
+    //tblMasterData
+
+</script>

@@ -1,0 +1,679 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    /*each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }*/
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div style="padding-bottom:10px;">
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+    <div id="dvMainTable">
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th></th>
+                        <th align="right" colspan="10">
+                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Account Name</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Account Group</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">SAC Code</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">PAN Number</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">Opening Balance</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">FA Type</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">HD OB</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">UserAccount</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px" align="center">
+                        <div id="dvAssign" style="width:80%;padding-bottom:2px">
+                            <table class="table" style="width:100%">
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="1" type="text" id="txtAccName" class="form-control FormclrField" placeholder="" />
+                                            <label class="labelup">Account Name *</label>
+                                        </span>
+
+                                        <div class="clrdiv" id="dvErrorAccName" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                        <span class="form-label">
+                                            <input tabindex="2" type="text" id="txtAccGrp" class="form-control FormclrField" placeholder="" />
+                                            <label class="labelup">Account Group *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorAccGrp" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" width="50%">
+                                        <span class="form-label">
+                                            <input tabindex="3" type="number" id="txtSAC" class="form-control FormclrField" placeholder="" maxlength="6"
+                                                   oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                                            <label class="labelup">SAC Code</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorSAC" style="color:red"></div>
+                                    </td>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" width="50%">
+                                        <span class="form-label">
+                                            <input tabindex="4" type="text" id="txtPAN" class="form-control FormclrField" placeholder="" maxlength="10" style="text-transform:uppercase" />
+                                            <label class="labelup">PAN No</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorPAN" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" width="50%">
+                                        <span class="form-label">
+                                            <input tabindex="5" type="number" id="txtOpenBal" class="form-control FormclrField txtsettag" txttag="0" placeholder="" />
+                                            <label class="labelup">Opening Balance</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorOpenBal" style="color:red"></div>
+                                    </td>
+                                    <td style="border:none;padding-left:12px;padding-right:7px" width="50%">
+                                        <span class="form-label">
+                                            <select tabindex="6" id="cmbFAType" class="form-control">
+                                                <option value="1">Credit</option>
+                                                <option value="2">Debit</option>
+                                            </select>
+                                            <label class="labelup">FA Type *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorFAType" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border:none" colspan="2">
+                                        <label id="lblCloseOS"></label>                                        
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border:none" colspan="2">
+                                        <label for="chkActive">Active :</label>
+                                        <input tabindex="7" type="checkbox" id="chkActive" checked disabled />
+                                        <div class="clrdiv" id="dvErrorActive" style="color:red"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button tabindex="9" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button tabindex="8" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        <button tabindex="10" type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+        var UID = '@Session["LoginUserID"]';
+var TransMode = 1;
+var FID = $("#txtFormID").val();
+var DecVal = '@Session["DecimalValues"]';
+   var Aurl = '@Session["APIurl"]';
+   if ($("#txtAddID").val() == 0) {
+       $("#trAdd,#btnAdd").hide();
+   }
+   //if ($("#txtModifyID").val() == 0) {
+   //    Table.column(8).visible(false);
+   //}
+   //if ($("#txtViewID").val() == 0) {
+   //    Table.column(9).visible(false);
+   //}
+   if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
+       $("#dvMainTable").hide();
+   }
+
+    //var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+    //    "bFilter": true,
+    //    "bSearchable": true,
+    //    "bInfo": true,
+    //    "bPaginate": true,
+    //    "ordering": false,
+    //    scrollY: "400px",
+    //    scrollX: true,
+    //    scrollCollapse: true,
+    //    "columnDefs": [{ "targets": [0, 10,11], "visible": false, searchable: false }, { "targets": [6, 7, 8, 9], "class": "text-center" }],
+    //});
+    var Table = $('#tblMasterData').DataTable();
+    AllFAData();
+    function AllFAData() {        
+        $.ajax({
+            url: Aurl + "financialaccount/getalldata",
+                type: "GET",
+                    datatype: "JSON",
+                        xhrFields: {
+                withCredentials: true
+            },
+            data: { Mode: 3, Name: "" },
+            success: function (data) {
+                var fajsdata = eval(data);
+                var searchValue = '';
+                if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+                    searchValue = $('#tblMasterData').DataTable().search(); // get current search term
+                }
+                $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                    scrollY: "450px",
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: true,
+                    destroy: true,
+                    data: fajsdata,
+                    fixedColumns: false,
+                    searching: true,
+                    ordering: true,
+                    sorting: false,
+                    columns: [
+                        { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                        { "data": "AccountName", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "FaGroup", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "SACCode", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "PAN", "autoWidth": true, className: "dt-body-right" },
+                        { "data": "OpenBalance", "autoWidth": true, className: "dt-body-right" },
+                        { "data": "FAType", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "Active", "autoWidth": true, className: "dt-body-center" },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
+                                return _action;
+                            }
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                return _action;
+                            }, "visible": $("#txtModifyID").val() == 0 ? false : true
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                return _action;
+                            }, "visible": $("#txtViewID").val() == 0 ? false : true
+                        },
+                        { "data": "OpenBalance", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                        { "data": "UserAccount", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                    ],
+                    initComplete: function () {
+                        // Re-apply search value after table is fully initialized
+                        this.api().search(searchValue).draw();
+                    }
+                });
+                Table = $('#tblMasterData').DataTable();
+            }
+        });
+        
+    }
+
+
+    GetData(3);
+    GetData(5);
+    var arrData = [], arrAccGrp = [];
+    function GetData(nMode,strName="") {
+        $.ajax({
+            url: Aurl + "financialaccount/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, Name: strName },
+            xhrFields: {
+                withCredentials: true
+            },
+            //async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    if (nMode == 3) {
+                        arrData = [];
+                        //Table.draw().clear();
+                        $.each(data, function (i, items) {
+                            //arrData[i] = items.AccountName
+                            var al = {
+                                "label": items.AccountName,
+                                "id": items.ID,
+                            }
+                            arrData.push(al);
+                            //Table.row.add([
+                            //    items.ID,
+                            //    items.AccountName,
+                            //    items.FaGroup,
+                            //    items.SACCode,
+                            //    items.PAN,
+                            //    parseFloat(items.OpenBalance).toFixed(DecVal),
+                            //    items.FAType == "1" ? "Credit" : "Debit",
+                            //    items.Active == "True" ? "Yes" : "No",
+                            //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
+                            //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
+                            //    items.OpenBalance,
+                            //    items.UserAccount
+                            //]).draw(false);
+                        });
+
+                        $("#txtAccName").autocomplete({
+                            minLength: 0,
+                            source: arrData,
+                            select: function (event, ui) {
+                                $("#txtAccName").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+                    }
+                    else if (nMode == 5) {
+                        arrAccGrp = [];
+                        $.each(data, function (i, items) {
+                            var al = {
+                                "label": items.Name,
+                                "id": items.ID,
+                            }
+                            arrAccGrp.push(al);
+                        });
+                        $("#txtAccGrp").autocomplete({
+                            minLength: 0,
+                            source: arrAccGrp,
+                            select: function (event, ui) {
+                                $("#txtAccGrp").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };
+                    }
+                    else if (nMode == 6) {
+                        $.each(eval(data), function (i, items) {
+                            var tt = items.FAType == "Credit" ? "1" : "2";
+                            $("#txtID").val(items.ID);
+                            $("#txtAccGrp").val(items.FaGroup);
+                            $("#txtAccName").val(items.AccountName);
+                            $("#cmbFAType").val(tt);
+                            $("#txtSAC").val(items.SACCode);
+                            $("#txtPAN").val(items.PAN);
+                            $("#chkActive").prop("checked", items.Active == "True");
+                            updateInputColumn("txtOpenBal", items.OpenBalance);
+                            $("#lblCloseOS").text("Closing Balance : " + items.CloseBal);
+                            if (TransMode == 2)
+                                $("#txtAccGrp").prop("disabled", items.UserAccount == "0");
+                            else
+                                $("#txtAccGrp").prop("disabled", true);
+                        });
+                    }
+                }
+                else {
+                    showErrorSnackbar("No Records Found");
+                }
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    function SetTagZero() {
+        var inputs = $(".txtsettag");
+        for (var i = 0; i < inputs.length; i++) {
+            var field = $(inputs[i]);
+            var FID = field[0].id;
+            if (FID != "")
+                updateInputColumn(FID, 0);
+        }
+    }
+    function updateInputColumn(inputID, netValue) {
+        //const label = document.getElementById(`dgvProdGross${rowId}`);
+        const input = document.getElementById(inputID);
+        var value = netValue != "" ? netValue : 0;
+        input.setAttribute('txttag', parseFloat(value).toFixed(4));
+        input.value = parseFloat(value).toFixed(DecVal);
+        input.title = netValue;
+    }
+    $(".txtsettag").focusin(function (e) {
+        var id = e.target.id;
+        const val = document.getElementById(id).getAttribute("txttag");
+        $("#" + id).val(val);
+        $("#" + id).select();
+    });
+    $(".txtsettag").blur(function (e) {
+        var val = e.target.value;
+        var id = e.target.id;
+        updateInputColumn(id, val);
+    });
+    function displayResult(item) {
+        $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
+    }
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    function CloseForm() {
+        modal.style.display = "none";
+    }
+    $("#btnAdd").click(function () {
+        TransMode = 1;
+        $("#chkActive,#btnSave,#btnClear,.FormclrField,#cmbFAType").prop("disabled", false);
+        $("#lblPopupheading").text("Add " + $("#MainHeading").text());
+        modal.style.display = "block";
+        ClearForm();
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $(".FormclrField").val("");
+        $("#cmbBank").val(0)
+        $("#chkDefault").prop("checked", false);
+        $("#chkActive").prop("checked", true);
+        $("#chkActive").prop("disabled", TransMode != 2);
+        $(".clrdiv").html("");
+        $("#txtAccName").focus();
+        $("#lblCloseOS").text("");
+        SetTagZero();
+        if (TransMode != 1)
+            modal.style.display = "none";
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        var IsValid = true, ChkFormation = true;
+        if ($("#txtAccGrp").val() == "") {
+            IsValid = false;
+            $("#dvErrorAccGrp").html("Account Group should not be empty");
+            showErrorSnackbar("Account Group should not be empty");
+        }
+        else {
+            const exists = arrAccGrp.filter(acc => acc.label == $("#txtAccGrp").val().trim());
+            if (exists.length == 0) {
+                IsValid = false;
+                $("#dvErrorAccGrp").html("Account Group select from list");
+                showErrorSnackbar("Account Group select from list");
+            }
+        }
+        if ($("#txtAccName").val() == "") {
+            IsValid = false;
+            $("#dvErrorAccName").html("Account Name should not be empty");
+            showErrorSnackbar("Account Name should not be empty");
+        }
+        ChkFormation = SACValidation($("#txtSAC"), $("#dvErrorSAC"));
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = PANValidation($("#txtPAN"), $("#dvErrorPAN"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $(".clrdiv").html("");
+        var lstMaster = {
+            "Mode": TransMode,
+            "ID": $("#txtID").val(),
+            "FaGroup": $("#txtAccGrp").val(),
+            "AccountName": $("#txtAccName").val(),
+            "OpenBalance": $("#txtOpenBal").val() != "" ? document.getElementById("txtOpenBal").getAttribute("txttag") : 0,
+            "SACCode": $("#txtSAC").val(),
+            "PAN": $("#txtPAN").val(),
+            "FAType": $("#cmbFAType").val(),
+            "Active": $("#chkActive").is(":checked") ? 1 : 0,
+            "UserID": UID,
+            "UserAccount" : 1
+        };
+            $.ajax({
+                url: Aurl + "financialaccount/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(lstMaster),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            ClearForm();
+                            AllFAData();
+                            GetData(3);
+                            modal.style.display = "none";
+                        }
+                        else if (items.Message == "OSPending") {
+                            //$("#divErrorOnName").html("Outstanding Amount Pending. Cannot Deactivate");
+                            showErrorSnackbar("Outstanding Amount Pending. Cannot Deactivate");
+                        }
+                        else {
+                            $("#dvErrorAccName").html(items.Message);
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                }, error: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+    }
+    $('#tblMasterData tbody').on('click', '.clsView', function () {
+        TransMode = 3;
+        $(".clrdiv").html("");
+        $("#lblPopupheading").text("View " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        //var ID = rowdata[0];
+        var ID = rowdata.ID;
+        GetData(6, ID);
+        $(".FormclrField").prop("disabled", true);
+        $("#chkActive,#btnSave,#btnClear,#cmbFAType").prop("disabled", true);
+        $("#txtAccGrp").prop("disabled", true);
+        modal.style.display = "block";
+
+    });
+
+    $('#tblMasterData tbody').on('click', '.clsEdit', function () {
+        TransMode = 2;
+        $(".clrdiv").html("");
+        $("#lblPopupheading").text("Edit " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        //var ID = rowdata[0];
+        var ID = rowdata.ID;       
+        GetData(6, ID);
+        $(".FormclrField").prop("disabled", false);
+        $("#chkActive,#btnSave,#cmbFAType").prop("disabled", false);
+        $("#btnClear").prop("disabled", true);
+        modal.style.display = "block";
+
+    });    
+</script>

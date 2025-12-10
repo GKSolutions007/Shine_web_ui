@@ -1,0 +1,623 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    /*each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }*/
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div style="padding-bottom:10px;">
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+
+    <div id="dvMainTable">
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th></th>
+                        <th align="right" colspan="10">
+                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">TypeID</th>
+                    <th style="text-align:center;font-size: 12px;width:35%;">Account Group</th>
+                    <th style="text-align:center;font-size: 12px;width:15%;">Account Type</th>
+                    <th style="text-align:center;font-size: 12px;width:30%;">Parent Group</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">Active</th>
+                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
+                    <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px" align="center">
+                        <div id="dvAssign" style="width:80%;padding-bottom:2px">
+                            <table class="table" style="width:100%">
+                                <tr>
+                                    @*<td align="right" style="border:none">
+                                            <label>* Account Group Name:</label>
+                                        </td>*@
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="1" type="text" id="txtAccGrp" class="form-control FormclrField" placeholder="" />
+                                            <label class="labelup">Account Group Name *</label>
+                                        </span>
+
+
+                                        <div class="clrdiv" id="dvErrorAccGrp" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    @*<td align="right" style="border:none">
+                                            <label>*Account Type :</label>
+                                        </td>*@
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                        <span class="form-label">
+                                            <select tabindex="2" id="cmbFAType" class="form-control">
+                                            </select>
+                                            <label class="labelup">Account Type *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorFAType" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    @*<td align="right" style="border:none">
+                                            <label>Parent Group :</label>
+                                        </td>*@
+                                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+
+                                        <span class="form-label">
+                                            <input tabindex="3" type="text" id="txtParentGrp" class="form-control FormclrField" placeholder="" />
+                                            <label class="labelup">Parent Group</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorParentGrp" style="color:red"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="right" style="border:none" width="40%">
+                                        <label for="chkActive">Active :</label>
+                                    </td>
+                                    <td style="border:none">
+                                        <input tabindex="4" type="checkbox" id="chkActive" checked disabled />
+                                        <div class="clrdiv" id="dvErrorActive" style="color:red"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button tabindex="6" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button tabindex="5" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        <button tabindex="7" type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+        var UID = '@Session["LoginUserID"]';
+var nMode = 1;
+var FID = $("#txtFormID").val();
+    var Aurl = '@Session["APIurl"]';
+    //var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+    //    "bFilter": true,
+    //    "bSearchable": true,
+    //    "bInfo": true,
+    //    "bPaginate": true,
+    //    "ordering": false,
+    //    scrollY: "400px",
+    //    scrollX: true,
+    //    scrollCollapse: true,
+    //    "columnDefs": [{ "targets": [0, 1], "visible": false, searchable: false }, { "targets": [5,6,7], "class": "text-center" }],
+    //});
+
+    if ($("#txtAddID").val() == 0) {
+        $("#trAdd").hide();
+        $("#btnAdd").hide();
+    }
+    //if ($("#txtModifyID").val() == 0) {
+    //    Table.column(6).visible(false);
+    //}
+    //if ($("#txtViewID").val() == 0) {
+    //    Table.column(7).visible(false);
+    //}
+    if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
+        $("#dvMainTable").hide();
+    }
+    var Table = $('#tblMasterData').DataTable();
+    AllFAGData();
+    function AllFAGData() {        
+        $.ajax({
+            url: Aurl + "financialaccountgroup/getalldata",
+            type: "GET",
+            datatype: "JSON",
+            xhrFields: {
+                withCredentials: true
+            },
+            data: { Mode: 3, Name: "" },
+            success: function (data) {
+                var fagjsdata = eval(data);
+                var searchValue = '';
+                if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+                    searchValue = $('#tblMasterData').DataTable().search(); // get current search term
+                }
+                $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                    scrollY: "450px",
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: true,
+                    destroy: true,
+                    data: fagjsdata,
+                    fixedColumns: false,
+                    searching: true,
+                    ordering: true,
+                    sorting: false,
+                    //"pagingType": "full_numbers",           
+                    columns: [
+                        { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                        { "data": "TypeID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                        { "data": "FAGrpName", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "TypeName", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "ParentGrp", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "Active", "autoWidth": true, className: "dt-body-center" },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
+                                return _action;
+                            }
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = value.UserAccount == "1" ? '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>' : '';
+                                return _action;
+                            }, "visible": $("#txtModifyID").val() == 0 ? false : true
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                return _action;
+                            }, "visible": $("#txtViewID").val() == 0 ? false : true
+                        },
+                    ],
+                    initComplete: function () {
+                        // Re-apply search value after table is fully initialized
+                        this.api().search(searchValue).draw();
+                    }
+                });
+                Table = $('#tblMasterData').DataTable();
+            }
+        });
+        
+    }
+
+    GetData(3);
+    GetData(5);
+    var arrData = [];
+    var ArrAL = [];
+    function GetData(nMode, Value = null) {
+        $.ajax({
+            url: Aurl + "financialaccountgroup/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, Name: Value },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 3) {
+                    arrData = [];
+                    //Table.draw().clear();
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            //arrData[i] = items.FAGrpName
+                            var al = {
+                                "label": items.FAGrpName,
+                                "id": items.ID,
+                            }
+                            arrData.push(al);                            
+                        });
+
+                        $("#txtAccGrp").autocomplete({
+                            minLength: 0,
+                            source: arrData,                            
+                            select: function (event, ui) {
+                                $("#txtAccGrp").val(ui.item.label);
+                                //$("#txtRemarks").val(ui.item.id);
+                                return false;
+                            },
+                        }).autocomplete("instance")._renderItem = function (ul, item) {
+                            return $("<li class='each'>")
+                                .append("<div class='acItem'><span class='name'>" +
+                                    item.label + "</span></div>")
+                                .appendTo(ul);
+                        };                        
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+                else if (nMode == 5) {
+                    $('#cmbFAType').find("option").remove();
+                    $('#cmbFAType').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select Account Type --",
+                        class: ""
+                    }));
+                    $.each(data, function (i, items) {
+                        $('#cmbFAType').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                    });
+                }
+                else if (nMode == 6) {
+                    ArrAL = [];
+                    $.each(data, function (i, items) {
+                        //ArrAL[i] = items.Name;
+                        var al = {
+                            "label": items.Name,
+                            "id": items.ID,
+                        }
+                        ArrAL.push(al);
+                    });
+                    $("#txtParentGrp").autocomplete({
+                        minLength: 0,
+                        source: ArrAL,                        
+                        select: function (event, ui) {
+                            $("#txtParentGrp").val(ui.item.label);
+                            //$("#txtRemarks").val(ui.item.id);
+                            return false;
+                        },
+                    }).autocomplete("instance")._renderItem = function (ul, item) {
+                        return $("<li class='each'>")
+                            .append("<div class='acItem'><span class='name'>" +
+                                item.label + "</span></div>")
+                            .appendTo(ul);
+                    };
+                }
+
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    function displayResult(item) {
+        $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
+    }
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    function CloseForm() {
+        modal.style.display = "none";
+    }
+
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    $("#btnAdd").click(function () {
+        nMode = 1;
+        $("#chkActive,#btnSave,#btnClear,.FormclrField,#cmbFAType").prop("disabled", false);
+        $("#lblPopupheading").text("Add " + $("#MainHeading").text());
+        modal.style.display = "block";
+        ClearForm();
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    $("#cmbFAType").change(function () {
+        var TypeID = $("#cmbFAType").val();
+        $('#txtParentGrp').val("");
+        GetData(6, TypeID);
+    });
+    function ClearForm() {
+        $(".FormclrField").val("");
+        $("#cmbFAType").val(0)
+        $("#chkDefault").prop("checked", false);
+        $("#chkActive").prop("checked", true);
+        $("#chkActive").prop("disabled", nMode != 2);
+        $(".clrdiv").html("");
+        $("#txtAccGrp").focus();
+        if (nMode != 1)
+            modal.style.display = "none";
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        var IsValid = true, ChkFormation = true;
+        if ($("#txtAccGrp").val() == "") {
+            IsValid = false;
+            $("#dvErrorAccGrp").html("Account Group should not be empty");
+            showErrorSnackbar("Account Group should not be empty");
+        }
+        if ($("#txtParentGrp").val() != "") {
+            //const exists = ArrAL.indexOf($("#txtParentGrp").val().trim()) !== -1;
+            //if (!exists) {
+            //    IsValid = false;
+            //    $("#dvErrorParentGrp").html("Account Group select from list");
+            //}
+            const exists = ArrAL.filter(acc => acc.label == $("#txtParentGrp").val().trim());
+            if (exists.length == 0) {
+                IsValid = false;
+                $("#dvErrorParentGrp").html("Parent Group select from list");
+                showErrorSnackbar("Parent Group select from list");
+            }
+        }
+
+        if ($("#cmbFAType").val() == 0) {
+            IsValid = false;
+            $("#dvErrorFAType").html("Select Account Type");
+            showErrorSnackbar("Select Account Type");
+        }
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $(".clrdiv").html("");
+        var lstMaster = {
+            "Mode": nMode,
+            "ID": $("#txtID").val(),
+            "FAGrpName": $("#txtAccGrp").val(),
+            "TypeID": $("#cmbFAType").val(),
+            "ParentGrp": $("#txtParentGrp").val(),
+            "UserAccount": 1,
+            "LevelID": 2,
+            "Active": $("#chkActive").is(":checked") ? 1 : 0,
+            "UserID": UID,
+            "UserAccount" : 1
+        };
+
+            $.ajax({
+                url: Aurl + "financialaccountgroup/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(lstMaster),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            ClearForm();
+                            AllFAGData();
+                            GetData(3);
+                            modal.style.display = "none";
+                        }
+                        else {
+                            $("#dvErrorAccGrp").html(items.Message);
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                }, error: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+    }
+    $('#tblMasterData tbody').on('click', '.clsView', function () {
+        nMode = 3;
+        $(".clrdiv").html("");
+        $("#lblPopupheading").text("View " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+        var TypeID = rowdata.TypeID;//[1];
+        var FAGrp = rowdata.FAGrpName;//[2];
+        var ParGrp = rowdata.ParentGrp;//[4];
+        var Active = rowdata.Active;//[5];
+
+        $("#txtID").val(ID);
+        $("#txtAccGrp").val(FAGrp);
+        $("#txtParentGrp").val(ParGrp);
+        $("#cmbFAType").val(TypeID);
+
+        $("#chkActive").prop("checked", Active == "Yes");
+        $(".FormclrField").prop("disabled", true);
+        $("#chkActive,#btnSave,#btnClear,#cmbFAType").prop("disabled", true);
+        modal.style.display = "block";
+
+    });
+
+    $('#tblMasterData tbody').on('click', '.clsEdit', function () {
+        nMode = 2;
+        $(".clrdiv").html("");
+        $("#lblPopupheading").text("Edit " + $("#MainHeading").text());
+        rowdata = Table.row($(this).parents('tr')).data();
+        var ID = rowdata.ID;//[0];
+        var TypeID = rowdata.TypeID;//[1];
+        var FAGrp = rowdata.FAGrpName;//[2];
+        var ParGrp = rowdata.ParentGrp;//[4];
+        var Active = rowdata.Active;//[5];
+        GetData(6, TypeID);
+        $("#txtID").val(ID);
+        $("#txtAccGrp").val(FAGrp);
+        $("#txtParentGrp").val(ParGrp);
+        $("#cmbFAType").val(TypeID);
+        $("#chkActive").prop("checked", Active == "Yes");
+        $("#btnClear").prop("disabled", true);
+        $(".FormclrField").prop("disabled", false);
+        $("#chkActive,#btnSave,#cmbFAType").prop("disabled", false);
+        modal.style.display = "block";
+    });    
+</script>

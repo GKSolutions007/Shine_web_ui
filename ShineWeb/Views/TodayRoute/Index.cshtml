@@ -1,0 +1,230 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    td {
+        font-size: 12px;
+    }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+<body>
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>   
+    <div id="dvMainTable">
+        <table class="table" style="width:100%">
+            <tr class="bgclrfortr">
+                <td style="border:none;width:20%">
+                    <div>
+                        <span class="form-label">
+                            <select class="form-control FormclrcmbField" id="cmbBrach"><option value="0">Select</option></select>
+                            <label class="labelup"> Brach</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBrach" class="clrdiv"></div>
+                    </div>
+                </td>
+                <td style="border:none;width:20%">
+                    <div>
+                        <span class="form-label">
+                            <select class="form-control FormclrcmbField" id="cmbBeat"><option value="0">Select</option></select>
+                            <label class="labelup"> Beat</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBeat" class="clrdiv"></div>
+                    </div>
+                </td>
+                <td style="border: none; width: 20%">
+                    <div>
+                        <span class="form-label">
+                            <select class="form-control FormclrcmbField" id="cmbSalesman"><option value="0">Select</option></select>
+                            <label class="labelup"> Salesman</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrSalesman" class="clrdiv"></div>
+                    </div>
+                </td>
+                <td style="border: none; width: 5%">
+                    <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                </td>
+                <td style="border: none; width: 35%">
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+@*
+*@
+<script type="text/javascript">
+     var UID = '@Session["LoginUserID"]';
+ var nMode = 1;
+    var FID = $("#txtFormID").val();
+    var DefBranch = '@Session["DefaultBranch"]';
+    var DecVal = '@Session["DecimalValues"]';
+    var Aurl = '@Session["APIurl"]';
+
+    GetData(1);
+    GetData(2);
+    function GetData(nMode, nBID = 0, nSMID = 0,nBranchID = 0) {
+        $.ajax({
+            url: Aurl + "todayroute/getpost",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, UserID: UID, BeatID: nBID, SalesmanID: nSMID, BranchID: nBranchID },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (nMode == 1) {
+                    $('#cmbBeat,#cmbSalesman,#cmbBrach').find("option").remove();
+                    $('#cmbBeat,#cmbSalesman,#cmbBrach').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                        class: ""
+                    }));
+                    $.each(data, function (i, items) {
+                        if (items.FType == 1) {
+                            $('#cmbBeat').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        else if (items.FType == 2) {
+                            $('#cmbSalesman').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        else if (items.FType == 3) {
+                            $('#cmbBrach').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                    });
+                    //$('#cmbBrach').val(DefBranch);
+                }
+                else if (nMode == 2) {
+                    $.each(data, function (i, items) {
+                        $('#cmbBeat').val(items.BeatID);
+                        $('#cmbSalesman').val(items.SalesmanID);
+                        $('#cmbBrach').val(items.BranchID);
+                    });
+                }
+                else if (nMode == 3) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            //ClearForm();
+                        }
+                        else {
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                }
+            },
+            error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $("select").val(0);
+        $(".clrdiv").html("");
+    }
+    $("#btnSave").click(function () {
+        //SaveData();
+        if (cfFocus != 3) {
+            ConfirmDialogMsg("Do you want to save data?");
+        } else {
+            SaveData();
+        }
+    });
+    
+    function SaveData() {
+        $(".clrdiv").html("");
+        var IsValid = true;//cmbSalesman
+        if ($("#cmbBeat").val() == 0 && $("#cmbSalesman").val() > 0) {
+            $("#divErrBeat").html("Select Beat Name");
+            showErrorSnackbar("Select Beat Name");
+            IsValid = false;
+        }
+        if ($("#cmbBeat").val() > 0 && $("#cmbSalesman").val() == 0) {
+            $("#divErrSalesman").html("Select Salesman Name");
+            showErrorSnackbar("Select Salesman Name");
+            IsValid = false;
+        }
+        if (IsValid) {
+            $("#btnSave").prop("disabled", true);
+            GetData(3, $("#cmbBeat").val(), $("#cmbSalesman").val(), $("#cmbBrach").val());
+        }
+    }
+</script>

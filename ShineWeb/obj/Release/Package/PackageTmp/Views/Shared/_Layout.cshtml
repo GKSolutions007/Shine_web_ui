@@ -1,0 +1,804 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title> @ViewBag.Title</title>
+    <link rel="SHORTCUT ICON" href="~/images/G_large_Transparent.png" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,100,300,500" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/font-awesome.min.css" rel="stylesheet" />
+    <link href="~/Content/Site.css" rel="stylesheet" />
+    <link href="~/Content/navbar.css" rel="stylesheet" />
+    <link href="~/Content/Snackbar.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="~/Scripts/Validation.js"></script>
+    <style>
+        .elipstyle {
+            width: 25px;
+            height: 40px;
+            border-radius: 50%;
+            transform: rotate(50deg);
+            background-color: white;
+        }
+
+        .dropdown-menu li {
+            position: relative;
+        }
+
+        .dropdown-menu .dropdown-submenu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: -17px;
+            width: 200px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            color: darkblue;
+        }
+
+        .dropdown-menu .dropdown-submenu-left {
+            right: 100%;
+            left: auto;
+        }
+
+        .dropdown-menu > li:hover > .dropdown-submenu {
+            display: block;
+            background-color: skyblue;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    @{
+        <input type="hidden" id="hdnConfirmFocus" value="@Session["ConfirmFocus"]" />
+        <input type="hidden" id="hdnClearConfirmFocus" value="@Session["ClearConfirmFocus"]" />
+        <input type="hidden" id="hdnCloseConfirmFocus" value="@Session["CloseConfirmpopup"]" />
+        <input type="hidden" id="hdnApiurl" value="@Session["APIurl"]" />
+        string encrep = "GT8qP3MyjELXy6lQp2MtIA==";// ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("Reports");
+        string defzer = "jJOtHsRVwYECOhoiBc69dA==";//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+        string LayoutName = Convert.ToString(Session["NavBarVisible"]);
+        string User = Convert.ToString(Session["LoginUser"]);
+        string UIDs = Convert.ToString(Session["LoginUserID"]);
+        System.Data.DataTable dtParent = (System.Data.DataTable)Session["dtParent"];
+        System.Data.DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+        System.Data.DataTable dtCompany = (System.Data.DataTable)Session["dtCompany"];
+        string CompCode = dtCompany.Rows[0][1].ToString();
+        string CompName = dtCompany.Rows[0][2].ToString();
+        if (LayoutName == "LogOn")
+        {
+            <header id="LoginPage" class="navbar navbar-bright navbar-fixed-top" role="banner">
+                <div class="container">
+                    <div class="navbar-header">
+                        <a href="~/LogOn/Index" class="navbar-brand">Login Page</a>
+                    </div>
+                </div>
+            </header>
+        }
+        else if (LayoutName == "UserPermission")
+        {
+            <div class="navbar-wrapper">
+                <div class="container-fluid">
+                    <nav class="navbar navbar-bright navbar-fixed-top">
+                        <div>
+                            <div class="navbar-header">
+                                <button type="button" id="btn3Menu" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                                    <span class="sr-only">Toggle navigation</span>
+                                    <span class="icon-bar"></span>
+                                    <span class="icon-bar"></span>
+                                    <span class="icon-bar"></span>
+                                </button>
+                                @*style="border-radius:10%;width:30px;height:30px"*@
+                                <a class="navbar-brand" id="aCompName" href="~/Home" style="font-size:large"><img src="~/Images/G_large_Transparent.png" style="width:45px;height:35px" /><b>@CompName</b></a>
+                                <img src="~/Images/search-icon.png" id="icQS" width="25" data-toggle="modal" data-target="#myModal" style="padding-top:10px" title="Quick Search" />
+                            </div>
+                            <div id="navbar" class="navbar-collapse collapse navbar-right">
+                                <ul class="nav navbar-nav">
+                                    @for (int iRow = 0; iRow < dtParent.Rows.Count; iRow++)
+                                    {
+                                        int nParentID = Convert.ToInt32(dtParent.Rows[iRow]["MenuId"]);
+                                        string strManuName = Convert.ToString(dtParent.Rows[iRow]["MenuName"]);
+                                        string FrmID = Convert.ToString(dtParent.Rows[iRow]["FormID"]);
+                                        string EncName = (ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(strManuName));
+                                        string EncFRMID = (ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(FrmID));
+                                        System.Data.DataRow[] dr = dtPermission.Select("MenuParentId=" + nParentID.ToString());
+                                        if (dr.Count() > 0)
+                                        {
+                                            <li class="dropdown">
+                                                @*<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">@strManuName <span class="caret"></span></a>*@
+                                                @if (strManuName == "Reports")
+                                                {
+                                                    //@Html.ActionLink("Reports", "index", "Reports", new { name = EncName, strFormID = EncFRMID }, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px;padding-bottom:10px", @title = User, @target = "_black" })
+                                                    continue;
+                                                }
+                                                else
+                                                {
+                                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">@strManuName <span class="caret"></span></a>
+                                                }
+                                                <ul class="dropdown-menu">
+                                                    @foreach (System.Data.DataRow dr_Row in dr)
+                                                    {
+                                                        int nChildParentID = Convert.ToInt32(dr_Row["MenuId"].ToString());
+                                                        string displayName = dr_Row["MenuName"].ToString();
+                                                        string controllerName = dr_Row["LocationName"].ToString();
+                                                        string IsMenus = dr_Row["IsMenu"].ToString();
+                                                        string FID = dr_Row["FormID"].ToString();
+                                                        string EncDispName = dr_Row["EncMenuName"].ToString();//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(displayName));
+                                                        string EncFID = dr_Row["EncFormID"].ToString();// (ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(FID));
+                                                        string EncTypeID = "jJOtHsRVwYECOhoiBc69dA==";//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+                                                        string EncTranID = "jJOtHsRVwYECOhoiBc69dA==";//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+                                                        System.Data.DataRow[] drSubChild = dtPermission.Select("IsMenu = 1 AND MenuChildLevel = 3 AND MenuParentId=" + nChildParentID.ToString());
+                                                        if (drSubChild.Count() > 0)
+                                                        {
+                                                            <li class="dropdown">
+                                                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="font-weight:600">@displayName <span class="caret"></span></a>
+                                                                <ul class="dropdown-submenu">
+                                                                    @foreach (System.Data.DataRow dr_RowSub in drSubChild)
+                                                                    {
+                                                                        int nChildParentID1 = Convert.ToInt32(dr_RowSub["MenuParentId"].ToString());
+                                                                        string displayName1 = dr_RowSub["MenuName"].ToString();
+                                                                        string controllerName1 = dr_RowSub["LocationName"].ToString();
+                                                                        string IsMenus1 = dr_RowSub["IsMenu"].ToString();
+                                                                        string FID1 = dr_RowSub["FormID"].ToString();
+                                                                        string EncDispName1 = dr_RowSub["EncMenuName"].ToString();// (ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(displayName1));
+                                                                        string EncFID1 = dr_RowSub["EncFormID"].ToString();//(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(FID1));
+                                                                        if (IsMenus == "1")
+                                                                        {
+                                                                            <li>@Html.ActionLink(displayName1, "Index", controllerName1, new { name = EncDispName1, FormID = EncFID1, TypeID = EncTypeID, TranID = EncTranID }, new { @class = "dropdown", @style = "font-weight:bold;" })</li>
+                                                                        }
+                                                                    }
+                                                                </ul>
+                                                            </li>
+                                                        }
+                                                        else
+                                                        {
+                                                            if (IsMenus == "1")
+                                                            {
+                                                                <li>@Html.ActionLink(displayName, "Index", controllerName, new { name = EncDispName, strFormID = EncFID, TypeID = EncTypeID, TranID = EncTranID }, new { @class = "dropdown", @style = "font-weight:bold;" })</li>
+                                                            }
+                                                        }
+                                                    }
+                                                </ul>
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            @*if (strManuName == "Reports")
+                                                {
+                                                    @Html.ActionLink("Reports", "index", "Reports", new { name = EncName, strFormID = EncFRMID }, new { @class = "dropdown dropdown-toggle", @style = "font-weight:bold;color:white;padding-left:15px;padding-bottom:10px", @title = User, @target = "_black" })
+                                                }*@
+                                        }
+
+                                    }
+                                    @*@Html.ActionLink("Sample Grid", "index", "sampgrid", null, new { @class = "dropdown", @style = "font-weight:bold;color:white", @title = User })*@
+                                    @*<li>@Html.ActionLink("LogOut - " + User, "LogOff", "Login", null, new { @class = "dropdown", @style = "font-weight:bold;", @title = User, @id = "algout" })</li>*@
+                                </ul>
+                                @{
+                                    System.Data.DataRow[] drrep = dtPermission.Select("MenuTree=3");
+                                    if (drrep.Count() > 0)
+                                    {
+                                        @Html.ActionLink("Reports", "index", "Reports", new { name = encrep, strFormID = defzer }, new { @class = "dropdown", @style = "font-weight:bold;color:white;padding-left:15px;padding-bottom:10px", @title = User, @target = "_black", @id = "lkreport" })
+                                        <br />
+                                    }
+                                }
+                                @Html.ActionLink("LogOut - " + User, "LogOff", "Login", null, new { @class = "dropdown", @style = "font-weight:bold;padding-bottom:15px", @title = User, @id = "algout" })
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+        }
+    }
+    <link href="~/Content/SlidePopup.css" rel="stylesheet" />
+    <div class="container">
+
+        <!-- The Modal -->
+        <div class="modal" id="myModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header" style="background-color:lightgoldenrodyellow">
+                        <h3 class="modal-title">Quick Search</h3>
+                        <button type="button" class="close" data-dismiss="mod al">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        @*<div class="dropdown" >*@
+                        @*<button onclick="myFunction()" class="dropbtn">Dropdown</button>*@
+                        <div id="myDropdown" class="dropdown-content">
+                            <input type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction()">
+                            @{
+                                if (Session["dtPermission"] != null)
+                                {
+                                    System.Data.DataRow[] drrr = dtPermission.Select("MenuChildLevel = 2", "MenuName");
+                                    if (drrr.Count() > 0)
+                                    {
+                                        foreach (System.Data.DataRow dr_Row in drrr)
+                                        {
+                                            //if (dr_Row["LocationName"].ToString() != "PriceChangeinOT" && dr_Row["LocationName"].ToString() != "AllowTrackLocation" && dr_Row["LocationName"].ToString() != "Allowpricetypechange" && dr_Row["LocationName"].ToString() != "AllowCreditlimitchange"
+                                            //    && dr_Row["LocationName"].ToString() != "AllowProdDiscchangeinDA" && dr_Row["LocationName"].ToString() != "AllowTradeDiscchangeinDA" && dr_Row["LocationName"].ToString() != "AllowAddnlDiscchangeinDA")
+                                            //{
+                                            string EncName = Url.Encode(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(dr_Row["MenuName"].ToString()));
+                                            string EncFID = Url.Encode(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt(dr_Row["FormID"].ToString()));
+                                            string EncTypeID = Url.Encode(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+                                            string EncTranID = Url.Encode(ShineWeb.BuisnessLayer.clsEncryptDecrypt.Encrypt("0"));
+                                            if (dr_Row["IsMenu"].ToString() == "1")
+                                            {
+                                                string reflink = dr_Row["LocationName"].ToString() + "?name=" + EncName + "&strFormID=" + EncFID + "&TypeID=" + EncTypeID + "&TranID=" + EncTranID;
+                                                <div>
+                                                    <a href="@reflink"> @dr_Row["MenuName"].ToString() </a>
+                                                </div>
+
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        </div>
+                        @*</div>*@
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer" style="background-color:skyblue;">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div style="padding-right:15px;padding-left:15px;">
+        @RenderBody()
+        <hr />
+    </div>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    @*@Scripts.Render("~/bundles/jquery")
+        @Scripts.Render("~/bundles/bootstrap")*@
+</body>
+</html>
+<script type="text/javascript">
+
+    myFunction();
+    function myFunction() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    function filterFunction() {
+        var input, filter, ul, li, a, i;
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+        div = document.getElementById("myDropdown");
+        a = div.getElementsByTagName("a");
+        for (i = 0; i < a.length; i++) {
+            txtValue = a[i].textContent || a[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                a[i].style.display = "";
+            } else {
+                a[i].style.display = "none";
+            }
+        }
+    }
+    $(document).on('keydown', ':focusable', function (e) {
+        if (e.which == 13) {
+            e.preventDefault();
+            var $canfocus = $(':focusable');
+            var index = $canfocus.index(this) + 1;
+            if (index >= $canfocus.length) index = 0;
+            $canfocus.eq(index).focus();
+        }
+        if (e.shiftKey && e.which == 13) {
+            e.preventDefault();
+            var $canfocus = $(':focusable');
+            var index = $canfocus.index(this) - 1;
+            if (index >= $canfocus.length) index = 0;
+            $canfocus.eq(index).focus();
+        }
+    });
+    //$("#icQS").hide();
+    //$(".modal-header").css("background-color", "darkcyan");
+    //$(".modal-header").css("color", "white");
+    //$(".btn-success").css("background-color", "gray");
+    //$(".navbar-fixed-top").css("background-color", "darkslateblue");
+    var Aurl = '@Session["APIurl"]';
+    GetColorData(1, '@Session["ThemeID"]');
+    function GetColorData(nMode, strName = null) {
+        $.ajax({
+            url: Aurl + "colorsettings/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, Name: strName },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    $.each(data, function (i, items) {
+                        $(".navbar-fixed-top").css("background-color", items.MenuHeader);
+                        //$("#btn3Menu").css("color", "#ff0000");
+                        $("#btn3Menu").css("background-color", items.CompanyNameColor);
+                        $("#aCompName,#algout").css("color", items.CompanyNameColor);
+                        $(".btn-info").css("background-color", items.AddButton);
+                        $(".btn-primary").css("background-color", items.DraftButton);
+                        $(".btn-success").css("background-color", items.SaveButton);
+
+                        $(".btn-danger").css("background-color", items.ClearButton);
+
+                        $(".btn-warning").css("background-color", items.CloseButton);
+
+                        //$(".clrforpdf").css("background-color", items.PDFButton);
+                        //$(".clrforpreview").css("background-color", items.PreviewButton);
+
+                        $(".modal-header").css("background-color", items.PopupHeader);
+
+                        $(".modal-footer").css("background-color", items.PopupFooter);
+
+                        $(".clsclrYes,.clsYes").css("background-color", items.ConfirmPopupYes);
+
+                        $(".clsclrNo,.clsNo").css("background-color", items.ConfirmPopupNo);
+                        $("ul a").css("color", items.SubMenuColor);
+                        $(".dropdown-btn,.dropdown-toggle,#lkreport").css("color", items.MenuColor);
+                        $(".trclrforcolheader").css("background-color", items.GridHeaderBackGround);
+                        $(".trclrforcolheader").css("color", items.GridHeaderTextColor);
+                        $(".modal-title").css("color", items.PopupHeaderText);
+
+                    });
+                }
+            }
+        });
+    }
+        $('input, select ,button, textarea').on('keydown', function (e) {
+        if (e.key === "Enter") {
+            if (e.target.localName != "button") {
+                e.preventDefault(); // Prevent default behavior
+                var nextinp = $('input:not([type=hidden]):not([readonly]):not([disabled]),select:not([disabled]),button, textarea').eq($('input:not([type=hidden]):not([readonly]):not([disabled]),select,button, textarea').index(this) + 1);
+                //console.log(nextinp);
+                var hasclass = $(this).hasClass('ui-autocomplete-input');
+                if (hasclass)// Enter from Autocomplete field
+                {
+                    var lencls = $('.ui-menu-item').length;
+                    var vbl = $('.ui-menu-item').is(":visible");
+                    //console.log("Visble : ", vbl, " ui-menu-item Count : " + lencls);
+                    if (!vbl) {
+                        if (nextinp.length) {
+                            var strType = nextinp[0].localName;
+                            if (strType != "button") {
+                                nextinp.focus();
+                                nextinp.select();
+                            }
+                            else {
+                                const isSaveDisabled = $("#btnSave").is(":disabled");
+                                const isClearDisabled = $("#btnClear").is(":disabled");
+                                if (!isSaveDisabled) {
+                                    $("#btnSave").focus();
+                                    $("#btnSave").select();
+                                } else {
+                                    $("#btnClose").focus();
+                                    $("#btnClose").select();
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (nextinp.length) {
+                        var strType = nextinp[0].localName;
+                        if (strType != "button") {
+                            nextinp.focus();
+                            nextinp.select();
+                        }
+                        else {
+                            const isSaveDisabled = $("#btnSave").is(":disabled");
+                            if (!isSaveDisabled) {
+                                $("#btnSave").focus();
+                                $("#btnSave").select();
+                            } else {
+                                $("#btnClose").focus();
+                                $("#btnClose").select();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else if (e.key === 'ArrowLeft' && e.target.id === "btnSave") {
+            $("#btnClear").focus();
+            $("#btnClear").select();
+        } else if (e.key === 'ArrowRight' && e.target.id === "btnSave") {
+            $("#btnClose").focus();
+            $("#btnClose").select();
+        } else if (e.key === 'ArrowRight' && e.target.id === "btnClear") {
+            $("#btnSave").focus();
+            $("#btnSave").select();
+        } else if (e.key === 'ArrowLeft' && e.target.id === "btnClose") {
+            $("#btnSave").focus();
+            $("#btnSave").select();
+        }
+        if (e.shiftKey && e.which == 13) {
+            e.preventDefault();
+            var $canfocus = $(':focusable');
+            var index = $canfocus.index(this) - 1;
+            if (index >= $canfocus.length) index = 0;
+            $canfocus.eq(index).focus();
+        }
+    });
+    if ($('#tblProductData').length) {
+        $('#tblProductData tbody').sortable({
+            items: 'tr',
+            handle: 'td', // Drag anywhere within a row
+            stop: function (event, ui) {
+                // Get the new row order
+                var rowOrder = [];
+
+                // Collect the IDs of rows after drag-and-drop reorder
+                $('#tblProductData tbody tr').each(function () {
+                    rowOrder.push($(this).find('td').eq(0).text());  // Get the ID from the first column
+                });
+                ReorderSerialNo();
+                // You can do further work here to save the row order (e.g., using AJAX to save to a server)
+            }
+        });
+    }
+    function arrowKeyHandlersave(e) {
+        if (e.key === "ArrowRight") {
+            e.preventDefault();
+            document.querySelector(".clsNo")?.focus();
+        } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            document.querySelector(".clsYes")?.focus();
+        }
+    }
+        var cfFocus = '@Session["ConfirmFocus"]';
+    function ConfirmDialogMsg(message) {
+        var IsAccepted = false;
+        $('<div></div>').appendTo('body')
+            .html('<div><h6>' + message + '</h6></div>')
+            .dialog({
+                modal: true,
+                closeOnEscape: true,
+                title: 'Confirm Popup',
+                zIndex: 100,
+                autoOpen: true,
+                width: '300px',
+                resizable: true,
+                close: false,
+                open: function () {
+                    document.addEventListener("keydown", arrowKeyHandlersave);
+                    $(this).closest(".ui-dialog")
+                        .find(".ui-dialog-titlebar-close")
+                        .removeClass("ui-dialog-titlebar-close")
+                        .html("x");
+                },
+                close: function () {
+                    // Remove event listener when dialog is closed
+                    document.removeEventListener("keydown", arrowKeyHandlersave);
+                    $(this).dialog("destroy").remove(); // Fully remove the dialog from DOM
+
+                },
+                buttons: [
+                    {
+                        text: "Yes",
+                        class: "btn btn-success clsYes",
+                        click: function () {
+                            $(this).dialog("close");
+                            SaveData();
+                        },
+                    },
+                    {
+                        text: "No",
+                        class: "btn btn-danger clsNo cfforeclr",
+                        click: function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                ],
+            });
+        if (cfFocus == 1) {
+            $(".clsYes").focus();
+        }
+        else if (cfFocus == 2) {
+            $(".clsNo").focus();
+        }
+    };
+    var ClearcfFocus = '@Session["ClearConfirmFocus"]';
+    //$(".ui-dialog-titlebar-close").html('x');
+    function ClearConfirmDialogMsg(message) {
+        var IsAccepted = false;
+        $('<div></div>').appendTo('body')
+            .html('<div><h6>' + message + '</h6></div>')
+            .dialog({
+                modal: true,
+                closeOnEscape: true,
+                title: 'Confirm Popup',
+                zIndex: 100,
+                autoOpen: true,
+                width: '300px',
+                resizable: true,
+                close: false,
+                open: function () {
+                    document.addEventListener("keydown", arrowKeyHandlersave);
+                    $(this).closest(".ui-dialog")
+                        .find(".ui-dialog-titlebar-close")
+                        .removeClass("ui-dialog-titlebar-close")
+                        .html("x");
+                },
+                close: function () {
+                    // Remove event listener when dialog is closed
+                    document.removeEventListener("keydown", arrowKeyHandlersave);
+                    $(this).dialog("destroy").remove(); // Fully remove the dialog from DOM
+
+                },
+                buttons: [
+                    {
+                        text: "Yes",
+                        class: "btn btn-success clsYes",//clsclrYes
+                        click: function () {
+                            $(this).dialog("close");
+                            ClearForm();
+                        },
+                    },
+                    {
+                        text: "No",
+                        class: "btn btn-danger clsNo",//clsclrNo
+                        click: function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                ],
+            });
+        if (ClearcfFocus == 1) {
+            $(".clsYes").focus();
+        }
+        else {
+            $(".clsNo").focus();
+        }
+    };
+    var ClosecfFocus = '@Session["CloseConfirmFocus"]';
+//$(".ui-dialog-titlebar-close").html('x');
+function CloseConfirmDialogMsg(message) {
+    var IsAccepted = false;
+    $('<div></div>').appendTo('body')
+        .html('<div><h6>' + message + '</h6></div>')
+        .dialog({
+            modal: true,
+            closeOnEscape: true,
+            title: 'Confirm Popup',
+            zIndex: 100,
+            autoOpen: true,
+            width: '300px',
+            resizable: true,
+            close: false,
+            open: function () {
+                document.addEventListener("keydown", arrowKeyHandlersave);
+                $(this).closest(".ui-dialog")
+                    .find(".ui-dialog-titlebar-close")
+                    .removeClass("ui-dialog-titlebar-close")
+                    .html("x");
+            },
+            close: function () {
+                // Remove event listener when dialog is closed
+                document.removeEventListener("keydown", arrowKeyHandlersave);
+                $(this).dialog("destroy").remove(); // Fully remove the dialog from DOM
+
+            },
+            buttons: [
+                {
+                    text: "Yes",
+                    class: "btn btn-success clsYes",//clsclsYes
+                    click: function () {
+                        $(this).dialog("close");
+                        CloseForm();
+                    },
+                },
+                {
+                    text: "No",
+                    class: "btn btn-danger clsNo",//clsclsNo
+                    click: function () {
+                        $(this).dialog("close");
+                    }
+                }
+            ],
+        });
+    if (ClosecfFocus == 1) {
+        $(".clsYes").focus();
+    }
+    else {
+        $(".clsNo").focus();
+    }
+    };
+
+    var allowprint = '@Session["AllowPrint"]';
+    function PrintConfirmDialogMsg(ID, TypeID, nConfigID, message) {
+        var IsAccepted = false;
+        $(".ui-dialog-titlebar-close").hide();
+        $('<div></div>').appendTo('body')
+            .html('<div><h6>' + message + '</h6></div>')
+            .dialog({
+                modal: true,
+                closeOnEscape: true,
+                title: 'Confirm Print Popup',
+                zIndex: 100,
+                autoOpen: true,
+                width: '300px',
+                resizable: true,
+                close: false,
+                open: function () {
+                    document.addEventListener("keydown", arrowKeyHandlersave);
+                    $(this).closest(".ui-dialog")
+                        .find(".ui-dialog-titlebar-close")
+                        .removeClass("ui-dialog-titlebar-close")
+                        .html("x");
+                },
+                close: function () {
+                    // Remove event listener when dialog is closed
+                    document.removeEventListener("keydown", arrowKeyHandlersave);
+                    $(this).dialog("destroy").remove(); // Fully remove the dialog from DOM
+
+                },
+                buttons: [
+                    {
+                        text: "Yes",
+                        class: "btn btn-success clsYes",
+                        click: function () {
+                            $(this).dialog("close");
+                            PrintDocument(ID, TypeID, nConfigID);
+                        },
+                    },
+                    {
+                        text: "No",
+                        class: "btn btn-danger clsNo cfforeclr",
+                        click: function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                ],
+            });
+        if (allowprint == 3) {
+            $(".clsYes").focus();
+        }
+        else if (allowprint == 4) {
+            $(".clsNo").focus();
+        }
+    };
+    setupArrowKeyNavigation();
+    // 👇 Function to apply keydown listener to all input elements in the table
+    function setupArrowKeyNavigation() {
+        if ($('#tblProductData').length) {
+            const allInputs = document.querySelectorAll('#tblProductData tbody input');
+            //allInputs.forEach((input, index) => {
+            //    input.onkeydown = function (e) {
+            //        const currentRow = input.closest('tr');
+            //        const inputIndex = Array.from(currentRow.querySelectorAll('input')).indexOf(input);
+            //        if (e.key === 'ArrowDown') {
+            //            const nextRow = currentRow.nextElementSibling;
+            //            if (nextRow) {
+            //                const nextInputs = nextRow.querySelectorAll('input');
+            //                if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
+            //                e.preventDefault();
+            //            }
+            //        }
+            //        if (e.key === 'ArrowUp') {
+            //            const prevRow = currentRow.previousElementSibling;
+            //            if (prevRow) {
+            //                const prevInputs = prevRow.querySelectorAll('input');
+            //                if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
+            //                e.preventDefault();
+            //            }
+            //        }
+            //        if (e.key === 'Enter') {
+            //            const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input'));
+            //            const currentInputIndex = allInputsList.indexOf(input);
+            //            const nextInput = allInputsList[currentInputIndex + 1];
+
+            //            if (nextInput) {
+            //                nextInput.focus();
+            //            } else {
+            //                // Call your add row function here
+            //                Addprodgridline();
+            //                setTimeout(() => {
+            //                    const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+            //                    if (newInputs[0]) newInputs[0].focus();
+            //                }, 100);
+            //            }
+            //            e.preventDefault();
+            //        }
+
+            //    };
+            //});
+            allInputs.forEach((input, index) => {
+                input.onkeydown = function (e) {
+                    const currentRow = input.closest('tr');
+                    const inputsInRow = Array.from(currentRow.querySelectorAll('input'));
+                    const inputIndex = inputsInRow.indexOf(input);
+
+                    if (e.key === 'ArrowDown') {
+                        const nextRow = currentRow.nextElementSibling;
+                        if (nextRow) {
+                            const nextInputs = nextRow.querySelectorAll('input');
+                            if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
+                            e.preventDefault();
+                        }
+                    }
+
+                    if (e.key === 'ArrowUp') {
+                        const prevRow = currentRow.previousElementSibling;
+                        if (prevRow) {
+                            const prevInputs = prevRow.querySelectorAll('input');
+                            if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
+                            e.preventDefault();
+                        }
+                    }
+
+                    if (e.key === 'ArrowRight') {
+                        const nextInput = inputsInRow[inputIndex + 1];
+                        if (nextInput) {
+                            nextInput.focus();
+                            e.preventDefault();
+                        }
+                    }
+
+                    if (e.key === 'ArrowLeft') {
+                        const prevInput = inputsInRow[inputIndex - 1];
+                        if (prevInput) {
+                            prevInput.focus();
+                            e.preventDefault();
+                        }
+                    }
+
+                    if (e.key === 'Enter') {
+                        const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input'));
+                        const currentInputIndex = allInputsList.indexOf(input);
+                        const nextInput = allInputsList[currentInputIndex + 1];
+
+                        if (nextInput) {
+                            nextInput.focus();
+                        } else {
+                            // Call your add row function here
+                            Addprodgridline();
+                            setTimeout(() => {
+                                const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                if (newInputs[0]) newInputs[0].focus();
+                            }, 100);
+                        }
+                        e.preventDefault();
+                    }
+                };
+            });
+
+        }
+    }
+    function disableNumberFieldControls() {
+        document.querySelectorAll('table input[type="number"]').forEach(function (input) {
+            // Block arrow key increment
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                }
+            });
+
+            // Block scroll wheel increment
+            input.addEventListener('wheel', function (e) {
+                e.preventDefault();
+            });
+        });
+    }
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        //disableNumberFieldControls();
+    });
+    // If using jQuery DataTables or dynamic tables, also hook into redraw:
+    $(document).on('draw.dt', function () {
+        //disableNumberFieldControls();
+    });
+</script>

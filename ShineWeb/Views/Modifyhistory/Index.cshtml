@@ -1,0 +1,479 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/bootstrap-typeahead.min.js"></script>
+<script src="~/Scripts/jquery.dataTables.min.js"></script>
+<script src="~/Scripts/dataTables.bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="~/Scripts/Validation.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    td {
+        font-size: 11px;
+        cursor:pointer;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 75%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    /* input:focus + .labelup,
+    input:not(:placeholder-shown) + .labelup, textarea:focus + .labelup, textarea:not(:placeholder-shown) + .labelup {
+        top: -35%;
+        font-size: .7em;
+        padding: 0 .3em;
+        background: #F9F9F9;
+        color: #000000;
+    }*/
+</style>
+<body>
+    <div>
+        @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+        @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+        <h4 id="MainHeading">@ViewData["FormName"]</h4>
+        <div class="toastBox"></div>
+        <div style="width:100%;">
+            <table class="table">
+                <tr>
+                    <td>
+
+                        <span class="form-label">
+                            <select tabindex="1" class="form-control FormclrcmbField" id="cmbUsers"><option value="0">Select User</option></select>
+                            <label class="labelup" for="txtCode"> User </label>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="form-label">
+                            <select tabindex="2" class="form-control FormclrcmbField" id="cmbTrans"><option value="0">Select Transaction</option></select>
+                            <label class="labelup" for="txtCode"> Transaction </label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFParty" class="clrdivs"></div>
+                    </td>
+                    <td>
+                        <span class="form-label">
+                            <input tabindex="3" class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                            <label class="labelup" for="txtCode"> From</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFFrom" class="clrdivs"></div>
+                    </td>
+                    <td>
+
+                        <span class="form-label">
+                            <input tabindex="4" class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                            <label class="labelup" for="txtCode"> To</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
+                    </td>
+                    <td>
+                        <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
+                    </td>
+                </tr>
+                <tr hidden>
+                    <td>
+                        <input id="txtHUserID" /><input id="txtHFormID" /><input id="txtHID" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+                <table class="table table-bordered table-hover" id="tblUserData" width="100%">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">UserID</th>
+                            <th style="text-align:center;font-size: 12px;width:100%;" class="trclrforcolheader">User Name</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+                <table class="table table-bordered table-hover" id="tblTransactions" width="100%">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TransID</th>
+                            <th style="text-align:center;font-size: 12px;width:100%;" class="trclrforcolheader">Transaction Name</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+                <table class="table table-bordered table-hover" id="tblTransData" width="100%">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ID</th>
+                            <th style="text-align:center;font-size: 12px;width:85%;" class="trclrforcolheader">Description</th>
+                            <th style="text-align:center;font-size: 12px;width:15%;" class="trclrforcolheader">Count</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="modalBatch" id="myModalfg">
+            <div class="modal-dialog" style="width:auto;">
+                <div class="modalBatch-content">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <button type="button" class="closefg">&times;</button>
+                        <h5 class="modal-title" style="color:black" id="lblPopupheading"><b>Form Name</b></h5>
+                        @*<hr />*@
+                    </div>
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <div style="padding-top:2px">
+                            <div id="dvAssign" style="width:100%;padding-bottom:7px">
+
+                                <table class="table table-bordered" id="tblMainHeader" style="width:100%">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Modal footer -->
+                    <div class="modal-footer" style="background-color:skyblue">
+                        <div style="padding-top:0px" align="right">
+                            <button tabindex="5" type="button" class="btn btn-warning" id="btnBatchClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+    var UID = '@Session["LoginUserID"]';
+    var Aurl = '@Session["APIurl"]';
+setDate("dtpFFrom", 0);
+setDate("dtpFTo", 0);
+    var TableUserData = $('#tblUserData').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        scrollY: "250px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+    });
+    var TableTransactions = $('#tblTransactions').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        scrollY: "250px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+    });
+    var TableTransData = $('#tblTransData').DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        scrollY: "250px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+    });
+    var TableMainHeader = $('#tblMainHeader').DataTable({
+        paging: false,
+        searching: true,
+        info: false,
+        ordering: false,
+        scrollY: "250px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+});
+
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    $('#btnBatchClose').click(function (e) {
+        modal.style.display = "none";
+    });
+function setDate(FieldID,Type) {
+    $.ajax({
+        url: "@Url.Action("setdate", "Home")",
+        type: 'get',
+        contentType: 'json',
+        data: { TypeID: Type },
+        success: function (data) {
+            $.each(data, function (i, items) {
+                $("#" + FieldID).attr("max", items.MaxDate);
+                $("#" + FieldID).attr("min", items.MinDate);
+                $("#" + FieldID).val(items.Value);
+            });
+        }, error: function (data) {
+            if (data.status == "401") {
+                var msg = data.responseJSON.Message;
+                //showErrorSnackbar(msg + " Logout and Login again.");
+            }
+        }
+    });
+    }
+    GetData(1);
+    var columns = [];
+    function GetData(nMode, strUID = null, strFID = null,strID = null) {
+        $.ajax({
+            url: Aurl + "modifyhistory/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, UserID: strUID, FormID: strFID, FromDate: $("#dtpFFrom").val(), ToDate: $("#dtpFTo").val(), HID: strID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    $('#cmbUsers,#cmbTrans').find("option").remove();
+                    $('#cmbUsers,#cmbTrans').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        if (items.FType == 1) {
+                            $('#cmbTrans').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 2) {
+                            $('#cmbUsers').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                    });
+                }
+                else if (nMode == 2) {
+                    TableUserData.draw().clear(); TableTransactions.draw().clear(); TableTransData.draw().clear();
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            TableUserData.row.add([
+                                items.ID, items.Name
+                            ]).draw(false);
+                        });
+                    } else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+                else if (nMode == 3) {
+                    TableTransactions.draw().clear(); TableTransData.draw().clear();
+                    $.each(data, function (i, items) {
+                        TableTransactions.row.add([
+                            items.ID, items.Name
+                        ]).draw(false);
+                    });
+                }
+                else if (nMode == 4) {
+                    TableTransData.draw().clear();
+                    data = eval(data);
+                    $.each(data, function (i, items) {
+                        TableTransData.row.add([
+                            items.ID, items.Name, items.nCount
+                        ]).draw(false);
+                    });
+                }
+                else if (nMode == 5) {
+                    TableMainHeader.destroy();
+                    $('#tblMainHeader').empty();
+                    modal.style.display = "block";
+                    //$('#tblMainHeader tbody tr').empty();
+
+                    data = eval(data);
+                    const columns1 = Object.keys(data[0]).map(key => {
+                        return { title: key, data: key };
+                    });
+
+                   $('#tblMainHeader').DataTable({
+                        paging: false,
+                        searching: true,
+                        info: false,
+                        ordering: false,
+                        destroy: true,
+                        autoWidth: true, 
+                        scrollY: "250px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        "data": data,
+                        "columns": columns1,
+                        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+                    });
+                    TableMainHeader = $('#tblMainHeader').DataTable();
+                    
+                    $('#tblMainHeader').find('tr').last().css('background-color', 'lightgreen');
+                    $("#tblMainHeader tbody tr").each(function () {
+                        var i = 0;
+                        $(this).find('td').each(function (index) {
+                            var currentCell = $(this);
+                            var nextCell = $(this).closest('tr').next('tr').find('td').eq(i).length > 0 ? $(this).closest('tr').next('tr').find('td').eq(i) : null;
+                            if (nextCell != null) {
+                                if (currentCell[0].innerHTML != nextCell[0].innerHTML) {
+                                    //currentCell.css('backgroundColor', 'yellow');
+                                    currentCell.css('color', 'red');
+                                }
+                            }
+                            i = i + 1;
+                        });
+                    });
+                    
+                }
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    $("#btnFilter").click(function () {
+        var IsValid = true;
+        if ($("#dtpFFrom").val() == "") {
+            IsValid = false;
+            $("#divErrFFrom").html("From Date should not be empty");
+            showErrorSnackbar("From Date should not be empty");
+        }
+        if ($("#dtpFTo").val() == "") {
+            IsValid = false;
+            $("#divErrFTo").html("To Date should not be empty");
+            showErrorSnackbar("To Date should not be empty");
+        } 
+        if (IsValid) {
+            TableUserData.draw().clear(); TableTransactions.draw().clear(); TableTransData.draw().clear();
+            GetData(2, $("#cmbUsers").val(), $("#cmbTrans").val());
+        }
+    });
+    $('#tblUserData tbody').on('click', 'tr', function () {
+        rowdata = TableUserData.row($(this)).data();
+        //showErrorSnackbar(rowdata[1]);
+        var UID = rowdata[0];
+        $("#txtHUserID").val(UID);
+        GetData(3, UID, $("#cmbTrans").val());
+    });
+    $('#tblTransactions tbody').on('click', 'tr', function () {
+        rowdata = TableTransactions.row($(this)).data();
+        //showErrorSnackbar(rowdata[1]);
+        var UID = $("#txtHUserID").val();
+        var TID = rowdata[0];
+        $("#txtHFormID").val(TID);
+        $("#lblPopupheading").text(rowdata[1]);
+        GetData(4, UID, TID);
+    });
+    $('#tblTransData tbody').on('click', 'tr', function () {
+        rowdata = TableTransData.row($(this)).data();
+        //showErrorSnackbar(rowdata[1]);
+        var UID = $("#txtHUserID").val();
+        var TID = $("#txtHFormID").val();
+        var ID = rowdata[0]
+        $("#txtHID").val(ID);
+        GetData(5, UID, TID, ID);
+        
+    });
+</script>

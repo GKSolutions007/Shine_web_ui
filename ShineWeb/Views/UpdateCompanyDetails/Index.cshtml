@@ -1,0 +1,624 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+@*<script src="~/Scripts/Validation.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+
+    each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 10; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        /*overflow: auto;*/ /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 5%;
+            /* overflow: auto;*/
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 20%;
+            /*overflow: auto;*/
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -40%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+    .labelupfortextarea {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -18%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div class="row">
+        <div class="col-sm-12 col-md-4 col-lg-4" align="center">
+            <table class="table" width="100%">
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <input id="txtCompanyID" hidden/>
+                            <span class="form-label">
+                                <input tabindex="1" class="form-control FormclrField" type="text" id="txtCode" placeholder="">
+                                <label class="labelup">Company Code*</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCode" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="2" class="form-control FormclrField" type="text" id="txtName" placeholder="">
+                                <label class="labelup" for="txtName">Company Name *</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnName" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="6" class="form-control FormclrField" type="text" id="txtContactperson" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnBAdd2')">
+                                <label class="labelup" for="txtContactperson">Contact Person</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnContactperson" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="7" class="form-control FormclrField" type="email" id="txtEMail" placeholder="" onkeypress="return AlphaNumericwithSplchar(this.value,'#divErrorOnBAdd3')">
+                                <label class="labelup" for="txtEMail">E-Mail ID</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnEMail" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="10" class="form-control FormclrField" type="number" id="txtMob1" placeholder="" maxlength="10"
+                                       oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                <label class="labelup" for="txtMob1">Mobile No 1</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnMob1" class="clrdivs"></div>
+                        </div>
+                    </td>
+                    <td style="border:none;padding-left:12px;padding-right:7px">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="8" class="form-control FormclrField" type="number" id="txtPh1" placeholder="" maxlength="10"
+                                       oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                <label class="labelup" for="txtPh1">Phone No 1</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPh1" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="7" class="form-control FormclrField" type="email" id="txtWebsite" placeholder="">
+                                <label class="labelup" for="txtEMail">Website</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnWebsite" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-sm-12 col-md-4 col-lg-4">
+            <table class="table" width="100%">
+                <tr class="bgclrfortr">
+                    <td style="border:none;" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <textarea class="form-control FormclrField" rows="3" id="txtAddress"></textarea>
+                                <label class="labelupfortextarea">Address</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrAddress" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="10" class="form-control FormclrField" type="text" id="txtCity" placeholder="">
+                                <label class="labelup" for="txtMob1">City</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCity" class="clrdivs"></div>
+                        </div>
+                    </td>
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <select id="cmbState" class="form-control FormclrcmbField"><option value="0">Select State</option></select>
+                                <label class="labelup" for="cmbCustomerType">State Name</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnState" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="10" class="form-control FormclrField" type="text" id="txtCountry" placeholder="">
+                                <label class="labelup" for="txtMob1">Country</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCountry" class="clrdivs"></div>
+                        </div>
+                    </td>
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input tabindex="19" class="form-control FormclrField" type="number" id="txtPincode" placeholder="" maxlength="6"
+                                       oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                <label class="labelup" for="txtPincode">Pincode *</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPincode" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="text" id="txtGSTIN" placeholder="" maxlength="15">
+                                <label class="labelup" for="txtGSTIN">GSTIN</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnGSTIN" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="text" id="txtPAN" placeholder="" maxlength="10">
+                                <label class="labelup" for="txtPAN">PAN Number</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPAN" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-sm-12 col-md-4 col-lg-4">
+            <table class="table" width="100%">
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="number" id="txtAadhaar" placeholder="" maxlength="12"
+                                       oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                                <label class="labelup" for="txtAadhaar">Aadhaar Number</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnAadhaar" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                        <div>
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="text" id="txtFSSAI" placeholder="" maxlength="14">
+                                <label class="labelup" for="txtFSSAI">FSSAI Number</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnFSSAI" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="bgclrfortr">
+                    <td style="border:none;padding-left:12px;padding-right:7px">
+                        <div>
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="text" id="txtDL20" placeholder="">
+                                <label class="labelup" for="txtDL20">D.L No 20</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnDL20" class="clrdivs"></div>
+                        </div>
+                    </td>
+                    <td style="border:none;padding-left:12px;padding-right:7px">
+                        <div>
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="text" id="txtDL21" placeholder="">
+                                <label class="labelup" for="txtDL21">D.L No 21</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnDL21" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div style="padding-top:10px;right:3%;bottom:10%;position:fixed">
+            <button type="button" class="btn btn-danger btnclrclear" id="btnClear"><span class="glyphicon glyphicon-refresh"> Reset</span></button>
+            <button type="button" class="btn btn-success btnclrsave" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [1], "visible": false, searchable: false }],
+    });
+
+    var Aurl = '@Session["APIurl"]';
+    var UID = '@Session["LoginUserID"]';
+    $("#txtCode").prop("disabled", true);
+    GetData(1,0);
+    var arrData = [];
+    function GetData(nMode,nMenuID) {
+        $.ajax({
+            url: Aurl + "companydetails/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, Name: nMenuID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    $('#cmbState').find("option").remove();
+                    $('#cmbState').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select State --",
+                    }));
+                    $.each(data, function (i, items) {
+                        $.each(items.lstState, function (i, itemState) {
+                            $('#cmbState').append($('<option/>', {
+                                value: itemState.ID,
+                                text: itemState.Name,
+                            }));
+                        });
+                        $("#txtCompanyID").val(items.CompanyId);
+                        $("#txtCode").val(items.CompanyCode);
+                        $("#txtName").val(items.CompanyName);                        
+                        $("#txtAddress").val(items.Address);
+                        $("#txtCountry").val(items.Country);
+                        $("#txtCity").val(items.City);
+                        $("#txtPincode").val(items.Pincode);
+                        $("#txtContactperson").val(items.Contact_Person);
+                        $("#txtMob1").val(items.MobileNo);
+                        $("#txtPh1").val(items.PhoneNo);
+                        $("#txtWebsite").val(items.Website);
+                        $("#txtEMail").val(items.Email);
+                        $("#txtFSSAI").val(items.FSSAI);
+                        $("#txtAadhaar").val(items.AadharNo);
+                        $("#txtPAN").val(items.PANNo);
+                        $("#txtGSTIN").val(items.GSTIN);
+                        $("#txtDL20").val(items.Dl_20);
+                        $("#txtDL21").val(items.Dl_21);
+                        $("#cmbState").val(items.StateID);
+                    });
+                }                
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $(".clrdiv").html("");
+        $("#txtCode").prop("disabled", true);
+        GetData(1, 0);
+    }
+    
+    function Validate() {
+        $(".clrdivs").html("");
+        var IsValid = true, ChkFormation = true;
+        if ($("#txtCode").val() == "") {
+            IsValid = false;
+            $("#divErrorOnCode").html("Customer Code should not be empty");
+            Errors += "Customer Details : Customer Code should not be empty<br/>";
+            showErrorSnackbar("Customer Code should not be empty");
+        }
+        if ($("#txtName").val() == "") {
+            IsValid = false;
+            $("#divErrorOnName").html("Customer Name should not be empty");
+            Errors += "Customer Details : Customer Name should not be empty<br/>";
+            showErrorSnackbar("Customer Name should not be empty");
+        }
+        if ($("#txtPincode").val().length != 6) {
+            IsValid = false;
+            $("#divErrorOnPincode").html("Invalid Pincode format(Enter 6 numeric)");
+            showErrorSnackbar("Invalid Pincode format(Enter 6 numeric)");
+        }
+        ChkFormation = PhonenoValidation($("#txtPh1"), $("#divErrorOnPh1"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = MobilenoValidation($("#txtMob1"), $("#divErrorOnMob1"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = EmailValidation($("#txtEMail"), $("#divErrorOnEMail"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = PANValidation($("#txtPAN"), $("#divErrorOnPAN"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        if ($("#txtAadhaar").val() != "") {
+            ChkFormation = AadharValidation($("#txtAadhaar"), $("#divErrorOnAadhaar"), false);
+            if (!ChkFormation) {
+                IsValid = false;
+            }
+        }
+        ChkFormation = FSSAIValidation($("#txtFSSAI"), $("#divErrorOnFSSAI"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = GSTINValidation($("#txtGSTIN"), $("#divErrorOnGSTIN"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        }
+        ChkFormation = WebsiteValidation($("#txtWebsite"), $("#divErrorOnWebsite"), false);
+        if (!ChkFormation) {
+            IsValid = false;
+        } 
+        
+        return IsValid;
+    }
+    $("#btnSave").click(function () {
+        if (Validate()) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $(".clrdiv").html("");
+        var listmenu = [];
+        $("#tblMasterData tbody tr").each(function () {
+            var nOrder = 0;
+            rowdata = Table.row($(this)).data();
+            var nMenuID = rowdata[1];
+            var valhasvalue = true;
+            $(this).find("input").each(function (index) {
+                var lst = {
+                    "MenuID": nMenuID,
+                    "Order": $(this).val()
+                }
+                listmenu.push(lst);
+            });
+        });
+        var lstMaster = {
+            "CompanyId": $("#txtCompanyID").val(),
+            "CompanyCode": $("#txtCode").val(),
+            "CompanyName": $("#txtName").val(),
+            "StateID": $("#cmbState").val(),
+            "Address": $("#txtAddress").val(),
+            "Country": $("#txtCountry").val(),
+            "State": $("#cmbState option:selected").val(),
+            "City": $("#txtCity").val(),
+            "Pincode": $("#txtPincode").val(),
+            "Contact_Person": $("#txtContactperson").val(),
+            "MobileNo": $("#txtMob1").val(),
+            "PhoneNo": $("#txtPh1").val(),
+            "Website": $("#txtWebsite").val(),
+            "Email": $("#txtEMail").val(),
+            "FSSAI": $("#txtFSSAI").val(),
+            "AadharNo": $("#txtAadhaar").val(),
+            "PANNo": $("#txtPAN").val(),
+            "GSTIN": $("#txtGSTIN").val(),
+            "Dl_20": $("#txtDL20").val(),
+            "Dl_21": $("#txtDL21").val()
+        };
+        $.ajax({
+            url: Aurl + "companydetails/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(lstMaster),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        //alert(items.Message);
+                    }
+                    else {
+                        $("#dvErrorName").html(items.Message);
+                        //alert(items.Message);
+                    }
+                });
+            }, error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }    
+    $('input, select ,button, textarea').on('keydown', function (e) {
+        if (e.key === "Enter") {
+            if (e.target.localName != "button") {
+                e.preventDefault(); // Prevent default behavior
+                var nextinp = $('input,select,button, textarea').eq($('input,select,button, textarea').index(this) + 1);
+                if (nextinp.length) {
+                    if (nextinp[0].disabled) {
+                        nextinp = $('input,select,button, textarea').eq($('input,select,button, textarea').index(this) + 2);
+                    }
+                    nextinp.focus();
+                    nextinp.select();
+                }
+            }
+        }
+        if (e.shiftKey && e.which == 13) {
+            e.preventDefault();
+            var $canfocus = $(':focusable');
+            var index = $canfocus.index(this) - 1;
+            if (index >= $canfocus.length) index = 0;
+            $canfocus.eq(index).focus();
+        }
+    });
+</script>

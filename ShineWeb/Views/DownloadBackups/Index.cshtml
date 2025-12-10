@@ -1,0 +1,734 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/Content/bootstrap.min.3.4.1.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-1.12.4.js"></script>
+<script src="~/Scripts/bootstrap.min.3.4.1.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<head>
+    <style>
+        .dt-input {
+            color: black !important;
+        }
+
+        td {
+            color: black;
+        }
+
+        .form-inline .form-group {
+            margin-right: 15px;
+        }
+
+        .child-tabs {
+            margin-top: 10px;
+        }
+        /* Custom styling for 50-50 tabs */
+        .main-tab-container {
+            display: flex;
+            margin-bottom: 0;
+        }
+
+        .main-tab {
+            flex: 1;
+            text-align: center;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 10px 0;
+            cursor: pointer;
+        }
+
+            .main-tab.active {
+                background-color: #337ab7;
+                /*color: white;*/
+                font-weight: bold;
+            }
+
+        .form-label {
+            position: relative;
+            display: block;
+            clear: both;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .labelup {
+            -webkit-transform: translateY(50%);
+            -moz-transform: translateY(-50%);
+            -ms-transform: translateY(-50%);
+            -o-transform: translateY(-50%);
+            transform: translateY(50%);
+            -webkit-transition: all 0.2s ease-in-out;
+            -moz-transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease-in-out;
+            position: absolute;
+            top: -40%;
+            left: 1em;
+            background: #fffefe;
+            color: #2b2828;
+            font-size: 0.7em;
+            cursor: text;
+            pointer-events: none;
+            font-family: sans-serif;
+        }
+
+        .labelupfortextarea {
+            -webkit-transform: translateY(50%);
+            -moz-transform: translateY(-50%);
+            -ms-transform: translateY(-50%);
+            -o-transform: translateY(-50%);
+            transform: translateY(50%);
+            -webkit-transition: all 0.2s ease-in-out;
+            -moz-transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease-in-out;
+            position: absolute;
+            top: -18%;
+            left: 1em;
+            background: #fffefe;
+            color: #2b2828;
+            font-size: 1em;
+            cursor: text;
+            pointer-events: none;
+            font-family: sans-serif;
+        }
+
+        .gdInput {
+            width: 100%;
+            height: 25px;
+            border-width: 0 0 0.1px 0;
+            border-color: #e0d6d6;
+            color: black !important;
+        }
+
+        #tblDocuments, #tblItemDetails thead {
+            font-size: 9px;
+        }
+
+        #tblDocuments, #tblItemDetails td {
+            font-size: 10px;
+        }
+
+            #tblDocuments th,
+            #tblDocuments td {
+                white-space: nowrap;
+            }
+
+        #tblItemDetails th,
+        #tblItemDetails td {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<style>
+
+
+    .upload-box {
+        background-color: #fff;
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        width: 500px;
+        text-align: center;
+        padding: 30px;
+        margin-left: 20%;
+        transition: 0.3s;
+        cursor: pointer;
+    }
+
+        .upload-box.dragover {
+            border-color: #007bff;
+            background-color: #e6f2ff;
+        }
+
+    .icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+
+    p {
+        margin: 10px 0;
+        color: #555;
+    }
+
+    .browse {
+        color: #007bff;
+        font-weight: bold;
+        text-decoration: underline;
+    }
+
+    .filename {
+        margin-top: 15px;
+        font-weight: bold;
+        color: #333;
+        word-break: break-word;
+        text-align:left;
+    }
+
+    .actions {
+        margin-top: 20px;
+        display: none; /* hidden until file selected */
+        margin-left: 30%;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        margin: 5px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .upload-btn {
+        background-color: #007bff;
+        color: #fff;
+    }
+
+    .remove-btn {
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    .info-box {
+        display: flex;
+        align-items: flex-start;
+        background-color: #e8f3ff; /* Light blue */
+        border-radius: 6px;
+        padding: 12px 16px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        color: #333;
+        max-width: 80%;
+    }
+
+    .info-icon {
+        width: 25px;
+        height: 25px;
+        margin-right: 10px;
+        flex-shrink: 0;
+        color: #0d6efd; /* Bootstrap blue */
+    }
+
+    .info-text a {
+        color: #0d6efd;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .info-text a:hover {
+            text-decoration: underline;
+        }
+</style>
+<style>
+    /* Snackbar container */
+    .RepLoadersnackbar {
+        visibility: hidden; /* hidden by default */
+        min-width: 250px;
+        background-color: #333;
+        color: #fff !important;
+        text-align: left;
+        border-radius: 8px;
+        padding: 12px 20px;
+        position: fixed;
+        top: 50px; /* ⬅️ instead of bottom */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    }
+
+        /* Show animation */
+        .RepLoadersnackbar.show {
+            visibility: visible;
+            animation: slideDown 0.3s, fadeout 0.3s 3s;
+        }
+
+    /* Slide from top */
+    @@keyframes slideDown {
+        from {
+            top: 0;
+            opacity: 0;
+        }
+
+        to {
+            top: 20px;
+            opacity: 1;
+        }
+    }
+
+    @@keyframes fadeout {
+        from {
+            top: 20px;
+            opacity: 1;
+        }
+
+        to {
+            top: 0;
+            opacity: 0;
+        }
+    }
+
+    /* Spinner */
+    .Reploader {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #4caf50;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div id="RepLoadersnackbar" class="RepLoadersnackbar">
+        <table>
+            <tr>
+                <td>
+                    <div class="Reploader"></div>
+                </td>
+                <td style="padding-left:10px;font-size:16px;color:white">
+                    <span>Processing... Please wait</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="container">
+        <!-- Custom Main Tabs -->
+        <div class="main-tab-container">
+            <div class="main-tab active" id="tab-Download">Download</div>
+            <div class="main-tab" id="tab-Upload">Upload</div>
+        </div>
+        <div class="tab-content">
+            <br />
+            <!-- download Tab -->
+            <div id="download" class="tab-pane  in active">
+                <!-- Child Tabs -->
+                <div class="child-tabs">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a data-toggle="tab" href="#docDetails" id="tbBackupfiles">Backup Files</a></li>
+                        <li><a data-toggle="tab" href="#itemDetails" id="tbOtherfiles">Other Files</a></li>
+
+                    </ul>
+
+                    <div class="tab-content">
+                        <div id="docDetails" class="tab-pane fade in active">
+                            <div id="dvMainTable" style="padding-right:100px;">
+                                <table class="table table-bordered" id="tblBackupFiles" width="100%">
+                                    <thead>
+                                        <tr class="trclrforcolheader">
+                                            <th style="text-align:center;font-size: 12px;width:3%;">#</th>
+                                            <th style="text-align:center;font-size: 12px;width:20%;">File Name</th>
+                                            <th style="text-align:center;font-size: 12px;width:15%;">File Size</th>
+                                            <th style="text-align:center;font-size: 12px;width:15%;">Created Date</th>
+                                            <th style="text-align:center;font-size: 12px;width:5%;" title="DownLoad"><span class="glyphicon glyphicon-download-alt"></span></th>
+                                            @*<span class="glyphicon glyphicon-download-alt"></span>*@
+                                            <th style="text-align:center;font-size: 12px;width:0%;">FilePath</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="itemDetails" class="tab-pane fade">
+                            <div id="dvMainTable" style="padding-right:100px;">
+                                <table class="table table-bordered" id="tblOtherFiles" width="100%">
+                                    <thead>
+                                        <tr class="trclrforcolheader">
+                                            <th style="text-align:center;font-size: 12px;width:3%;">#</th>
+                                            <th style="text-align:center;font-size: 12px;width:20%;">File Name</th>
+                                            <th style="text-align:center;font-size: 12px;width:15%;">File Size</th>
+                                            <th style="text-align:center;font-size: 12px;width:15%;">Created Date</th>
+                                            <th style="text-align:center;font-size: 12px;width:5%;" title="DownLoad"><span class="glyphicon glyphicon-download-alt"></span></th>
+                                            <th style="text-align:center;font-size: 12px;width:5%;" title="Delete"><span class="glyphicon glyphicon-trash"></span></th>
+                                            @*<span class="glyphicon glyphicon-download-alt"></span>*@
+                                            <th style="text-align:center;font-size: 12px;width:0%;">FilePath</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <!-- Import Tab -->
+            <div id="upload" class="tab-pane fade">
+
+                <br>
+                <div class="upload-box" id="drop-area">
+                    <input type="file" id="fileElem" multiple accept="*.*" />
+
+                    <div class="icon">📁</div>
+                    <p id="promptText">Drag & drop your file here<br>or <span class="browse">click to browse</span></p>
+                    <p class="filename" id="filename" style="white-space: pre-line;"></p>
+                </div>
+
+                <!-- Action Buttons (initially hidden) -->
+                <div class="actions" id="actionButtons">
+                    <button class="btn remove-btn" onclick="removeFile()">Remove</button>
+                    <button class="btn upload-btn" onclick="uploadFile()">Upload</button>
+                </div>
+                @*<div class="form-inline">
+                        <div class="form-group">
+                            <label class="sr-only">Browse</label>
+                            <input type="file" class="form-control" id="txtImportFile">
+                        </div>
+                        <button class="btn btn-success" id="btnImport">Import</button>
+                    </div>*@
+            </div>
+        </div>
+    </div>
+
+</body>
+<script name="Upload">
+    var UID = '@Session["LoginUserID"]';
+    const dropArea = document.getElementById('drop-area');
+    const fileElem = document.getElementById('fileElem');
+    const filenameDisplay = document.getElementById('filename');
+    const promptText = document.getElementById('promptText');
+    const actionButtons = document.getElementById('actionButtons');
+
+    // Click anywhere in drop area to open file picker
+    dropArea.addEventListener('click', () => {
+        fileElem.click();
+    });
+
+    // Handle file selection
+    fileElem.addEventListener('change', handleFiles);
+
+    // Drag events
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.classList.remove('dragover');
+        fileElem.files = e.dataTransfer.files;
+        handleFiles();
+    });
+
+    function handleFiles() {
+        var selfiles = fileElem.files;
+        var selectedfilenames = "";
+        for (var i = 0; i < selfiles.length; i++) {
+            const listfiles = selfiles[i]
+            const filename = listfiles.name;
+            const createtime = listfiles.lastModifiedDate;
+            const size = listfiles.size;
+            let displaySize;
+            if (size < 1024) {
+                displaySize = size + ' Bytes';
+            } else if (size < 1024 * 1024) {
+                displaySize = (size / 1024).toFixed(2) + ' KB';
+            } else if (size < 1024 * 1024 * 1024) {
+                displaySize = (size / (1024 * 1024)).toFixed(2) + ' MB';
+            } else {
+                displaySize = (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+            }
+            selectedfilenames += parseInt(i+1)+".) "+ filename + "\n";
+            var fileinfo = "File Name : " + filename + "\n" + "Create Date : " + createtime + "\n" + "File Size : " + displaySize
+            console.log("File Info: ", fileinfo);
+        }
+        const file = fileElem.files[0];
+        if (file) {
+            fileElem.title = selectedfilenames;
+            filenameDisplay.textContent = `         📄 ${selfiles.length} file(s) selected\n ${selectedfilenames}`;
+            promptText.style.display = 'none';
+            actionButtons.style.display = 'block';
+        }
+    }
+
+    function removeFile() {
+        fileElem.value = '';
+        filenameDisplay.textContent = '';
+        promptText.style.display = 'block';
+        actionButtons.style.display = 'none';
+    }
+
+    function uploadFile() {
+        var fileUpload = $("#fileElem").get(0);
+        var files = fileUpload.files;
+        // Create FormData object
+        var File = new FormData();
+        if (files.length > 0) {
+            let sb = document.getElementById("RepLoadersnackbar");
+            sb.classList.add("show");
+            File.append(UID, files[0]);
+            for (var i = 0; i < files.length; i++) {
+                File.append(files[i].name, files[i]);
+            }
+            $.ajax({
+                url: Aurl + "myuploads",
+                type: 'POST',
+                datatype: "JSON",
+                data: File,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (data) {
+                    sb.classList.remove("show");
+                    $.each(data, function (i, items) {
+                        $('#dvmsg').show();
+                        showSuccessSnackbar(items.Msg);
+                        fileElem.value = '';
+                        filenameDisplay.textContent = '';
+                        promptText.style.display = 'block';
+                        actionButtons.style.display = 'none';
+                    });
+
+                }, error: function (data) {
+                    sb.classList.remove("show");
+                    showErrorSnackbar("Error Occured");
+                }
+            });
+        } else {
+            showErrorSnackbar("Please select a file.");
+        }
+    }
+
+</script>
+
+<script type="text/javascript"  name="list and download">
+    // Custom tab click handlers
+    $('#tab-Download').click(function () {
+        $('.main-tab').removeClass('active');
+        $(this).addClass('active');
+        $('#download').addClass('in active').show();
+        $('#upload').removeClass('in active').hide();
+    });
+
+    $('#tab-Upload').click(function () {
+        $('.main-tab').removeClass('active');
+        $(this).addClass('active');
+        $('#upload').addClass('in active').show();
+        $('#download').removeClass('in active').hide();
+    });
+    $("#tbBackupfiles").click(function () {
+        GetData(1)
+    });
+    $("#tbOtherfiles").click(function () {
+        GetData(2)
+    });
+    var Table = $('#tblBackupFiles').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [5], "visible": false, searchable: false }, { "targets": [0, 4], "class": "text-center" }],
+    });
+    var TableOtherfiles = $('#tblOtherFiles').DataTable({
+        pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [6], "visible": false, searchable: false }, { "targets": [0, 4,5], "class": "text-center" }],
+    });
+    var Aurl = '@Session["APIurl"]';
+    var arrData = [];
+    var UID = '@Session["LoginUserID"]';
+    var strCompCode = '@Session["CompanyCode"]'
+    var nMode = 1;
+    var FID = $("#txtFormID").val();
+    if ($("#txtAddID").val() == 0) {
+        $("#tab-Upload").hide();
+    }
+    GetData(1);
+    function GetData(nFileType) {
+        $.ajax({
+            url: Aurl + "listbackupfiles",
+            type: 'get',
+            contentType: 'json',
+            data: { FileType: nFileType },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                    console.log(data)
+                    if (nFileType == "1") {
+                        $('#tblBackupFiles').DataTable({
+                            pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: true,
+                            destroy: true,
+                            data: data,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, row, meta) {
+                                        return '<p style="font-size:14px;">' + (meta.row + 1) + '</p>';
+                                    }
+                                },
+                                { "data": "fileName", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "fileSize", "autoWidth": true, className: "dt-body-left" },
+                                { "data": "CreateTime", "autoWidth": true, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-center", width: "5%", orderable: false,
+                                    "visible": $("#txtViewID").val() == 0 ? false : true,
+                                    "mRender": function (data, type, value) {
+                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-download-alt clsbakdownload" style="font-size:16px" title="DownLoad"></span></a>';
+                                        return _action;
+                                    }
+                                },
+                                { "data": "fullPath", "autoWidth": true, "visible": false, className: "dt-body-left" },
+
+                            ],
+                        });
+                        Table = $('#tblBackupFiles').DataTable();
+                        if (!Table.data().any()) {
+                            showErrorSnackbar("No Files Found");
+                        }
+                    }
+                    else {
+                        $('#tblOtherFiles').DataTable({
+                            pageLength: ItemsperPage,
+                            lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: true,
+                            destroy: true,
+                            data: data,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                {   // Row index
+                                    className: "dt-body-center",
+                                    width: "5%",
+                                    render: function (data, type, row, meta) {
+                                        return '<p style="font-size:14px;">' + (meta.row + 1) + '</p>';
+                                    }
+                                },
+                                { data: "fileName", className: "dt-body-left", width: "25%" },
+                                { data: "fileSize", className: "dt-body-left", width: "10%" },
+                                { data: "CreateTime", className: "dt-body-left", width: "20%" },
+                                {
+                                    className: "dt-body-center",
+                                    width: "3%", orderable: false, "visible": $("#txtViewID").val() == 0 ? false : true,
+                                    render: function () {
+                                        return '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-download-alt clsotherdownload" style="font-size:16px" title="Download"></span></a>';
+                                    }
+                                },                                
+                                {
+                                    className: "dt-body-center", "visible": $("#txtModifyID").val() == 0 ? false : true,
+                                    width: "3%", orderable: false,
+                                    render: function () {
+                                        return '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-trash clsotherdelete" style="font-size:16px" title="Delete"></span></a>';
+                                    }
+                                },
+                                { data: "fullPath", visible: false }
+                            ]
+                        });
+
+                        TableOtherfiles = $('#tblOtherFiles').DataTable();
+                        if (!TableOtherfiles.data().any()) {
+                                showErrorSnackbar("No Files Found");
+                        }
+                    }                
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    $('#tblBackupFiles tbody').on('click', '.clsbakdownload', function () {
+        rowdata = Table.row($(this).parents('tr')).data();
+        var FileName = rowdata.fileName;//[0];
+        var FilePath = rowdata.fullPath;//[0];
+        location.href = Aurl + 'downloadbakfile?FPath=' + FilePath + "&FName=" + FileName;
+    });
+    $('#tblOtherFiles tbody').on('click', '.clsotherdownload', function () {
+        rowdata = TableOtherfiles.row($(this).parents('tr')).data();
+        var FileName = rowdata.fileName;//[0];
+        var FilePath = rowdata.fullPath;//[0];
+        location.href = Aurl + 'downloadbakfile?FPath=' + FilePath + "&FName=" + FileName;
+    });    
+    $('#tblOtherFiles tbody').on('click', '.clsotherdelete', function () {
+        rowdata = TableOtherfiles.row($(this).parents('tr')).data();
+        var FileName = rowdata.fileName;//[0];
+        var FilePath = rowdata.fullPath;//[0];
+        deletefiles(FilePath, FileName);        
+    });
+    function deletefiles(strFilePth,strFileName) {
+        $.ajax({
+            url: Aurl + "deletemyuploadfile",
+            type: 'get',
+            contentType: 'json',
+            data: { FPath: strFilePth, FName: strFileName },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == "1") {
+                        showSuccessSnackbar(items.Message);
+                        GetData(2);
+                    }
+                    else if (items.MsgID == "2") {
+                        showErrorSnackbar(items.Message);
+                    }
+                });
+            }, error: function (data) {
+                showErrorSnackbar("Error : " + data);
+            }
+        });
+    }
+</script>

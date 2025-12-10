@@ -1,0 +1,1752 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+
+@*<script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
+<script src="~/Scripts/jquery-1.11.1.min.js"></script>
+<script src="~/Scripts/bootstrap_3.3.7.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+        .gdInput {
+            width: 100%;
+            height: 25px;
+            border-width: 0 0 0.1px 0;
+            border-color: #e0d6d6;
+        }
+        /* each {
+            border-bottom: 1px solid #555;
+            padding: 3px 0;
+        }
+
+        .acItem .name {
+            font-size: 14px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .acItem .desc {
+            font-size: 10px;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #555;
+        }
+
+        .ui-autocomplete {
+            max-height: 245px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+    */
+        td {
+            font-size: 11px;
+        }
+
+        input[type=number] {
+            text-align: right;
+        }
+
+            input[type=number]::placeholder {
+                text-align: left;
+            }
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        /* The Modal (background) */
+        .modalBatch {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 10; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        /* Modal Content/Box */
+        @@media only screen and (min-width: 600px) {
+            .modalBatch-content {
+                background-color: #ffffff;
+                margin: 2% auto; /* 15% from the top and centered */
+                padding: 10px;
+                border: 1px solid #888;
+                width: 85%; /* Could be more or less, depending on screen size */
+                height: 70%;
+                top: 5%;
+                overflow: auto;
+            }
+        }
+
+        @@media only screen and (max-width: 600px) {
+            .modalBatch-content {
+                background-color: #ffffff;
+                margin: 10% auto; /* 15% from the top and centered */
+                padding: 25px;
+                border: 1px solid #888;
+                width: 95%; /* Could be more or less, depending on screen size */
+                height: 80%;
+                top: 20%;
+                overflow: auto;
+            }
+        }
+        /* The Close Button */
+        .closefg {
+            color: #aaa;
+            float: right;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+            .closefg:hover,
+            .closefg:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        .form-label {
+            position: relative;
+            display: block;
+            clear: both;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .labelup {
+            -webkit-transform: translateY(50%);
+            -moz-transform: translateY(-50%);
+            -ms-transform: translateY(-50%);
+            -o-transform: translateY(-50%);
+            transform: translateY(50%);
+            -webkit-transition: all 0.2s ease-in-out;
+            -moz-transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease-in-out;
+            position: absolute;
+            top: -40%;
+            left: 1em;
+            background: #fffefe;
+            color: #2b2828;
+            font-size: 0.90em;
+            cursor: text;
+            pointer-events: none;
+            font-family: sans-serif;
+        }
+
+        .labelupfortextarea {
+            -webkit-transform: translateY(50%);
+            -moz-transform: translateY(-50%);
+            -ms-transform: translateY(-50%);
+            -o-transform: translateY(-50%);
+            transform: translateY(50%);
+            -webkit-transition: all 0.2s ease-in-out;
+            -moz-transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease-in-out;
+            position: absolute;
+            top: -18%;
+            left: 1em;
+            background: #fffefe;
+            color: #2b2828;
+            font-size: 1em;
+            cursor: text;
+            pointer-events: none;
+            font-family: sans-serif;
+        }
+</style>
+<style>
+    /* Align dropdown in DataTable cell */
+    .action-dropdown {
+        min-width: 100px;
+        font-size: 12px;
+        z-index: 1000;
+        text-align: left;
+    }
+
+        /* Optional: Add hover effect */
+        .action-dropdown > li > a {
+            padding: 3px 12px;
+            color: #333;
+            text-decoration: none;
+        }
+
+            .action-dropdown > li > a:hover {
+                background-color: #f5f5f5;
+                color: #000;
+            }
+
+    /* Optional: Make dropdown button minimal */
+    .dropdown-toggle {
+        background-color: transparent !important;
+        border: none !important;
+        font-size: 15px;
+        line-height: 1;
+        padding: 2px 5px;
+    }
+
+        .dropdown-toggle::after {
+            display: none;
+        }
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.Variant, new { @autocomplete = "off", @class = "form-control", @id = "txtVariantID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.Cancel, new { @autocomplete = "off", @class = "form-control", @id = "txtCancelID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    <input hidden id="txtStatus" />
+    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <hr />
+    <div class="toastBox"></div>
+    <div style="padding-bottom:10px;">
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+    <div id="dvMainTable">
+        <div style="width:100%;">
+            <table class="table">
+                <tr>
+                    <td>
+                        <span class="form-label">
+                            <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
+                            <label class="labelup" for="txtCode"> Party Name</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFParty" class="clrdivs"></div>
+                    </td>
+                    <td>
+                        <span class="form-label">
+
+                            <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterAccount" placeholder="">
+                            <label class="labelup" for="txtCode"> Account Name</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFAccount" class="clrdivs"></div>
+                    </td>
+                    <td>
+                        <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
+                    </td>
+                    <td>
+                        <span class="form-label">
+                            <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                            <label class="labelup" for="txtCode"> From</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFFrom" class="clrdivs"></div>
+                    </td>
+                    <td>
+
+                        <span class="form-label">
+                            <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                            <label class="labelup" for="txtCode"> To</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
+                    </td>
+                    <td>
+                        <input tabindex="1" style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowAll">
+                        <label for="chkShowAll" style="font-size:14px;">All Status</label>
+                    </td>
+                    <td>
+                        <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <table class="table table-bordered" id="tblMasterData" width="100%">
+            <thead>
+                @*<tr id="trAdd">
+                        <th></th>
+                        <th align="right" colspan="10">
+                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                        </th>
+                    </tr>*@
+                <tr class="trclrforcolheader">
+                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                    <th style="text-align:center;font-size: 12px;width:0%;">StatusID</th>
+                    <th style="text-align:center;font-size: 12px;width:7%;">Doc ID</th>
+                    <th style="text-align:center;font-size: 12px;width:7%;">Date</th>
+                    <th style="text-align:center;font-size: 12px;width:9%;">Type</th>
+                    <th style="text-align:center;font-size: 12px;width:8%;">Ref No</th>
+                    <th style="text-align:center;font-size: 12px;width:7%;">Payment Mode</th>
+                    <th style="text-align:center;font-size: 12px;width:14%;">Party Name</th>
+                    <th style="text-align:center;font-size: 12px;width:14%;">Account Name</th>
+                    <th style="text-align:center;font-size: 12px;width:8%;">Note Value</th>
+                    <th style="text-align:center;font-size: 12px;width:8%;">Balance</th>
+                    <th style="text-align:center;font-size: 12px;width:6%;">Status</th>
+                    <th style="text-align:center;font-size: 12px;width:6%;">User</th>
+                    <th style="text-align:center;font-size: 12px;width:3%;" title="View">
+                        <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
+                        </span>
+                    </th>
+                    <th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
+                        <span class="glyphicon glyphicon-pencil" style="font-size:16px">
+                        </span>
+                    </th>
+                    @*<th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
+            <span class="glyphicon glyphicon-pencil" style="font-size:16px">
+            </span>
+        </th>
+        <th style="text-align:center;font-size: 12px;width:3%;" title="Cancel">
+            <span class="glyphicon glyphicon-remove-circle" style="font-size:16px">
+            </span>
+        </th>
+        <th style="text-align:center;font-size: 12px;width:3%;" title="View">
+            <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
+            </span>
+        </th>
+        <th style="text-align:center;font-size: 12px;width:3%;" title="Variant">
+            <span class="glyphicon glyphicon-file" style="font-size:12px">
+            </span>
+        </th>*@
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px">
+                        <div class="row">
+                            <div style="padding-top:2px; width:100%" class="col-sm-12 col-md-12 col-lg-12">
+                                <div class="col-sm-12 col-md-4 col-lg-4">
+                                    <table>
+                                        <tr>
+                                            <td align="right" width="40%">
+                                                <label>Doc ID :</label>
+                                            </td>
+                                            <td width="60%">
+                                                <label id="lblDocID" style="font-size:12px">CRDR/2425/1</label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                @*<div class="col-sm-3 col-md-3 col-lg-3">
+                                        <table hidden>
+                                            <tr>
+                                                <td align="right" colspan="2" width="100%">
+                                                    <span class="form-label">
+                                                        <select class="form-control FormclrcmbField" id="cmbUDN"><option value="0">Select UDN</option></select>
+                                                        <label class="labelup">UDN</label>
+
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>*@
+                                <div class="col-sm-12 col-md-4 col-lg-4" align="center">
+                                    <table>
+                                        <tr>
+                                            <td align="right" colspan="2" width="100%">
+                                                <span class="form-label">
+                                                    <input class="form-control FormclrField" type="text" id="txtRefNo" />
+                                                    <label class="labelup">Ref No</label>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-sm-12 col-md-4 col-lg-4" align="right">
+                                    <table>
+                                        <tr>
+                                            <td align="right" colspan="2" width="100%">
+                                                <span class="form-label">
+                                                    <input class="form-control FormclrField" type="date" id="dtpDate" oninput="javascript: if (this.value > this.max) { this.value = this.max; }" />
+                                                    <label class="labelup">Date *</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorDate" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-sm-12 col-md-12 col-lg-12" style="padding-left:40px" align="left">
+                                <input type="radio" class="FormclrField" id="rdoOCinOPEx" name="rdoselect" checked />&ensp;<label style="font-size:14px;" id="lblrdo1" for="rdoOCinOPEx">For Income</label>
+                                &emsp;
+                                <input type="radio" class="FormclrField" id="rdoOCOPParty" name="rdoselect" />&ensp;<label style="font-size:14px;" id="lblrdo2" for="rdoOCOPParty">Part for an income</label>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div style="padding-top:2px; width:100%" class="col-sm-12 col-md-12 col-lg-12">
+                                <div class="col-sm-4 col-md-4 col-lg-4">
+                                    <table class="table" style="width:100%;border:none">
+                                        @*<tr>
+                                                <td style="border:none;padding-right:7px" colspan="2">
+
+                                                </td>
+                                            </tr>*@
+                                        <tr>
+                                            <td style="border:none;padding-right:7px" colspan="2">
+                                                <span class="form-label">
+                                                    <input tabindex="1" type="text" id="txtPartyName" class="form-control FormclrField" placeholder="" />
+                                                    <label class="labelup">Party Name *</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorPartyName" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border:none;padding-right:7px" colspan="2">
+                                                <span class="form-label">
+                                                    <input disabled tabindex="7" type="text" class="form-control FormclrField" id="txtAccountName" placeholder="" />
+                                                    <label class="labelup">Account Name *</label>
+
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorAccountName" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border:none;padding-right:2px">
+                                                <span class="form-label">
+                                                    <select class="form-control FormclrcmbField" id="cmbPaymode"><option value="0">-- Select --</select>
+                                                    <label class="labelup">Payment Mode *</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorPaymode" style="color:red"></div>
+                                            </td>
+                                            <td style="border:none;padding-right:7px">
+                                                <span class="form-label">
+                                                    <select class="form-control FormclrcmbField" id="cmbBTmode"><option value="0">-- Select --</select>
+                                                    <label class="labelup">Mode</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorBTmode" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border:none;padding-right:7px" colspan="2">
+
+                                                <span class="form-label">
+                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtValue" class="form-control FormclrField txtsettag" placeholder="" />
+                                                    <label class="labelup">Value *</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorValue" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                        <tr id="trVisa">
+                                            <td style="border:none;padding-right:7px">
+                                                <span class="form-label">
+                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtVisaPern" class="form-control FormclrField txtsettag" placeholder="" />
+                                                    <label class="labelup">Visa %</label>
+                                                </span>
+                                                <div class="clrdivs" id="dvErrorVisaPern" style="color:red"></div>
+                                            </td>
+                                            <td style="border:none;padding-right:2px">
+                                                <span class="form-label">
+                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtVisaAmt" class="form-control FormclrField txtsettag" placeholder="" />
+                                                    <label class="labelup">Visa ₹</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorVisaAmt" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div style="padding-bottom: 2px;" class="col-sm-4 col-md-4 col-lg-4">
+                                    <table class="table" width="100%" style=" border: none">
+                                        <tr>
+                                            <td style="border:none;padding-right:7px" colspan="2">
+                                                <div>
+                                                    <span class="form-label">
+
+                                                        <select tabindex="5" class="form-control FormclrcmbField" id="cmbBankAccount"><option value="0">Select</option></select>
+                                                        <label class="labelup" for="txtCode">Account No *</label>
+                                                    </span>
+                                                    <a hidden href="javascript:void(0)" id="lnkViewBank">Bank Info</a>
+                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBankAccount" class="clrdivs"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @*<tr id="trNeft">
+
+                                            </tr>*@
+                                        <tr id="trChq">
+                                            <td style="border:none;" width="60%">
+                                                <div>
+                                                    <span class="form-label">
+                                                        <select tabindex="5" class="form-control FormclrcmbField" id="cmbChequeNo"><option value="0">Select</option></select>
+                                                        <label class="labelup" for="txtCode">Cheque No</label>
+                                                    </span>
+                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrChequeNo" class="clrdivs"></div>
+                                                </div>
+                                            </td>
+                                            <td style="border:none;" width="40%">
+                                                <span class="form-label">
+                                                    <input class="form-control" type="date" id="dtpChqueDate" />
+                                                    <label class="labelup">Cheque Date</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorChqueDate" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border:none;" colspan="1">
+                                                <div>
+                                                    <span class="form-label">
+                                                        <input tabindex="4" class="form-control FormclrField" type="number" step="any" id="txtNEFT" placeholder="">
+                                                        <label class="labelup" for="txtCode">Cheque/NEFT/WD Slip No</label>
+                                                    </span>
+                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNEFT" class="clrdivs"></div>
+                                                </div>
+                                            </td>
+                                            <td style="border:none;" colspan="1">
+                                                <div>
+                                                    <span class="form-label">
+                                                        <select tabindex="5" class="form-control FormclrcmbField" id="cmbBank"><option value="0">Select</option></select>
+                                                        <label class="labelup" for="txtCode">Bank Name</label>
+                                                    </span>
+                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrChequeNo" class="clrdivs"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr id="trChq">
+                                            <td style="border:none;" width="60%">
+
+                                                <div>
+                                                    <span class="form-label">
+                                                        <input tabindex="4" class="form-control FormclrField" type="text" id="txtBranch" placeholder="">
+                                                        <label class="labelup" for="txtCode">Branch Name</label>
+                                                    </span>
+                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNEFT" class="clrdivs"></div>
+                                                </div>
+                                            </td>
+                                            <td style="border:none;" width="40%">
+                                                <span class="form-label">
+                                                    <input tabindex="4" class="form-control FormclrField" type="text" id="txtIFSC" placeholder="" maxlength="11">
+                                                    <label class="labelup" for="txtCode">IFSC</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorIFSC" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-sm-4 col-md-4 col-lg-4">
+                                    <table class="table" width="100%" style=" border: none">
+                                        <tr class="bgclrfortr">
+                                            <td style="border:none;" colspan="2">
+                                                <div>
+                                                    <span class="form-label">
+                                                        <input tabindex="1" class="form-control FormclrField" type="text" id="txtRemarks" placeholder="">
+                                                        <label class="labelup" for="txtCode">Remarks</label>
+                                                    </span>
+                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdiv"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="bgclrfortr">
+                                            <td style="border:none;" colspan="2">
+                                                <div>
+                                                    <span class="form-label">
+                                                        <textarea class="form-control FormclrField" rows="3" id="txtNarration"></textarea>
+                                                        <label class="labelupfortextarea" for="txtCode">Narration</label>
+                                                    </span>
+                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNarration" class="clrdiv"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border:none;" colspan="2">
+                                                <div>
+                                                    <label>Balance : </label><label id="lblBalance" style="font-size:14px;font-weight:600;padding-left:10px;">0.00</label>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="form-label">
+
+                    </span>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    @*<div style="padding-top:0px" align="right">
+            <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+            <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+            <button type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+        </div>*@
+                    <table width="100%">
+                        <tr>
+                            <td width="20%" align="left" style="padding-left:20px">
+                                <div>
+                                    <span class="form-label">
+                                        <select class="form-control" id="cmbPrintProfile"><option value="0">Select</option></select>
+                                        <label class="labelup"> Print Profile</label>
+                                    </span>
+                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
+                                </div>
+                            </td>
+                            <td width="80%" align="right">
+                                <div style="padding-right:20px" align="right">
+                                    <button type="button" class="btn clrforpdf" id="btnPDF"><span class="glyphicon glyphicon-envelope"> PDF</span></button>
+                                    <button type="button" class="btn btn-primary" id="btnPreview"><span class="glyphicon glyphicon-print"> Preview</span></button>
+                                    <button type="button" class="btn clrforpreview" id="btnPrint"><span class="glyphicon glyphicon-print"> Print</span></button>
+                                    <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                                    <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                                    <button type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+    //document.body.style.zoom = "85%";
+     var UID = '@Session["LoginUserID"]';
+ var nMode = 1;
+ var FID = $("#txtFormID").val();
+    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false }],
+    });
+    function displayResult(item) {
+        $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
+    }
+    var Aurl = '@Session["APIurl"]';
+    if ($("#txtAddID").val() == 0) {
+        $("#trAdd").hide();
+        $("#btnAdd").hide();
+    }
+    //if ($("#txtModifyID").val() == 0) {
+    //    Table.column(11).visible(false);
+    //}
+    //if ($("#txtCancelID").val() == 0) {
+    //    Table.column(12).visible(false);
+    //}
+    //if ($("#txtViewID").val() == 0) {
+    //    Table.column(13).visible(false);
+    //}
+    //if ($("#txtVariantID").val() == 0) {
+    //    Table.column(14).visible(false);
+    //}
+    var PrintTransID = FID == 10 ? 16 : 17, PrintConfigID = 0;
+    if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
+        //$("#dvMainTable").hide();
+    }
+    if (FID == "10") {
+        $("#lblrdo1").text("For Income");
+        $("#lblrdo2").text("Party For an Income");
+    } else {
+        $("#lblrdo1").text("For Expenses");
+        $("#lblrdo2").text("Party For an Expenses");
+    }
+    GetPrintProfile(PrintTransID);
+    function GetPrintProfile(nTransID) {
+        $.ajax({
+            url: Aurl + "printprofileconfig/getprofile",
+            type: 'get',
+            contentType: 'json',
+            data: { TransID: nTransID },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                $('#cmbPrintProfile').find("option").remove();
+                $('#cmbPrintProfile').append($('<option/>', {
+                    value: 0,
+                    text: "-- Select --",
+                }));
+                var lstdata = eval(data)
+                var getdef = lstdata.filter(pr => pr.DefaultConfig == 1);
+                var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                $.each(lstdata, function (i, items) {
+                    $('#cmbPrintProfile').append($('<option/>', {
+                        value: items.ConfigID,
+                        text: items.ConfigName,
+                    }));
+                    $('#cmbPrintProfile').val(defid);
+                    PrintConfigID = defid;
+                });
+            }
+        });
+    }
+    //setDate();
+    GetData(1,"");
+    //GetData(2,"");
+    //GetFilterData();
+    var arrPartyData = [], arrExpenseData = [], arrALPartyData = [], arrALExpenseData = [], arrBankData=[], nIndexarrParty = 0, nIndexarrAccount = 0;
+    function GetData(nMode, nID, strVal = "") {
+        $.ajax({
+            url: Aurl + "othercollectionpayment/get",
+            type: 'get',
+            contentType: 'json',
+            data: { TransID: FID, Mode: nMode, ID: nID, Value: strVal },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 1) {
+                    $('#cmbUDN,#cmbPaymode,#cmbBTmode,#cmbBankAccount,#cmbChequeNo,#cmbBank').find("option").remove();
+                    $('#cmbUDN,#cmbPaymode,#cmbBTmode,#cmbBankAccount,#cmbChequeNo,#cmbBank').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    arrPartyData = [], arrExpenseData = [], arrALPartyData = [], arrALExpenseData = [], arrBankData = [];
+                    nIndexarrParty = 0, nIndexarrAccount = 0;
+                    $.each(data, function (i, items) {
+                        if (items.FType == 1) {
+                            var al = {
+                                "label": items.Name,
+                            }
+                            arrALPartyData.push(al);
+                            arrPartyData[nIndexarrParty] = items.Name;
+                            nIndexarrParty++;
+                        }
+                        if (items.FType == 2) {
+                            var al = {
+                                "label": items.Name,
+                            }
+                            arrALExpenseData.push(al);
+                            arrExpenseData[nIndexarrAccount] = items.Name;
+                            nIndexarrAccount++;
+                        }
+                        if (items.FType == 3) {
+                            $('#cmbUDN').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 4) {
+                            $("#lblDocID").text(items.Name);
+                        }
+                        if (items.FType == 5) {
+                            $('#cmbPaymode').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 6) {
+                            $('#cmbBTmode').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                        if (items.FType == 7) {
+                            var BADetails = (items.Name).split('|');
+                            $('#cmbBankAccount').append($('<option/>', {
+                                value: items.ID,
+                                text: BADetails[0],
+                            }));
+                            var BAInfo = {
+                                "ID": items.ID,
+                                "AccNo": BADetails[0],
+                                "Bank": BADetails[1],
+                                "Branch": BADetails[2],
+                                "IFSC": BADetails[3],
+                                "MICR": BADetails[4],
+                                "FAID" : items.Code
+                            }
+                            arrBankData.push(BAInfo);
+                        }
+                        if (items.FType == 8) {
+                            $('#cmbBank').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                    });
+                    SetAutlistforFields();
+                }
+                if (nMode == 2) {
+                    Table.draw().clear();
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            Table.row.add([
+                                items.ID,
+                                items.DocID,
+                                items.DocDate,
+                                items.OCPType,
+                                items.RefNo,
+                                items.ContType,
+                                items.PartyID,
+                                items.FAID,
+                                items.NoteValue,
+                                items.Balance,
+                                items.Status,
+                                items.Status == 'Amended' || items.Status == 'Cancelled' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
+                                items.Status == 'Amended' || items.Status == 'Cancelled' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-remove-circle clsCancel" style="font-size:16px" title="Cancel"></span></a>',
+                                '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
+                                '<a href="javascript:void(0)" class="clsVariant" style = "font-size:12px"><span class="glyphicon glyphicon-file clsVariant" style="font-size:12px" title="Variant"></span></a>',
+                            ]).draw(false);
+                        });
+                    }
+                    else {
+                        showErrorSnackbar("No records found");
+                    }
+                }
+                if (nMode == 3) {
+
+                    $.each(data, function (i, items) {
+                        if (nTransMode != 3)
+                            $("#lblDocID").text(items.DocID);
+                        //$("#txtValue").val(items.NoteValue);
+
+                        updateInputColumn("txtValue",  items.NoteValue);
+                            $("#txtID").val(items.ID), $("#dtpDate").val(items.DocDate),
+                        $("#txtRefNo").val(items.RefNo), $("#txtPartyName").val(items.PartyID), $("#txtAccountName").val(items.FAID),
+                         $("#txtRemarks").val(items.Remark), $("#txtNarration").val(items.Narration),
+                            $("#cmbUDN").val(items.UDFId), $("#txtStatus").val(items.StatusID);
+                        $("#rdoOCinOPEx").prop("checked", items.OCPType == "2");
+                        $("#rdoOCOPParty").prop("checked", items.OCPType == "3");
+                        $("#cmbPaymode").val(items.ContType),
+                            $("#cmbBTmode").val(items.ContMode),
+                            //$("#txtNEFT").val(items.NEFTNo),
+                            //$("#cmbChequeNo").val(items.ChequeNo),
+                            //$("#dtpChqueDate").val(items.ChequeDate),
+                            updateInputColumn("txtVisaAmt", items.VisaPern); updateInputColumn("txtVisaPern", items.VisaAmt);
+                        if (items.OCPPMData.length > 0) {
+                            var BankAccID = 0;
+                            var md = [];
+                            if (FID == 11) {
+                                md = arrBankData.filter(t => t.FAID == items.OCPPMData[0].BankAccID);
+                            } else {
+                                md = arrBankData.filter(t => t.ID == items.OCPPMData[0].BankAccID);
+                            }
+                            if (md.length > 0) {
+                                BankAccID = md[0].ID;
+                            }
+                            if (FID == 11 && $("#cmbPaymode").val() == 2) {
+                                GetData(4, BankAccID, items.OCPPMData[0].ChequeID);
+                            }
+                            if (FID == 11)
+                                $("#txtNEFT").val(items.OCPPMData[0].NeftID);
+                            else
+                                $("#txtNEFT").val(items.OCPPMData[0].ChequeID);
+                            //$("#cmbChequeNo").val(items.OCPPMData[0].ChequeID);
+                            $("#dtpChqueDate").val(items.OCPPMData[0].Date);
+                            $("#cmbBankAccount").val(BankAccID);//items.OCPPMData[0].BankAccID
+                            $("#txtIFSC").val(items.OCPPMData[0].IfscCode);
+                            $("#cmbBank").val(items.OCPPMData[0].BankName);
+                            $("#txtBranch").val(items.OCPPMData[0].BranchName);
+                        }
+                        EnableDisableFields();
+                        if ($("#cmbPaymode").val() != 1 && md.length > 0) {//cash
+                            var faid = md[0].FAID;
+                            GetClosingBalance(6, faid, $("#dtpDate").val());
+                        } else if ($("#cmbPaymode").val() == 1) {
+                            GetClosingBalance(6, 13, $("#dtpDate").val());
+                            $("#lblBalance").text("0.00");
+                        } else {
+
+                        }
+                        modal.style.display = "block";
+                    });
+                }
+                if (nMode == 4) {
+                    $('#cmbChequeNo').find("option").remove();
+                    $('#cmbChequeNo').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        $('#cmbChequeNo').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                    });
+                    $("#cmbChequeNo").val(strVal);
+                }
+                if (nMode == 6 || nMode == 7) {// type change
+                    $("#lblBalance").text("0.00");
+                    $.each(data, function (i, items) {
+                        var bal = parseFloat(items.Balance).toFixed(DecVal) + " " + items.ContType;
+                        $("#lblBalance").text(bal);
+                    });
+                }
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    function GetClosingBalance(nMode, nID, strVal = "") {
+        $.ajax({
+            url: Aurl + "contra/get",
+            type: 'get',
+            contentType: 'json',
+            data: { TransID: FID, Mode: nMode, ID: nID, Value: strVal },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (nMode == 6) {// type change
+                    $("#lblBalance").text("0.00");
+                    $.each(data, function (i, items) {
+                        var bal = parseFloat(items.Balance).toFixed(DecVal) + " " + items.ContType;
+                        $("#lblBalance").text(bal);
+                    });
+                }
+            }
+        });
+    }
+    $('#btnFilter').click(function (e) {
+        GetFilterData(1);
+    });
+    var Showall = '@Session["Showallstatus"]';
+$("#chkShowAll").prop("checked", Showall == '1');
+    function GetFilterData(ClickType = 0) {//arrVendorName,divErrFTo,divErrFFrom,divErrFParty
+        var IsValid = true;
+        //txtFilterAccount,txtFilterParty
+        $(".clrdivs").html("");
+        if ($("#txtFilterParty").val() != "") {
+            const exists = arrPartyData.indexOf($("#txtFilterParty").val().trim()) !== -1;
+            if (!exists) {
+                IsValid = false;
+                $("#divErrFParty").html("Select Party Name from list");
+            }
+        }
+        if ($("#txtFilterAccount").val() != "") {
+            const exists = arrExpenseData.indexOf($("#txtFilterAccount").val().trim()) !== -1;
+            if (!exists) {
+                IsValid = false;
+                $("#divErrFAccount").html("Select Account Name from list");
+            }
+        }
+        if ($("#dtpFFrom").val() == "") {
+            IsValid = false;
+            $("#divErrFFrom").html("From date should not be empty");
+        }
+        if ($("#dtpFTo").val() == "") {
+            IsValid = false;
+            $("#divErrFTo").html("To date should not be empty");
+        }
+        if ($("#dtpFFrom").val() > $("#dtpFTo").val()) {
+            IsValid = false;
+            $("#divErrFFrom").html("From date should be lessthan To Date");
+        }
+        if (IsValid) {
+            var strAcc = $("#txtFilterAccount").val(), strParty = $("#txtFilterParty").val(), dFrom = $("#dtpFFrom").val(),
+                dTo = $("#dtpFTo").val(), chkshow = $("#chkShowAll").is(":checked") ? "1" : "0";
+            $.ajax({
+                url: Aurl + "othercollectionpayment/getfilterdata",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: 2, TransID: FID, AccName: strAcc, Party: strParty, FromDate: dFrom, ToDate: dTo, Showall: chkshow },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    Table.draw().clear(); Table.draw().clear();
+                    var billjsdata = eval(data);
+                    var searchValue = '';
+                    if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+                        searchValue = $('#tblMasterData').DataTable().search(); // get current search term
+                    }
+                    $('#tblMasterData').DataTable({
+                        pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                        scrollY: "450px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: true,
+                        destroy: true,
+                        data: billjsdata,
+                        fixedColumns: false,
+                        searching: true,
+                        ordering: true,
+                        sorting: false,
+                        pageLength: ItemsperPage, // default page size
+                        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                        columns: [
+                            { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                            { "data": "StatusID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                            { "data": "DocID", "autoWidth": true, className: "dt-body-left" },//1
+                            { "data": "DocDate", "autoWidth": true, className: "dt-body-left" },//2
+                            { "data": "OCPType", "autoWidth": true, className: "dt-body-left" },//2
+                            { "data": "RefNo", "autoWidth": true, className: "dt-body-left" },//3
+                            { "data": "ContType", "autoWidth": true, className: "dt-body-left" },//2
+                            { "data": "PartyID", "autoWidth": true, className: "dt-body-left" },//4
+                            { "data": "FAID", "autoWidth": true, className: "dt-body-left" },//5
+                            { "data": "NoteValue", "autoWidth": true, className: "dt-body-right" },//6
+                            { "data": "Balance", "autoWidth": true, className: "dt-body-right" },//9
+                            { "data": "Status", "autoWidth": true, className: "dt-body-left" },//10
+                            {
+                                className: "dt-body-left",
+                                "mRender": function (data, type, value) {
+                                    var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
+                                    return _action;
+                                }
+                            },
+                            {
+                                className: "dt-body-center", orderable: false,
+                                "mRender": function (data, type, value) {
+                                    var _action = '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                    return _action;
+                                }, "visible": $("#txtViewID").val() == 0 ? false : true
+                            },
+                            {
+                                className: "dt-body-center",
+                                orderable: false,
+                                render: function (data, type, row) {
+
+                                    var status = row.Status;
+                                    var edit = '', cancel = '', view = '', variant = '', Print = '', Preview = '', PDF = '';
+                                    if ($("#txtViewID").val() == 1) {
+                                        var Print = '<a class="dropdown-item clsprint" href="javascript:void(0)">🖨 Print</a>';
+                                        var Preview = '<a class="dropdown-item clspreview" href="javascript:void(0)#">🖨 Preview</a>';
+                                        var PDF = '<a class="dropdown-item clspdf" href="javascript:void(0)">📕 PDF</a>';
+                                    }
+                                    if (status !== 'Amended' && status !== 'Cancelled') {
+                                        if ($("#txtModifyID").val() == 1)
+                                            edit = '<a class="dropdown-item clsEdit" href="javascript:void(0)">✏️ Edit</a>';
+                                        if ($("#txtCancelID").val() == 1)
+                                            cancel = '<a class="dropdown-item clsCancel" href="javascript:void(0)">❌ Cancel</a>';
+                                    }
+                                    if ($("#txtVariantID").val() == 1)
+                                        variant = '<a class="dropdown-item clsVariant" href="javascript:void(0)">📄 Variant</a>';
+                                    return `
+<div class="dropdown">
+    <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown">
+        &#8942;
+    </button>
+    <ul class="dropdown-menu  action-dropdown" style="right:0;left:auto;">
+        ${edit ? `<li>${edit}</li>` : ''}
+        ${cancel ? `<li>${cancel}</li>` : ''}
+        ${variant ? `<li>${variant}</li>` : ''}
+        ${Print ? `<li>${Print}</li>` : ''}
+        ${Preview ? `<li>${Preview}</li>` : ''}
+        ${PDF ? `<li>${PDF}</li>` : ''}
+    </ul>
+</div>`;
+                                }
+                            }
+                            //{
+                            //    className: "dt-body-center",
+                            //    "mRender": function (data, type, value) {
+                            //        var _action = value.Status == 'Amended' || value.Status == 'Cancelled' ? '' : '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                            //        return _action;
+                            //    }, "visible": $("#txtModifyID").val() == 0 ? false : true
+                            //},//11
+                            //{
+                            //    className: "dt-body-center",
+                            //    "mRender": function (data, type, value) {
+                            //        var _action = value.Status == 'Amended' || value.Status == 'Cancelled' ? '' : '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-remove-circle clsCancel" style="font-size:16px" title="Cancel"></span></a>';
+                            //        return _action;
+                            //    }, "visible": $("#txtCancelID").val() == 0 ? false : true
+                            //},//12
+                            //{
+                            //    className: "dt-body-center",
+                            //    "mRender": function (data, type, value) {
+                            //        var _action = '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                            //        return _action;
+                            //    }, "visible": $("#txtViewID").val() == 0 ? false : true
+                            //},//13
+                            //{
+                            //    className: "dt-body-center",
+                            //    "mRender": function (data, type, value) {
+                            //        var _action = '<a href="javascript:void(0)" class="clsVariant" style = "font-size:12px"><span class="glyphicon glyphicon-file clsVariant" style="font-size:12px" title="Variant"></span></a>';
+                            //        return _action;
+                            //    }, "visible": $("#txtVariantID").val() == 0 ? false : true
+                            //},//14
+                        ],
+                        initComplete: function () {
+                            // Re-apply search value after table is fully initialized
+                            this.api().search(searchValue).draw();
+                        }
+                    });
+                    Table = $('#tblMasterData').DataTable();
+                    if (!Table.data().any()) {
+                        if (ClickType == 1)
+                            showErrorSnackbar("No records found");
+                    }
+                    //if (data.length > 0) {
+                    //    $.each(data, function (i, items) {
+                    //        Table.row.add([
+                    //            items.ID,
+                    //            items.DocID,
+                    //            items.DocDate,
+                    //            items.OCPType,
+                    //            items.RefNo,
+                    //            items.ContType,
+                    //            items.PartyID,
+                    //            items.FAID,
+                    //            items.NoteValue,
+                    //            items.Balance,
+                    //            items.Status,
+                    //            items.Status == 'Amended' || items.Status == 'Cancelled' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
+                    //            items.Status == 'Amended' || items.Status == 'Cancelled' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-remove-circle clsCancel" style="font-size:16px" title="Cancel"></span></a>',
+                    //            '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
+                    //            '<a href="javascript:void(0)" class="clsVariant" style = "font-size:12px"><span class="glyphicon glyphicon-file clsVariant" style="font-size:12px" title="Variant"></span></a>',
+                    //        ]).draw(false);
+                    //    });
+                    //}
+                    //else {
+                    //    if (ClickType == 1)
+                    //    showErrorSnackbar("No records found");
+                    //}
+
+                }, error: function (data) {
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+        }
+    }
+    function SetAutlistforFields() {
+        $("#txtPartyName,#txtFilterParty").autocomplete({
+            minLength: 0,
+            source: arrALPartyData,
+            autoFocus: true,
+            //focus: function (event, ui) {
+            //    $("#txtName").val(ui.item.label);
+            //    return false;
+            //},
+            select: function (event, ui) {
+                var id = event.target.id;
+                $("#" + id).val(ui.item.label);
+                //$("#txtRemarks").val(ui.item.id);
+                return false;
+            },
+        }).autocomplete("instance")._renderItem = function (ul, item) {
+            return $("<li class='each'>")
+                .append("<div class='acItem'><span class='name'>" +
+                    item.label + "</span></div>")
+                .appendTo(ul);
+        };
+        $("#txtAccountName,#txtFilterAccount").autocomplete({
+            minLength: 0,
+            source: arrALExpenseData,
+            autoFocus: true,
+            //focus: function (event, ui) {
+            //    $("#txtName").val(ui.item.label);
+            //    return false;
+            //},
+            select: function (event, ui) {
+                var id = event.target.id;
+                $("#" + id).val(ui.item.label);
+                //$("#txtRemarks").val(ui.item.id);
+                return false;
+            },
+        }).autocomplete("instance")._renderItem = function (ul, item) {
+            return $("<li class='each'>")
+                .append("<div class='acItem'><span class='name'>" +
+                    item.label + "</span></div>")
+                .appendTo(ul);
+        };
+    }
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    function CloseForm() {
+        modal.style.display = "none";
+    }
+
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    $("#btnAdd").click(function () {
+        nMode = 1;
+        nTransMode = 1;
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnSave,#btnClear,#btnClose").prop("disabled", false);
+        $("#btnPreview,#btnPDF").prop("disabled", true);
+        $("#lblPopupheading").text("Add " + $("#MainHeading").text());
+        modal.style.display = "block";
+        ClearForm(false);
+        EnableDisableFields();
+    });
+    $("#rdoOCinOPEx,#rdoOCOPParty").change(function (e) {
+        ClearForm(false);
+        EnableDisableFields();
+
+    });
+    $("#cmbBankAccount").change(function (e) {
+        $("#txtIFSC,#txtBranch").val("");
+        $("#cmbBank").val(0);
+        $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", false);
+        var id = $("#txtID").val() != "" ? $("#txtID").val() : "0"
+        var md = arrBankData.filter(t => t.ID == $('#cmbBankAccount').val());
+        if (md.length > 0) {
+            if (FID == 11) {
+                $("#txtIFSC").val(md[0].IFSC);
+                $("#txtBranch").val(md[0].Branch);
+                $("#cmbBank").val(md[0].Bank);
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+            }
+            if (FID == 10 && ($("#cmbPaymode").val() == 4 || $("#cmbPaymode").val() == 5)) {
+                $("#txtIFSC").val(md[0].IFSC);
+                $("#txtBranch").val(md[0].Branch);
+                $("#cmbBank").val(md[0].Bank);
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+            }
+            else if (FID == 11 && $("#cmbPaymode").val() == 2) {
+                GetData(4, $("#cmbBankAccount").val(), id);
+            }
+        }
+        if ($("#cmbPaymode").val() != 1 && md.length > 0) {//cash
+            var faid = md[0].FAID;
+            GetClosingBalance(6, faid, $("#dtpDate").val());
+        } else {
+            $("#lblBalance").text("0.00");
+        }
+    });
+    $("#cmbPaymode").change(function (e) {
+        $("#cmbBankAccount").val(0);
+        $("#cmbBTmode").val(0);
+        $("#cmbBank").val(0);
+        $("#cmbChequeNo").val(0);
+        updateInputColumn("txtVisaAmt", 0);
+        updateInputColumn("txtVisaPern", 0);
+        EnableDisableFields();
+        if ($("#cmbPaymode").val() == 1) {//cash
+            GetClosingBalance(6, 13, $("#dtpDate").val());
+        } else{
+            $("#lblBalance").text("0.00");
+        }
+    });
+    $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", FID == 11);
+    function EnableDisableFields() {
+        var rdo1 = $("#rdoOCinOPEx").is(":checked");
+        var rdo2 = $("#rdoOCOPParty").is(":checked");
+        var Paymode = $("#cmbPaymode").val();
+        $("#dtpChqueDate").val("");
+        $(".clrdiv,.clrdivs").html("");
+        $("#cmbBTmode,#txtVisaAmt,#txtVisaPern,#cmbBankAccount,#txtNEFT,#cmbChequeNo,#dtpChqueDate").prop("disabled", false);
+        $("#txtPartyName").prop("disabled", rdo1);
+        $("#trVisa").hide(); //$("#trNeft").hide(); $("#trChq").hide();
+        if (Paymode == 1) {//cash
+            $("#cmbBTmode,#txtVisaAmt,#txtVisaPern,#cmbBankAccount,#txtNEFT,#cmbChequeNo,#dtpChqueDate").prop("disabled", true);
+        }
+        else if (Paymode == 2) {//cheque
+            $("#dtpChqueDate").val($("#dtpDate").val());
+            if (FID == 10) {
+                $("#cmbBTmode,#txtVisaAmt,#txtVisaPern,#cmbBankAccount,#cmbChequeNo").prop("disabled", true);
+                //$("#trNeft").show();
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", false);
+            }
+            else {
+
+                $("#cmbBTmode,#txtVisaAmt,#txtVisaPern,#txtNEFT").prop("disabled", true);
+                //$("#trChq").show();
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+            }
+        }
+        else if (Paymode == 3) {//DD
+            //$("#trNeft").show();
+            if (FID == 10) {
+                $("#cmbBTmode,#txtVisaAmt,#txtVisaPern,#cmbBankAccount,#cmbChequeNo").prop("disabled", true);
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", false);
+            }
+            else {
+                $("#cmbBTmode,#txtVisaAmt,#txtVisaPern,#cmbChequeNo,#dtpChqueDate").prop("disabled", true);
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+            }
+        }
+        else if (Paymode == 4) {//Bank transfer
+            //$("#trNeft").show();
+            if (FID == 10) {
+                $("#txtVisaAmt,#txtVisaPern,#cmbChequeNo,#dtpChqueDate").prop("disabled", true);
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+            }
+            else {
+                $("#txtVisaAmt,#txtVisaPern,#cmbChequeNo,#dtpChqueDate").prop("disabled", true);
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+            }
+        }
+        else if (Paymode == 5) {//VISA
+            $("#trVisa").show();
+            if (FID == 10) {
+                $("#cmbBTmode,#cmbChequeNo,#dtpChqueDate").prop("disabled", true);
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+            }
+            else {
+                $("#cmbBTmode,#cmbChequeNo,#dtpChqueDate").prop("disabled", true);
+                $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+            }
+        }
+        else {
+            $("#cmbBTmode,#txtVisaAmt,#txtVisaPern,#cmbBankAccount,#txtNEFT,#cmbChequeNo,#dtpChqueDate").prop("disabled", true);
+            $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+        }
+        if (nTransMode == 5 || nTransMode == 4) {
+            $("#txtPartyName,#cmbBTmode,#txtVisaAmt,#txtVisaPern,#cmbBankAccount,#txtNEFT,#cmbChequeNo,#dtpChqueDate").prop("disabled", true);
+            $("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", true);
+        }
+    }
+    function SetTagZero() {
+        var inputs = $(".txtsettag");
+        for (var i = 0; i < inputs.length; i++) {
+            var field = $(inputs[i]);
+            var FID = field[0].id;
+            updateInputColumn(FID, "0");
+        }
+    }
+        var DecVal = '@Session["DecimalValues"]';
+function updateInputColumn(inputID, netValue) {
+    //const label = document.getElementById(`dgvProdGross${rowId}`);
+    const input = document.getElementById(inputID);
+    var value = netValue != "" ? netValue : 0;
+    input.setAttribute('txttag', parseFloat(value).toFixed(4));
+    input.value = parseFloat(value).toFixed(DecVal);
+    input.title = netValue;
+}
+    $(".txtsettag").focusin(function (e) {
+        var id = e.target.id;
+        const val = document.getElementById(id).getAttribute("txttag");
+        $("#" + id).val(val);
+        $("#" + id).select();
+    });
+    $(".txtsettag").blur(function (e) {
+        var val = e.target.value;
+        var id = e.target.id;
+        updateInputColumn(id, val);
+    });
+    function CalculateValues() {
+        var DiscAmt = 0, grs = 0, tax = 0, net = 0, dpern = 0;
+        var Goods = document.getElementById("txtValue").getAttribute("txttag");// ReturnTagValue("txtValue", "");
+        if (Goods > 0) {
+            DiscAmt = document.getElementById("txtVisaAmt").getAttribute("txttag"); //ReturnTagValue("txtVisaAmt", "");
+            grs = parseFloat(Goods) - parseFloat(DiscAmt);
+            tax = (grs * parseFloat(taxPern)) / 100;
+            net = grs + tax;
+            dpern = (parseFloat(DiscAmt) / parseFloat(Goods)) * 100;
+        }
+        updateInputColumn("txtVisaAmt", DiscAmt);
+        updateInputColumn("txtVisaPern", dpern);
+        //setTagValue("txtVisaAmt", "", DiscAmt);
+        //setTagValue("txtVisaPern", "", dpern);
+    }
+    $('#txtValue').change(function (e) {
+        var val = e.target.value;
+        if ($('#txtVisaPern').val() != "") {
+            const VPern = document.getElementById('txtVisaPern').getAttribute("txttag");
+            var vamt = parseFloat(val) + ((parseFloat(VPern) * parseFloat(val)) / 100);
+            updateInputColumn("txtVisaAmt", vamt);
+        }
+    });
+    $('#txtVisaAmt').change(function (e) {
+        if (parseFloat($('#txtValue').val()) > 0) {
+            if (e.target.value != "") {
+                if (parseFloat(e.target.value) > parseFloat($('#txtValue').val())) {
+                    updateInputColumn("txtVisaAmt", 0);
+                    updateInputColumn("txtVisaPern", 0);
+                    showErrorSnackbar("Visa Amount should be less than Value");
+                }
+                else {
+                    const val = document.getElementById('txtValue').getAttribute("txttag");
+                    var dpern = (parseFloat(e.target.value) / parseFloat(val)) * 100;
+                    //updateInputColumn("txtVisaAmt", e.target.value);
+                    updateInputColumn("txtVisaPern", dpern);
+                }
+            }
+            else {
+                updateInputColumn("txtVisaAmt", 0);
+                updateInputColumn("txtVisaPern", 0);
+            }
+            //CalculateValues()
+        }
+    });
+    $('#txtVisaPern').change(function (e) {
+        if (parseFloat($('#txtValue').val()) > 0) {
+            if (parseFloat(e.target.value) > 100) {
+                showErrorSnackbar("Visa Percentage should be less than 100");
+                updateInputColumn("txtVisaAmt", 0);
+                updateInputColumn("txtVisaPern", 0);
+            }
+            else {
+                if (e.target.value != "") {
+                    const val = document.getElementById('txtValue').getAttribute("txttag");
+                    var dpern = parseFloat(val) +((parseFloat(e.target.value) * parseFloat(val)) / 100);
+                    updateInputColumn("txtVisaAmt", dpern);
+                    //updateInputColumn("txtVisaPern", dpern);
+                }
+                else {
+                    updateInputColumn("txtVisaAmt", 0);
+                    updateInputColumn("txtVisaPern", 0);
+                }
+            }
+            //CalculateValues();
+        }
+    });
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else {
+
+            ClearForm();
+        }
+    });
+    setDate("dtpDate", 0);
+setDate("dtpFFrom", 0);
+setDate("dtpFTo", 0);
+
+setTimeout(function () { GetFilterData(); }, 800);
+
+function setDate1(FieldID,Type) {
+    $.ajax({
+         url: "@Url.Action("setdate", "Home")",
+        type: 'get',
+        contentType: 'json',
+        data: { TypeID: Type },
+        success: function (data) {
+            $.each(data, function (i, items) {
+                $("#" + FieldID).attr("max", items.MaxDate);
+                $("#" + FieldID).attr("min", items.MinDate);
+                $("#" + FieldID).val(items.Value);
+            });
+        }
+    })
+}
+
+
+    function ClearForm(ClosePOPup = true) {
+        GetData(1, "");
+        $(".FormclrField").val("");
+        $(".FormclrcmbField").val(0);
+        $(".clrdiv,.clrdivs").html("");
+        $("#txtPartyName").focus();
+        $("#lblBalance").text("0.00");
+        EnableDisableFields();
+        if (nTransMode != 1 && ClosePOPup)
+            modal.style.display = "none";
+        SetTagZero();
+        setDate("dtpDate", 0);
+        SetFilterDate();
+        setTimeout(function () { GetFilterData(); }, 800);
+        inputTag = [];
+        $("#btnPreview,#btnPDF").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint").hide();
+        $("#btnSave,#btnClose,#btnDraft,#btnClear").show();
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv,.clrdivs").html("");
+        var IsValid = true, ChkFormation = true;
+        var rdo1 = $("#rdoOCinOPEx").is(":checked");
+        var rdo2 = $("#rdoOCOPParty").is(":checked");
+        if (rdo2) {
+            if ($("#txtPartyName").val() == "") {
+                IsValid = false;
+                $("#dvErrorPartyName").html("Party Name should not be empty");
+                showErrorSnackbar("Party Name should not be empty");
+            }
+            else {
+                const exists = arrPartyData.indexOf($("#txtPartyName").val().trim()) !== -1;
+                if (!exists) {
+                    IsValid = false;
+                    $("#dvErrorPartyName").html("Select Party Name from list");
+                    showErrorSnackbar("Select Party Name from list");
+                }
+            }
+        }
+        if ($("#txtAccountName").val() == "") {
+            IsValid = false;
+            $("#dvErrorAccountName").html("Select Account Name from list");
+            showErrorSnackbar("Select Account Name from list");
+        }
+        else {
+            const exists = arrExpenseData.indexOf($("#txtAccountName").val().trim()) !== -1;
+            if (!exists) {
+                IsValid = false;
+                $("#dvErrorAccountName").html("Select Account Name from list.");
+                showErrorSnackbar("Select Account Name from list");
+            }
+        }
+        if ($("#txtValue").val() == "") {
+            IsValid = false;
+            $("#dvErrorValue").html("Value should not be empty");
+        }
+        else {
+            var val = $("#txtValue").val();
+            if (parseFloat(val) <= 0) {
+                IsValid = false;
+                $("#dvErrorValue").html("Value should be greater than zero");
+                showErrorSnackbar("Value should be greater than zero");
+            }
+        }
+        if ($("#cmbPaymode").val() == 0) {
+            IsValid = false;
+            $("#dvErrorPaymode").html("Select Payment Mode");
+            showErrorSnackbar("Select Payment Mode");
+        }
+        else {
+            //$("#cmbBankAccount").val() == 0
+            if ($("#cmbPaymode").val() == 4 && $("#cmbBTmode").val() == 0) {
+                IsValid = false;
+                $("#dvErrorBTmode").html("Select Mode");
+                showErrorSnackbar("Select Mode");
+            }
+
+            if (FID == 10)//ohter collection
+            {
+                if (($("#cmbPaymode").val() == 2 || $("#cmbPaymode").val() == 3) && $("#txtNEFT").val() == "") {
+                    IsValid = false;
+                    $("#divErrNEFT").html("Enter Cheque No");
+                    showErrorSnackbar("Enter Cheque No");
+                }
+                if (($("#cmbPaymode").val() == 2) && $("#dtpChqueDate").val() == "") {
+                    IsValid = false;
+                    $("#dvErrorChqueDate").html("Select Cheque Date");
+                    showErrorSnackbar("Select Cheque Date");
+                }
+                if (($("#cmbPaymode").val() == 4 || $("#cmbPaymode").val() == 5) && $("#cmbBankAccount").val() == 0) {
+                    IsValid = false;
+                    $("#divErrBankAccount").html("Select Bank Account*");
+                    showErrorSnackbar("Select Bank Account");
+                }
+            }
+            else {
+                if (($("#cmbPaymode").val() != 1) && $("#cmbBankAccount").val() == 0) {
+                    IsValid = false;
+                    $("#divErrBankAccount").html("Select Bank Account*");
+                    showErrorSnackbar("Select Bank Account");
+                }
+                if ($("#cmbPaymode").val() == 2 && $("#cmbChequeNo").val() == 0) {
+                    IsValid = false;
+                    $("#divErrChequeNo").html("Select Cheque No*");
+                    showErrorSnackbar("Select Cheque No");
+                }
+                if (($("#cmbPaymode").val() == 2) && $("#dtpChqueDate").val() == "") {
+                    IsValid = false;
+                    $("#dvErrorChqueDate").html("Select Cheque Date");
+                    showErrorSnackbar("Select Cheque Date");
+                }
+            }
+        }
+        if ($("#dtpDate").val() == "") {
+            IsValid = false;
+            $("#dvErrorDate").html("Date should not be empty");
+            showErrorSnackbar("Date should not be empty");
+        }
+        var ifsc = IFSCValidation($("#txtIFSC"), $("#dvErrorIFSC"));
+        if (!ifsc) {
+            IsValid = false;
+        }
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        var rdo1 = $("#rdoOCinOPEx").is(":checked");
+        var rdo2 = $("#rdoOCOPParty").is(":checked");
+        $(".clrdiv").html("");
+        var nStatus = $("#txtStatus").val() !== "" ? $("#txtStatus").val() : 1;
+        //$("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", false);
+        var lstMaster = {
+            "TransID": FID,
+            "TransMode": nTransMode,
+            "OCPType": rdo1 ? 2 : 3,
+            "ID": $("#txtID").val(),
+            "DocDate": $("#dtpDate").val(),
+            "RefNo": $("#txtRefNo").val(),
+            "PartyID": $("#txtPartyName").val(),
+            "FAID": $("#txtAccountName").val(),
+            "NoteValue": document.getElementById("txtValue").getAttribute("txttag"),//ReturnTagValue("txtValue", ""),//$("#txtValue").val(),
+            "ContType": $("#cmbPaymode").val(),
+            "ContMode": $("#cmbBTmode").val(),
+            "BankAccID": $("#cmbBankAccount").val(),
+            "NEFTNo": $("#txtNEFT").val(),
+            "ChequeNo": $("#cmbChequeNo").val() > 0 ? $("#cmbChequeNo option:selected").text() : "",
+            "ChequeDate": $("#dtpChqueDate").val(),
+            "Remark": $("#txtRemarks").val(),
+            "VisaPern": document.getElementById("txtVisaPern").getAttribute("txttag"),//ReturnTagValue("txtVisaPern",""),// $("#txtVisaAmt").val(),
+            "VisaAmt": document.getElementById("txtVisaAmt").getAttribute("txttag"),//ReturnTagValue("txtVisaAmt", ""),//$("#txtVisaPern").val(),
+            "Narration": $("#txtNarration").val(),
+            "UDFId": $("#cmbUDN").val(),
+            "IFSC": $("#txtIFSC").val(),
+            "BankID": $("#cmbBank").val(),
+            "Branch": $("#txtBranch").val(),
+            "Status": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode == 2 ? 3 : nStatus,
+            "CurrentStatus": nStatus,
+            "CBy": UID
+        };
+            $.ajax({
+                url: Aurl + "othercollectionpayment/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(lstMaster),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            if (nTransMode != 4) {
+                                if (allowprint == 1) {
+                                    PrintDocument(items.ID, PrintTransID, PrintConfigID);
+                                } else if (allowprint == 3 || allowprint == 4) {
+                                    PrintConfirmDialogMsg(items.ID, PrintTransID, PrintConfigID, "Do you want to print ?");
+                                }
+                            }
+                            ClearForm();
+                            //GetData(2,"");
+                            GetFilterData();
+                            modal.style.display = "none";
+                        }
+                        else if (items.Message == "AccountName") {
+                            $("#dvErrorName").html("Account Name Already Exists in another master");
+                        }
+                        else if (items.Message == "ChequeStatus") {
+                            $("#divErrChequeNo").html("Cheque status already changed");
+                            showErrorSnackbar("Cheque status already changed");
+                        }
+                        else {
+                            //$("#divErrorOnCode").html(items.Message);
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                }, error: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+    }
+    var nTransMode = 1;
+    $('#tblMasterData tbody').on('click', '.clsView', function (e) {
+        $(".clrdiv").html("");
+        rowdata = Table.row($(this).parents('tr')).data();
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.Status;//[8];
+        nTransMode = 5;
+        $("#txtID").val(ID);
+        GetData(3, ID);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnPrint").show();
+        $("#btnSave,#btnClear,#btnDraft").hide();
+        $("#txtIFSC,#txtBranch,#cmbBank,#txtPartyName").prop("disabled", true);
+        var hdfkl = $("#txtFormName").val();
+        $("#lblPopupheading").text("View " + $("#txtFormName").val());
+    });
+    $('#tblMasterData tbody').on('click', '.clsEdit', function (e) {
+        $(".clrdiv").html("");
+        rowdata = Table.row($(this).parents('tr')).data();
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.Status;//[8];
+        if (sts != "Cancelled") {
+            $("#txtID").val(ID);
+            nTransMode = 2;
+            //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
+            GetData(3, ID);
+            nTransMode = 2;
+            $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+            $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+            $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+            $("#btnSave,#btnClose").prop("disabled", false);
+            $("#btnSave,#btnClose").show();
+            $("#lblPopupheading").text("Modify " + $("#txtFormName").val());
+        }
+        else {
+            showErrorSnackbar("Cannot Modify.This document already cancelled");
+        }
+    });
+    $('#tblMasterData tbody').on('click', '.clsCancel', function (e) {
+        $(".clrdiv").html("");
+        rowdata = Table.row($(this).parents('tr')).data();
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.Status;//[8];
+        if (sts != "Cancelled") {
+            $("#lblPopupheading").text("Cancel " + $("#txtFormName").val());
+            $("#txtID").val(ID);
+            nTransMode = 4;
+            GetData(3, ID);
+            $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+            $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+            $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
+            $("#btnSave,#btnClose").prop("disabled", false);
+            $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+            $("#btnSave,#btnClose").show();
+            $("#txtIFSC,#txtBranch,#cmbBank,#txtPartyName").prop("disabled", true);
+            $("#txtRemarks,#txtNarration").prop("disabled", false);
+        }
+        else {
+            showErrorSnackbar("This document already cancelled");
+        }
+    });
+    $('#tblMasterData tbody').on('click', '.clsVariant', function (e) {
+        $(".clrdiv").html("");
+        nTransMode = 3;
+        rowdata = Table.row($(this).parents('tr')).data();
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.Status;//[8];
+        $("#txtID").val(ID);
+        GetData(1,"");
+        GetData(3, ID);
+        $("#lblPopupheading").text("Variant " + $("#txtFormName").val());
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
+        $("#btnPreview,#btnPDF").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        $("#btnSave,#btnClose,#btnDraft").show();
+        //showErrorSnackbar("Variant functionality still developing");
+    });
+    $('#tblMasterData tbody').on('click', '.clspreview', function (e) {
+        rowdata = Table.row($(this).parents('tr')).data();
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.StatusID;//[9];
+        $("#txtID").val(ID);
+        $("#txtStatus").val(sts);
+        $("#btnPreview").click();
+    });
+    $('#tblMasterData tbody').on('click', '.clspdf', function (e) {
+        rowdata = Table.row($(this).parents('tr')).data();
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.StatusID;//[9];
+        $("#txtID").val(ID);
+        $("#txtStatus").val(sts);
+        $("#btnPDF").click();
+    });
+    $('#tblMasterData tbody').on('click', '.clsprint', function (e) {
+        rowdata = Table.row($(this).parents('tr')).data();
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.StatusID;//[9];
+        $("#txtID").val(ID);
+        $("#txtStatus").val(sts);
+        $("#btnPrint").click();
+    });
+</script>
