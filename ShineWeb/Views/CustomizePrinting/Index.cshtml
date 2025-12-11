@@ -17,7 +17,90 @@
 <script src="~/Scripts/datatable.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+@* Google Fonts *@
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
+    /* Modern CSS Variables */
+    :root {
+        /* Colors */
+        --primary-50: #eff6ff;
+        --primary-100: #dbeafe;
+        --primary-500: #3b82f6;
+        --primary-600: #2563eb;
+        --primary-700: #1d4ed8;
+        --primary-800: #1e40af;
+        
+        --secondary-500: #8b5cf6;
+        --secondary-600: #7c3aed;
+        --secondary-700: #6d28d9;
+        
+        --accent-500: #14b8a6;
+        --accent-600: #0d9488;
+        
+        --success-500: #10b981;
+        --success-600: #059669;
+        
+        --warning-500: #f59e0b;
+        --warning-600: #d97706;
+        
+        --danger-500: #ef4444;
+        --danger-600: #dc2626;
+        
+        --gray-50: #f8fafc;
+        --gray-100: #f1f5f9;
+        --gray-200: #e2e8f0;
+        --gray-300: #cbd5e1;
+        --gray-400: #94a3b8;
+        --gray-500: #64748b;
+        --gray-600: #475569;
+        --gray-700: #334155;
+        --gray-800: #1e293b;
+        --gray-900: #0f172a;
+        
+        /* Typography */
+        --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-secondary: 'Poppins', sans-serif;
+        
+        /* Spacing */
+        --space-1: 0.25rem;
+        --space-2: 0.5rem;
+        --space-3: 0.75rem;
+        --space-4: 1rem;
+        --space-5: 1.25rem;
+        --space-6: 1.5rem;
+        --space-8: 2rem;
+        
+        /* Shadows */
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        
+        /* Border Radius */
+        --radius-sm: 0.375rem;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-xl: 1rem;
+        
+        /* Transitions */
+        --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Reset and Base Styles */
+    * {
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: var(--font-primary);
+        color: var(--gray-800);
+        background: linear-gradient(135deg, var(--gray-50) 0%, var(--primary-50) 100%);
+        line-height: 1.6;
+    }
+
     .main {
         padding-left: 10px !important;
         padding-top: 25px !important;
@@ -50,8 +133,8 @@
         max-height:625px;*/
     }
 
-    .label, .line, .box, .image, .value, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue,
-    .headerbox, .bodybox, .footerbox, .imageheader, .imagefooter, .barcodeheader, .qrcodeheader, .qrcodefooter, .barcodefooter, 
+    .label, .line, .headerhline, .bodyhline, .footerhline, .headervline, .bodyvline, .footervline, .box, .image, .value, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue,
+    .headerbox, .bodybox, .footerbox, .imageheader, .imagefooter, .barcodeheader, .qrcodeheader, .qrcodefooter, .barcodefooter,
     .headerformula, .bodyformula, .footerformula {
         position: absolute;
         cursor: move;
@@ -134,7 +217,7 @@
                 background: #f0f0f0;
             }
 
-    .line {
+    .line, .headerhline, .bodyhline, .footerhline, .headervline, .bodyvline, .footervline {
         background: #000;
     }
 
@@ -162,6 +245,15 @@
         border-radius: 50%;
         z-index: 10;
         display: inline-block;
+    }
+    
+    /* Selection Box for Drag-to-Select */
+    .selection-box {
+        position: absolute;
+        border: 2px solid #3b82f6;
+        background: rgba(59, 130, 246, 0.2);
+        pointer-events: none;
+        z-index: 99999;
     }
 
         .resize-handle.nw {
@@ -346,61 +438,109 @@
     }
 </style>
 <style>
-    /* Modal FOR QR and SaveAs */
+     /* Modal FOR QR and SaveAs */
     .modalQRBarcode {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        display: none;
+        position: fixed;
+        z-index: 1000;
         left: 0;
         top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgb(0,0,0); /* Fallback color */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        animation: fadeIn var(--transition-base);
     }
 
     /* Modal Content/Box */
     @@media only screen and (min-width: 800px) {
         .modalQRBarcode-content {
             background-color: #ffffff;
-            margin: 3% auto; /* 15% from the top and centered */
-            padding: 2px;
-            border: 1px solid #888;
-            width: 40%; /* Could be more or less, depending on screen size */
+            margin: 3% auto;
+            padding: 0;
+            border: none;
+            border-radius: var(--radius-xl);
+            width: 40%;
             max-height: 40% !important;
             top: 2% !important;
             overflow: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideDown var(--transition-slow);
         }
     }
 
     @@media only screen and (max-width: 600px) {
         .modalQRBarcode-content {
             background-color: #ffffff;
-            margin: 10% auto; /* 15% from the top and centered */
-            padding: 3px;
-            border: 1px solid #888;
-            width: 95%; /* Could be more or less, depending on screen size */
+            margin: 10% auto;
+            padding: 0;
+            border: none;
+            border-radius: var(--radius-xl);
+            width: 95%;
             height: 70%;
             top: 20%;
             overflow: auto;
+            box-shadow: var(--shadow-xl);
         }
     }
    
     /* The Close Button */
     .closemodalQRBarcode {
-        color: #aaa;
+        color: var(--gray-400);
         float: right;
-        font-size: 10px;
+        font-size: 28px;
         font-weight: bold;
+        line-height: 20px;
+        transition: color var(--transition-fast);
     }
 
         .closemodalQRBarcode:hover,
         .closemodalQRBarcode:focus {
-            color: black;
+            color: var(--danger-500);
             text-decoration: none;
             cursor: pointer;
         }
+    
+    @@keyframes slideDown {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Modal Header */
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 100%);
+        color: white;
+        padding: var(--space-5);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        border-bottom: none;
+    }
+    
+        .modal-header .modal-title {
+            color: white;
+            font-family: var(--font-secondary);
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+    
+    /* Modal Body */
+    .modal-body {
+        padding: var(--space-6);
+    }
+    
+    /* Modal Footer */
+    .modal-footer {
+        background: var(--gray-50);
+        padding: var(--space-4) var(--space-6);
+        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        border-top: 1px solid var(--gray-200);
+    }
 
     .form-label {
         position: relative;
@@ -427,8 +567,52 @@
         font-size: 0.8em;
         cursor: text;
         pointer-events: none;
-        font-family: sans-serif;
+        font-family: var(--font-primary);
+        font-weight: 500;
     }
+    
+    /* Modern Form Controls */
+    select:not([style*="inline"]),
+    .form-control {
+        border: 2px solid var(--gray-300);
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        font-family: var(--font-primary);
+        font-size: 0.9rem;
+        transition: all var(--transition-base);
+        background: white;
+        color: var(--gray-800);
+    }
+    
+        select:focus,
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        select:hover:not(:focus),
+        .form-control:hover:not(:focus) {
+            border-color: var(--gray-400);
+        }
+    
+    textarea.form-control,
+    textarea.formc {
+        border: 2px solid var(--gray-300);
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        font-family: var(--font-primary);
+        font-size: 0.9rem;
+        transition: all var(--transition-base);
+        resize: vertical;
+    }
+    
+        textarea.form-control:focus,
+        textarea.formc:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
 
     input[type=number] {
         text-align: right;
@@ -450,56 +634,62 @@
     }
     /* Modal FOR Formula */
     .modalFormula {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        display: none;
+        position: fixed;
+        z-index: 1000;
         left: 25%;
         top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgb(0,0,0); /* Fallback color */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
     }
 
     /* Modal Content/Box */
     @@media only screen and (min-width: 800px) {
         .modalFormula-content {
             background-color: #ffffff;
-            /*margin: 1% auto;*/ /* 15% from the top and centered */
-            padding: 2px;
-            border: 1px solid #888;
-            width: 40%; /* Could be more or less, depending on screen size */
+            padding: 0;
+            border: none;
+            border-radius: var(--radius-xl);
+            width: 40%;
             max-height: 40% !important;
             top: 5% !important;
             overflow: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideDown var(--transition-slow);
         }
     }
 
     @@media only screen and (max-width: 600px) {
         .modalFormula-content {
             background-color: #ffffff;
-            margin: 10% auto; /* 15% from the top and centered */
-            padding: 3px;
-            border: 1px solid #888;
-            width: 95%; /* Could be more or less, depending on screen size */
+            margin: 10% auto;
+            padding: 0;
+            border: none;
+            border-radius: var(--radius-xl);
+            width: 95%;
             height: 70%;
             top: 20%;
             overflow: auto;
+            box-shadow: var(--shadow-xl);
         }
     }
 
     /* The Close Button */
     .closemodalFormula {
-        color: #aaa;
+        color: var(--gray-400);
         float: right;
-        font-size: 10px;
+        font-size: 28px;
         font-weight: bold;
+        line-height: 20px;
+        transition: color var(--transition-fast);
     }
 
         .closemodalFormula:hover,
         .closemodalFormula:focus {
-            color: black;
+            color: var(--danger-500);
             text-decoration: none;
             cursor: pointer;
         }
@@ -508,81 +698,120 @@
 
     .container {
         width: 260px;
-        background-color: #fff8b5;
-        border: 1px solid #000;
-        padding: 10px;
-        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        background: white;
+        border: none;
+        padding: var(--space-4);
+        box-shadow: var(--shadow-lg);
+        border-radius: var(--radius-lg);
     }
 
     .section {
-        margin-bottom: 4px;
-        border: 1px solid #000;
-        padding: 6px;
-        /*        width: 220px;*/
-        background-color: lightgreen;
-        color: black;
+        margin-bottom: var(--space-4);
+        border: none;
+        padding: var(--space-4);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        color: var(--gray-800);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
     }
+    
+        .section:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
 
     .Headersection {
-        margin-bottom: 4px;
-        border: 1px solid #000;
-        padding: 6px;
-        /*        width: 220px;*/
-        background-color: white;
-        color: black;
+        margin-bottom: var(--space-4);
+        border:  none;
+        padding: var(--space-4);
+        background: white;
+        color: var(--gray-800);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
     }
+    
+        .Headersection:hover {
+            box-shadow: var(--shadow-lg);
+        }
 
     .Bodysection {
-        margin-bottom: 4px;
-        border: 1px solid #000;
-        padding: 6px;
-        /*        width: 220px;*/
-        background-color: white;
-        color: black;
+        margin-bottom: var(--space-4);
+        border: none;
+        padding: var(--space-4);
+        background: white;
+        color: var(--gray-800);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
     }
+    
+        .Bodysection:hover {
+            box-shadow: var(--shadow-lg);
+        }
 
     .Footersection {
-        margin-bottom: 4px;
-        border: 1px solid #000;
-        padding: 6px;
-        /*        width: 220px;*/
-        background-color: white;
-        color: black;
+        margin-bottom: var(--space-4);
+        border: none;
+        padding: var(--space-4);
+        background: white;
+        color: var(--gray-800);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
     }
+    
+        .Footersection:hover {
+            box-shadow: var(--shadow-lg);
+        }
 
     .section-title {
-        font-weight: bold;
-        margin-bottom: 5px;
+        font-family: var(--font-secondary);
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: var(--space-3);
+        color: var(--primary-700);
     }
 
     .radio-group {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 8px;
+        gap: var(--space-4);
+        margin-bottom: var(--space-3);
         justify-content: space-evenly;
     }
-
-
-    /*    select, input[type="text"] {
-        width: 100%;
-        padding: 4px;
-        margin-bottom: 8px;
-    }*/
 
     .button-group {
         display: flex;
         flex-wrap: wrap;
-        gap: 5px;
+        gap: var(--space-2);
         justify-content: right;
-        margin-top: 5px;
+        margin-top: var(--space-4);
     }
 
         .button-group button {
-            background-color: aquamarine;
-            border: 1px solid;
-            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-4);
+            font-family: var(--font-primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            box-shadow: var(--shadow-sm);
         }
+        
+            .button-group button:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+                background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            }
+            
+            .button-group button:active {
+                transform: translateY(0);
+            }
 
     .colors {
         display: grid;
@@ -677,22 +906,103 @@
         display: flex none;
         justify-content: space-between;
         align-items: center;
-        gap: 5px;
-        padding: 8px 6px;
-        background-color: #f8f9fa;
-        border: 1px solid #ccc;
-        border-radius: 8px;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        backdrop-filter: blur(20px);
     }
 
     .menu-left,
     .menu-right {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--space-2);
     }
 
+    /* Modern Button Styles */
     .btn {
-        padding: 5px 10px;
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-md);
+        font-family: var(--font-primary);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        border: none;
+    }
+    
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+    
+    /* Modern Tabs */
+    .nav-tabs {
+        border-bottom: 2px solid var(--gray-200);
+        margin-bottom: var(--space-4);
+    }
+    
+        .nav-tabs > li {
+            margin-bottom: -2px;
+        }
+    
+        .nav-tabs > li > a {
+            color: var(--gray-600);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            padding: var(--space-3) var(--space-5);
+            transition: all var(--transition-base);
+            font-family: var(--font-secondary);
+            font-weight: 500;
+        }
+    
+            .nav-tabs > li > a:hover {
+                background: var(--gray-100);
+                border-color: var(--gray-200);
+                color: var(--primary-600);
+            }
+    
+        .nav-tabs > li.active > a,
+        .nav-tabs > li.active > a:hover,
+        .nav-tabs > li.active > a:focus {
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+            color: white;
+            border: none;
+            box-shadow: var(--shadow-md);
+        }
+    
+    /* Child Tabs Styling */
+    .child-tabs {
+        margin-top: var(--space-4);
+        color: var(--gray-800);
+    }
+    
+    /* Tab Content */
+    .tab-content {
+        padding: var(--space-4);
+        background: white;
+        border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .tab-pane {
+        animation: fadeIn var(--transition-base);
+    }
+    
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
 </style>
@@ -704,67 +1014,131 @@
     <div class="toastBox"></div>
     @*<div class="qrcodeheader"></div>
         <div class="barcodeheader"></div>*@
-    <div class="row" style="background-color:lightcoral">
-        <div id="controls" style="padding-top:10px;">
+    <div class="row modern-control-bar" style="background: linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 100%); 
+                                               box-shadow: var(--shadow-lg); 
+                                               border-radius: var(--radius-lg); 
+                                               padding: var(--space-2) var(--space-4); 
+                                               margin-bottom: var(--space-4);">
+        <div id="controls" style="padding-top:0;">
             <table>
                 <tr>
                     <td width="55%">
-                        <select id="paperType" style="max-width: 250px; height: 30px; border-radius: 10px;">
+                        <select id="paperType" style="max-width: 250px; border-radius: var(--radius-md); 
+                                                      border: 2px solid rgba(255,255,255,0.3); 
+                                                      background: rgba(255,255,255,0.95); 
+                                                      padding: var(--space-2) var(--space-3); 
+                                                      font-family: var(--font-primary); 
+                                                      font-weight: 500;
+                                                      transition: all var(--transition-base);
+                                                      box-shadow: var(--shadow-sm);">
                             <option value="A4">A4</option>
                             <option value="A5">A5</option>
                             <option value="A5L">A5 - Landscape</option>
                             <option value="custom">Custom</option>
                         </select>
-                        <input type="number" id="customWidth" placeholder="Width mm" style="max-width: 75px; height: 30px; border-radius: 10px;">
-                        <input type="number" id="customHeight" placeholder="Height mm" style="max-width: 75px; height: 30px; border-radius: 10px;">
-                        <select id="cmbFontNames" style="max-width: 200px; height: 30px; border-radius: 10px;">
+                        <input type="number" id="customWidth" placeholder="Width mm" style="max-width: 75px; border-radius: var(--radius-md); 
+                                                                                           border: 2px solid rgba(255,255,255,0.3); 
+                                                                                           background: rgba(255,255,255,0.95); 
+                                                                                           padding: var(--space-2) var(--space-3); 
+                                                                                           font-family: var(--font-primary);
+                                                                                           transition: all var(--transition-base);
+                                                                                           box-shadow: var(--shadow-sm);">
+                        <input type="number" id="customHeight" placeholder="Height mm" style="max-width: 75px; border-radius: var(--radius-md); 
+                                                                                            border: 2px solid rgba(255,255,255,0.3); 
+                                                                                            background: rgba(255,255,255,0.95); 
+                                                                                            padding: var(--space-2) var(--space-3); 
+                                                                                            font-family: var(--font-primary);
+                                                                                            transition: all var(--transition-base);
+                                                                                            box-shadow: var(--shadow-sm);">
+                        <select id="cmbFontNames" style="max-width: 200px; border-radius: var(--radius-md); 
+                                                         border: 2px solid rgba(255,255,255,0.3); 
+                                                         background: rgba(255,255,255,0.95); 
+                                                         padding: var(--space-2) var(--space-3); 
+                                                         font-family: var(--font-primary); 
+                                                         font-weight: 500;
+                                                         transition: all var(--transition-base);
+                                                         box-shadow: var(--shadow-sm);">
                             <option value="1">Times New Roman</option>
                             <option value="2">sanserif</option>
                             <option value="3">Pixel</option>
                         </select>
-                        <input type="color" style="max-width: 25px; height: 30px; border-radius: 10px;" id="txtColors"/>
-                        <input type="number" id="txtFontsize" placeholder="Size" value="8" style="max-width: 75px; height: 30px; border-radius: 10px;">
-                        <label class="checkbox-label" title="Continues Paper">
-                            <input id="chkContinuesPapper" type="checkbox" checked>
+                        <input type="color" style="max-width: 38px; border-radius: var(--radius-md); 
+                                                   border: 2px solid rgba(255,255,255,0.3); 
+                                                   background: rgba(255,255,255,0.95); 
+                                                   cursor: pointer;
+                                                   transition: all var(--transition-base);
+                                                   box-shadow: var(--shadow-sm);" id="txtColors"/>
+                        <input type="number" id="txtFontsize" placeholder="Size" value="8" style="max-width: 75px; border-radius: var(--radius-md); 
+                                                                                                  border: 2px solid rgba(255,255,255,0.3); 
+                                                                                                  background: rgba(255,255,255,0.95);                                                                                                   
+                                                                                                  font-family: var(--font-primary);
+                                                                                                  transition: all var(--transition-base);
+                                                                                                  box-shadow: var(--shadow-sm);">
+                        <label class="checkbox-label modern-checkbox" title="Continues Paper" style="color: white; font-weight: 500; margin-left: var(--space-3);">
+                            <input id="chkContinuesPapper" type="checkbox" checked style="margin-right: var(--space-2); cursor: pointer;">
                             CP
                         </label>&emsp;
-                        <label class="checkbox-label" title="Footer on Every Pages">
-                            <input id="chkFooteronEveryPage" type="checkbox" />
+                        <label class="checkbox-label modern-checkbox" title="Footer on Every Pages" style="color: white; font-weight: 500;">
+                            <input id="chkFooteronEveryPage" type="checkbox" style="margin-right: var(--space-2); cursor: pointer;"/>
                             FEP
                         </label>&emsp;
-                        <label class="checkbox-label">
-                            <input id="chkIncut" type="checkbox">
+                        <label class="checkbox-label modern-checkbox" style="color: white; font-weight: 500;">
+                            <input id="chkIncut" type="checkbox" style="margin-right: var(--space-2); cursor: pointer;">
                             Inc Cut:
                         </label>&emsp;
-                        <button class="edit-icon-button" id="editBtn">
+                        <button class="edit-icon-button modern-icon-btn" id="editBtn" style="background: rgba(255,255,255,0.2); 
+                                                                                              border: 2px solid rgba(255,255,255,0.3); 
+                                                                                              border-radius: var(--radius-md); 
+                                                                                              
+                                                                                              cursor: pointer; 
+                                                                                              transition: all var(--transition-base);
+                                                                                              backdrop-filter: blur(10px);">
                             <img src="~/Images/pencil-case.png" />
                         </button>
                     </td>
                     <td style="padding-left:5px;width:6%">
-                        <span class="form-label">
-                            <input class="FormclrField" type="number" id="txtItemsPerPage" value="10" style="max-width: 105px; height: 35px; border-radius: 10px;" placeholder=""
+                        <span class="form-label modern-input-group">
+                            <input class="FormclrField modern-input" type="number" id="txtItemsPerPage" value="10" style="max-width: 105px; border-radius: var(--radius-md); 
+                                                                                                                          border: 2px solid rgba(255,255,255,0.3); 
+                                                                                                                          background: rgba(255,255,255,0.95); 
+                                                                                                                          
+                                                                                                                          font-family: var(--font-primary);
+                                                                                                                          transition: all var(--transition-base);
+                                                                                                                          box-shadow: var(--shadow-sm);" placeholder=""
                                    maxlength="2" oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
-                            <label class="labelup">Item Per Page</label>
+                            <label class="labelup" style="background: transparent; color: white; font-weight: 600; font-size: 0.65em; top: -55%; white-space: nowrap;">Item Per Page</label>
                         </span>
                     </td>
                     <td style="padding-left:5px;width:2%">
-                        <span class="form-label" title="Line Feed">
-                            <input class="FormclrField" type="text" value="2" id="txtLF" placeholder="" style="max-width: 55px; height: 35px; border-radius: 10px;"
+                        <span class="form-label modern-input-group" title="Line Feed">
+                            <input class="FormclrField modern-input" type="text" value="2" id="txtLF" placeholder="" style="max-width: 55px; border-radius: var(--radius-md); 
+                                                                                                                              border: 2px solid rgba(255,255,255,0.3); 
+                                                                                                                              background: rgba(255,255,255,0.95); 
+                                                                                                                              
+                                                                                                                              font-family: var(--font-primary);
+                                                                                                                              transition: all var(--transition-base);
+                                                                                                                              box-shadow: var(--shadow-sm);"
                                    maxlength="1" oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
 
-                            <label class="labelup">LF</label>
+                            <label class="labelup" style="background: transparent; color: white; font-weight: 600; font-size: 0.7em; top: -55%;">LF</label>
                         </span>
                     </td>
                     <td style="padding-left:5px;width:2%">
-                        <span class="form-label" title="Bottom Line Space">
-                            <input class="FormclrField" value="2" type="text" id="txtBLS" placeholder="" style="max-width: 55px; height: 35px; border-radius: 10px;"
+                        <span class="form-label modern-input-group" title="Bottom Line Space">
+                            <input class="FormclrField modern-input" value="2" type="text" id="txtBLS" placeholder="" style="max-width: 55px; height: 32px; border-radius: var(--radius-md); 
+                                                                                                                               border: 2px solid rgba(255,255,255,0.3); 
+                                                                                                                               background: rgba(255,255,255,0.95); 
+                                                                                                                               
+                                                                                                                               font-family: var(--font-primary);
+                                                                                                                               transition: all var(--transition-base);
+                                                                                                                               box-shadow: var(--shadow-sm);"
                                    maxlength="1" oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
-                            <label class="labelup">BLS</label>
+                            <label class="labelup" style="background: transparent; color: white; font-weight: 600; font-size: 0.7em; top: -55%;">BLS</label>
                         </span>
                     </td>
                     <td style="padding-left:5px;width:12%">
-                        <label><input type="radio" name="PrinterType" id="rdoWindows" checked> Windows</label>&emsp;
-                        <label><input type="radio" name="PrinterType" id="rdoDOS"> DOS</label>
+                        <label style="color: white; font-weight: 500;"><input type="radio" name="PrinterType" id="rdoWindows" checked style="margin-right: var(--space-2); cursor: pointer;"> Windows</label>&emsp;
+                        <label style="color: white; font-weight: 500;"><input type="radio" name="PrinterType" id="rdoDOS" style="margin-right: var(--space-2); cursor: pointer;"> DOS</label>
                     </td>
                 </tr>
             </table>
@@ -772,37 +1146,175 @@
 
         </div>
     </div>
-    <!-- Context menu -->
-    <!--<div class="edit-context-menu" id="editcontextMenu">-->
-    <!--<button id="addLabel" class="btn btn-primary">Label</button>
-    <button id="addValue" class="btn btn-primary">Value</button>
-    <button id="addHLine" class="btn btn-primary">H-Line</button>
-    <button id="addVLine" class="btn btn-primary">V-Line</button>
-    <button id="addBox" class="btn btn-primary" hidden>Box</button>
-    <button id="addImage" class="btn btn-primary">Image</button>
-    <input type="file" id="imageUpload" class="btn btn-primary" accept="image/*" style="display:none">
-    <button id="showInfo" class="btn btn-outline-primary">Show Info</button>
-    <button id="btnqrbarcode" class="btn btn-primary">QR/Barcode</button>-->
-
-    <div class="edit-context-menu" id="editcontextMenu">
-        <div class="menu-left">
-            <button id="addLabel" class="btn btn-primary">Label</button>
-            <button id="addValue" class="btn btn-primary">Value</button>
-            <button id="addHLine" class="btn btn-primary">H-Line</button>
-            <button id="addVLine" class="btn btn-primary">V-Line</button>
-            <button id="addBox" class="btn btn-primary" hidden>Box</button>
-            <button id="addImage" class="btn btn-primary">Image</button>
-            <input type="file" id="imageUpload" class="btn btn-primary" accept="image/*" style="display:none">
-            <button id="showInfo" class="btn btn-outline-primary">Show Info</button>
-            <button id="btnqrbarcode" class="btn btn-primary">QR/Barcode</button>
+    <!-- Modern Context Menu -->
+    <div class="edit-context-menu modern-context-menu" id="editcontextMenu" style="display: none; 
+                                                                                    position: absolute;
+                                                                                    background: rgba(255, 255, 255, 0.98);
+                                                                                    backdrop-filter: blur(20px);
+                                                                                    border: 1px solid var(--gray-200);
+                                                                                    border-radius: var(--radius-lg);
+                                                                                    box-shadow: var(--shadow-xl);
+                                                                                    padding: var(--space-3);
+                                                                                    z-index: 1000;
+                                                                                    gap: var(--space-3);
+                                                                                    align-items: center;">
+        <div class="menu-left" style="display: flex; gap: var(--space-2); align-items: center;">
+            <button id="addLabel" class="btn btn-primary modern-btn" style="background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-4);
+                                                                              font-weight: 500;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Label</button>
+            <button id="addValue" class="btn btn-primary modern-btn" style="background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-4);
+                                                                              font-weight: 500;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Value</button>
+            <button id="addHLine" class="btn btn-primary modern-btn" style="background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-4);
+                                                                              font-weight: 500;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">H-Line</button>
+            <button id="addVLine" class="btn btn-primary modern-btn" style="background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-4);
+                                                                              font-weight: 500;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">V-Line</button>
+            <button id="addBox" class="btn btn-primary modern-btn" hidden style="background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-4);
+                                                                              font-weight: 500;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Box</button>
+            <button id="addImage" class="btn btn-primary modern-btn" style="background: linear-gradient(135deg, var(--secondary-500) 0%, var(--secondary-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-4);
+                                                                              font-weight: 500;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Image</button>
+            <input type="file" id="imageUpload" accept="image/*" style="display:none">
+            <button id="showInfo" class="btn btn-outline-primary modern-btn-outline" style="background: transparent;
+                                                                                              color: var(--primary-600);
+                                                                                              border: 2px solid var(--primary-500);
+                                                                                              border-radius: var(--radius-md);
+                                                                                              padding: var(--space-2) var(--space-4);
+                                                                                              font-weight: 500;
+                                                                                              cursor: pointer;
+                                                                                              transition: all var(--transition-base);">Show Info</button>
+            <button id="btnqrbarcode" class="btn btn-primary modern-btn" style="background: linear-gradient(135deg, var(--accent-500) 0%, var(--accent-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-4);
+                                                                              font-weight: 500;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">QR/Barcode</button>
         </div>
 
-        <div class="menu-right">
-            <button id="setsamesize" class="btn btn-primary">Set Same Size</button>
-            <button id="rightalign" class="btn btn-primary">Right</button>
-            <button id="leftalign" class="btn btn-primary">Left</button>
-            <button id="topalign" class="btn btn-primary">Top</button>
-            <button id="bottomalign" class="btn btn-primary">Bottom</button>
+        <div class="menu-right" style="display: flex; gap: var(--space-2); align-items: center; margin-left: var(--space-4); padding-left: var(--space-4); border-left: 2px solid var(--gray-200);">
+            <button id="setsamesize" class="btn btn-primary modern-btn" style="background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-3);
+                                                                              font-weight: 500;
+                                                                              font-size: 0.875rem;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Set Same Size</button>
+            <button id="rightalign" class="btn btn-primary modern-btn-sm" style="background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-3);
+                                                                              font-weight: 500;
+                                                                              font-size: 0.875rem;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Right</button>
+            <button id="leftalign" class="btn btn-primary modern-btn-sm" style="background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-3);
+                                                                              font-weight: 500;
+                                                                              font-size: 0.875rem;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Left</button>
+            <button id="topalign" class="btn btn-primary modern-btn-sm" style="background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-3);
+                                                                              font-weight: 500;
+                                                                              font-size: 0.875rem;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Top</button>
+            <button id="bottomalign" class="btn btn-primary modern-btn-sm" style="background: linear-gradient(135deg, var(--gray-500) 0%, var(--gray-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-3);
+                                                                              font-weight: 500;
+                                                                              font-size: 0.875rem;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Bottom</button>
+            <div style="border-left: 2px solid var(--gray-200); height: 20px; margin: 0 var(--space-2);"></div>
+            <button id="selectAllHeaders" class="btn btn-primary modern-btn-sm" style="background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-3);
+                                                                              font-weight: 500;
+                                                                              font-size: 0.875rem;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Select All Headers</button>
+            <button id="selectAllBody" class="btn btn-primary modern-btn-sm" style="background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-3);
+                                                                              font-weight: 500;
+                                                                              font-size: 0.875rem;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Select All Body</button>
+            <button id="selectAllFooter" class="btn btn-primary modern-btn-sm" style="background: linear-gradient(135deg, var(--warning-500) 0%, var(--warning-600) 100%);
+                                                                              color: white;
+                                                                              border: none;
+                                                                              border-radius: var(--radius-md);
+                                                                              padding: var(--space-2) var(--space-3);
+                                                                              font-weight: 500;
+                                                                              font-size: 0.875rem;
+                                                                              cursor: pointer;
+                                                                              transition: all var(--transition-base);
+                                                                              box-shadow: var(--shadow-sm);">Select All Footer</button>
         </div>
     </div>
 
@@ -1196,18 +1708,245 @@
     $('#rdoQRCode,#rdoBarCode').click(function (e) {
         LoadQRBarcodeitems();
     });
+    
     var arrPaperTypes = [], arrFontNames = [], arrTransactions = [], arrProfileNames = [];
     var strSaveType = "Save";
     InitialDatas();
+    
     const paper = document.getElementById('paper');
-    const paperType = document.getElementById('paperType');
+const paperType = document.getElementById('paperType');
     const customWidth = document.getElementById('customWidth');
     const customHeight = document.getElementById('customHeight');
     const contextMenu = document.getElementById('contextMenu');
     const imageUpload = document.getElementById('imageUpload');
+    let selectedControl = null;
+    
     customWidth.style.display = 'none';
     customHeight.style.display = 'none';
-    let selectedElements = new Set();   // 🆕 track multiple selected
+    
+    // ============================================
+    // DRAG-TO-SELECT FUNCTIONALITY
+    // ============================================
+    let selectionBox = null;
+    let isSelecting = false;
+    let startX = 0, startY = 0;
+    let selectedElements = new Set();
+    
+    // Create selection box element
+    function createSelectionBox() {
+        if (!selectionBox) {
+            selectionBox = document.createElement('div');
+            selectionBox.className = 'selection-box';
+            selectionBox.style.display = 'none';
+            paper.appendChild(selectionBox);
+        }
+    }
+    
+    createSelectionBox();
+    
+    // Check if two rectangles intersect
+    function rectsIntersect(rect1, rect2) {
+        return !(
+            rect1.right < rect2.left ||
+            rect1.left > rect2.right ||
+            rect1.bottom < rect2.top ||
+            rect1.top > rect2.bottom
+        );
+    }
+    
+    // Clear all selections
+    function clearAllSelections() {
+        selectedElements.forEach(control => {
+            control.classList.remove('selected');
+        });
+        selectedElements.clear();
+    }
+    
+    // Start drag selection
+    paper.addEventListener('mousedown', function(e) {
+        // Allow selection if clicking on paper background OR holding Ctrl/Cmd key (for group selection from anywhere)
+        if (e.target === paper || e.ctrlKey || e.metaKey) {
+            isSelecting = true;
+            const rect = paper.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            
+            // Note: Keep existing selections when Ctrl is held (handled in mousemove)
+            // Clear previous selections only if not holding Ctrl/Cmd
+            if (!e.ctrlKey && !e.metaKey) {
+                clearAllSelections();
+            }
+            
+            selectionBox.style.left = startX + 'px';
+            selectionBox.style.top = startY + 'px';
+            selectionBox.style.width = '0px';
+            selectionBox.style.height = '0px';
+            selectionBox.style.display = 'block';
+            
+            e.preventDefault();
+            e.stopPropagation(); // Prevent control dragging when using group selection
+        }
+    });
+    
+    // Update selection box during drag
+    paper.addEventListener('mousemove', function(e) {
+        if (!isSelecting) return;
+        
+        const rect = paper.getBoundingClientRect();
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY -  rect.top;
+        
+        const width = Math.abs(currentX - startX);
+        const height = Math.abs(currentY - startY);
+        const left = Math.min(currentX, startX);
+        const top = Math.min(currentY, startY);
+        
+        selectionBox.style.left = left + 'px';
+        selectionBox.style.top = top + 'px';
+        selectionBox.style.width = width + 'px';
+        selectionBox.style.height = height + 'px';
+        
+        // Highlight controls within selection box
+        const selectionRect = selectionBox.getBoundingClientRect();
+        const controls = paper.querySelectorAll('.label, .value, .line,.headerhline,.bodyhline,.footerhline,.headervline,.bodyvline,.footervline, .box, .image, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, .headerbox, .bodybox, .footerbox, .imageheader, .imagefooter, .barcodeheader, .qrcodeheader, .qrcodefooter, .barcodefooter, .headerformula, .bodyformula, .footerformula');
+        console.log("Mouse Moving");
+        controls.forEach(control => {
+            const controlRect = control.getBoundingClientRect();
+            
+            if (rectsIntersect(selectionRect, controlRect)) {
+                if (!selectedElements.has(control)) {
+                    control.classList.add('selected');
+                    selectedElements.add(control);
+                }
+            } else if (!e.ctrlKey && !e.metaKey) {
+                // Remove selection if not holding Ctrl/Cmd
+                if (selectedElements.has(control)) {
+                    control.classList.remove('selected');
+                    selectedElements.delete(control);
+                }
+            }
+            else {
+                console.log("no control select");
+            }
+        });
+    });
+    
+    // End drag selection
+    document.addEventListener('mouseup', function(e) {
+        if (isSelecting) {
+            isSelecting = false;
+            selectionBox.style.display = 'none';
+            
+            console.log(`Selected ${selectedElements.size} control(s)`);
+        }
+    });
+    
+    // Handle Ctrl+A to select all
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'a' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            
+            clearAllSelections();
+            const controls = paper.querySelectorAll('.label, .value, .line,.headerhline,.bodyhline,.footerhline,.headervline,.bodyvline,.footervline, .box, .image, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, .headerbox, .bodybox, .footerbox, .imageheader, .imagefooter, .barcodeheader, .qrcodeheader, .qrcodefooter, .barcodefooter, .headerformula, .bodyformula, .footerformula');
+            
+            controls.forEach(control => {
+                control.classList.add('selected');
+                selectedElements.add(control);
+            });
+            
+            console.log(`Selected all ${selectedElements.size} control(s)`);
+        }
+        
+        // Resize selected controls with Ctrl + Arrow keys
+        if ((e.ctrlKey || e.metaKey) && selectedElements.size > 0 && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            const resizeStep = 1; // pixels to resize per keypress
+            
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                // Decrease height
+                selectedElements.forEach(control => {
+                    // Get current position - use offsetTop/Left if style values aren't set
+                    const currentTop = parseInt(control.style.top) || control.offsetTop;
+                    const currentLeft = parseInt(control.style.left) || control.offsetLeft;
+                    const currentHeight = parseInt(control.style.height) || control.offsetHeight;
+                    const newHeight = Math.max(15, currentHeight - resizeStep);
+                    
+                    // Set position explicitly first
+                    control.style.position = 'absolute';
+                    control.style.top = currentTop + 'px';
+                    control.style.left = currentLeft + 'px';
+                    control.style.height = newHeight + 'px';
+                });
+                console.log(`Resized ${selectedElements.size} control(s): height decreased`);
+            }
+            else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                // Increase height
+                selectedElements.forEach(control => {
+                    const currentTop = parseInt(control.style.top) || control.offsetTop;
+                    const currentLeft = parseInt(control.style.left) || control.offsetLeft;
+                    const currentHeight = parseInt(control.style.height) || control.offsetHeight;
+                    const newHeight = currentHeight + resizeStep;
+                    
+                    control.style.position = 'absolute';
+                    control.style.top = currentTop + 'px';
+                    control.style.left = currentLeft + 'px';
+                    control.style.height = newHeight + 'px';
+                });
+                console.log(`Resized ${selectedElements.size} control(s): height increased`);
+            }
+            else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                // Decrease width
+                selectedElements.forEach(control => {
+                    const currentTop = parseInt(control.style.top) || control.offsetTop;
+                    const currentLeft = parseInt(control.style.left) || control.offsetLeft;
+                    const currentWidth = parseInt(control.style.width) || control.offsetWidth;
+                    const newWidth = Math.max(15, currentWidth - resizeStep);
+                    //console.log("newWidth ", newWidth);
+                    control.style.position = 'absolute';
+                    control.style.top = currentTop + 'px';
+                    control.style.left = currentLeft + 'px';
+                    control.style.width = newWidth + 'px';
+                });
+                console.log(`Resized ${selectedElements.size} control(s): width decreased`);
+            }
+            else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                // Increase width
+                selectedElements.forEach(control => {
+                    const currentTop = parseInt(control.style.top) || control.offsetTop;
+                    const currentLeft = parseInt(control.style.left) || control.offsetLeft;
+                    const currentWidth = parseInt(control.style.width) || control.offsetWidth;
+                    const newWidth = currentWidth + resizeStep;
+                    
+                    control.style.position = 'absolute';
+                    control.style.top = currentTop + 'px';
+                    control.style.left = currentLeft + 'px';
+                    control.style.width = newWidth + 'px';
+                });
+                console.log(`Resized ${selectedElements.size} control(s): width increased`);
+            }
+        }
+        
+        // Delete selected controls with Delete or Backspace key
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElements.size > 0 && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            
+            const confirmDelete = confirm(`Delete ${selectedElements.size} selected control(s)?`);
+            if (confirmDelete) {
+                selectedElements.forEach(control => {
+                    control.remove();
+                });
+                selectedElements.clear();
+            }
+        }
+    });
+    // ============================================
+    // END DRAG-TO-SELECT FUNCTIONALITY
+    // ============================================
+    
+    //let selectedElements = new Set();   // 🆕 track multiple selected
     let lastClicked = null;
 
     function mmToPx(mm) { return mm * 3.78; }
@@ -1257,6 +1996,34 @@
     document.getElementById('addHLine').onclick = () => addElement('hline');
     document.getElementById('addVLine').onclick = () => addElement('vline');
     document.getElementById('addBox').onclick = () => addElement('box');
+
+    // Select All Section Handlers
+    document.getElementById('selectAllHeaders').onclick = () => {
+        deselectAll();
+        // Select all header controls: labels, values, lines, boxes, images, barcodes, etc.
+        paper.querySelectorAll('.headerlabel, .headervalue, .headerhline, .headervline, .headerbox, .imageheader, .barcodeheader, .qrcodeheader, .headerformula').forEach(el => {
+            selectedElements.add(el); 
+            el.classList.add('selected');
+        });
+    };
+
+    document.getElementById('selectAllBody').onclick = () => {
+        deselectAll();
+        // Select all body controls
+        paper.querySelectorAll('.bodylabel, .bodyvalue, .bodyhline, .bodyvline, .bodybox, .bodyformula').forEach(el => {
+            selectedElements.add(el); 
+            el.classList.add('selected');
+        });
+    };
+
+    document.getElementById('selectAllFooter').onclick = () => {
+        deselectAll();
+        // Select all footer controls
+        paper.querySelectorAll('.footerlabel, .footervalue, .footerhline, .footervline, .footerbox, .imagefooter, .barcodefooter, .qrcodefooter, .footerformula').forEach(el => {
+            selectedElements.add(el); 
+            el.classList.add('selected');
+        });
+    };
 
     document.getElementById('setsamesize').onclick = () => setSizeAlignElement('setsamesize');
     document.getElementById('rightalign').onclick = () => setSizeAlignElement('rightalign');
@@ -1338,10 +2105,16 @@
             el.textContent = ValueText; el.dataset.boldtext = "0"; el.dataset.italictext = "0";
             el.dataset.wraptext = "0";
         } else if (type === 'hline') {
-            el = document.createElement('div'); el.className = 'line'; el.dataset.type = 'hline';
+            el = document.createElement('div');
+            //el.className = 'line';
+            el.className = nPlaceType == 1 ? 'headerhline' : nPlaceType == 2 ? 'bodyhline' : nPlaceType == 3 ? 'footerhline' : 'hline';
+            el.dataset.type = 'hline';
             el.style.height = '2px'; el.style.width = '120px';
         } else if (type === 'vline') {
-            el = document.createElement('div'); el.className = 'line'; el.dataset.type = 'vline';
+            el = document.createElement('div');
+            //el.className = 'line';
+            el.className = nPlaceType == 1 ? 'headervline' : nPlaceType == 2 ? 'bodyvline' : nPlaceType == 3 ? 'footervline' : 'vline';
+            el.dataset.type = 'vline';
             el.style.width = '2px'; el.style.height = '120px';
         } else if (type === 'box') {
             el = document.createElement('div');
@@ -1496,6 +2269,11 @@
 
         el.addEventListener('mousedown', e => {
             //console.log('mousedown', e);
+            // Skip normal dragging if Ctrl/Cmd is held (for group selection box)
+            if (e.ctrlKey || e.metaKey) {
+                return; // Let the paper's mousedown handler take over for selection box
+            }
+            
             if (e.target.classList.contains('resize-handle') || e.target.classList.contains('rotate-handle') || e.button === 2) return;
             handleSelection(el, e);
             if (selectedElements.size === 1) {  // only drag single
@@ -1595,8 +2373,8 @@
     //------------------------------------------//
     function showContextMenu(x, y) {
         const isLabel = [...selectedElements].every(el => el.matches('.label, .value, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, .headerformula, .bodyformula, .footerformula'));
-        const isFooterEPField = [...selectedElements].every(el => el.matches('.footerlabel, .footervalue, .footerbox, .imageheader, .qrcodefooter, .barcodefooter, .footerformula'));
-        const isAlreadyAppliedFooterEP = [...selectedElements].every(el => el.matches('.footerlabel, .footervalue, .footerbox, .imageheader, .qrcodefooter, .barcodefooter, .footerformula') && el.dataset.FooterOnEPControl == 1);
+        const isFooterEPField = [...selectedElements].every(el => el.matches('.footerhline,.footervline,.footerlabel, .footervalue, .footerbox, .imageheader, .qrcodefooter, .barcodefooter, .footerformula'));
+        const isAlreadyAppliedFooterEP = [...selectedElements].every(el => el.matches('.footerhline,.footervline,.footerlabel, .footervalue, .footerbox, .imageheader, .qrcodefooter, .barcodefooter, .footerformula') && el.dataset.FooterOnEPControl == 1);
         const isLabelwrapapplied = [...selectedElements].every(el => el.matches('.label, .value, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, .headerformula, .bodyformula, .footerformula') && el.dataset.WrapText == 1);
         //el.FooterOnEPControl
         //const elements = paper.querySelectorAll('.label, .value, .line, .box, .image, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, .headerbox, .bodybox, .footerbox, .imagefooter, .imageheader,.qrcodeheader,.qrcodefooter,.barcodeheader,.barcodefooter');
@@ -1713,13 +2491,13 @@
             case 'FooteronEP':
                 for (const el of selectedElements)
                     //if (el.classList.contains('label') || el.classList.contains('value'))
-                    if (el.matches('.footerlabel, .footervalue, .footerbox, .imageheader, .qrcodefooter, .barcodefooter, .footerformula'))
+                    if (el.matches('.line,.headerhline,.bodyhline,.footerhline,.headervline,.bodyvline,.footervline,.footerlabel, .footervalue, .footerbox, .imageheader, .qrcodefooter, .barcodefooter, .footerformula'))
                         el.dataset.FooterOnEPControl = 1;
                 break;
             case 'RemoveFooteronEP':
                 for (const el of selectedElements)
                     //if (el.classList.contains('label') || el.classList.contains('value'))
-                    if (el.matches('.footerlabel, .footervalue, .footerbox, .imageheader, .qrcodefooter, .barcodefooter, .footerformula'))
+                    if (el.matches('.line,.headerhline,.bodyhline,.footerhline,.headervline,.bodyvline,.footervline,.footerlabel, .footervalue, .footerbox, .imageheader, .qrcodefooter, .barcodefooter, .footerformula'))
                         el.dataset.FooterOnEPControl = 0;
 
             case 'AddWrap':
@@ -1827,7 +2605,7 @@
         if (e.key === 'a' && e.ctrlKey) {
             e.preventDefault();
             deselectAll();
-            paper.querySelectorAll('.label,.value,.line,.box,.image, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, .headerbox, .bodybox, .footerbox, .imagefooter, .imageheader,.qrcodeheader,.barcodeheader,.qrcodefooter,.barcodefooter, .headerformula, .bodyformula, .footerformula').forEach(el => {
+            paper.querySelectorAll('.label,.value,.line,.headerhline,.bodyhline,.footerhline,.headervline,.bodyvline,.footervline,.box,.image, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, .headerbox, .bodybox, .footerbox, .imagefooter, .imageheader,.qrcodeheader,.barcodeheader,.qrcodefooter,.barcodefooter, .headerformula, .bodyformula, .footerformula').forEach(el => {
                 selectedElements.add(el); el.classList.add('selected');
             });
             return;
@@ -1842,7 +2620,7 @@
         else if ((e.key === 'd' || e.key === 'D') && e.ctrlKey) {
             e.preventDefault(); duplicateSelected();
         }
-        else if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        else if (!e.ctrlKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
             e.preventDefault();
             for (const el of selectedElements) {
                 let x = parseInt(el.style.left) || 0;
@@ -1992,7 +2770,10 @@
     });
     function SaveData() {
         var PrintDetails = [];
-        const elements = paper.querySelectorAll('.label, .value, .line, .box, .image, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, .headerbox, .bodybox, .footerbox, .imagefooter, .imageheader,.qrcodeheader,.qrcodefooter,.barcodeheader,.barcodefooter, .headerformula, .bodyformula, .footerformula');
+        //,.footervlineel.className = ctrl.PlaceType == "Header" ? 'headervline' : ctrl.PlaceType == "Body" ? 'bodyvline' : ctrl.PlaceType == "Footer" ? 'footervline' : 'vline';
+        const elements = paper.querySelectorAll(`.label, .value,  .box, .image, .headerlabel, .bodylabel, .footerlabel, .headervalue, .bodyvalue, .footervalue, 
+        .headerbox, .bodybox, .footerbox, .imagefooter, .imageheader,.qrcodeheader,.qrcodefooter,.barcodeheader,.barcodefooter,
+        .headerformula, .bodyformula, .footerformula,.headervline,.bodyvline,.footervline,.headerhline,.bodyhline,.footerhline`);
         console.log("elements ", elements);
         const controls = [];
         elements.forEach(el => {
@@ -2026,9 +2807,9 @@
                                     ? 'gksQRCode'
                                     : el.matches('.barcodeheader,.barcodefooter')
                                         ? 'gksBarCode'
-                                        : el.dataset.type === 'hline'
+                                            : el.matches('.hline,.headerhline,.bodyhline,.footerhline')//el.dataset.type === 'hline'
                                             ? 'H_Line'
-                                            : el.dataset.type === 'vline'
+                                                : el.matches('.vline, .headervline,.bodyvline,.footervline')//el.dataset.type === 'vline'
                                                 ? 'V_Line'
                                                 : 'Unknown',
                 X: x,
@@ -2241,17 +3022,19 @@
                                     //img.style.opacity = 0.2;
                                     el.appendChild(img);
                                     break;
-
+                                
                                 case 'H_Line':
                                     el = document.createElement('div');
-                                    el.className = 'line';
+                                    //el.className = 'line';
+                                    el.className = ctrl.PlaceType == "Header" ? 'headerhline' : ctrl.PlaceType == "Body" ? 'bodyhline' : ctrl.PlaceType == "Footer" ? 'footerhline' : 'hline';
                                     el.dataset.type = 'hline';
                                     el.style.height = '2px';
                                     break;
 
                                 case 'V_Line':
                                     el = document.createElement('div');
-                                    el.className = 'line';
+                                    //el.className = 'line';
+                                    el.className = ctrl.PlaceType == "Header" ? 'headervline' : ctrl.PlaceType == "Body" ? 'bodyvline' : ctrl.PlaceType == "Footer" ? 'footervline' : 'vline';
                                     el.dataset.type = 'vline';
                                     el.style.width = '2px';
                                     break;
