@@ -1755,16 +1755,114 @@
     if ($('#tblProductData').length) {
         $('#tblProductData tbody').sortable({
             items: 'tr',
-            handle: 'td', // Drag anywhere within a row
-            stop: function (event, ui) {
-                // Get the new row order
-                var rowOrder = [];
-                // Collect the IDs of rows after drag-and-drop reorder
-                $('#tblProductData tbody tr').each(function () {
-                    console.log("Order change : ",$(this).find('td').eq(0).text())
-                    rowOrder.push($(this).find('td').eq(0).text());  // Get the ID from the first column
+            cursor: 'move',
+            opacity: 0.6,
+            helper: function(e, ui) {
+                // Preserve the width of cells in the helper
+                ui.children().each(function() {
+                    $(this).width($(this).width());
                 });
+                return ui;
+            },
+            update: function (event, ui) {
+                // Sortable has changed the DOM order
+                // Strategy: Save edited values, rebuild DataTable, then restore values to new DOM
+                
+                // Step 1: Save DOM nodes with their edited values
+                var savedRowData = [];
+                $('#tblProductData tbody tr').each(function() {
+                    var $oldRow = $(this);
+                    var dtRowData = ProductTable.row(this).data();
+                    
+                    // Capture all current input values from the DOM
+                    var editedValues = {
+                        dtData: dtRowData,
+                        inputs: {},
+                        selects: {},
+                        labels: {}
+                    };
+                    
+                    $oldRow.find('input').each(function() {
+                        var id = $(this).attr('id');
+                        if (id) {
+                            editedValues.inputs[id] = {
+                                value: $(this).val(),
+                                txttag: $(this).attr('txttag')
+                            };
+                        }
+                    });
+                    
+                    $oldRow.find('select').each(function() {
+                        var id = $(this).attr('id');
+                        if (id) {
+                            editedValues.selects[id] = $(this).val();
+                        }
+                    });
+                    
+                    $oldRow.find('label').each(function() {
+                        var id = $(this).attr('id');
+                        if (id) {
+                            editedValues.labels[id] = {
+                                text: $(this).text(),
+                                lbltag: $(this).attr('lbltag')
+                            };
+                        }
+                    });
+                    
+                    savedRowData.push(editedValues);
+                });
+                
+                // Step 2: Rebuild DataTable in new order
+                ProductTable.clear();
+                savedRowData.forEach(function(rowData) {
+                    if (rowData.dtData) {
+                        ProductTable.row.add(rowData.dtData);
+                    }
+                });
+                ProductTable.draw(false);
+                
+                // Step 3: Restore edited values to the NEW DOM nodes created by DataTable
+                $('#tblProductData tbody tr').each(function(index) {
+                    var $newRow = $(this);
+                    var editedData = savedRowData[index];
+                    
+                    if (editedData) {
+                        // Restore input values
+                        $.each(editedData.inputs, function(id, data) {
+                            var $input = $newRow.find('#' + id);
+                            if ($input.length) {
+                                $input.val(data.value);
+                                if (data.txttag) {
+                                    $input.attr('txttag', data.txttag);
+                                }
+                            }
+                        });
+                        
+                        // Restore select values
+                        $.each(editedData.selects, function(id, value) {
+                            var $select = $newRow.find('#' + id);
+                            if ($select.length) {
+                                $select.val(value);
+                            }
+                        });
+                        
+                        // Restore label values
+                        $.each(editedData.labels, function(id, data) {
+                            var $label = $newRow.find('#' + id);
+                            if ($label.length) {
+                                $label.text(data.text);
+                                if (data.lbltag) {
+                                    $label.attr('lbltag', data.lbltag);
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Step 4: Update serial numbers
                 ReorderSerialNo();
+                
+                //console.log("Rows interchanged, indices synced, values preserved!");
             }
         });
     }    
