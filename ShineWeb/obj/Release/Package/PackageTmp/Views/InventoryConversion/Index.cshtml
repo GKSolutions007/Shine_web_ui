@@ -1861,40 +1861,47 @@ function setDate1(FieldID,Type) {
                                 },
                                 {
                                     className: "dt-body-center",
-                                    orderable: false, "visible": $("#txtViewID").val() == 0 ? false : true,
-                                    render: function (data, type, row) {
-
-                                        var status = row.Status;
-                                        var edit = '', cancel = '', view = '', variant = '', Print = '', Preview = '', PDF = '';
-                                        if ($("#txtViewID").val() == 1) {
-                                            var Print = '<a class="dropdown-item clsprint" href="javascript:void(0)">🖨 Print</a>';
-                                            var Preview = '<a class="dropdown-item clspreview" href="javascript:void(0)#">🖨 Preview</a>';
-                                            var PDF = '<a class="dropdown-item clspdf" href="javascript:void(0)">📕 PDF</a>';
-                                        }
-                                        if (status !== 'Amended' && status !== 'Cancelled') {
-                                            if ($("#txtModifyID").val() == 1)
-                                                edit = '<a class="dropdown-item clsEdit" href="javascript:void(0)">✏️ Edit</a>';
-                                            if ($("#txtCancelID").val() == 1)
-                                                cancel = '<a class="dropdown-item clsCancel" href="javascript:void(0)">❌ Cancel</a>';
-                                        }
-                                        if ($("#txtVariantID").val() == 1)
-                                            variant = '<a class="dropdown-item clsVariant" href="javascript:void(0)">📄 Variant</a>';
-                                        return `
-<div class="dropdown">
-    <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown">
-        &#8942;
-    </button>
-    <ul class="dropdown-menu  action-dropdown" style="right:0;left:auto;">
-        ${edit ? `<li>${edit}</li>` : ''}
-        ${cancel ? `<li>${cancel}</li>` : ''}
-        ${variant ? `<li>${variant}</li>` : ''}
-        ${Print ? `<li>${Print}</li>` : ''}
-        ${Preview ? `<li>${Preview}</li>` : ''}
-        ${PDF ? `<li>${PDF}</li>` : ''}
-    </ul>
-</div>`;
+                                    orderable: false,
+                                    render: function () {
+                                        return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
                                     }
                                 }
+//                                {
+//                                    className: "dt-body-center",
+//                                    orderable: false, "visible": $("#txtViewID").val() == 0 ? false : true,
+//                                    render: function (data, type, row) {
+
+//                                        var status = row.Status;
+//                                        var edit = '', cancel = '', view = '', variant = '', Print = '', Preview = '', PDF = '';
+//                                        if ($("#txtViewID").val() == 1) {
+//                                            var Print = '<a class="dropdown-item clsprint" href="javascript:void(0)">🖨 Print</a>';
+//                                            var Preview = '<a class="dropdown-item clspreview" href="javascript:void(0)#">🖨 Preview</a>';
+//                                            var PDF = '<a class="dropdown-item clspdf" href="javascript:void(0)">📕 PDF</a>';
+//                                        }
+//                                        if (status !== 'Amended' && status !== 'Cancelled') {
+//                                            if ($("#txtModifyID").val() == 1)
+//                                                edit = '<a class="dropdown-item clsEdit" href="javascript:void(0)">✏️ Edit</a>';
+//                                            if ($("#txtCancelID").val() == 1)
+//                                                cancel = '<a class="dropdown-item clsCancel" href="javascript:void(0)">❌ Cancel</a>';
+//                                        }
+//                                        if ($("#txtVariantID").val() == 1)
+//                                            variant = '<a class="dropdown-item clsVariant" href="javascript:void(0)">📄 Variant</a>';
+//                                        return `
+//<div class="dropdown">
+//    <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown">
+//        &#8942;
+//    </button>
+//    <ul class="dropdown-menu  action-dropdown" style="right:0;left:auto;">
+//        ${edit ? `<li>${edit}</li>` : ''}
+//        ${cancel ? `<li>${cancel}</li>` : ''}
+//        ${variant ? `<li>${variant}</li>` : ''}
+//        ${Print ? `<li>${Print}</li>` : ''}
+//        ${Preview ? `<li>${Preview}</li>` : ''}
+//        ${PDF ? `<li>${PDF}</li>` : ''}
+//    </ul>
+//</div>`;
+//                                    }
+//                                }
                             ],
                             initComplete: function () {
                                 // Re-apply search value after table is fully initialized
@@ -1916,6 +1923,30 @@ function setDate1(FieldID,Type) {
                 }
             });
         }
+    }
+
+    function getActionsByRole(role, row) {
+        let actions = [];
+
+        if (role.canEdit && row.Status !== 'Cancelled' && row.Status !== 'Amended')
+            actions.push({ cls: "clsEdit", label: "✏️ Edit" });
+
+        if (role.canCancel && row.Status !== 'Cancelled')
+            actions.push({ cls: "clsCancel", label: "❌ Cancel" });
+
+        if (role.canVariant)
+            actions.push({ cls: "clsVariant", label: "📄 Variant" });
+
+        if (role.canPrint)
+            actions.push({ cls: "clsprint", label: "🖨 Print" });
+
+        if (role.canPreview)
+            actions.push({ cls: "clspreview", label: "🖨 Preview" });
+
+        if (role.canPDF)
+            actions.push({ cls: "clspdf", label: "📕 PDF" });
+
+        return actions;
     }
 
     $('#tblMasterData tbody').on('click', '.clsView', function (e) {
@@ -1966,6 +1997,38 @@ function setDate1(FieldID,Type) {
         $("#txtStatus").val(sts);
         $("#btnPrint").click();
     });
+
+    $(document).on('click', '.clspreview', function (e) {
+        //rowdata = Table.row($(this).parents('tr')).data();
+        rowdata = window.__SelectedRowData;
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.CurrentStatus;//[9];
+        $("#txtID").val(ID);
+        $("#txtStatus").val(sts);
+        $("#btnPreview").click();
+    });
+    $(document).on('click', '.clspdf', function (e) {
+        //rowdata = Table.row($(this).parents('tr')).data();
+        rowdata = window.__SelectedRowData;
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.CurrentStatus;//[9];
+        $("#txtID").val(ID);
+        $("#txtStatus").val(sts);
+        $("#btnPDF").click();
+    });
+    $(document).on('click', '.clsprint', function (e) {
+        //rowdata = Table.row($(this).parents('tr')).data();
+        rowdata = window.__SelectedRowData;
+        var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.CurrentStatus;//[9];
+        $("#txtID").val(ID);
+        $("#txtStatus").val(sts);
+        $("#btnPrint").click();
+    });
+
     $("#btnClear").click(function () {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
