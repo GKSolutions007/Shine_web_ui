@@ -759,8 +759,97 @@
             border: 5px !important;
         }
     </style>
+    <style>
+        /* Snackbar container */
+        .RepLoadersnackbar {
+            visibility: hidden; /* hidden by default */
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px 20px;
+            position: fixed;
+            top: 50px; /* ⬅️ instead of bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+        }
+
+            /* Show animation */
+            .RepLoadersnackbar.show {
+                visibility: visible;
+                animation: slideDown 0.3s, fadeout 0.3s 3s;
+            }
+
+        /* Slide from top */
+        @@keyframes slideDown {
+            from {
+                top: 0;
+                opacity: 0;
+            }
+
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        @@keyframes fadeout {
+            from {
+                top: 20px;
+                opacity: 1;
+            }
+
+            to {
+                top: 0;
+                opacity: 0;
+            }
+        }
+
+        /* Spinner */
+        .Reploader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4caf50;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @@keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        ul li > .menu-name:hover {
+            font-weight: bold;
+            color: var(--report-menu-hover);
+    </style>
 </head>
 <body>
+    <div id="RepLoadersnackbar" class="RepLoadersnackbar">
+        <table>
+            <tr>
+                <td>
+                    <div class="Reploader"></div>
+                </td>
+                <td style="padding-left:10px;font-size:16px;">
+                    <span>Loading... Please wait</span>
+                </td>
+            </tr>
+        </table>
+    </div>
     <div class="modaliframePreview" id="myiframePreview">
         <div class="modal-dialog" style="width:100%;">
             <div class="modaliframePreview-content">
@@ -1161,7 +1250,32 @@
     <script>
         var ItemsperPage = parseInt('@Session["ItemsperPage"]', 10) || 10;
         var RetainDate = parseInt('@Session["RetainDate"]');
-
+        var PreviousItemsCount = 0, PreviousNetAmt = 0;
+        var autoDraftInterval = null;        
+        var autosavetimeinterval = (parseInt('@Session["DraftAutoSaveTimeInterval"]') * (60 * 1000));//
+        function DraftAutosavetrigger() {
+            var currentItemCount = ProductTable.rows().count();
+            var currentNetAmt = document.getElementById("lblRoundNet").getAttribute("lbltag");
+            if ((currentItemCount != PreviousItemsCount) || (currentNetAmt != PreviousNetAmt)) {
+                if (nTransMode == 1 || nTransMode == 2) {
+                    PreviousItemsCount = ProductTable.rows().count();
+                    PreviousNetAmt = document.getElementById("lblRoundNet").getAttribute("lbltag");
+                    //$("#btnDraft").click();
+                    nIsDraft = 1;
+                    SaveData(1);
+                }
+            }
+        }
+        function startAutoDraftSave() {
+            if (autoDraftInterval) return; // prevent multiple intervals
+            autoDraftInterval = setInterval(function () {
+                DraftAutosavetrigger();
+            }, autosavetimeinterval);
+        }
+        function stopAutoDraftSave() {
+            clearInterval(autoDraftInterval);
+            autoDraftInterval = null;
+        }
     </script>
 
     <div style="padding-left: 15px; padding-top: 40px;padding-bottom: 30px;width:100%" class="main">
@@ -1767,13 +1881,13 @@
             update: function (event, ui) {
                 // Sortable has changed the DOM order
                 // Strategy: Save edited values, rebuild DataTable, then restore values to new DOM
-                
+
                 // Step 1: Save DOM nodes with their edited values
                 var savedRowData = [];
                 $('#tblProductData tbody tr').each(function() {
                     var $oldRow = $(this);
                     var dtRowData = ProductTable.row(this).data();
-                    
+
                     // Capture all current input values from the DOM
                     var editedValues = {
                         dtData: dtRowData,
@@ -1781,7 +1895,7 @@
                         selects: {},
                         labels: {}
                     };
-                    
+
                     $oldRow.find('input').each(function() {
                         var id = $(this).attr('id');
                         if (id) {
@@ -1791,14 +1905,14 @@
                             };
                         }
                     });
-                    
+
                     $oldRow.find('select').each(function() {
                         var id = $(this).attr('id');
                         if (id) {
                             editedValues.selects[id] = $(this).val();
                         }
                     });
-                    
+
                     $oldRow.find('label').each(function() {
                         var id = $(this).attr('id');
                         if (id) {
@@ -1808,10 +1922,10 @@
                             };
                         }
                     });
-                    
+
                     savedRowData.push(editedValues);
                 });
-                
+
                 // Step 2: Rebuild DataTable in new order
                 ProductTable.clear();
                 savedRowData.forEach(function(rowData) {
@@ -1820,12 +1934,12 @@
                     }
                 });
                 ProductTable.draw(false);
-                
+
                 // Step 3: Restore edited values to the NEW DOM nodes created by DataTable
                 $('#tblProductData tbody tr').each(function(index) {
                     var $newRow = $(this);
                     var editedData = savedRowData[index];
-                    
+
                     if (editedData) {
                         // Restore input values
                         $.each(editedData.inputs, function(id, data) {
@@ -1837,7 +1951,7 @@
                                 }
                             }
                         });
-                        
+
                         // Restore select values
                         $.each(editedData.selects, function(id, value) {
                             var $select = $newRow.find('#' + id);
@@ -1845,7 +1959,7 @@
                                 $select.val(value);
                             }
                         });
-                        
+
                         // Restore label values
                         $.each(editedData.labels, function(id, data) {
                             var $label = $newRow.find('#' + id);
@@ -1858,14 +1972,14 @@
                         });
                     }
                 });
-                
+
                 // Step 4: Update serial numbers
                 ReorderSerialNo();
-                
+
                 //console.log("Rows interchanged, indices synced, values preserved!");
             }
         });
-    }    
+    }
     $('#tblProductData tbody').on('click', 'tr', function () {
         //alert('Row index: ' + ProductTable.row(this).index());
         var tttselrid = ProductTable.row(this).index()
@@ -2457,6 +2571,7 @@ function CloseConfirmDialogMsg(message) {
         if (PrintConfigID > 0) {
             if (id > 0) {
                 if (sts != 2 && sts != 4) {
+
                     PrintDocument(id, PrintTransID, PrintConfigID, 1);
                 }
                 else {
@@ -2514,16 +2629,20 @@ function CloseConfirmDialogMsg(message) {
     });
     function PrintDocument(ID, strTransID, nConfigID, printorpreview = 0) {
         if (nConfigID > 0) {
+            let sb = document.getElementById("RepLoadersnackbar");
+            sb.classList.add("show");
+            var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
         $.ajax({
             //url: '@Url.Action("PDFGenerate", "Invoice")',
             url: Aurl + "invoice/PDFGenerate",
             type: 'GET',
             datatype: 'json',
-            data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID },
+            data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID, Copies: strcopy },
             xhrFields: {
                 withCredentials: true
             },
             success: function (data) {
+                sb.classList.remove("show");
                 if (data.length > 0) {
                     var pdfpathDownload = 'Invoice/ExportData?Fname=' + data;
                     var pdfpathPreview = 'Invoice/PreviewData?Fname=' + data;
@@ -2539,6 +2658,7 @@ function CloseConfirmDialogMsg(message) {
                     showErrorSnackbar('PDF File not generate. Try Again');
                 }
             }, error: function (data) {
+                sb.classList.remove("show");
                 if (data.status == "401") {
                     var msg = data.responseJSON.Message;
                     //showErrorSnackbar(msg + " Logout and Login again.");
@@ -2552,6 +2672,8 @@ function CloseConfirmDialogMsg(message) {
     }
     function PDFDocument(ID, strTransID, nConfigID) {
         if (nConfigID > 0) {
+            let sb = document.getElementById("RepLoadersnackbar");
+            sb.classList.add("show");
             $.ajax({
                 //url: '@Url.Action("PDFGenerate", "Invoice")',
                 url: Aurl + "invoice/PDFGenerate",
@@ -2562,6 +2684,7 @@ function CloseConfirmDialogMsg(message) {
                     withCredentials: true
                 },
                 success: function (data) {
+                    sb.classList.remove("show");
                     if (data.length > 0) {
                         //location.href = 'Invoice/ExportData?Fname=' + data;
                         location.href = Aurl + 'Invoice/downloadprint?Fname=' + data;
@@ -2569,6 +2692,7 @@ function CloseConfirmDialogMsg(message) {
                         showErrorSnackbar('PDF File not generate. Try Again');
                     }
                 }, error: function (data) {
+                    sb.classList.remove("show");
                     if (data.status == "401") {
                         var msg = data.responseJSON.Message;
                         //showErrorSnackbar(msg + " Logout and Login again.");
@@ -2587,7 +2711,7 @@ function CloseConfirmDialogMsg(message) {
         //testlink = "https://localhost:44396/pdf/INV_2425_200_202511101208256146.pdf"; // API
         //testlink = "https://localhost:44326/pdf/INV_2425_200_202511101208256146.pdf" // UI
         // Fetch the remote file
-        console.log("testlink", testlink)
+        console.log("testlink", testlink);
         fetch(testlink)
             .then(response => response.blob())
             .then(pdfBlob => {
@@ -2919,5 +3043,16 @@ function CloseConfirmDialogMsg(message) {
 
         //showPopupAtButton(this); // (your existing position code)
     });
+    @*window.addEventListener("beforeunload", function (e) {
+       // e.preventDefault();
+        var Url = '@Session["url"].ToString()';
+        e.returnValue = ""; // required for Chrome / Edge
+        var logout = this.confirm("Do you want to logout?")
+        if (logout) {
+            this.window.load            
+            window.location.href = Url + 'Login/Logoff';
+        } else{
 
+        }
+    });*@
 </script>
