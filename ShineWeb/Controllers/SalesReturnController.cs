@@ -24,7 +24,7 @@ namespace ShineWeb.Controllers
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
-                ViewData["FormName"] = Name;
+                ViewData["FormName"] = Name.Replace("Sales","Saleable");
                 ViewData["FormID"] = decFormID;
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string AddPerm = dtPermission.Select("MenuName = 'Create " + Name + "'", null).Length > 0 ? "1" : "0";
@@ -43,7 +43,7 @@ namespace ShineWeb.Controllers
 
 
                 SingleMasterModel dam = new SingleMasterModel();
-                dam.FormName = Name;
+                dam.FormName = Name.Replace("Sales", "Saleable");
                 dam.ID = TranID;
                 dam.TransType = TypeID;
                 dam.FormID = decFormID;
