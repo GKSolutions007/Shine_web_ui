@@ -615,7 +615,7 @@
                     <td>
                         <div class="toggle">
                             <input type="radio" name="sizeBy" id="rdoMainTableData" checked="checked" />
-                            <label for="rdoMainTableData">Invoice Data</label>
+                            <label for="rdoMainTableData">@ViewData["FormName"]</label>
                             <input type="radio" name="sizeBy" id="rdoDraftTableData" />
                             <label for="rdoDraftTableData">Draft Data</label>
                         </div>
@@ -1196,11 +1196,20 @@
                         </td>
                     </tr>
                     <tr class="bgclrfortr">
-                        <td style="border:none;" colspan="2">
+                        <td style="border:none;" width="80">
                             <div>
                                 <span class="form-label">
                                     <select class="form-control" id="cmbPrintProfile"><option value="0">Select</option></select>
                                     <label class="labelup"> Print Profile</label>
+                                </span>
+                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
+                            </div>
+                        </td>
+                        <td style="border:none;" width="20">
+                            <div>
+                                <span class="form-label">
+                                    <input id="txtNoofCopies" class="form-control" value="1" />
+                                    <label class="labelup">Copies</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
                             </div>
@@ -1262,7 +1271,7 @@
                     </td>
                     <td width="50%" align="right">
                         <div style="padding-right:20px" align="right">
-                            <button type="button" class="btn clrforpdf" id="btnPDF"><span class="glyphicon glyphicon-envelope"> PDF</span></button>
+                            <button type="button" class="btn clrforpdf" id="btnPDF"><i class='fa-regular fa-file-pdf' style='color:white'></i> PDF</button>
                             <button type="button" class="btn clrforpreview" id="btnPreview"><span class="glyphicon glyphicon-print"> Preview</span></button>
                             <button type="button" class="btn clrforpreview" id="btnPrint"><span class="glyphicon glyphicon-print"> Print</span></button>
                             <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
@@ -1728,6 +1737,7 @@ if ($("#txtAddID").val() == 0) {
         $("#MainHeading").text($("#txtFormName").val());
         //GetData(rdo1 ? 6 : 10);
         GetFilterData();
+        stopAutoDraftSave();
     }
     var modal = document.getElementById("myModalfg");
     var span = document.getElementsByClassName("closefg")[0];
@@ -3666,7 +3676,7 @@ if ($("#txtAddID").val() == 0) {
                 $.each(lstdata, function (i, items) {
                     $('#cmbPrintProfile').append($('<option/>', {
                         value: items.ConfigID,
-                        text: items.ConfigName,
+                        text: items.ConfigName, 'data-automail': items.AutoMail
                     }));
                     $('#cmbPrintProfile').val(defid);
                     PrintConfigID = defid;
@@ -4071,6 +4081,7 @@ if ($("#txtAddID").val() == 0) {
                                 .appendTo(ul);
                         };
                         ProductRID++;
+                        startAutoDraftSave();
                         var ItemCount = parseInt(ProductTable.rows().count());
                         if (ItemCount == (SelRowIndex + 1)) {
                             Addprodgridline();
@@ -5026,13 +5037,13 @@ if ($("#txtAddID").val() == 0) {
             actions.push({ cls: "clsVariant", label: "📄 Variant" });
 
         if (role.canPrint && rdo1 == "1")
-            actions.push({ cls: "clsprint", label: "🖨 Print" });
+            actions.push({ cls: "clsprint", label: "<i class='fa-solid fa-print'></i> Print" });
 
         if (role.canPreview && rdo1 == "1")
-            actions.push({ cls: "clspreview", label: "🖨 Preview" });
+            actions.push({ cls: "clspreview", label: "<i class='fa-solid fa-print'></i> Preview" });
 
         if (role.canPDF && rdo1 == "1")
-            actions.push({ cls: "clspdf", label: "📕 PDF" });
+           actions.push({ cls: "clspdf", label: "<i class='fa-regular fa-file-pdf' style='color:brown'></i> PDF" });
 
         //actions.push({ cls: "clsrowinfo ", label: "ℹ️ Other Info" });
         return actions;
@@ -5214,12 +5225,14 @@ if ($("#txtAddID").val() == 0) {
         // ceil - always Up value, floor - always down value
         $("#txtRoundOff").val("0.00"); $("#lblRoundNet,#lblRoundNetFooter").text("0.00");
         $("#lblPTCount").text("0");
-        $("#lblName,#lblProdCodeAS").text(""), $("#cmbRating").text(""), $("#lblMob1").text(""), $("#lblGSTIN").text("");
+        $("#lblName,#lblProdCodeAS,#cmbRating,#lblMob1,#lblGSTIN").text("");
+        $("#txtNoofCopies").val("1");
         //Table.draw().clear();
         TableBatch.draw().clear();
         ProductTable.draw().clear();
         ProductTable.draw().clear();
         GetData(1, RoleID);
+        stopAutoDraftSave();
         //GetData(6);
         SetTagZero();
         setDate("dtpDate", 0);

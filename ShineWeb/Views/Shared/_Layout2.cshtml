@@ -862,7 +862,9 @@
                                 <h5 class="modal-title" style="color:black" id="lblPopupheading"><b>Preview</b></h5>
                             </td>
                             <td>
-                                <button type="button" class="btn clrforpdf" id="btniframePDF"><span class="glyphicon glyphicon-envelope"> PDF</span></button>
+                                <button type="button" class="btn" id="btniframeWhatsapp" style="background-color:green;color:white"><i class='fa-brands fa-whatsapp' style='color:white'></i> Whatsapp</button>
+                                <button type="button" class="btn clrforpdf" id="btniframeEmail"><span class="glyphicon glyphicon-envelope"> Mail</span></button>
+                                <button type="button" class="btn clrforpdf" id="btniframePDF"><i class='fa-regular fa-file-pdf' style='color:white'></i> PDF</button>
                                 <button type="button" class="btn clrforpreview" id="btniframePrint"><span class="glyphicon glyphicon-print"> Print</span></button>
                                 <button type="button" class="btn btn-warning" id="btnclosefgmodaliframePreview"><span class="glyphicon glyphicon-remove"> Close</span></button>
                             </td>
@@ -932,7 +934,7 @@
                                     <i title="Expand Menus" class="fa fa-arrow-alt-circle-right"></i>
                                 </div>
                             </td>
-                            <td style="width:25%">
+                            <td style="width:28%">
                                 <a href="~/Home" id="acompname" style="color:lightgreen;font-size:large"><img src="~/Images/G_large_Transparent.png" style="width:45px;height:35px" />@*<b> Shine Web</b>*@</a>
                                 <label style="color:brown;font-size:16px;font-weight:800">@CompName</label>
                             </td>
@@ -1249,6 +1251,7 @@
     </div>
     <script>
         var ItemsperPage = parseInt('@Session["ItemsperPage"]', 10) || 10;
+        var SendAutoMail = 0;
         var RetainDate = parseInt('@Session["RetainDate"]');
         var PreviousItemsCount = 0, PreviousNetAmt = 0;
         var autoDraftInterval = null;        
@@ -2522,6 +2525,11 @@ function CloseConfirmDialogMsg(message) {
 
     $('#cmbPrintProfile').change(function (e) {
         var selval = e.target.value;
+        var $selected = $(this).find('option:selected');
+        SendAutoMail = 0;
+        if ($selected) {
+            SendAutoMail = $selected.data('automail');
+        }
         if (selval > 0) {
             PrintConfigID = $('#cmbPrintProfile').val();
         } else {
@@ -2703,6 +2711,113 @@ function CloseConfirmDialogMsg(message) {
         else {
             showErrorSnackbar("Select Print profile");
         }
+    }
+    $("#btnEmail,#btniframeEmail").click(function (e) {
+        //modalPayment.style.display = "block";
+        var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+        var sts = $("#txtStatus").val();
+        if (PrintConfigID > 0) {
+            if (id > 0) {
+                if (sts != 2 && sts != 4) {
+                    EmailDocument(id, PrintTransID, PrintConfigID);                
+                }
+            }
+        }
+        else {
+            showErrorSnackbar("Select Print profile");
+        }
+    });
+
+    function EmailDocument(ID, strTransID, nConfigID) {
+        if (nConfigID > 0) {
+            let sb = document.getElementById("RepLoadersnackbar");
+            sb.classList.add("show");
+            var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
+            $.ajax({
+                url: Aurl + "invoice/MailGenerate",
+                type: 'GET',
+                datatype: 'json',
+                data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID, Copies: strcopy },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    sb.classList.remove("show");
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            if (items.MsgID == 0) {
+                                showSuccessSnackbar(items.Message);
+                            }
+                            else if (items.MsgID == 1) {
+                                showErrorSnackbar(items.Message);
+                            }
+                        });
+                    } else {
+                        showErrorSnackbar('Mail Not Send. Try Again');
+                    }
+                }, error: function (data) {
+                    sb.classList.remove("show");
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+        }
+        else {
+            showErrorSnackbar("Select Print profile");
+        }
+    }
+    $("#btnWhatsapp,#btniframeWhatsapp").click(function (e) {
+        //modalPayment.style.display = "block";
+        var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+        var sts = $("#txtStatus").val();
+        if (id > 0) {
+            if (sts != 2 && sts != 4) {
+                WhatsappDocument(id, PrintTransID, PrintConfigID);
+            }
+        }
+    });
+    function WhatsappDocument(ID, strTransID, nConfigID) {
+        
+            let sb = document.getElementById("RepLoadersnackbar");
+            sb.classList.add("show");
+            var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
+            $.ajax({
+                url: Aurl + "invoice/WhatsappGenerate",
+                type: 'GET',
+                datatype: 'json',
+                data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID, Copies: strcopy, APIURL: Aurl },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    sb.classList.remove("show");
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            if (items.MsgID == 0) {
+                                //showSuccessSnackbar(items.Message);
+                                var phone = items.RowID
+                                var message = items.Message;
+                                var url = "https://api.whatsapp.com/send?phone=" + phone + "&text=" + encodeURIComponent(message);
+                                console.log("url : ", url);
+                                window.open(url, "_blank");
+                            }
+                            else if (items.MsgID == 1) {
+                                showErrorSnackbar(items.Message);
+                            }
+                        });
+                    } else {
+                        showErrorSnackbar('Message Not Send. Try Again');
+                    }
+                }, error: function (data) {
+                    sb.classList.remove("show");
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });           
     }
     var myurl = '@Session["url"]';
     function printEmbedDocument(testlink) {
@@ -3049,7 +3164,7 @@ function CloseConfirmDialogMsg(message) {
         e.returnValue = ""; // required for Chrome / Edge
         var logout = this.confirm("Do you want to logout?")
         if (logout) {
-            this.window.load            
+            this.window.load
             window.location.href = Url + 'Login/Logoff';
         } else{
 

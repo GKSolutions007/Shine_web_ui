@@ -175,7 +175,7 @@
     <div id="dvMainTable">
         <table class="table" width="100%">
             <tr>
-                <td style="border:none;width:20%">
+                <td style="border:none;width:15%">
                     <span class="form-label">
                         <select class="form-control FormclrcmbField" id="cmbTransaction"><option value="0">Select</option></select>
                         <label class="labelup"> Transaction</label>
@@ -188,6 +188,13 @@
                         <label class="labelup"> Profile</label>
                     </span>
                     <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProfile" class="clrdiv"></div>
+                </td>
+                <td style="border:none;width:8%">
+                    <span class="form-label">                        
+                        <input id="txtNoofCopy" class="form-control FormclrField" value="1"/>
+                        <label class="labelup"> No.of Copies</label>
+                    </span>
+                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNoofCopy" class="clrdiv"></div>
                 </td>
                 <td style="border:none;padding-left:12px;padding-right:7px;width:30%">
                     <div>
@@ -341,6 +348,7 @@
         GetData(1);
         $(".clrdiv").html("");
         $("#txtDocIDs").val("");
+        $("#txtNoofCopy").val("1");
         $("#dvProgImg").hide();
         $("#cmbTransaction").focus();
     }
@@ -356,6 +364,11 @@
             IsValid = false;
             $("#divErrProfile").html("Select Profile");
             showErrorSnackbar("Select Profile");
+        }
+        if ($("#txtNoofCopy").val() == "") {
+            IsValid = false;
+            $("#divErrNoofCopy").html("No of Copy should not be empty");
+            showErrorSnackbar("No of Copy should not be empty");
         }
         if ($("#txtDocIDs").val() == "") {
             IsValid = false;
@@ -377,15 +390,22 @@
         var strTransID = $("#cmbTransaction").val();
         var nConfigID = $("#cmbProfile").val();
         var strDocs = $("#txtDocIDs").val();
+        var strnoofcopy = $("#txtNoofCopy").val();
         $.ajax({
-            url: '@Url.Action("GeneratePrint", "TransactionPrint")',
+            //url: '@Url.Action("GeneratePrint", "TransactionPrint")',
+            url: Aurl + "transactionprint/generateprint",
             type: 'GET',
             datatype: 'json',
-            data: { TransID: strTransID, ConfigID: nConfigID, DocValue: strDocs },
+            data: { TransID: strTransID, ConfigID: nConfigID, DocValue: strDocs, Copies: strnoofcopy },
+            xhrFields: {
+                withCredentials: true
+            },
             success: function (data) {                
                 $("#btnSave").prop("disabled", false);
                 if (data.length > 0) {                   
-                    printEmbedDocument(myurl + "/Group PDF/" + data);
+                    var tempurl = Aurl.replace("/api/", "/");
+                    //printEmbedDocument(myurl + "/Group PDF/" + data);
+                    printEmbedDocument(tempurl + "PDF/" + data);//myurl
                     showSuccessSnackbar("Print Initialized");
                     
                 } else {
@@ -403,21 +423,7 @@
             }
         });
     }
-     var myurl = '@Session["url"]';
- function printEmbedDocument(testlink) {
-     let ifr = document.createElement("iframe");
-     ifr.style.position = 'absolute';
-     ifr.style.width = "0px";
-     ifr.style.height = "0px";
-     ifr.style.border = "none";
-     ifr.src = testlink;
-     ifr.onload = function () {
-         ifr.contentWindow.focus();
-         ifr.contentWindow.print();
-         //setTimeout(() => document.body.rsemoveChild(ifr), 1000);
-     }
-     document.body.appendChild(ifr);
-    }
+
     $("#btnCommonDocFilter").click(function () {
         var tid = parseInt($("#cmbTransaction").val());
 
