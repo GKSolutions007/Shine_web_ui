@@ -1264,6 +1264,7 @@
         <div class="footerAction modal-footer">
             <table width="100%">
                 <tr>
+                    $(document).on('click', '.clspdf', function (e) {
                     <td width="50%" align="right">
                         <div align="right" style="color: black">
                             Net ₹ : <label lbltag="0" id="lblRoundNetFooter" style="font-size:16px;font-weight:600;" class="lblPT lblsettag">0.00</label>
@@ -1271,6 +1272,8 @@
                     </td>
                     <td width="50%" align="right">
                         <div style="padding-right:20px" align="right">
+                            <button type="button" class="btn" id="btnWhatsapp" style="background-color:green;color:white"><i class='fa-brands fa-whatsapp' style='color:white'></i> Whatsapp</button>
+                            <button type="button" class="btn clrforpdf" id="btnEmail"><span class="glyphicon glyphicon-envelope"> Mail</span></button>
                             <button type="button" class="btn clrforpdf" id="btnPDF"><i class='fa-regular fa-file-pdf' style='color:white'></i> PDF</button>
                             <button type="button" class="btn clrforpreview" id="btnPreview"><span class="glyphicon glyphicon-print"> Preview</span></button>
                             <button type="button" class="btn clrforpreview" id="btnPrint"><span class="glyphicon glyphicon-print"> Print</span></button>
@@ -5043,7 +5046,13 @@ if ($("#txtAddID").val() == 0) {
             actions.push({ cls: "clspreview", label: "<i class='fa-solid fa-print'></i> Preview" });
 
         if (role.canPDF && rdo1 == "1")
-           actions.push({ cls: "clspdf", label: "<i class='fa-regular fa-file-pdf' style='color:brown'></i> PDF" });
+            actions.push({ cls: "clspdf", label: "<i class='fa-regular fa-file-pdf' style='color:brown'></i> PDF" });
+
+        if (rdo1 == "1")
+            actions.push({ cls: "clsemail", label: "<i class='fa-solid fa-envelope' style='color:brown'></i> Mail" });
+
+        if (rdo1 == "1")
+            actions.push({ cls: "clswhatsapp", label: "<i class='fa-brands fa-whatsapp' style='color:green'></i> Whatsapp" });
 
         //actions.push({ cls: "clsrowinfo ", label: "ℹ️ Other Info" });
         return actions;
@@ -5067,6 +5076,7 @@ if ($("#txtAddID").val() == 0) {
         $("#dvMain").show();
         $("#btnPDF,#btnPreview,#btnPrint").prop("disabled", false);
         $("#dvDocuments").hide();
+        $("#btnEmail,#btnWhatsapp").show();
         $("#btnPreview,#btnPDF,#btnPrint").show();
         $("#btnSave,#btnClear,#btnDraft").hide();
         $("#MainHeading").text("View " + $("#txtFormName").val() + "_" + Sts);
@@ -5097,6 +5107,7 @@ if ($("#txtAddID").val() == 0) {
             $("#btnSave,#btnClose").prop("disabled", false);
             $("#btnDraft").prop("disabled", !rdo2);
             $("#dvMain").show();
+            $("#btnEmail,#btnWhatsapp").hide();
             $("#dvDocuments").hide();
             var frmname = $("#txtFormName").val();
             $("#MainHeading").text(rdo1 ? ("Modify " + $("#txtFormName").val()) : ("Create " + $("#txtFormName").val()));
@@ -5134,6 +5145,7 @@ if ($("#txtAddID").val() == 0) {
                 $("#btnSave").show();
                 $("#dvMain").show();
                 $("#dvDocuments").hide();
+                $("#btnEmail,#btnWhatsapp").hide();
                 $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
             }
             else {
@@ -5165,6 +5177,7 @@ if ($("#txtAddID").val() == 0) {
         //}, 300);
         $("#dvMain").show();
         $("#dvDocuments").hide();
+        $("#btnEmail,#btnWhatsapp").hide();
         $("#btnPreview,#btnPDF,#btnPrint").hide();
         $("#btnSave,#btnClear,#btnDraft").show();
         $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
@@ -5201,6 +5214,24 @@ if ($("#txtAddID").val() == 0) {
         $("#txtStatus").val(sts);
         $("#btnPDF").click();
     });
+    $(document).on('click', '.clsemail', function (e) {//'#tblMasterData tbody'
+        rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
+        //var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.CurrentStatus;//[9];
+        $("#txtID").val(ID);
+        $("#txtStatus").val(sts);
+        $("#btnEmail").click();
+    });
+    $(document).on('click', '.clswhatsapp', function (e) {//'#tblMasterData tbody'
+        rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
+        //var selrow = Table.row($(this).parents('tr')).index();
+        var ID = rowdata.ID;//[0];
+        var sts = rowdata.CurrentStatus;//[9];
+        $("#txtID").val(ID);
+        $("#txtStatus").val(sts);
+        $("#btniframeWhatsapp").click();
+    });
     $(document).on('click', '.clsprint', function (e) {
         //rowdata = Table.row($(this).parents('tr')).data();
         rowdata = window.__SelectedRowData;
@@ -5227,6 +5258,7 @@ if ($("#txtAddID").val() == 0) {
         $("#lblPTCount").text("0");
         $("#lblName,#lblProdCodeAS,#cmbRating,#lblMob1,#lblGSTIN").text("");
         $("#txtNoofCopies").val("1");
+        $("#btnEmail,#btnWhatsapp").hide();
         //Table.draw().clear();
         TableBatch.draw().clear();
         ProductTable.draw().clear();
@@ -5630,6 +5662,9 @@ if ($("#txtAddID").val() == 0) {
                                     } else if (allowprint == 3 || allowprint == 4) {
                                         PrintConfirmDialogMsg(items.ID, PrintTransID, PrintConfigID, "Do you want to print ?");
                                     }
+                                    if (SendAutoMail == 1) {
+                                        EmailDocument(items.ID, PrintTransID, PrintConfigID);
+                                    }
                                 }
                                 ClearForm();
 
@@ -5908,6 +5943,7 @@ if ($("#txtAddID").val() == 0) {
         $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
         $("#dvMain").show();
         $("#dvDocuments").hide();
+        $("#btnEmail,#btnWhatsapp").hide();
         console.log("Prod AL : " + TempAL);
         setTimeout(() => {
             Addprodgridline();
@@ -5924,6 +5960,7 @@ if ($("#txtAddID").val() == 0) {
         $("#dvMain").show();
         $("#btnPDF,#btnPreview").prop("disabled", false);
         $("#dvDocuments").hide();
+        $("#btnEmail,#btnWhatsapp").show();
         $("#MainHeading").text("View " + $("#txtFormName").val());
     }
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {//$("#txtQAViewDocID").val()
