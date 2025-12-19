@@ -14,9 +14,11 @@
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
-@*<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>*@
+@*<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+*@
 <script src="~/Scripts/npm_charts.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+<script src="~/Scripts/npm_chart_datalabels.js"></script>
 <style>
     :root {
         --primary-color: #4a90e2;
@@ -29,7 +31,15 @@
         --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
 
+    td {
+        font-weight: 600;
+    }
 
+    .total-row {
+        font-weight: 700 !important;
+        background-color: #f0f7ff !important;
+        color: var(--primary-color) !important;
+    }
     body {
         background-color: var(--bg-color);
         color: var(--text-color);
@@ -38,10 +48,10 @@
 
     .modern-card {
         background: var(--card-bg);
-        border-radius: 12px;
+        border-radius: 8px;
         box-shadow: var(--shadow);
-        padding: 20px;
-        margin-bottom: 24px;
+        padding: 12px;
+        margin-bottom: 12px;
         border: 1px solid var(--border-color);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
@@ -51,15 +61,20 @@
         }
 
     .card-title {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 600;
         color: var(--primary-color);
-        margin-bottom: 15px;
+        margin-bottom: 8px;
         border-bottom: 1px solid var(--border-color);
-        padding-bottom: 10px;
+        padding-bottom: 8px;
         display: flex;
         align-items: center;
         gap: 8px;
+    }
+
+    .modern-card .table td, .modern-card .table th {
+        font-size: 11px;
+        padding: 6px 8px;
     }
 
     /* Sidebar Widgets */
@@ -70,27 +85,52 @@
     .widget-header {
         background: var(--primary-color);
         color: white;
-        padding: 10px 15px;
+        padding: 8px 12px;
         border-radius: 8px 8px 0 0;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .widget-body {
         background: white;
-        padding: 15px;
+        padding: 12px;
         border: 1px solid var(--border-color);
         border-top: none;
         border-radius: 0 0 8px 8px;
     }
 
+    .widget-body label {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+
+    .sidebar-widget .form-control {
+        height: 28px;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .sidebar-widget .btn-sm {
+        height: 28px;
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .sidebar-widget .form-group {
+        margin-bottom: 10px;
+    }
+
     /* Balance Summary */
     .summary-tile {
         flex: 1;
-        padding: 15px;
-        border-radius: 10px;
+        padding: 10px;
+        border-radius: 8px;
         text-align: center;
-        min-width: 140px;
+        min-width: 120px;
     }
 
     .bg-cash {
@@ -104,15 +144,15 @@
     }
 
     .summary-label {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--secondary-color);
-        margin-bottom: 4px;
+        margin-bottom: 2px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
     .summary-value {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
         color: #172b4d;
     }
@@ -123,6 +163,7 @@
         border: 1px solid var(--input-border);
         box-shadow: none;
         height: 38px;
+        font-weight: 600;
     }
 
     .btn {
@@ -177,7 +218,7 @@
     @Html.HiddenFor(model => model.ChequeDetailEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtChequeDetailEnable" })
     @Html.HiddenFor(model => model.TransVariantEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtTransVariantEnable" })
 
-    <div class="container-fluid" style="padding: 20px;">
+    <div class="container-fluid" style="padding: 10px;">
         <div class="row">
             <!-- Sidebar / Side Widgets -->
             <div class="col-md-3">
@@ -294,7 +335,7 @@
                                         </thead>
                                     </table>
                                 </div>
-                                <div style="flex: 1; min-width: 200px; max-height: 250px; display: flex; justify-content: center;">
+                                <div style="flex: 1; min-width: 200px; max-height: 200px; display: flex; justify-content: center;">
                                     <canvas id="collectionChart"></canvas>
                                 </div>
                             </div>
@@ -423,13 +464,19 @@
                     backgroundColor: [
                         '#4a90e2', '#36b37e', '#ffab00', '#ff5630', '#00b8d9', '#6554c0'
                     ],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
+                    borderWidth: 1,
+                    borderColor: '#ffffff',
+                    hoverOffset: 15
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                hover: {
+                    mode: 'nearest',
+                    intersect: true,
+                    animationDuration: 400
+                },        
                 plugins: {
                     legend: {
                         position: 'bottom',
@@ -743,6 +790,11 @@
                         { "data": "PaymentMode", "autoWidth": true, className: "dt-body-left" },
                         { "data": "ColAmt", "autoWidth": true, className: "dt-body-right" },
                     ],
+                    createdRow: function(row, data, dataIndex) {
+                        if (data.PaymentMode && data.PaymentMode.toLowerCase().includes("total")) {
+                            $(row).addClass('total-row');
+                        }
+                    }
 
                 });
                 tblCollectionDetail = $('#tblCollectionDetail').DataTable();
@@ -780,6 +832,11 @@
                         { "data": "Counts", "autoWidth": true, className: "dt-body-center" },
                         { "data": "collAmt", "autoWidth": true, className: "dt-body-right" },
                     ],
+                    createdRow: function(row, data, dataIndex) {
+                        if (data.DateType && data.DateType.toLowerCase().includes("total")) {
+                            $(row).addClass('total-row');
+                        }
+                    }
                 });
                 tblChequeDetail = $('#tblChequeDetail').DataTable();
             }
