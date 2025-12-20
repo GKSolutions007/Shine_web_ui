@@ -222,6 +222,19 @@
         <div class="row">
             <!-- Sidebar / Side Widgets -->
             <div class="col-md-3">
+                <!-- Balance Tiles -->
+                <div class="col-md-12" style="margin-bottom: 24px;">
+                    <div style="display: flex; gap: 20px;">
+                        <div class="summary-tile bg-cash">
+                            <div class="summary-label">Cash Balance</div>
+                            <div class="summary-value" id="dvCash">₹ 0.00</div>
+                        </div>
+                        <div class="summary-tile bg-bank">
+                            <div class="summary-label">Bank Balance</div>
+                            <div class="summary-value" id="dvBank">₹ 0.00</div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Quick Access -->
                 <div class="sidebar-widget">
                     <div class="widget-header">
@@ -276,23 +289,11 @@
 
             <!-- Main Dashboard Area -->
             <div class="col-md-9">
-                <div class="row">
-                    <!-- Balance Tiles -->
-                    <div class="col-md-12" style="margin-bottom: 24px;">
-                        <div style="display: flex; gap: 20px;">
-                            <div class="summary-tile bg-cash">
-                                <div class="summary-label">Cash Balance</div>
-                                <div class="summary-value" id="dvCash">₹ 0.00</div>
-                            </div>
-                            <div class="summary-tile bg-bank">
-                                <div class="summary-label">Bank Balance</div>
-                                <div class="summary-value" id="dvBank">₹ 0.00</div>
-                            </div>
-                        </div>
-                    </div>
-
+                <div class="row">                    
                     <!-- Pending Drafts Card -->
                     <div class="col-md-5">
+                        
+                        <!--Pending Drafts -->
                         <div class="modern-card">
                             <div class="card-title">
                                 <span class="glyphicon glyphicon-time"></span> Pending Drafts
@@ -304,6 +305,21 @@
                                         <th style="display:none;">TransName</th>
                                         <th>Transaction</th>
                                         <th style="text-align:center;">Count</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <!-- Cheque Details -->
+                        <div class="modern-card" id="dvChequeDetail">
+                            <div class="card-title">
+                                <span class="glyphicon glyphicon-briefcase"></span> Cheque In Hand
+                            </div>
+                            <table class="table" id="tblChequeDetail">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th style="text-align:center;">Count</th>
+                                        <th style="text-align:right;">Amount ₹</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -341,20 +357,34 @@
                             </div>
                         </div>
 
-                        <!-- Cheque Details -->
-                        <div class="modern-card" id="dvChequeDetail">
-                            <div class="card-title">
-                                <span class="glyphicon glyphicon-briefcase"></span> Cheque In Hand
+
+                        <!-- Transaction Details -->
+                        <div class="modern-card" id="dvCollectionDetail">
+                            <div class="card-title" style="justify-content: space-between;">
+                                <span><span class="glyphicon glyphicon-stats"></span> Transaction</span>
+                                <select id="cmbTransactionTimeFilter" class="form-control input-sm" style="width: 100px; display: inline-block;">
+                                    <option value="1">Today</option>
+                                    <option value="2">Week</option>
+                                    <option value="3">Month</option>
+                                    <option value="4">Quarter</option>
+                                    <option value="5">All</option>
+                                </select>
                             </div>
-                            <table class="table" id="tblChequeDetail">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th style="text-align:center;">Count</th>
-                                        <th style="text-align:right;">Amount ₹</th>
-                                    </tr>
-                                </thead>
-                            </table>
+                            <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 250px;">
+                                    <table class="table" id="tblTransactionDetail">
+                                        <thead>
+                                            <tr>
+                                                <th>Transaction</th>
+                                                <th style="text-align:right;">Amount ₹</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                                <div style="flex: 1; min-width: 200px; max-height: 200px; display: flex; justify-content: center;">
+                                    <canvas id="TransactionChart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -434,6 +464,17 @@
         scrollX: true,
         scrollCollapse: true,
     });
+    var tblTransactionDetail = $('#tblTransactionDetail').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "400px",
+        scrollX: true,
+        scrollCollapse: true,
+    });
+    
     var tblChequeDetail = $('#tblChequeDetail').DataTable({
         "bFilter": false,
         "bSearchable": false,
@@ -502,6 +543,75 @@
                             return percentage;
                         },
                         display: function(context) {
+                            return context.dataset.data[context.dataIndex] > 0;
+                        }
+                    }
+                },
+                cutout: '60%'
+            },
+            plugins: [ChartDataLabels]
+        });
+    }
+
+    var TransactionsChart = null;
+
+    function updateTransactionsChart(data) {
+        var labels = data.map(function (item) { return item.Transaction; });
+        var values = data.map(function (item) { return parseFloat(item.Values.replace(/,/g, '')); });
+
+        var ctx = document.getElementById('TransactionChart').getContext('2d');
+
+        if (TransactionsChart) {
+            TransactionsChart.destroy();
+        }
+
+        TransactionsChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
+                        '#4a90e2', '#36b37e', '#ffab00', '#ff5630', '#00b8d9', '#6554c0'
+                    ],
+                    borderWidth: 1,
+                    borderColor: '#ffffff',
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                hover: {
+                    mode: 'nearest',
+                    intersect: true,
+                    animationDuration: 400
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',                        
+                        labels: {                            
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 11 }
+                        }
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        font: {
+                            weight: 'bold',
+                            size: 11
+                        },
+                        formatter: function (value, ctx) {
+                            var sum = 0;
+                            var dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(function (data) {
+                                sum += data;
+                            });
+                            var percentage = (value * 100 / sum).toFixed(1) + "%";
+                            return percentage;
+                        },
+                        display: function (context) {
                             return context.dataset.data[context.dataIndex] > 0;
                         }
                     }
@@ -761,6 +871,7 @@
         });
     }
     getCollectionData(1);
+    getTransactionData(1);
     function getCollectionData(FType) {
         $.ajax({
             url: Aurl + "homescreendraft/get",
@@ -800,6 +911,48 @@
                 tblCollectionDetail = $('#tblCollectionDetail').DataTable();
                 $("#cmbTimeFilter").val(FType);
                 updateCollectionChart(MainData);
+            }
+        });
+    }
+    function getTransactionData(FType) {
+        $.ajax({
+            url: Aurl + "homescreendraft/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: 7, Trans: FType },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                var Transdata = eval(data);
+                console.log("Transaction : ", Transdata);
+                var MainData = Transdata.filter(col => col.PaymentMode != 'Total');
+                $('#tblTransactionDetail').DataTable({
+                    scrollY: "250px",
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: false,
+                    info: false,
+                    destroy: true,
+                    data: Transdata,
+                    fixedColumns: false,
+                    searching: false,
+                    ordering: false,
+                    sorting: false,
+                    columns: [
+                        { "data": "Transaction", "autoWidth": true, className: "dt-body-left" },
+                        { "data": "Values", "autoWidth": true, className: "dt-body-right" },
+                    ],
+                    createdRow: function (row, data, dataIndex) {
+                        if (data.PaymentMode && data.PaymentMode.toLowerCase().includes("total")) {
+                            $(row).addClass('total-row');
+                        }
+                    }
+
+                });
+                tblTransactionDetail = $('#tblTransactionDetail').DataTable();
+                $("#cmbTransactionTimeFilter").val(FType);
+                updateTransactionsChart(MainData);
             }
         });
     }
@@ -848,7 +1001,11 @@
         var Selval = e.target.value;
         getCollectionData(Selval);
     })
-
+    $(document).on("change", "#cmbTransactionTimeFilter", function (e) {
+        //$('#tblCollectionDetail').on('change', '#cmbTimeFilter', function (e) {
+        var Selval = e.target.value;
+        getTransactionData(Selval);
+    })
     $('#tblDraftCount tbody').on('dblclick', 'td', function () {
         rowdata = TblDraftCount.row($(this).parents('tr')).data();
         var ID = rowdata[0];
