@@ -1983,6 +1983,44 @@ if ($("#txtAddID").val() == 0) {
         //window.scrollTo(id[0].offsetLeft, id[0].offsetTop);
         window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: "smooth" });
     }
+    function CalculateItemDiffPrice() {
+
+        $("#tblProductData tbody tr").each(function () {
+
+            const rowData = ProductTable.row(this).data();
+            const invoicePrice = parseFloat(rowData[28]) || 0;
+
+            const $row = $(this);
+
+            // Qty
+            const qtyAttr = $row.find('input[name="Qty"]').attr('txttag');
+            const qty = parseFloat(qtyAttr) || 0;
+
+            // UOM Conversion Factor
+            const uomCF = parseFloat(
+                $row.find('select[name="UOM"] option:selected').attr('name')
+            ) || 1;
+
+            // Gross
+            const grossAttr = $row.find('label[name="Gross"]').attr('lbltag');
+            const gross = parseFloat(grossAttr) || 0;
+
+            // Diff Value label
+            const $diffLabel = $row.find('label[name="DiffValue"]');
+
+            if (qty > 0) {
+                const rate = gross / qty;
+                const diff = (invoicePrice * uomCF) - rate;
+
+                $diffLabel.css("color", diff >= 0 ? "green" : "red");
+                updateLabelColumn($diffLabel.attr("id"), diff);
+            } else {
+                $diffLabel.css("color", "black");
+                updateLabelColumn($diffLabel.attr("id"), 0);
+            }
+        });
+    }
+
     function calculateProdGrid() {
         $(".lblPT").text(0.00);
         var dPTQty = 0, dPTFreeQty = 0, dPTDmgQty = 0, dPTGoods = 0, dPTGross = 0, dPTTax = 0, dPTNet = 0, TotProdDisc = 0, TotTradeDisc = 0, TotAddnlDisc = 0, Value = 0;
@@ -5698,238 +5736,7 @@ if ($("#txtAddID").val() == 0) {
                 }
             });
         }
-    }
-    //print
-  /*  $('#cmbPrintProfile').change(function (e) {
-        var selval = e.target.value;
-        if (selval > 0) {
-            PrintConfigID = $('#cmbPrintProfile').val();
-        } else {
-            $('#cmbPrintProfile').val(PrintConfigID);
-        }
-    });
-       
-    $("#btnPrint,#btniframePrint").click(function (e) {
-        //modalPayment.style.display = "block";
-        if (PrintConfigID > 0) {
-        var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
-        var sts = $("#txtStatus").val();
-        if (id > 0) {
-            if (sts == 1 || sts == 3 || sts == 5 || sts == 6 || sts == 7) {
-                if (allowprint == 1) {
-                    PrintDocument(id, PrintTransID, PrintConfigID);
-                } else if (allowprint == 3 || allowprint == 4) {
-                    PrintConfirmDialogMsg(id, PrintTransID, PrintConfigID, "Do you want to print ?");
-                }
-                else {
-                    showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
-                }
-            }
-            else {
-                if (allowprint != 2) {
-                    modalPrintAppPassword.style.display = "block";
-                    $("#txtCommonPrintPrevieworPDF").val(1);//1 - Preview , 2 - PDF
-                    $("#txtCommonPrintTransID").val(id);
-                    $("#txtCommonPrintTranTypeID").val(PrintTransID);
-                    $("#txtCommonPrintConfigID").val(PrintConfigID);
-                }
-                else {
-                    showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
-                }
-            }
-            //PrintDocument(id, 4);
-            }
-        }
-        else {
-            showErrorSnackbar("Select Print profile");
-        }
-    });
-    $("#btnPreview").click(function (e) {
-        //modalPayment.style.display = "block";
-        var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
-        var sts = $("#txtStatus").val();
-        if (PrintConfigID > 0) {
-            if (id > 0) {
-                if (sts == 1 || sts == 3 || sts == 5 || sts == 6 || sts == 7) {
-                    PrintDocument(id, PrintTransID, PrintConfigID, 1);
-                }
-                else {
-                    if (allowprint != 2) {
-                        modalPrintAppPassword.style.display = "block";
-                        $("#txtCommonPrintPrevieworPDF").val(1);//1 - Preview , 2 - PDF
-                        $("#txtCommonPrintTransID").val(id);
-                        $("#txtCommonPrintTranTypeID").val(PrintTransID);
-                        $("#txtCommonPrintConfigID").val(PrintConfigID);
-                    }
-                    else {
-                        showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
-                    }
-                }
-                //PrintDocument(id, 4);
-            }
-        }
-        else {
-            showErrorSnackbar("Select Print profile");
-        }
-    });
-    $("#btnPDF,#btniframePDF").click(function (e) {
-        //modalPayment.style.display = "block";
-        if (PrintConfigID > 0) {
-            var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
-            var sts = $("#txtStatus").val();
-            if (id > 0) {
-                //PDFDocument(id, 4, 1);
-                if (sts == 1 || sts == 3 || sts == 5 || sts == 6 || sts == 7) {
-                    if (allowprint != 2) {
-                        PDFDocument(id, PrintTransID, PrintConfigID);
-                    }
-                    else {
-                        showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
-                    }
-                }
-                else {
-                    if (allowprint != 2) {
-                        modalPrintAppPassword.style.display = "block";
-                        $("#txtCommonPrintPrevieworPDF").val(2);//1 - Preview , 2 - PDF
-                        $("#txtCommonPrintTransID").val(id);
-                        $("#txtCommonPrintTranTypeID").val(PrintTransID);
-                        $("#txtCommonPrintConfigID").val(PrintConfigID);
-                    }
-                    else {
-                        showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
-                    }
-                }
-            }
-        }
-        else {
-            showErrorSnackbar("Select Print profile");
-        }
-    });
-    function PrintDocument(ID, strTransID, nConfigID, printorpreview = 0) {
-        if (PrintConfigID > 0) {
-            $.ajax({
-                url: '@Url.Action("PDFGenerate", "Invoice")',
-                type: 'GET',
-                datatype: 'json',
-                data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID },
-                success: function (data) {
-                    if (data.length > 0) {
-                        var pdfpathDownload = 'Invoice/ExportData?Fname=' + data;
-                        var pdfpathPreview = 'Invoice/PreviewData?Fname=' + data;
-                        //location.href = pdfpathDownload;
-                        //printEmbedDocument(myurl + "/PDF/" + data);
-                        if (printorpreview == 0) {
-                            printEmbedDocument(myurl + "/PDF/" + data);
-                        } else {
-                            previewiframe(myurl + "/PDF/" + data);
-                        }
-                    } else {
-                        showErrorSnackbar('PDF File not generate. Try Again');
-                    }
-                }, error: function (data) {
-                    if (data.status == "401") {
-                        var msg = data.responseJSON.Message;
-                        //showErrorSnackbar(msg + " Logout and Login again.");
-                    }
-                }
-            });
-        }
-        else {
-            showErrorSnackbar("Select Print profile");
-        }
-    }
-    function PDFDocument(ID, strTransID, nConfigID) {
-        if (nConfigID > 0) {
-            $.ajax({
-                url: '@Url.Action("PDFGenerate", "Invoice")',
-                type: 'GET',
-                datatype: 'json',
-                data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID },
-                success: function (data) {
-                    if (data.length > 0) {
-                        location.href = 'Invoice/ExportData?Fname=' + data;
-                    } else {
-                        showErrorSnackbar('PDF File not generate. Try Again');
-                    }
-                }, error: function (data) {
-                    if (data.status == "401") {
-                        var msg = data.responseJSON.Message;
-                        //showErrorSnackbar(msg + " Logout and Login again.");
-                    }
-                }
-            });
-        }
-        else {
-            showErrorSnackbar("Select Print profile");
-        }
-    }
-    var myurl = '@Session["url"]';
-    function printEmbedDocument(testlink) {
-        let ifr = document.createElement("iframe");
-        ifr.style.position = 'absolute';
-        ifr.style.width = "0px";
-        ifr.style.height = "0px";
-        ifr.style.border = "none";
-        ifr.src = testlink;
-        ifr.onload = function () {
-            ifr.contentWindow.focus();
-            ifr.contentWindow.print();
-            //setTimeout(() => document.body.removeChild(ifr), 1000);
-        }
-        document.body.appendChild(ifr);
-    }
-    function previewiframe(link) {
-        const options = "#toolbar=0&navpanes=0&scrollbar=0&zoom=80";
-
-        document.getElementById("iframepreview").src = link + options;
-        modaliframePreview.style.display = "block";
-    }
-    var allowprint = '@Session["AllowPrint"]';
-    function PrintConfirmDialogMsg1(ID, TypeID, nConfigID, message) {
-        var IsAccepted = false;
-        $(".ui-dialog-titlebar-close").hide();
-        $('<div></div>').appendTo('body')
-            .html('<div><h6>' + message + '</h6></div>')
-            .dialog({
-                modal: true,
-                closeOnEscape: true,
-                title: 'Confirm Print Popup',
-                zIndex: 100,
-                autoOpen: true,
-                width: '300px',
-                resizable: true,
-                close: false,
-                open: function () {
-                    $(this).closest(".ui-dialog")
-                        .find(".ui-dialog-titlebar-close")
-                        .removeClass("ui-dialog-titlebar-close")
-                        .html("x");
-                },
-                buttons: [
-                    {
-                        text: "Yes",
-                        class: "btn btn-success clsYes",
-                        click: function () {
-                            $(this).dialog("close");
-                            PrintDocument(ID, TypeID, nConfigID);
-                        },
-                    },
-                    {
-                        text: "No",
-                        class: "btn btn-danger clsNo cfforeclr",
-                        click: function () {
-                            $(this).dialog("close");
-                        }
-                    }
-                ],
-            });
-        if (allowprint == 3) {
-            $(".clsYes").focus();
-        }
-        else if (allowprint == 4) {
-            $(".clsNo").focus();
-        }
-    };*/
+    }    
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {
         $("#txtDraftID").val($("#txtID").val())
         //var rdo1 = $("#rdoMainTableData").is(":checked");
@@ -5961,6 +5768,7 @@ if ($("#txtAddID").val() == 0) {
         $("#dvDocuments").hide();
         $("#btnEmail,#btnWhatsapp").show();
         $("#MainHeading").text("View " + $("#txtFormName").val());
+        
     }
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {//$("#txtQAViewDocID").val()
         var ID = $("#txtID").val();
@@ -5971,6 +5779,7 @@ if ($("#txtAddID").val() == 0) {
         $("#dvDocuments").hide();
         $("#btnPreview,#btnPDF,#btnPrint").hide();
         $("#btnSave,#btnClear,#btnDraft").show();
+        $("#btnEmail,#btnWhatsapp").show();
         $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
         $("#MainHeading").text("Variant " + $("#txtFormName").val());
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
@@ -5978,28 +5787,11 @@ if ($("#txtAddID").val() == 0) {
         $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
         GetVariantData(VarType, ID, PartyID);     
         $("#MainHeading").text("Create " + $("#txtFormName").val());
+        setTimeout(() => {
+            CalculateItemDiffPrice();
+        }, 600);
     }
-    function GetVariantData(nVariantType, nID, nPartyID) {
-        //showSuccessSnackbar(nVariantType + nID + nPartyID);
-        //$.ajax({
-        //    url: Aurl + "quotation/getvariantdata",
-        //    type: 'get',
-        //    contentType: 'json',
-        //    data: { VariantType: nVariantType, DocID: nID },
-        //    xhrFields: {
-        //        withCredentials: true
-        //    },
-        //    async: false,
-        //    success: function (data) {
-        //        ProductTable.draw().clear(); ProductTable.draw().clear();
-
-        //    }, error: function (data) {
-        //        if (data.status == "401") {
-        //            var msg = data.responseJSON.Message;
-        //            //showErrorSnackbar(msg + " Logout and Login again.");
-        //        }
-        //    }
-        //});
+    function GetVariantData(nVariantType, nID, nPartyID) {        
         $.ajax({
             url: Aurl + "salesreturn/getvariantdata",
             type: 'get',

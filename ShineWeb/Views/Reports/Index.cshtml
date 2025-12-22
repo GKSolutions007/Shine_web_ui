@@ -481,6 +481,7 @@
     ul li > .menu-name:hover {
         font-weight: bold;
         color: var(--report-menu-hover);
+    }
 </style>
 <body>
     <div id="RepLoadersnackbar" class="RepLoadersnackbar">        
@@ -741,22 +742,43 @@
             }
         });
     }
+    function getMenuIcon(name, hasChildren) {
+        if (!name) return hasChildren ? 'fa-folder' : 'fa-file-lines';
+        
+        const lowerName = name.toLowerCase();
+        if (lowerName == "sales reports") return 'fa-cart-shopping';
+        if (lowerName == "purchase reports") return 'fas fa-shopping-bag';
+        if (lowerName == "inventory reports") return 'fa-warehouse';
+        if (lowerName == "accounts reports") return 'fa-calculator';        
+        if (lowerName == "outstanding report") return 'fa-file-invoice-dollar';
+        if (lowerName == "analysis reports") return 'fa-chart-pie';        
+        if (lowerName == "master management") return 'fas fa-database';        
+        
+    }
+
     function createMenu(data) {
-        //console.log(data);
         const ul = document.createElement('ul');
         data.forEach(item => {
-            //console.log("item", item);
             const li = document.createElement('li');
-
-            // 🔹 Store ReportID in data attribute
             li.dataset.reportId = item.ReportID || "";
             li.dataset.menuName = item.ReportName;
+
+            const hasChildren = item.Children && item.Children.length > 0;
 
             // Toggle symbol
             const toggle = document.createElement('span');
             toggle.classList.add('toggle');
-            toggle.textContent = item.Children && item.Children.length > 0 ? '+' : '•';
+            toggle.textContent = hasChildren ? '+' : '•';
             li.appendChild(toggle);
+
+            // 🔹 Add Icon
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid ' + getMenuIcon(item.ReportName, hasChildren);
+            icon.style.marginRight = hasChildren ? '8px' : '4px';
+            icon.style.width = hasChildren ? '16px' : '0px';
+            icon.style.textAlign = 'center';
+            icon.style.color = '#555';
+            li.appendChild(icon);
 
             // Menu text
             const name = document.createElement('span');
@@ -764,42 +786,47 @@
             name.classList.add('menu-name');
             li.appendChild(name);
 
-            if (item.Children && item.Children.length > 0) {
+            if (hasChildren) {
                 const childUl = createMenu(item.Children);
-                childUl.classList.add('collapsed'); // start collapsed
+                childUl.classList.add('collapsed');
                 li.appendChild(childUl);
 
-                // Expand/collapse + alert
                 li.addEventListener('click', function (e) {
                     e.stopPropagation();
-
                     const isCollapsed = childUl.classList.contains('collapsed');
 
-                    // Collapse siblings
                     const siblings = li.parentElement.querySelectorAll(':scope > li > ul');
                     const siblingToggles = li.parentElement.querySelectorAll(':scope > li > .toggle');
+                    const siblingIcons = li.parentElement.querySelectorAll(':scope > li > i');
+
                     siblings.forEach(s => s.classList.add('collapsed'));
                     siblingToggles.forEach(t => t.textContent = '+');
+                    // Reset icons of siblings to closed folder if they have children
+                    siblingIcons.forEach((ic, idx) => {
+                        const sibLi = li.parentElement.querySelectorAll(':scope > li')[idx];
+                        const sibHasChildren = sibLi.querySelector('ul') !== null;
+                        if (sibHasChildren) {
+                            ic.className = 'fa-solid ' + getMenuIcon(sibLi.dataset.menuName, true);
+                        }
+                    });
 
-                    // Expand this one if collapsed
                     if (isCollapsed) {
                         childUl.classList.remove('collapsed');
                         toggle.textContent = '−';
+                        // Update this icon to open folder or specific active icon
+                        icon.className = 'fa-solid ' + getMenuIcon(item.ReportName, true);
+                        icon.style.color = '#007acc';
                     } else {
                         toggle.textContent = '+';
+                        icon.style.color = '#555';
                     }
-
-                    // 🔹 Show ReportID + MenuName in popup
-                    //alert(`ReportID: ${li.dataset.reportId || "N/A"}\nMenu: ${li.dataset.menuName}`);
                 });
             } else {
-                // Leaf node
                 li.addEventListener('click', function (e) {
                     e.stopPropagation();
                     console.log(li.dataset);
                     $("#Grid").html("");
                     $("#DetailGrid").html("");
-                    //alert(`ReportID: ${li.dataset.reportId || "N/A"}\nMenu: ${li.dataset.menuName}`);
                     FID = li.dataset.reportId;
                     GetData(0);
                     GetData(1);
@@ -810,6 +837,10 @@
                         $("#btnFilters,#btnGenerate,#btnExport,#dvAssign").show();
                         openTabs(null, 'FilterDetails', 1);
                     }
+                    
+                    // Highlight active leaf
+                    li.parentElement.querySelectorAll('li').forEach(l => l.style.backgroundColor = 'transparent');
+                    li.style.backgroundColor = '#eef';
                 });
             }
 
@@ -1055,8 +1086,8 @@
                         }
                     }
                     if (nMode == 1) {
-                        if (data.length > 0) {
-                            Table.draw().clear();
+                        Table.draw().clear(); Table.draw().clear();
+                        if (data.length > 0) {                            
                             $.each(data, function (i, items) {
                                 var ParamType = items.ParameterType;
                                 var ParVal = "";
