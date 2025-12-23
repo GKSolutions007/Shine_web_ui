@@ -34,7 +34,8 @@ namespace ShineWeb.Controllers
             //}
 
             string nv = Convert.ToString(Session["NavBarVisible"]);
-            
+            string userAgent = Request.UserAgent;
+            bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
             string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
                 //"http://202.21.32.54/sampapi/api/";
             // HttpContext.Request.Url.AbsoluteUri.ToString();
@@ -99,7 +100,32 @@ namespace ShineWeb.Controllers
             bool Issend = bl.SendEmail("Shine Activation mail", "Hii user, your activation link given below. Click the link to activate your account.\n" + ALink, ToMail);
             return Json(Issend ? 0 : 1, JsonRequestBehavior.AllowGet);
         }
+        private string GetOperatingSystem(string userAgent)
+        {
+            if (string.IsNullOrEmpty(userAgent))
+                return "Unknown";
 
+            userAgent = userAgent.ToLower();
+
+            if (userAgent.Contains("windows nt 10"))
+                return "Windows 10 / 11";
+            if (userAgent.Contains("windows nt 6.3"))
+                return "Windows 8.1";
+            if (userAgent.Contains("windows nt 6.2"))
+                return "Windows 8";
+            if (userAgent.Contains("windows nt 6.1"))
+                return "Windows 7";
+            if (userAgent.Contains("mac os x"))
+                return "macOS";
+            if (userAgent.Contains("android"))
+                return "Android";
+            if (userAgent.Contains("iphone") || userAgent.Contains("ipad"))
+                return "iOS";
+            if (userAgent.Contains("linux"))
+                return "Linux";
+
+            return "Unknown";
+        }
         public ActionResult AACM(string AAlk)
         {
             try
