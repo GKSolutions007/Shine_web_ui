@@ -219,15 +219,76 @@ function WebsiteValidation(value, errordiv) {
     }
     return true;
 }
-function AlphaNumericwithSplchar(value, errordiv) {
+function AlphaNumericwithSplchar_old(Field, errordiv, event) {
     $(errordiv).html('');
-    var strRegex = /^[ A-Za-z0-9-_&*.,)(@@%]*$/
-    if (!strRegex.test(value)) {
-        $(errordiv).html('*Invalid special character');        
+    //var strRegex = /^[ A-Za-z0-9-_&*.,)(@@%]*$/
+    var strRegex = /^[a-zA-Z0-9_@. ,%|*~&()\/-]+$/;
+    if (!strRegex.test(Field.value)) {
+        event.preventDefault();
+        Field.value = Field.value.replace(strRegex, '');        
+        $(errordiv).html('*Invalid special character');
+        Field.style.borderColor = 'red';
         return false;
+    } else {
+        $(errordiv).html(''); 
+        Field.style.borderColor = 'none';
     }
     return true;
 }
+
+// ✅ Block invalid characters BEFORE they appear (desktop + mobile)
+function AlphaNumericMobileSafe(e, errordiv) {
+    $(errordiv).html('');
+
+    // Allow deletes, navigation, autofill
+    if (!e.data) return true;
+
+    var regex = /^[a-zA-Z0-9_@. ,%|*~&()\/-]$/;
+
+    if (!regex.test(e.data)) {
+        $(errordiv).html('*Invalid special character');
+        
+        return false; // ❌ blocks input (works on mobile)
+    }
+
+    return true;
+}
+function AlphaNumericBeforeInput(e, input, errordiv) {
+    $(errordiv).html('');
+    input.style.borderColor = ''; // reset
+
+    // Allow delete, navigation, undo, redo
+    if (!e.data) return true;
+
+    // Allow paste & autofill
+    if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+        return true;
+    }
+
+    var regex = /^[a-zA-Z0-9_@. ,%|*~&()\/-]$/;
+
+    if (!regex.test(e.data)) {
+        $(errordiv).html('*Invalid special character(_@. ,%|*~&()\/- only allowed)');
+        input.style.borderColor = 'red';
+        return false; // ❌ block typing
+    }
+
+    return true;
+}
+// ✅ Fallback sanitizer (paste, autofill, IME)
+function sanitizeAlphaNumeric(input, errordiv) {
+    var sanitizeRegex = /[^a-zA-Z0-9_@. ,%|*~&()\/-]/g;
+    var oldValue = input.value;
+    $(errordiv).html('');
+    input.value = input.value.replace(sanitizeRegex, '');
+    input.style.borderColor = '';
+    if (oldValue !== input.value) {
+        input.style.borderColor = 'red';
+        $(errordiv).html('*Invalid special character(_@. ,%|*~&()\/- only allowed)');
+    }
+}
+
+
 function AlphaorNumericonly(value, errordiv) {
     $(errordiv).html('');
     var strRegex = /^[A-Za-z0-9]*$/

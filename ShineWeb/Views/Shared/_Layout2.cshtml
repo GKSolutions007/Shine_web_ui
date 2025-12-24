@@ -144,7 +144,7 @@
             display: block;
             background-color: white;
             border-radius: 5px;
-        }
+        }       
         /* Fixed sidenav, full height - MODERNIZED */
         .sidenav {
             height: 100%;
@@ -159,6 +159,7 @@
             color: white;
             box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
         }
 
             /* Style the sidenav links and the dropdown button */
@@ -902,6 +903,17 @@
         ul li > .menu-name:hover {
             font-weight: bold;
             color: var(--report-menu-hover);
+        }
+        #tblMasterData tbody tr {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+            #tblMasterData tbody tr:hover {
+                background-color: #f0f9ff !important;
+                transform: scale(1.01);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
     </style>
 </head>
 <body>
@@ -1969,18 +1981,23 @@
 
                 // Step 1: Save DOM nodes with their edited values
                 var savedRowData = [];
+                var rowcssprop;
                 $('#tblProductData tbody tr').each(function() {
                     var $oldRow = $(this);
                     var dtRowData = ProductTable.row(this).data();
-
+                    console.log("old row data : ", $oldRow, "Prod field : ", dtRowData[14], "css prop : ", $oldRow[0].style.cssText);
+                    rowcssprop = $oldRow[0].style.cssText;
                     // Capture all current input values from the DOM
                     var editedValues = {
                         dtData: dtRowData,
+                        rowStyle: $oldRow.attr('style') || '',
+                        rowClass: $oldRow.attr('class') || '',
                         inputs: {},
                         selects: {},
-                        labels: {}
+                        labels: {},
+                        cellStyles: []
                     };
-
+                   
                     $oldRow.find('input').each(function() {
                         var id = $(this).attr('id');
                         if (id) {
@@ -2007,7 +2024,9 @@
                             };
                         }
                     });
-
+                    //$oldRow.find('td').each(function () {
+                    //    editedValues.cellStyles.push(rowcssprop || '');//$(this).attr('style')
+                    //});
                     savedRowData.push(editedValues);
                 });
 
@@ -2024,7 +2043,11 @@
                 $('#tblProductData tbody tr').each(function(index) {
                     var $newRow = $(this);
                     var editedData = savedRowData[index];
-
+                    //if (rowcssprop)
+                    //    $newRow.attr('style', rowcssprop);
+                    if (editedData.rowStyle) {
+                        $newRow.attr('style', editedData.rowStyle);
+                    }
                     if (editedData) {
                         // Restore input values
                         $.each(editedData.inputs, function(id, data) {

@@ -747,7 +747,7 @@
             }
         });
     }
-    
+    var DocGridSearchValue = "";
     ej.grids.Grid.Inject(ej.grids.Page, ej.grids.ExcelExport, ej.grids.Toolbar, ej.grids.Aggregate, ej.grids.Group, ej.grids.Sort, ej.grids.Filter, ej.grids.ColumnMenu, ej.grids.ColumnChooser);
     function bindDataTable(data) {
         if (data.length === 0) {
@@ -912,10 +912,16 @@
             //console.log("Selected Row Data:", rowData);
             $("#DocumentGrid").html("");
             $("#ProductInfo").show();
+            if (Documetsgrid) {
+                DocGridSearchValue = Documetsgrid.searchSettings.key || '';
+                //showInfoSnackbar("lastSearchText : " + lastSearchText);
+            }
             GetProductDocuments(rowData["ID"]);
             $("#lblProductName").text(rowData["Name"]);
         }
     }
+    var DocGridSearchValue = '';
+    var isRebinding = false;
     function bindDocumentDataTable(data) {
         if (data.length === 0) {
             return; // No data to display
@@ -929,6 +935,7 @@
         //    { field: 'Party', headerText: 'Party Name', width: "60", textAlign: 'left' },
         //    { field: 'Qty', headerText: 'Qty', width: "30", textAlign: 'Right' },
         //    { field: 'Value', headerText: 'Value', width: "30", textAlign: 'Right' }]
+        isRebinding = true;
         Documetsgrid = new ej.grids.Grid({
             dataSource: data,
             allowPaging: false,
@@ -944,7 +951,7 @@
             allowReordering: true,
             showColumnChooser: true, // ✅ Must be true
             showColumnMenu: true,
-            rowSelected: onRowSelected,
+            //rowSelected: onRowSelected,
             columns: documentcolumnsettings,
             toolbarClick: function (args) {
                 if (args.item.id === 'customizeBtn') {
@@ -1068,6 +1075,20 @@
                 console.log("Column visibility changed:");
                 console.log("Field:", args.column.field);
                 console.log("Now Visible:", args.visible);
+            },
+            /* 🔥 CAPTURE SEARCH VALUE HERE */
+            actionBegin: function (args) {
+                if (args.requestType === 'searching' && !isRebinding) {
+                    DocGridSearchValue = args.searchString || '';
+                }
+            },
+
+            /* 🔥 REAPPLY SEARCH ONLY AFTER REBIND */
+            dataBound: function () {
+                if (isRebinding && DocGridSearchValue) {
+                    Documetsgrid.search(DocGridSearchValue);
+                    isRebinding = false;
+                }
             }
         });
 
