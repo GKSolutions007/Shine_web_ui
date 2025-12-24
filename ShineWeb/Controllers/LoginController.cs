@@ -49,6 +49,7 @@ namespace ShineWeb.Controllers
             //string addslahinlast = IsSlash == '/' ? url : url + "/";
             Session["url"] = IsSlash == '/' ? url : url + "/";
             Session["DeviceType"] = Request.Browser.IsMobileDevice ? "0" : "1";
+            Session["DeviceOS"] = GetOperatingSystem(userAgent);
             if (string.IsNullOrEmpty(nv))
             {
                 Session["NavBarVisible"] = "LogOn";
@@ -107,14 +108,14 @@ namespace ShineWeb.Controllers
 
             userAgent = userAgent.ToLower();
 
-            if (userAgent.Contains("windows nt 10"))
-                return "Windows 10 / 11";
-            if (userAgent.Contains("windows nt 6.3"))
-                return "Windows 8.1";
-            if (userAgent.Contains("windows nt 6.2"))
-                return "Windows 8";
-            if (userAgent.Contains("windows nt 6.1"))
-                return "Windows 7";
+            if (userAgent.Contains("windows nt 10"))//Windows 10 / 11
+                return "Windows";
+            if (userAgent.Contains("windows nt 6.3"))//Windows 8.1
+                return "Windows";
+            if (userAgent.Contains("windows nt 6.2"))//Windows 8
+                return "Windows";
+            if (userAgent.Contains("windows nt 6.1"))//Windows 7
+                return "Windows";
             if (userAgent.Contains("mac os x"))
                 return "macOS";
             if (userAgent.Contains("android"))
