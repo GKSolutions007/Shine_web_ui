@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Transactions;
 using System.Web;
 
 namespace ShineWeb.Models
@@ -71,5 +72,10 @@ namespace ShineWeb.Models
         public string CollectionDetailEnable { get; set; }
         public string ChequeDetailEnable { get; set; }
         public string TransVariantEnable { get; set; }
+        public string Balances { get; set; }
+        public string QuickAccess { get; set; }
+        public string PendingDraft { get; set; }
+        public string TransactionSummary { get; set; }
+
     }
 }

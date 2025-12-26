@@ -704,6 +704,7 @@
                         </div>
                     </div>
                     <span class="form-label">
+                        
                         @*<input tabindex="1" hidden type="text" id="txtCode1" placeholder="">*@
                         @*<label class="labelup" for="txtCode">Customer Code*</label>*@
                     </span>
@@ -1130,6 +1131,39 @@ function updateInputColumn(inputID, netValue) {
             $('#cmbTaxType').val(1);
         }
     });
+    $('#txtGSTIN').change(function (e) {
+        //showInfoSnackbar("GST NO : " + e.target.value);
+        $("#divErrorOnGSTIN").html("");
+        CheckStatutoryExists("vendor", "GSTIN", e.target.value);
+    });
+    function CheckStatutoryExists(strFormName, strFieldName, strValue) {
+        var StrID = $("#txtID").val() == "" || $("#txtID").val() == null ? 0 : $("#txtID").val();
+        $.ajax({
+            url: Aurl + "customermaster/validatestatutory",
+            type: 'get',
+            contentType: 'json',
+            data: { FormName: strFormName, FieldName: strFieldName, Value: strValue, ID: StrID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                var Response = eval(data);
+                if (Response) {
+                    var Infodata = '';
+                    $.each(Response, function (i, items) {
+                        if (strFieldName == "GSTIN") {
+                            Infodata += "&bull; "+items.Name + ", <br/>";
+                        }
+                    });
+                    if (Infodata != '') {
+                        if (strFieldName == "GSTIN") {
+                            $("#divErrorOnGSTIN").html("GSTIN Already Used in This Vendor(s)<br/>" + Infodata);
+                        }
+                    }
+                }
+            }
+        });
+    }
     $("#btnSave").click(function () {
         $(".clrdiv,.clrdivs").html("");
         var IsValid = true, ChkFormation = true;

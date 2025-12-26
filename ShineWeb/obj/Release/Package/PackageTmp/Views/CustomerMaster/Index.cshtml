@@ -68,7 +68,7 @@
         top: 0;
         width: 100%; /* Full width */
         height: 100%; /* Full height */
-        /*overflow: auto;*/ /* Enable scroll if needed */
+        overflow: auto; /* Enable scroll if needed */
         background-color: rgb(0,0,0); /* Fallback color */
         background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
     }
@@ -78,7 +78,7 @@
         .modalBatch-content {
             background-color: #ffffff;
             margin: 3% auto; /* 15% from the top and centered */
-            padding: 10px;
+            padding: 2px;
             border: 1px solid #888;
             width: 75%; /* Could be more or less, depending on screen size */
             height: 70%;
@@ -91,7 +91,7 @@
         .modalBatch-content {
             background-color: #ffffff;
             margin: 10% auto; /* 15% from the top and centered */
-            padding: 25px;
+            padding: 2px;
             border: 1px solid #888;
             width: 95%; /* Could be more or less, depending on screen size */
             height: 80%;
@@ -783,7 +783,7 @@
                                                 <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
                                                     <div>
                                                         <span class="form-label">
-                                                            <input class="form-control FormclrField" type="text" id="txtGSTIN" placeholder="" maxlength="15">
+                                                            <input class="form-control FormclrField" type="text" id="txtGSTIN" style="text-transform:uppercase" placeholder="" maxlength="15">
                                                             <label class="labelup" for="txtGSTIN">GSTIN</label>
                                                         </span>
                                                         <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnGSTIN" class="clrdivs"></div>
@@ -1518,6 +1518,39 @@ function updateInputColumn(inputID, netValue) {
             $('#cmbTaxType').val(1);
         }
     });
+    $('#txtGSTIN').change(function (e) {
+        //showInfoSnackbar("GST NO : " + e.target.value);
+        $("#divErrorOnGSTIN").html("");
+        CheckStatutoryExists("customer", "GSTIN", e.target.value);
+    });
+    function CheckStatutoryExists(strFormName, strFieldName, strValue) {
+        var StrID = $("#txtID").val() == "" || $("#txtID").val() == null ? 0 : $("#txtID").val();
+        $.ajax({
+            url: Aurl + "customermaster/validatestatutory",
+            type: 'get',
+            contentType: 'json',
+            data: { FormName: strFormName, FieldName: strFieldName, Value: strValue, ID: StrID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                var Response = eval(data);
+                if (Response) {
+                    var Infodata = '';
+                    $.each(Response, function (i, items) {
+                        if (strFieldName == "GSTIN") {
+                            Infodata += "&bull; " +items.Name + ", <br/>";
+                        }
+                    });
+                    if (Infodata != '') {
+                        if (strFieldName == "GSTIN") {
+                            $("#divErrorOnGSTIN").html("GSTIN Already Used in This Customer(s)<br/>" + Infodata);
+                        }
+                    }
+                }
+            }
+        });
+    }
     var objcustRem = [];
     function AddRemarks() {
         objcustRem = [];

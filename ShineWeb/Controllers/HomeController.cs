@@ -25,10 +25,20 @@ namespace ShineWeb.Controllers
                 string ColldtlEnable = dtPermission.Select("MenuID = 303", null).Length > 0 ? "1" : "0";
                 string ChqdtlEnable = dtPermission.Select("MenuID = 304", null).Length > 0 ? "1" : "0";
                 string tranvariantEnable = dtPermission.Select("MenuID = 309", null).Length > 0 ? "1" : "0";
+
+                string BalanceEnable = dtPermission.Select("MenuID = 397", null).Length > 0 ? "1" : "0";
+                string QAEnable = dtPermission.Select("MenuID = 398", null).Length > 0 ? "1" : "0";
+                string PendDraftEnable = dtPermission.Select("MenuID = 399", null).Length > 0 ? "1" : "0";
+                string TranSummaryEnable = dtPermission.Select("MenuID = 400", null).Length > 0 ? "1" : "0";
                 Homescreen dam = new Homescreen();
                 dam.CollectionDetailEnable = ColldtlEnable;
                 dam.ChequeDetailEnable = ChqdtlEnable;
                 dam.TransVariantEnable = tranvariantEnable;
+
+                dam.Balances = BalanceEnable;
+                dam.QuickAccess = QAEnable;
+                dam.PendingDraft = PendDraftEnable;
+                dam.TransactionSummary = TranSummaryEnable;
                 return View(dam);
             }
         }

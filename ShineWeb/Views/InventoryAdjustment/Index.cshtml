@@ -171,6 +171,62 @@
             cursor: pointer;
         }
 
+    .modalProdHistory {
+        display: none;
+        position: fixed;
+        z-index: 10;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+    }
+    .modal-body {
+        padding:5px !important;
+    }
+        @@media only screen and (min-width: 600px) {
+            .modalProdHistory-content {
+                background-color: #ffffff;
+                margin: 2% auto;
+                padding: 2px;
+                border: 1px solid #888;
+                width: 80%;
+                height: 70%;
+                top: 5%;
+                overflow: auto;
+            }
+        }
+
+        @@media only screen and (max-width: 600px) {
+            .modalProdHistory-content {
+                background-color: #ffffff;
+                margin: 10% auto;
+                padding: 2px;
+                border: 1px solid #888;
+                width: 95%;
+                height: 80%;
+                top: 20%;
+                overflow: auto;
+            }
+        }
+
+        .closePHistory {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+    .closePHistory:hover,
+    .closePHistory:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+
     .tab {
         overflow: hidden;
         border: 1px solid #ccc;
@@ -303,6 +359,9 @@
         .dropdown-toggle::after {
             display: none;
         }
+    #tblProductHistory td{
+        font-size:12px;
+    }
 </style>
 <body>
 
@@ -423,8 +482,8 @@
                             <div>
                                 <span class="form-label">
                                     <input tabindex="1" class="form-control FormclrField" type="text" id="txtRefNo" placeholder=""
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
-                                                        oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')"/>
+                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
+                                           oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
                                     <label class="labelup" for="txtCode"> Ref No</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
@@ -487,11 +546,14 @@
                             <label for="chkQtyonly" style="font-size:14px;">Qty Batch Only</label>
                         </td>
                         <td width="40%" id="trItemName">
-                            <span class="form-label">
-                                <input class="form-control FormclrField" id="txtHProds" />
-                                <input id="txtHProdCode" hidden />
-                                <label class="labelup" for="txtCode">Item Details </label>
-                            </span>
+                            <div class="input-group">
+                                <span class="form-label">
+                                    <input class="form-control FormclrField" id="txtHProds" />
+                                    <input id="txtHProdCode" hidden />
+                                    <label class="labelup" for="txtCode">Item Details </label>
+                                </span>
+                                <span id="sItemHistroy" class="input-group-addon" title="Product History"><span class="glyphicon glyphicon-info-sign" style="background-color:white;"></span></span>
+                            </div>
                             <label class="form-label" style="padding-left: 1em" id="lblProdCodeAS"></label>
                             <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProduct" class="clrdivs"></div>
                         </td>
@@ -515,7 +577,7 @@
             </div>
             <table class="table table-bordered  row-border order-column" id="tblProductData" width="100%">
                 <thead>
-                    <tr>
+                    <tr class="trclrforcolheader">
                         <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ProdID</th>
                         <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ProdCode</th>
                         <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">UOMID</th>
@@ -565,8 +627,8 @@
                             <div>
                                 <span class="form-label">
                                     <input tabindex="1" class="form-control FormclrField" type="text" id="txtRemarks" placeholder=""
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
-                                                        oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')"/>
+                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
+                                           oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
                                     <label class="labelup" for="txtCode">Remarks</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdivs"></div>
@@ -578,8 +640,8 @@
                             <div>
                                 <span class="form-label">
                                     <textarea class="form-control FormclrField" rows="3" id="txtNarration"
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
-                                                        oninput="sanitizeAlphaNumeric(this, '#divErrNarration')"/></textarea>
+                                              onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
+                                              oninput="sanitizeAlphaNumeric(this, '#divErrNarration')" ></textarea>
                                     <label class="labelupfortextarea" for="txtCode">Narration</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNarration" class="clrdivs"></div>
@@ -590,10 +652,10 @@
         </div>
         <div class="footerAction modal-footer">
             @*<div style="padding-right:20px" align="right">
-            <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
-            <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
-            <button type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
-        </div>*@
+                    <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                    <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                    <button type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                </div>*@
             <table width="100%">
                 <tr>
                     <td width="15%" align="left" style="padding-left:20px">
@@ -698,7 +760,7 @@
                             </table>
                             <table class="table table-bordered row-border order-column" id="tblBatch" style="width:100%">
                                 <thead>
-                                    <tr>
+                                    <tr class="trclrforcolheader">
                                         <th style="width:0%">InventoryID</th>
                                         <th style="width:0%">HDPPrice</th>
                                         <th style="width:0%">HDSPrice</th>
@@ -849,6 +911,45 @@
             </div>
         </div>
     </div>
+
+    <div class="modalProdHistory" id="myModalPHistory">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalProdHistory-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closePHistory">&times;</button>
+                    <h5 class="modal-title" style="color:black"><b>Product History</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px">
+                        <table class="table table-bordered row-border order-column" id="tblProductHistory" style="width:100%">
+                            <thead>
+                                <tr class="trclrforcolheader">                                   
+                                    <th style="width:10%">Doc ID</th>
+                                    <th style="width:15%">Doc Date</th>
+                                    <th style="width:10%">Purchase Price</th>
+                                    <th style="width:8%">Qty</th>
+                                    <th style="width:8%">Free Qty</th>
+                                    <th style="width:6%">Damage Qty</th>                                    
+                                    <th style="width:10%">Remarks</th>
+                                    <th style="width:9%">Narration</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                                                
+                        <button type="button" class="btn btn-warning" id="btnProdHistoryClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 
@@ -869,24 +970,7 @@
         scrollX: true,
         scrollCollapse: true,
         "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false }, { "targets": [7], "class": "text-center" }],
-    });
-    //<tr>
-    //    <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ProdID</th>
-    //    <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ProdCode</th>
-    //    <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">UOMID</th>
-    //    <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TaxPern</th>
-    //    <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">Action</th>
-    //    <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
-    //    <th style="text-align:center;font-size: 12px;width:30%;padding-right:100px;" class="trclrforcolheader">Item Names</th>6
-    //    <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">ABS Qty</th>
-    //    <th style="text-align:center;font-size: 12px;width:7%;" class="trclrforcolheader">ABS Free</th>
-    //    <th style="text-align:center;font-size: 12px;width:7%;" title="Damage Qty" class="trclrforcolheader">ABS Dmg</th>
-    //    <th style="text-align:center;font-size: 12px;width:8%;" title="Product Discount" class="trclrforcolheader">UOM</th>
-    //    <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Adj Qty</th>
-    //    <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Adj Free</th>
-    //    <th style="text-align:center;font-size: 12px;width:8%;" title="Damage Qty" class="trclrforcolheader">Adj Dmg</th>
-    //    <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Gross ₹</th>
-    //</tr>
+    });    
     var ProductTable = $('#tblProductData').DataTable({
         paging: false,
         searching: false,
@@ -901,6 +985,17 @@
         //    end: 4
         //},
         "columnDefs": [{ "targets": [0, 1, 2, 3], "visible": false, searchable: false, ordering: false }, { "targets": [6], "width": "30%" }],
+    });
+    
+    var TableProductHistory = $('#tblProductHistory').DataTable({
+        "bFilter": false,
+        "bSearchable": true,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "300px",
+        scrollX: true,
+        scrollCollapse: true,        
     });
     var TableSelectProd = $('#tblSelectProd').DataTable({
         "bFilter": true,
@@ -1022,6 +1117,15 @@ if ($("#txtAddID").val() == 0) {
         modalPinfo.style.display = "none";
     });
 
+    var modalPhistory = document.getElementById("myModalPHistory");
+    var spanphistory = document.getElementsByClassName("closePHistory")[0];
+    spanphistory.onclick = function () {
+        modalPhistory.style.display = "none";
+    }
+    $('#btnProdHistoryClose').click(function (e) {
+        modalPhistory.style.display = "none";
+    });
+    
     $("#btnAddNB").click(function () {
         modalPinfo.style.display = "block";
         var ProdID = $('#txtHProdID').val();
@@ -1226,6 +1330,12 @@ function updateInputColumn(inputID, netValue) {
         ProductTable.row($(this).parents('tr')).remove().draw();
         calculateProdGrid();
         ReorderSerialNo();
+    });
+    $('#tblProductData tbody').on('click', '.clsinfoprod', function () {
+        rowdata = ProductTable.row($(this).parents('tr')).data();
+        var ProdID = rowdata[0];
+        modalPhistory.style.display = "block";
+        GetProductHistoryData(ProdID)
     });
     var mind = document.getElementById("dtpDate").getAttribute("max");
     $("#btnNBAccept").click(function (e) {
@@ -1483,7 +1593,7 @@ function updateInputColumn(inputID, netValue) {
                     PCode,//'<label name="UOMID">' +
                     $("#cmbUOM").val(),
                     $("#txtBatchTaxPern").val(),
-                    '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;',//
+                    '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;',//
                     '<p style="font-size:14px;">' + Sno + '</p>',
                     '<input disabled name = "ProName" class="gdInput" value="' + PName + '" title="' + PName + '" style="border:none;"/><br/>' + PCode,
                     '<input txttag="' + actqty + '" title="' + actqty + '" type="number" step="any" id="dgvProdQty' + ProductRID + '" name ="ActQty" class="gdInput txtsettag" value="' + parseFloat(actqty).toFixed(DecVal) + '" disabled/>',
@@ -1613,7 +1723,6 @@ function setDate1(FieldID,Type) {
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
     var prodids = 0;
     function GetData(nMode, strName = null, strID = null) {
-
         $.ajax({
             url: Aurl + "inventoryadjustment/get",
             type: 'get',
@@ -1802,6 +1911,61 @@ function setDate1(FieldID,Type) {
             }
         });
     }
+    function GetProductHistoryData(nProdID) {
+        $.ajax({
+            url: Aurl + "inventoryadjustment/producthistory",
+            type: 'get',
+            contentType: 'json',
+            data: { ProdID: nProdID, BranchID: $("#cmbBranch").val() },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                var Response = JSON.parse(data);
+                var dd = [];
+                TableProductHistory.draw().clear(); TableProductHistory.draw().clear();
+                if (Response.length > 0) {
+                    dd.push(Response);
+                    console.log(dd);
+                    $('#tblProductHistory').DataTable({
+                        scrollY: "300px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: false,
+                        destroy: true,
+                        data: Response,//items.lstBatchInfo,
+                        fixedColumns: false,
+                        searching: false,
+                        ordering: false,
+                        sorting: false,
+                        info: false,
+                        columns: [
+                            { title: 'Doc ID', data: 'DocID', className: "dt-body-left", width: "8%" },
+                            { title: 'Doc Date', data: 'DocDate', className: "dt-body-left", width: "10%" },
+                            { title: 'Purchase Price', data: 'PurchasePrice', className: "dt-body-right", width: "10%" },
+                            { title: 'Qty', data: 'Qty', className: "dt-body-right", width: "10%" },
+                            { title: 'Free Qty', data: 'FreeQty', className: "dt-body-right", width: "10%" },
+                            { title: 'Damage Qty', data: 'DamageQty', className: "dt-body-right", width: "10%" },
+                            { title: 'Remarks', data: 'Remarks', className: "dt-body-left", width: "15%" },
+                            { title: 'Narration', data: 'Narration', className: "dt-body-left", width: "15%" }
+                        ]
+                    });
+                    TableProductHistory = $('#tblProductHistory').DataTable();
+                } else {
+                    showErrorSnackbar("No Record Found");
+                }
+            }
+        });
+    }
+    $("#sItemHistroy").click(function () {
+        if ($("#txtHProdID").val() != "") {
+            modalPhistory.style.display = "block";
+            var PID = $("#txtHProdID").val();
+            GetProductHistoryData(PID);
+        } else {
+            showErrorSnackbar("Select Product");
+        }
+    });
     $("#chkQtyonly").change(function (e) {
         var qtyonly = $("#chkQtyonly").is(":checked") ? 1 : 0;
         $('#txtHProdCode').val("");
@@ -1870,7 +2034,7 @@ function setDate1(FieldID,Type) {
                             itemsProd.Code,
                             itemsProd.UomID,
                             itemsProd.TaxPern,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;',
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;',
                             '<p style="font-size:14px;">' + (rowIndex + 1) + '</p>',
                             '<input disabled name = "ProName" class="gdInput" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '" style="border:none;"/><br/>' + itemsProd.Code,
                             '<input txttag="' + itemsProd.ActQty + '" title="' + itemsProd.ActQty + '" type="number" step="any" id="dgvProdQty' + rowIndex + '" name ="ActQty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.ActQty).toFixed(DecVal) + '" disabled/>',
@@ -1911,95 +2075,7 @@ function setDate1(FieldID,Type) {
                             { title: "Adj Free", className: "dt-body-right", width: "6%" },
                             { title: "Adj Dmg", className: "dt-body-right", width: "6%" },
                             { title: "Gross ₹", className: "dt-body-right", width: "8%" },
-                        ]
-                        //columns: [
-                        //    { "data": "ProdID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                        //    { "data": "Code", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                        //    { "data": "UomID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                        //    { "data": "TaxPern", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                        //    {
-                        //        className: "dt-body-center",
-                        //        "mRender": function (data, type, value) {
-                        //            var _action = '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;';
-                        //            return _action;
-                        //        }
-                        //    },
-                        //    {
-                        //        className: "dt-body-center",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<p style="font-size:14px;">' + (rowIndex + 1) + '</p>';
-                        //            return _action;
-                        //        }
-                        //    },
-                        //    {
-                        //        className: "dt-body-left",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<input disabled name = "ProName" class="gdInput" value="' + value.Name + '" title="' + value.Name + '" style="border:none;"/><br/>' + value.Code;
-                        //            return _action;
-                        //        }
-                        //    },
-                        //    {
-                        //        className: "dt-body-left",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<input txttag="' + value.ActQty + '" title="' + value.ActQty + '" type="number" step="any" id="dgvProdQty' + rowIndex + '" name ="ActQty" class="gdInput txtsettag" value="' + parseFloat(value.ActQty).toFixed(DecVal) + '" disabled/>';
-                        //            return _action;
-                        //        }
-                        //    },
-                        //    {
-                        //        className: "dt-body-left",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<input txttag="' + value.ActFreeQty + '" title="' + value.ActFreeQty + '" type="number" step="any" id="dgvProdFreeQty' + rowIndex + '" name="ActFreeQty" class="gdInput txtsettag" value="' + parseFloat(value.ActFreeQty).toFixed(DecVal) + '" disabled/>';
-                        //            return _action;
-                        //        }
-                        //    },
-
-                        //    {
-                        //        className: "dt-body-left",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<input txttag="' + value.ActDmgQty + '" title="' + value.ActDmgQty + '" type="number" step="any" id="dgvProdDmgQty' + rowIndex + '" name="ActDmgQty" class="gdInput txtsettag" value="' + parseFloat(value.ActDmgQty).toFixed(DecVal) + '" disabled/>';
-                        //            return _action;
-                        //        }
-                        //    },
-                        //    { "data": "UOMName", "autoWidth": true, className: "dt-body-left" },
-                        //    {
-                        //        className: "dt-body-left",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<input txttag="' + value.Qty + '" title="' + value.Qty + '" type="number" step="any" id="dgvProdQty' + rowIndex + '" name ="Qty" class="gdInput txtsettag" value="' + parseFloat(value.Qty).toFixed(DecVal) + '" disabled/>';
-                        //            return _action;
-                        //        }
-                        //    },
-                            
-                        //    {
-                        //        className: "dt-body-left",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<input txttag="' + value.FreeQty + '" title="' + value.FreeQty + '" type="number" step="any" id="dgvProdFreeQty' + rowIndex + '" name="FreeQty" class="gdInput txtsettag" value="' + parseFloat(value.FreeQty).toFixed(DecVal) + '" disabled/>';
-                        //            return _action;
-                        //        }
-                        //    },
-                        //    {
-                        //        className: "dt-body-left",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<input txttag="' + value.DmgQty + '" title="' + value.DmgQty + '" type="number" step="any" id="dgvProdDmgQty' + rowIndex + '" name="DmgQty" class="gdInput txtsettag" value="' + parseFloat(value.DmgQty).toFixed(DecVal) + '" disabled/>';
-                        //            return _action;
-                        //        }
-                        //    },
-                        //    {
-                        //        className: "dt-body-right",
-                        //        "mRender": function (data, type, value, meta) {
-                        //            var rowIndex = meta.row;
-                        //            var _action = '<label lbltag="' + value.PurchasePrice + '" title="' + value.PurchasePrice + '" name="Gross" id="dgvProdGross' + rowIndex + '" class="lblsettag">' + parseFloat(value.PurchasePrice).toFixed(DecVal) + '</label>';
-                        //            return _action;
-                        //        }
-                        //    },
-                        //],
+                        ]                        
                     });
                     ProductTable = $('#tblProductData').DataTable();
                     calculateProdGrid();

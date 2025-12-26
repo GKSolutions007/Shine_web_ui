@@ -664,7 +664,7 @@
                             </td>
                             <td style="border:none;" width="20%">
                             </td>
-                            <td style="border:none;" width="12%">
+                            <td style="border:none;" width="10%">
                                 <span class="form-label">
                                     <input id="txtHDClosingBalance" hidden />
                                     <input class="form-control FormclrField" type="text" id="txtClosingBalance" placeholder="" style="align-content:flex-end">
@@ -672,28 +672,35 @@
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrClosingBalance" class="clrdivs"></div>
                             </td>
-                            <td style="border:none;" width="12%">
+                            <td style="border:none;" width="10%">
                                 <span class="form-label">
                                     <input class="form-control FormclrField txtsettag" type="number" id="txtTotAdjustmentAmount" txttag="0" placeholder="">
                                     <label class="labelup">Adjustment Amount</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrTotAdjustmentAmount" class="clrdivs"></div>
                             </td>
-                            <td style="border:none;" width="12%">
+                            <td style="border:none;" width="10%">
+                                <span class="form-label">
+                                    <input class="form-control FormclrField txtsettag" type="number" id="txtTotDiscountAmount" txttag="0" placeholder="">
+                                    <label class="labelup">Discount Amount</label>
+                                </span>
+                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrTotDiscountAmount" class="clrdivs"></div>
+                            </td>
+                            <td style="border:none;" width="10%">
                                 <span class="form-label">
                                     <input class="form-control FormclrField txtsettag" type="number" id="txtAdjustedAmount" txttag="0" placeholder="">
                                     <label class="labelup">Adjused Amount</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrAdjustedAmount" class="clrdivs"></div>
                             </td>
-                            <td style="border:none;" width="12%">
+                            <td style="border:none;" width="10%">
                                 <span class="form-label">
                                     <input class="form-control FormclrField txtsettag" type="number" txttag="0" id="txtRemainingAmount" placeholder="">
                                     <label class="labelup">Remaining Amount</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemainingAmount" class="clrdivs"></div>
                             </td>
-                            <td style="border:none;" width="12%">
+                            <td style="border:none;" width="10%">
                                 <span class="form-label">
                                     <input class="form-control FormclrField txtsettag" type="text" txttag="0" id="txtBalance" placeholder="">
                                     <label class="labelup">Balance</label>
@@ -764,7 +771,7 @@
                             <tbody></tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="10"></th>
+                                    <th colspan="11"></th>
                                     <th style="text-align: right;">
                                         <label id="lblG2TotalOS" lbltag="0" class="lblsettag">
                                             0.00
@@ -1859,7 +1866,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var dG1AdjAmt = parseFloat(document.getElementById("lblG1AdjAmt").getAttribute("lbltag"));//
             var dG2TotAdjAmt = G2Sumvalue(nGrid2CurrentRowIndex);
             var dCollAmt = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
-
+            var dG2DiscAmt = getG2FooterSum(3);
             var calcdiff = (dCollAmt + dG1AdjAmt - dG2TotAdjAmt)
             console.log("Amt : " + calcdiff);
             var dTotRemAmt = parseFloat(document.getElementById("txtRemainingAmount").getAttribute("txttag"));
@@ -1885,7 +1892,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             const fieldID = $(this).attr("id");
                             if (fieldName == "AdjCollAmtFooter") {
                                 //CollAmt = dTotRemAmt > Balance ? Balance : dTotRemAmt;
-                                CollAmt = (dCollAmt + dG1AdjAmt - dG2TotAdjAmt) <= Balance ? (dCollAmt + dG1AdjAmt - dG2TotAdjAmt) : Balance;
+                                CollAmt = (dCollAmt + dG1AdjAmt - dG2TotAdjAmt) <= Balance ? (dCollAmt + dG1AdjAmt + dG2DiscAmt - dG2TotAdjAmt) : Balance;
                                 fieldval = CollAmt;
                                 updateInputColumn(fieldID, CollAmt);
                                 //parseFloat($(this).attr('txttag'));
@@ -2382,8 +2389,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var totadjmtamt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag"));
         var totadjtedamt = parseFloat(document.getElementById("txtAdjustedAmount").getAttribute("txttag"));
         console.log("totadjmtamt", totadjmtamt, "totadjtedamt", totadjtedamt);
-        var RemAmt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag")) - parseFloat(document.getElementById("txtAdjustedAmount").getAttribute("txttag"))
+        //parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag"))
+        var RemAmt = totadjmtamt - parseFloat(document.getElementById("txtAdjustedAmount").getAttribute("txttag"))
         updateInputColumn("txtRemainingAmount", RemAmt + G2DiscValue);
+        updateInputColumn("txtTotDiscountAmount", G2DiscValue);
         //bal cal for disc amt
         var clsbl = $("#txtHDClosingBalance").val() != "" ? parseFloat($("#txtHDClosingBalance").val()) : 0;
         var val = $("#txtAmount").val() != "" ? parseFloat($("#txtAmount").val()) : 0;
@@ -2948,7 +2957,7 @@ function setDate1(FieldID,Type) {
         $("#txtCustomerID,#txtSearch").val(""),
             $("#lblName,#lblMob1,#lblGSTIN").text(""),
             $("#cmbCreditTerm,#cmbPaymode,#cmbBeat,#cmbSalesman").val(0),
-            $("#txtBAdd1,#txtBAdd2,#txtBAdd3,#txtSAdd1,#txtSAdd2,#txtSAdd3,#txtPincode,#txtClosingBalance").val("");
+            $("#txtBAdd1,#txtBAdd2,#txtBAdd3,#txtSAdd1,#txtSAdd2,#txtSAdd3,#txtPincode,#txtClosingBalance,#txtTotDiscountAmount").val("");
         updateLabelColumn("lblG1TotalBalance", 0);
         updateLabelColumn("lblG2TotalOS", 0);
         if (nDocPrefix == 19) {
@@ -4070,7 +4079,7 @@ function setDate1(FieldID,Type) {
         //ClearForm();
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
-    $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance").prop("disabled", true);
+    $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
     function ClearForm() {
         ProductRID = 0;
         $(".FormclrField").val("");
@@ -4117,7 +4126,7 @@ function setDate1(FieldID,Type) {
         $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnPrint").hide();
         $("#btnSave,#btnClear,#btnDraft").show();
-        $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance").prop("disabled", true);
+        $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
         $("#MainHeading").text($("#txtFormName").val());
         $("#txtSearch").focus();
     }
