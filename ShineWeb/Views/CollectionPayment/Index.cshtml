@@ -771,7 +771,12 @@
                             <tbody></tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="11"></th>
+                                    <th colspan="10"></th>
+                                    <th style="text-align: right;">
+                                        <label id="lblG2TotalDocValue" lbltag="0" class="lblsettag">
+                                            0.00
+                                        </label>
+                                    </th>
                                     <th style="text-align: right;">
                                         <label id="lblG2TotalOS" lbltag="0" class="lblsettag">
                                             0.00
@@ -824,7 +829,7 @@
                                     <span class="form-label">
                                         <input class="form-control FormclrField" type="text" id="txtRemarks" placeholder=""
                                                        onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
-                                                        oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')"/
+                                                        oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
                                         <label class="labelup">Remarks</label>
                                     </span>
                                     <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdivs"></div>
@@ -1162,7 +1167,7 @@
 
     setTimeout(function () {
         GetFilterData();
-    }, 800);
+    }, 1200);
     GetData(1);
 
 if ($("#txtAddID").val() == 0) {
@@ -1699,7 +1704,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount should be less than Given Collection Amount");
                 }
                 else if (CollAmt > remAmt) {
-                    CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount should be less than Remaining Amount");
+                    CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount (" + CollAmt + ") should be less than Remaining Amount(" + remAmt +")");
                 }
                 else {
                     dAdjAmt += CollAmt;
@@ -1854,15 +1859,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
         return dTotalAdjAmt;
     }
     $('#tblGridtwoData tbody').on('keydown', '.AdjCollAmtFooter', function (e) {
+        var PMID = $("#cmbPaymode").val();
         const key = e.keyCode;
         const isSpace = key === 32;
         const isCtrlSpace = key === 32 && e.ctrlKey;
         if (isSpace && !e.ctrlKey) {
-            e.preventDefault();
-            //showErrorSnackbar("Key Down Space Pressed, Value : " + val);
-            var currrowdata = TableGridtwoData.row(nGrid2CurrentRowIndex).data();
-            var CurrRowDocID = currrowdata[0];
-
+            e.preventDefault();                       
             var dG1AdjAmt = parseFloat(document.getElementById("lblG1AdjAmt").getAttribute("lbltag"));//
             var dG2TotAdjAmt = G2Sumvalue(nGrid2CurrentRowIndex);
             var dCollAmt = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
@@ -1870,13 +1872,25 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var calcdiff = (dCollAmt + dG1AdjAmt - dG2TotAdjAmt)
             console.log("Amt : " + calcdiff);
             var dTotRemAmt = parseFloat(document.getElementById("txtRemainingAmount").getAttribute("txttag"));
+
+            //Get full row of the space-clicked cell
+            var $r;
+            var idx = TableGridtwoData.row($r).index();
+
+            //showErrorSnackbar("Key Down Space Pressed, Value : " + val);
+            var currrowdata = TableGridtwoData.row(nGrid2CurrentRowIndex).data();
+            var CurrRowDocID = currrowdata[0];
+            const G1AdjAmt = getTag("#lblG1AdjAmt", "lbltag");
+            const orgCollAmt = getTag("#txtAmount", "txttag");
             if (dTotRemAmt > 0) {
-                var dAdjAmt = 0, dTotalAdjAmt = 0, fieldval = 0;
-                $("#tblGridtwoData tbody tr").each(function () {
+                var dAdjAmt = 0, dTotalAdjAmt = 0, fieldval = 0;                
+                $("#tblGridtwoData tbody tr").each(function () {                    
                     var CollAmt = 0, AdjAmtPM = 0, DiscPern = 0, DiscAmt = 0, Balance = 0;
                     var rowData = TableGridtwoData.row($(this)).data();
                     var RowDocID = rowData[0];
                     if (CurrRowDocID == RowDocID) {
+                        $r = $(this).closest('tr')
+                        //$r = $(TableGridtwoData.row(nGrid2CurrentRowIndex).data());
                         $(this).find("label").each(function (index) {
                             const fieldName = $(this).attr("name");
                             const fieldID = $(this).attr("id");
@@ -1917,13 +1931,108 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 $(this).val(0);
                             }
                         });
-                    }
+                        var isf = false;
+                        if ($r) {
+                            // Read all values
+                            let Balance = getTagEl($r, "label[name='G2OS']");
+                            let CollAmt = getTagEl($r, "input[name='AdjCollAmtFooter']");
+                            let AdjAmtPM = getTagEl($r, "input[name='AdjAmt']");
+                            let DiscPern = getTagEl($r, "input[name='AdjDiscPern']");
+                            let DiscAmt = getTagEl($r, "input[name='AdjDiscAmt']");
+                            let Writeoff = getTagEl($r, "label[name='WriteoffAmt']");
+
+                            let dWriteoff = 0;
+                            let dTAA = 0;
+                            console.log("CollAmt : ", CollAmt);
+                            // ----- Validate Collection Amount -----
+                            if (CollAmt) {
+                                let maxval = getMaxEl($r, "input[name='AdjCollAmtFooter']");
+                                let remAmt = getTag("#txtRemainingAmount", "txttag");
+                                let totAdj = getTag("#txtTotAdjustmentAmount", "txttag");
+                                console.log("remAmt : ", remAmt);
+                                if (CollAmt >= remAmt) {
+                                    //CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "1.Amount (" + CollAmt + ") should be less than Remaining Amount(" + remAmt + ")");
+                                    //updateLbl($r, "input[name='AdjCollAmtFooter']", remAmt);
+                                    CollAmt = remAmt;
+                                    let id = $r.find("input[name='AdjCollAmtFooter']").attr("id");
+                                    updateInputColumn(id, remAmt);
+                                } else if (CollAmt >= maxval) {
+                                    CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Collect Amount(" + CollAmt + ") should be less than Balance(" + maxval +")");
+                                    //let id = $r.find("input[name='AdjCollAmtFooter']").attr("id");
+                                    //updateInputColumn(id, maxval);
+                                    //CollAmt = maxval;
+                                }
+                                else if (PMID == 9) {
+                                    dAdjAmt += CollAmt;
+                                }
+                                else if (CollAmt >= (orgCollAmt + G1AdjAmt)) {
+                                    //CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount should be less than Given Collection Amount");
+                                    CollAmt = (orgCollAmt + G1AdjAmt);
+                                    let id = $r.find("input[name='AdjCollAmtFooter']").attr("id");
+                                    updateInputColumn(id, (orgCollAmt + G1AdjAmt));
+                                }                                 
+                                else {
+                                    dAdjAmt += CollAmt;
+                                }
+                            }
+
+                            // ----- Validate AdjAmt -----
+                            if (CollAmt > 0) {
+                                AdjAmtPM = AdjAmtPM || 0;
+                            } else {
+                                AdjAmtPM = resetInput($r, "input[name='AdjAmt']", "");
+                            }
+
+                            // ----- Discount % -----
+                            if (CollAmt > 0) {
+                                let calDisc = (DiscPern * Balance) / 100;
+                                let minusAdj = AdjAmtPM >= 0 ? 0 : AdjAmtPM;
+
+                                if (Balance < (CollAmt + calDisc - minusAdj)) {
+                                    DiscPern = resetInput($r, "input[name='AdjDiscPern']", "Amount mismatched");
+                                }
+                            } else {
+                                DiscPern = resetInput($r, "input[name='AdjDiscPern']", "");
+                            }
+
+                            // ----- Discount Amount -----
+                            if (CollAmt > 0) {
+                                let minusAdj = AdjAmtPM >= 0 ? 0 : AdjAmtPM;
+
+                                if (Balance < (CollAmt + DiscAmt - minusAdj)) {
+                                    DiscAmt = resetInput($r, "input[name='AdjDiscAmt']", "Amount mismatched");
+                                }
+                            } else {
+                                DiscAmt = resetInput($r, "input[name='AdjDiscAmt']", "");
+                            }
+
+                            // ----- Writeoff -----
+                            dWriteoff = CollAmt > 0 ? Writeoff : resetLbl($r, "label[name='WriteoffAmt']");
+
+                            // ----- Total Adjustment -----
+                            let PMAdj = AdjAmtPM > 0 ? 0 : Math.abs(AdjAmtPM);
+                            let totAdj = CollAmt + DiscAmt + PMAdj + dWriteoff;
+
+                            updateLbl($r, "label[name='G2TotalAdjAmount']", totAdj);
+                            dTotalAdjAmt += totAdj;
+
+                            // ----- Balance -----
+                            let newBal = (nTransMode == 4 || nTransMode == 5) ? 0 : (Balance - totAdj);
+                            updateLbl($r, "label[name='G2Balance']", newBal);
+                        }
+                    }                    
                 });
-                calculateGrid2Value();
+                //const $r = $(this);
+                //const idx = TableGridtwoData.row($r).index();
+                
+               
+                //calculateGrid2Value();
                 CalculateAdjustvalues();
+                SumG2FooterLabels();
             }
             else {
                 showErrorSnackbar("Remaining Amount should be greater than zero");
+                showErrorSnackbar("Remaining Amount : " + dTotRemAmt);
             }
         }
         else if (isCtrlSpace) {
@@ -1940,17 +2049,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
             let Writeoff = getTagEl($r, "label[name='WriteoffAmt']");
             let G2RemBal = getTagEl($r, "label[name='G2Balance']");
 
-
+            let remAmt = getTag("#txtRemainingAmount", "txttag");
+            var availAmt = remAmt >= G2RemBal ? G2RemBal : remAmt;
             row.find("input").each(function () {
                 const field = $(this);
                 const name = field.attr("name");
 
                 if (name === "AdjCollAmtFooter") {
-                    //balance = parseFloat(field.attr("lbltag"));
-                    updateInputColumn(field[0].id, G2RemBal)
+                    //balance = parseFloat(field.attr("lbltag"));                    
+                    updateInputColumn(field[0].id, availAmt)
                 }
             });
-            var totadj = G2RemBal + DiscAmt + Writeoff + (AdjAmtPM >= 0 ? 0 : Math.abs(AdjAmtPM));
+            var totadj = availAmt + DiscAmt + Writeoff + (AdjAmtPM >= 0 ? 0 : Math.abs(AdjAmtPM));
             var newg2rembal = Balance - totadj;
             updateLbl($r, "label[name='G2TotalAdjAmount']", totadj);
             updateLbl($r, "label[name='G2Balance']", newg2rembal);
@@ -2106,7 +2216,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount should be less than Given Collection Amount");
             }
             else if (CollAmt > remAmt) {
-                CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount should be less than Remaining Amount");
+                CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount(" + CollAmt +") should be less than Remaining Amount (" + remAmt+")");
             }
         } else {
             //showErrorSnackbar("Reset Disc % , ₹")
@@ -2164,7 +2274,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $('#tblGridtwoData tbody').on('change', '.AdjFooter', function (e) {
 
         ProdGridChange = true;
-
+        var RemAmt = parseFloat(document.getElementById("txtRemainingAmount").getAttribute("txttag"));
         const $row = $(this).closest("tr");
         console.log("Row data ", $row);
         const rowData = TableGridtwoData.row($row).data();
@@ -2186,8 +2296,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         // ----------- Validate and set AdjAmt --------------
         const $AdjAmt = $row.find("input[name='AdjAmt']");
         const adjId = $AdjAmt.attr("id");
-
-        if (CollAmt <= 0) {
+        var tempvar = false;
+        if (CollAmt <= 0 && tempvar) {
             showErrorSnackbar("Collected Amount should be greater than zero");
             updateInputColumn(adjId, 0);
         } else {
@@ -2195,7 +2305,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             const Val = fieldVal;
 
             // positive adjustment
-            if (Val > 0 && Val <= Balance) {
+            if (Val > 0 && Val <= RemAmt) {//Balance
                 AdjAmtPM = Val;
                 updateInputColumn(adjId, Val);
             }
@@ -2546,12 +2656,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var newValue = parseFloat(availblewriteoff) >= parseFloat(diffwrtoff) ? parseFloat(diffwrtoff) : 0;
             if (newValue == 0) {
                 $dropdown.val(0);
+                showErrorSnackbar("Write off amount not available");
             }
             //var dwo = newValue
 
             // Update label and lbltag
             $dgvcurrwriteoff.text(parseFloat(newValue).toFixed(DecVal)).attr('lbltag', newValue).attr('title', newValue);
-            var finaltotadj = parseFloat(originalAdjValue) + parseFloat(newValue);
+            var finaltotadj = parseFloat(originalAdjValue) + parseFloat(newValue);// + parseFloat(dDiscAmt)
             $totalAdjLabel.text(parseFloat(finaltotadj).toFixed(DecVal)).attr('lbltag', parseFloat(finaltotadj)).attr('title', parseFloat(finaltotadj));
 
             $FinalBalanceLabel.text(parseFloat(originalBalanceValue - finaltotadj).toFixed(DecVal)).attr('lbltag', parseFloat(originalBalanceValue - finaltotadj)).attr('title', parseFloat(originalBalanceValue - finaltotadj));
@@ -2568,6 +2679,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         }
         //calculateGrid2Value();
         SumG2FooterLabels();
+        CalculateAdjustvalues();
     });
 
     $('#tblGridtwoData_older tbody').on('change', '.AdjDiscPern,.AdjDiscAmt', function (e) {//old function
@@ -2959,7 +3071,7 @@ function setDate1(FieldID,Type) {
             $("#cmbCreditTerm,#cmbPaymode,#cmbBeat,#cmbSalesman").val(0),
             $("#txtBAdd1,#txtBAdd2,#txtBAdd3,#txtSAdd1,#txtSAdd2,#txtSAdd3,#txtPincode,#txtClosingBalance,#txtTotDiscountAmount").val("");
         updateLabelColumn("lblG1TotalBalance", 0);
-        updateLabelColumn("lblG2TotalOS", 0);
+        updateLabelColumn("lblG2TotalOS", 0);        
         if (nDocPrefix == 19) {
             $("#lblrdoAdv").text("Payable");
             $("#lblrdoOS").text("Receivable");
@@ -3306,7 +3418,7 @@ function setDate1(FieldID,Type) {
                 withCredentials: true
             },
             success: function (data) {
-                var G1So = 1, G2So = 1, G1Bal = 0, G2Bal = 0;
+                var G1So = 1, G2So = 1, G1Bal = 0, G2Bal = 0,G2DocValue = 0;
                 var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                 var CollPayOSData = eval(data)
                 var g1data = CollPayOSData.filter(d => d.TypeID == "1");
@@ -3362,6 +3474,7 @@ function setDate1(FieldID,Type) {
                 console.log("g2data ", g2data);
                 var G2dataSet = g2data.map(function (items, nRowIndex) {
                     G2Bal += parseFloat(items.Balance);
+                    G2DocValue += parseFloat(items.NetAmt);
                     var rmos = parseFloat(items.Balance) - parseFloat(items.TotalAdjAmt);
                     return [
                         items.ID,
@@ -3473,9 +3586,9 @@ function setDate1(FieldID,Type) {
                 } else {
                     $("#lblrdoAdv").html("Receivable" + "(<b style='color:red'>" + G1Count + "</b>)");
                     $("#lblrdoOS").html("Payable" + "(<b style='color:red'>" + G2Count + "</b>)");
-                }
-
+                }                               
                 updateLabelColumn("lblG1TotalBalance", G1Bal);
+                updateLabelColumn("lblG2TotalDocValue", G2DocValue);
                 updateLabelColumn("lblG2TotalOS", G2Bal);
                 updateLabelColumn("lblG2Balance", G2Bal);
                 //showErrorSnackbar("adv : " + $("#lblAdvDocCount").text());
@@ -3580,7 +3693,7 @@ function setDate1(FieldID,Type) {
                             $("#txtSAdd3").val(itemsParty.Shipadd3),
                             $("#txtPincode").val(itemsParty.Pincode);
                     });
-                    var G1So = 1, G2So = 1, G1Bal = 0, G2Bal = 0;
+                    var G1So = 1, G2So = 1, G1Bal = 0, G2Bal = 0,G2DocValue = 0;
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                     var g1data = items.lstCollPayDtl.filter(d => d.TypeID == "1");
                     var g2data = items.lstCollPayDtl.filter(d => d.TypeID == "2");
@@ -3635,6 +3748,7 @@ function setDate1(FieldID,Type) {
                     console.log("g2 ", g2data);
                     var G2dataSet = g2data.map(function (Docsitems, nRowIndex) {
                         G2Bal += parseFloat(Docsitems.Balance);
+                        G2DocValue += parseFloat(Docsitems.NetAmt);
                         var rmos = parseFloat(Docsitems.Balance) - parseFloat(Docsitems.TotalAdjAmt);
                         return [
                             Docsitems.ID,
@@ -3752,6 +3866,7 @@ function setDate1(FieldID,Type) {
                         $("#lblrdoOS").html("Payable" + "(<b style='color:red'>" + G2Count + "</b>)");
                     }
                     updateLabelColumn("lblG1TotalBalance", G1Bal);
+                    updateLabelColumn("lblG2TotalDocValue", G2DocValue);                    
                     updateLabelColumn("lblG2TotalOS", G2Bal);
                     setTimeout(() => {
                         calculateGrid1Value();
@@ -4435,6 +4550,7 @@ function setDate1(FieldID,Type) {
             });
         }
         if (G2Count > 0) {
+            
             $("#tblGridtwoData tbody tr").each(function () {
                 rowdata = TableGridtwoData.row($(this)).data();
                 strID = rowdata[0];
@@ -4442,9 +4558,9 @@ function setDate1(FieldID,Type) {
                 strFAID = rowdata[2];
                 strDocValue = rowdata[3];
                 strDocID = rowdata[5];
-                strTran_Date = rowdata[6];
-                strDocRef = rowdata[7];
-                strTransName = rowdata[8];
+                strTran_Date = rowdata[7];
+                strDocRef = rowdata[8];
+                strTransName = rowdata[9];
 
                 $(this).find("label").each(function (index) {
                     const fieldName = $(this).attr("name");
@@ -4670,7 +4786,8 @@ function setDate1(FieldID,Type) {
     //        if (index >= $canfocus.length) index = 0;
     //        $canfocus.eq(index).focus();
     //    }
-    //});
+    //});20915.17
+
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {
         nTransMode = 5;
         var ID = $("#txtID").val();
