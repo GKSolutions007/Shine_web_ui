@@ -112,7 +112,7 @@
     .modalBatch {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        z-index: 200; /* Sit on top */
         left: 0;
         top: 0;
         width: 100%; /* Full width */
@@ -208,29 +208,25 @@
 
     <hr />
     <div class="toastBox"></div>
-    <div style="padding-bottom:10px">
+    <div style="padding-bottom:10px" hidden>
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
     <div id="dvMainTable">
-        <table class="table table-bordered" id="tblMasterData" width="100%">
-            <thead>
-                @*<tr id="trAdd">
-                        <th></th>
-                        <th align="right" colspan="4">
-                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
-                        </th>
-                    </tr>*@
-                <tr class="trclrforcolheader">
-                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                    <th style="text-align:center;font-size: 12px;width:80%;">Name</th>
-                    <th style="text-align:center;font-size: 12px;width:10%;">Active</th>
-                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
-                    <th style="align-content:center !important;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
-                    <th style="align-content: center !important; font-size: 12px; width: 5%; " title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
-                </tr>
-            </thead>
-        </table>
-
+        <div id="my-grid" style="height: 500px; width: 100%;"></div>
+        <div hidden>
+            <table class="table table-bordered" id="tblMasterData" width="100%">
+                <thead>
+                    <tr class="trclrforcolheader">
+                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                        <th style="text-align:center;font-size: 12px;width:80%;">Name</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Active</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                        <th style="align-content:center !important;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
+                        <th style="align-content: center !important; font-size: 12px; width: 5%; " title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
     </div>
     <div class="modalBatch" id="myModalfg">
         <div class="modal-dialog" style="width:auto;">
@@ -284,6 +280,87 @@
     </div>
     
 </body>
+<script>
+    const allGridActions = [
+        {
+            icon: '👁️',
+            title: 'View Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: $("#txtModifyID").val() == 1,
+            handler: (rowData) => {
+                //let display = 'Row Data:\n';
+                //for (const key in rowData) {
+                //    if (key !== '_gridId') { display += `${key}: ${rowData[key]}\n`; }
+                //}
+                //alert("View : " + display);
+                var ID = rowData.ID;//[0];
+                var Name = rowData.Name;//[1];
+                var Active = rowData.Active;//[2];
+                nMode = 3;
+                $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
+                //showSuccessSnackbar("View " + $("#MainHeading").text())
+                $("#txtID").val(ID);
+                $("#txtName").val(Name);
+                $("#chkActive").prop("checked", Active == "True");
+                $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", true);
+                $(".clrdiv").html("");
+                modal.style.display = "block";
+            }
+        },
+        {
+            icon: '✏️',
+            title: 'Edit Data',
+            className: 'dg-action-edit',
+            // 💡 CONDITIONAL VISIBILITY: Hide delete action for code "C001"
+            //visible: (rowData) => {
+            //    console.log("Action rowData : ", rowData);
+            //    // Hide delete action if code is "C001"
+            //    if (rowData['Active'] === 'No') {
+            //        return false;
+            //    }
+            //    // Show for all other codes (including "C002")
+            //    return true;
+            //},
+            visible: $("#txtViewID").val() == 1,
+            // 💡 NEW TAG: This action will be rendered in the 3-dot menu
+            displayType: 'single_icon',
+            handler: (rowData, gridInstance) => {
+                //if (confirm(`Are you sure you want to delete the row for ${rowData['First Name']}?`)) {
+                //    gridInstance.deleteRow(rowData._gridId);
+                //}
+                var ID = rowData.ID;//[0];
+                var Name = rowData.Name;//[1];
+                var Active = rowData.Active;//[2];
+                nMode = 2;
+                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                $("#txtID").val(ID);
+                $("#txtName").val(Name);
+                $("#chkActive").prop("checked", Active == "True");
+                $("#chkActive,#btnSave,#txtName").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                $(".clrdiv").html("");
+                modal.style.display = "block";
+            }
+        }]
+    var columns = [
+        
+    ];
+    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+    const menuActions = [];// allGrid3dotActions.filter(a => a.displayType === 'menu_item');
+    var actions = {
+        "field": "Action",
+        "header": "Action",
+        "type": "action",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": allGridActions
+    };
+</script>
 <script type="text/javascript">
     var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
         "bFilter": true,
@@ -315,8 +392,12 @@
     var RID = '@Session["RoleID"]';
     var nMode = 1;
     var FID = $("#txtFormID").val();
-    GetData();
-    var arrData = [];
+    GetColumnSettingsData(2, 1, 1);
+    setTimeout(() => {
+        GetData();
+    }, 500);
+    var grid;
+    var arrData = [],SingleMasterData;
     function GetData() {
         $.ajax({
             url: Aurl + "singlemaster/get",
@@ -330,6 +411,7 @@
             async : false,
             success: function (data) {
                 if (data.length > 0) {
+                    SingleMasterData = data;
                     //Table.draw().clear(); Table.draw().clear();
                     arrData = [];
                     $.each(data, function (i, items) {
@@ -338,15 +420,91 @@
                             "active": items.Active,
                             "id": items.ID,
                         }
-                        arrData.push(al);
-                        //Table.row.add([
-                        //    items.ID,
-                        //    items.Name,
-                        //    items.Active == "True" ? "Yes" : "No",
-                        //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
-                        //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
-                        //]).draw(false);
+                        arrData.push(al);                        
                     });
+
+                    grid = new GKBSDynamicGrid('#my-grid', columns, SingleMasterData, {
+                        enablePagination: true,
+                        pageSize: 10,
+                        enableSearch: true,
+                        stickyToWindow: true,
+                        enableExport: false,
+                        enablePrint: false,
+                        enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                        enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                        enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                        enableSorting: true,
+                        singleIconAction: singleIconAction, // Pass the single View action
+                        rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                        //onCellChange: handleCellUpdate,
+                        customCellRenderer: (el, col, rowData) => {
+                            if (col.field === 'Active') {
+                                const val = rowData[col.field];
+                                console.log("Active : ", val);
+                                if (val === 'True') {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-active">
+                                        <span class="dg-status-circle"></span> Active
+                                    </div>`;
+                                } else if (val === 'False') {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+                                        <span class="dg-status-circle"></span> In-Active
+                                    </div>`;
+                                }
+                            }
+                        },
+                        customButtons: [
+                            {
+                                icon: '⚙️',
+                                text: 'Settings',
+                                title: 'Settings',
+                                visible: true,
+                                onClick: (gridInstance, event) => {
+                                    //console.log("gridInstance : ", gridInstance);
+                                    //console.log("event : ", event);
+                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                    modalGenColumnSettings.style.display = "block";
+                                    GendralColumnSettings(1, 1, 1, 0);
+                                }
+                            },
+                            {
+                                icon: '➕',
+                                text: 'Add New',
+                                title: 'Add New',
+                                visible: $("#txtAddID").val() == 1,
+                                onClick: (gridInstance, event) => {
+                                    //console.log("gridInstance : ", gridInstance);
+                                    //console.log("event : ", event);
+                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                    nMode = 1;
+                                    $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
+                                    $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
+                                    modal.style.display = "block";
+                                    ClearForm();
+                                }
+                            },
+                        ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+                            //let message = `Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Row Data:\n`;
+                            //for (const key in rowData) {
+                            //    if (key !== '_gridId') {
+                            //        message += `• ${key}: ${rowData[key]}\n`;
+                            //    }
+                            //}
+                            //alert(message);
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                            //// Double-click handler - shows JSON format
+                            //let message = `Double-Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
+                            //alert(message);
+                        },
+                    });
+
                     var searchValue = '';
                     if ($.fn.DataTable.isDataTable('#tblMasterData')) {
                         searchValue = $('#tblMasterData').DataTable().search(); // get current search term
@@ -445,7 +603,29 @@
             }
         });
     }
-
+    
+    function GetColumnSettingsData(nMode,nFormID,nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    console.log("columns : ", columns);                    
+                    columns.push(actions);
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
     }
@@ -539,33 +719,7 @@
                             window.opener.$('#txtReason').val(name)
                             window.opener.$('#txtReasonID').val(items.ID)
                             window.close();
-                        }
-                        //if ($("#lblIsDepend").text() == "1")
-                        //{
-                        //    var Par = $("#lblParentMenuID").text();
-                        //    var fid = $("#lblParentFormFieldID").text();
-                        //    parent.$("#myModalfgiframe").hide();
-                        //    if (Par == "78")//from salesman for smgroup
-                        //    {
-                        //        //lblParentFormFieldID
-                        //        parent.GetData(5, items.ID);
-                        //        parent.$("#" + fid).focus();//$("#cmbSMGroup").focus();// $(this).focus();
-                        //    }
-                        //    else if (Par == "124")//from user for role
-                        //    {
-                        //        parent.GetData(7, RID, items.ID);
-                        //        parent.$("#" + fid).focus();//$(this).focus();//$("#cmbRole").focus()
-                        //    }
-                        //    else if (Par == "86")//from user for role
-                        //    {
-                        //        parent.GetData(5);
-                        //        setTimeout(() => {
-                        //            parent.$("#" + fid).val(items.ID);
-                        //            parent.$("#" + fid).focus();
-                        //        }, 500)
-                        //    }
-                        //    //document.getElementById("myModalfgiframe").style.display = "none";
-                        //}
+                        }                        
                     }
                     else {
                         $("#dvErrorName").html(items.Message);
