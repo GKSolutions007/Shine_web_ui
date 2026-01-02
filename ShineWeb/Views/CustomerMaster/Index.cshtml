@@ -7,6 +7,7 @@
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 @*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 <script src="~/Scripts/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
@@ -14,6 +15,7 @@
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
 <style>
    /* each {
         border-bottom: 1px solid #555;
@@ -63,7 +65,7 @@
     .modalBatch {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        z-index: 200; /* Sit on top */
         left: 0;
         top: 0;
         width: 100%; /* Full width */
@@ -204,7 +206,7 @@
     <h4 id="MainHeading">@ViewData["FormName"]</h4>
     <hr />
     <div class="toastBox"></div>
-    <div style="padding-bottom:10px;">
+    <div style="padding-bottom:10px;" hidden>
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
     <div hidden>
@@ -942,6 +944,83 @@
     </div>
 </body>
 
+
+<script>
+    const allGridActions = [
+        {
+            icon: '👁️',
+            title: 'View Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: $("#txtModifyID").val() == 1,
+            handler: (rowData) => {
+                $(".modal-title#lblPopupheading").text("View Customer");
+                nMode = 3;
+                $(".clrdiv").html("");
+
+                //rowData = Table.row($(this).parents('tr')).data();
+                //var ID = rowData[0];
+                var ID = rowData.ID;
+
+                $("#txtID").val(ID);
+                openTabs(null, 'CustomerDetails', 1);
+                GetData(5, ID);
+                $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                $("input[type=checkbox],#btnSave,#btnClear").prop("disabled", true);
+                $("#txtOSCount").prop("disabled", true);
+                $("#txtOSValue").prop("disabled", true);
+                $(".clrdivs").html("");
+                $("#dvErrorDetail").hide();
+                $("#lblSaveError").html("");
+                modal.style.display = "block";
+            }
+        },
+        {
+            icon: '✏️',
+            title: 'Edit Data',
+            className: 'dg-action-edit',
+            visible: $("#txtViewID").val() == 1,
+            displayType: 'single_icon',
+            handler: (rowData, gridInstance) => {
+                $(".modal-title#lblPopupheading").text("Edit Customer");
+                nMode = 2;
+                $(".clrdiv").html("");
+                openTabs(null, 'CustomerDetails', 1);
+
+                //rowData = Table.row($(this).parents('tr')).data();
+                //var ID = rowData[0];
+                var ID = rowData.ID;
+                $("#txtID").val(ID);
+                GetData(5, ID);
+                $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+                $("input[type=checkbox],#chkActive,#btnSave").prop("disabled", false);
+                $("#txtOSValue,#txtOSCount").prop("disabled", true);
+                $("#btnClear").prop("disabled", true);
+                $(".clrdivs").html("");
+                $("#dvErrorDetail").hide();
+                $("#lblSaveError").html("");
+                modal.style.display = "block";
+            }
+        }]
+    var columns = [
+
+    ];
+    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+    const menuActions = [];// allGrid3dotActions.filter(a => a.displayType === 'menu_item');
+    var actions = {
+        "field": "Action",
+        "header": "Action",
+        "type": "action",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": allGridActions
+    };
+</script>
+
 <script type="text/javascript">
 
     var TableTest = $('#tblMasterDataTest').DataTable({
@@ -1011,6 +1090,8 @@
     if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
         $("#dvMainTable").hide();
     }
+    var grid, Customer;
+    GetColumnSettingsData(2, 14, 1);
     var Table = $('#tblMasterData').DataTable();
     AllCustData();
     function AllCustData() {
@@ -1023,7 +1104,69 @@
             },
             data: { Mode: 444, Name: "" },
             success: function (data) {
+                Customer = data;
                 var customerjsdata = eval(data);
+                grid = new GKBSDynamicGrid('#my-grid', columns, Customer, {
+                    enablePagination: true,
+                    pageSize: 10,
+                    enableSearch: true,
+                    stickyToWindow: true,
+                    enableExport: false,
+                    enablePrint: false,
+                    enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                    enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                    enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                    enableSorting: true,
+                    singleIconAction: singleIconAction, // Pass the single View action
+                    rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                    //onCellChange: handleCellUpdate,
+                    customCellRenderer: (el, col, rowData) => {
+                        if (col.field === 'Active') {
+                            const val = rowData[col.field];
+                            console.log("Active : ", val);
+                            if (val === 'True') {
+                                el.innerHTML = `<div class="dg-status-badge dg-status-active">
+                      <span class="dg-status-circle"></span> Active
+                  </div>`;
+                            } else if (val === 'False') {
+                                el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+                      <span class="dg-status-circle"></span> In-Active
+                  </div>`;
+                            }
+                        }
+                    },
+                    customButtons: [
+                        {
+                            icon: '⚙️',
+                            text: 'Settings',
+                            title: 'Settings',
+                            visible: true,
+                            onClick: (gridInstance, event) => {
+                                //console.log("gridInstance : ", gridInstance);
+                                //console.log("event : ", event);
+                                //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                modalGenColumnSettings.style.display = "block";
+                                GendralColumnSettings(1, 14, 1, 0);
+                            }
+                        },
+                        {
+                            icon: '➕',
+                            text: 'Add New',
+                            title: 'Add New',
+                            visible: $("#txtAddID").val() == 1,
+                            onClick: (gridInstance, event) => {
+                                //console.log("gridInstance : ", gridInstance);
+                                //console.log("event : ", event);
+                                //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                nMode = 1;
+                                $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
+                                $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
+                                modal.style.display = "block";
+                                ClearForm();
+                            }
+                        },
+                    ],
+                });
                 var searchValue = '';
                 if ($.fn.DataTable.isDataTable('#tblMasterData')) {
                     searchValue = $('#tblMasterData').DataTable().search(); // get current search term
@@ -1923,4 +2066,28 @@ function updateInputColumn(inputID, netValue) {
             $("#lblSaveError").html("");
         }
     }
+
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    console.log("columns : ", columns);
+                    columns.push(actions);
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
+
 </script>
