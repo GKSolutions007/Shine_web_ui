@@ -8,6 +8,8 @@
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 @*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
+
 
 @*<script src="~/Scripts/bootstrap.min.js"></script>
     <script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
@@ -17,6 +19,7 @@
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
 </header>
@@ -68,7 +71,7 @@
     .modalBatch {
         display: none;
         position: fixed;
-        z-index: 10;
+        z-index: 200;
         left: 0;
         top: 0;
         width: 100%;
@@ -324,7 +327,7 @@
         <div>
             <table style="width:100%;">
                 <tr>
-                    <td width="20%">
+                    <td width="20%" hidden>
                         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
                     </td>
                     <td align="right">
@@ -362,41 +365,44 @@
                     </td>
                 </tr>
             </table>
+            <div id="my-grid" style="height: 500px; width: 100%;"></div>
 
         </div>
         @*<button id="btnLoadDraft" class="btn btn-primary"><span class="glyphicon glyphicon-download-alt	" style="color: white"></span>&#x2009;Load Draft Data</button>*@
 
         <hr />
-        <table class="table table-bordered" id="tblMasterData" width="100%">
-            <thead>
-                @*<tr id="trAdd">
-                        <th></th>
-                        <th align="right" colspan="10">
-                            <button id="btnAdd" class="btn btn-info" onclick="openTabs(event, 'ProductDetails')"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+        <div hidden>
+            <table class="table table-bordered" id="tblMasterData" width="100%">
+                <thead>
+                    @*<tr id="trAdd">
+                    <th></th>
+                    <th align="right" colspan="10">
+                        <button id="btnAdd" class="btn btn-info" onclick="openTabs(event, 'ProductDetails')"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                    </th>
+                </tr>*@
+                    <tr class="trclrforcolheader">
+                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                        <th style="text-align:center;font-size: 12px;width:0%;">StatusID</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Doc ID</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Date</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Ref No</th>
+                        <th style="text-align:center;font-size: 12px;width:25%;">Branch</th>
+                        <th style="text-align:center;font-size: 12px;width:25%;">Convertion Type</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Amount</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Status</th>
+                        <th style="text-align:center;font-size: 12px;width:6%;">User</th>
+                        <th style="text-align:center !important;font-size: 12px;width:5%;" title="View">
+                            <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
+                            </span>
                         </th>
-                    </tr>*@
-                <tr class="trclrforcolheader">
-                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                    <th style="text-align:center;font-size: 12px;width:0%;">StatusID</th>
-                    <th style="text-align:center;font-size: 12px;width:10%;">Doc ID</th>
-                    <th style="text-align:center;font-size: 12px;width:10%;">Date</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Ref No</th>
-                    <th style="text-align:center;font-size: 12px;width:25%;">Branch</th>
-                    <th style="text-align:center;font-size: 12px;width:25%;">Convertion Type</th>                    
-                    <th style="text-align:center;font-size: 12px;width:15%;">Amount</th>
-                    <th style="text-align:center;font-size: 12px;width:10%;">Status</th>
-                    <th style="text-align:center;font-size: 12px;width:6%;">User</th>
-                    <th style="text-align:center !important;font-size: 12px;width:5%;" title="View">
-                        <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
-                        </span>
-                    </th>
-                    <th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
-                        <span class="glyphicon glyphicon-pencil" style="font-size:16px">
-                        </span>
-                    </th>
-                </tr>
-            </thead>
-        </table>
+                        <th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
+                            <span class="glyphicon glyphicon-pencil" style="font-size:16px">
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
     </div>
 
     <div id="dvMain">
@@ -427,8 +433,8 @@
                             <div>
                                 <span class="form-label">
                                     <input tabindex="1" class="form-control FormclrField" type="text" id="txtRefNo" placeholder=""
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
-                                                        oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')"/>
+                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
+                                           oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
                                     <label class="labelup" for="txtCode"> Ref No</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
@@ -439,12 +445,12 @@
                 </table>
             </div>
             @*<div class="col-sm-12 col-md-4 col-lg-4">
-                <table width="100%">
-                    <tr>
-                        
-                    </tr>
-                </table>
-            </div>*@
+                    <table width="100%">
+                        <tr>
+
+                        </tr>
+                    </table>
+                </div>*@
             <div class="col-sm-12 col-md-4 col-lg-4">
                 <table width="100%">
                     @*<tr hidden>
@@ -578,8 +584,8 @@
                             <div>
                                 <span class="form-label">
                                     <input tabindex="1" class="form-control FormclrField" type="text" id="txtRemarks" placeholder=""
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
-                                                        oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')"/>
+                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
+                                           oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
                                     <label class="labelup" for="txtCode">Remarks</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdivs"></div>
@@ -591,8 +597,8 @@
                             <div>
                                 <span class="form-label">
                                     <textarea class="form-control FormclrField" rows="3" id="txtNarration"
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
-                                                        oninput="sanitizeAlphaNumeric(this, '#divErrNarration')"/></textarea>
+                                              onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
+                                              oninput="sanitizeAlphaNumeric(this, '#divErrNarration')" /></textarea>
                                     <label class="labelupfortextarea" for="txtCode">Narration</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNarration" class="clrdivs"></div>
@@ -661,7 +667,7 @@
                             <input id="txtBatchTrackBatch" hidden />
                             <input id="txtBatchTrackPKD" hidden />
                             <table class="table" width="100%">
-                                <tr>                                    
+                                <tr>
                                     <td width="10%" hidden>
                                         <span class="form-label">
                                             <input class="form-control FormBtField" type="text" id="txtBatchTaxName" placeholder="" disabled>
@@ -707,7 +713,7 @@
                                 <thead>
                                     <tr>
                                         <th style="width:0%">InventoryID</th>
-                                        <th style="width:0%">HDPPrice</th>                                       
+                                        <th style="width:0%">HDPPrice</th>
                                         <th style="width:0%">HDMRPPrice</th>
                                         <th style="width:3%">#</th>
                                         <th style="width:8%">Qty Type</th>
@@ -851,7 +857,235 @@
     </div>
 </body>
 
+<script>
+    const allGridActions = [
+        {
+            icon: '👁️',
+            title: 'View Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: $("#txtViewID").val() == 1,
+            handler: (rowData) => {
+                //$(".clrdivs").html("");
+                //rowData = Table.row($(this).parents('tr')).data();
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                nTransMode = 5;
+                $("#txtID").val(ID);
+                GetProductViewData(8, ID);
+                ProductTable.column(4).visible(false);
+                $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                $//("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
+                $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
+                $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
+                $("#btnPreview,#btnPDF,#btnPrint").show();
+                $("#btnSave,#btnClear,#btnDraft").hide();
+                $("#dvMain").show();
+                $("#dvDocuments").hide();
+                $("#btnEmail,#btnWhatsapp").show();
+                $("#MainHeading").text("View " + $("#txtFormName").val());
+            }
+        },
+        //{
+        //    icon: '✏️',
+        //    title: 'Edit',
+        //    className: 'dg-action-edit',
+        //    visible: $("#txtViewID").val() == 1,
+        //    displayType: 'menu_item',
+        //    handler: (rowData, gridInstance) => {
+        //        $(".clrdiv").html("");
+        //        // rowdata = Table.row($(this).parents('tr')).data();
+        //        rowdata = window.__SelectedRowData;
+        //        var selrow = Table.row($(this).parents('tr')).index();
+        //        var ID = rowdata.ID;//[0];
+        //        var sts = rowdata.Status;//[8];
+        //        if (sts != "Cancelled") {
+        //            $("#txtID").val(ID);
+        //            nTransMode = 2;
+        //            //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
+        //            GetData(3, ID);
+        //            nTransMode = 2;
+        //            $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        //            $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+        //            $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        //            $("#btnSave,#btnClose").prop("disabled", false);
+        //            $("#btnSave,#btnClose").show();
+        //            $("#btnEmail,#btnWhatsapp").hide();
+        //            $(".modal-title#lblPopupheading").text("Modify " + $("#txtFormName").val());
+        //        }
+        //        else {
+        //            showErrorSnackbar("Cannot Modify.This document already cancelled");
+        //        }
+        //    }
+        //},
+        //{
+        //    icon: '📄',
+        //    title: 'Variant',
+        //    className: 'dg-action-edit',
+        //    visible: $("#txtViewID").val() == 1,
+        //    displayType: 'menu_item',
+        //    handler: (rowData, gridInstance) => {
+        //        $(".clrdiv").html("");
+        //        nTransMode = 3;
+        //        //rowdata = Table.row($(this).parents('tr')).data();
+        //        rowdata = window.__SelectedRowData;
+        //        var selrow = Table.row($(this).parents('tr')).index();
+        //        var ID = rowdata.ID;//[0];
+        //        var sts = rowdata.Status;//[8];
+        //        $("#txtID").val(ID);
+        //        GetData(1, "");
+        //        GetData(3, ID);
+        //        $(".modal-title#lblPopupheading").text("Variant " + $("#txtFormName").val());
+        //        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        //        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
+        //        $("#btnPreview,#btnPDF").prop("disabled", true);
+        //        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        //        $("#btnEmail,#btnWhatsapp").hide();
+        //        $("#btnSave,#btnClose,#btnDraft").show();
+        //    }
+        //},
+        //{
+        //    icon: '❌',
+        //    title: 'Cancel',
+        //    className: 'dg-action-edit',
+        //    visible: $("#txtViewID").val() == 1,
+        //    displayType: 'menu_item',
+        //    handler: (rowData, gridInstance) => {
+        //        $(".clrdiv").html("");
+        //        //rowdata = Table.row($(this).parents('tr')).data();
+        //        rowdata = window.__SelectedRowData;
+        //        var selrow = Table.row($(this).parents('tr')).index();
+        //        var ID = rowdata.ID;//[0];
+        //        var sts = rowdata.Status;//[8];
+        //        if (sts != "Cancelled") {
+        //            $(".modal-title#lblPopupheading").text("Cancel " + $("#txtFormName").val());
+        //            $("#txtID").val(ID);
+        //            nTransMode = 4;
+        //            GetData(3, ID);
+        //            $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        //            $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
+        //            $("#btnSave,#btnClose").prop("disabled", false);
+        //            $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+        //            $("#btnSave,#btnClose").show();
+        //            $("#btnEmail,#btnWhatsapp").hide();
+        //            $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+        //        }
+        //        else {
+        //            showErrorSnackbar("This document already cancelled");
+        //        }
+        //    }
+        //},
+        {
+            icon: '🖨️',
+            title: 'Print',
+            className: 'dg-action-edit',
+            visible: $("#txtViewID").val() == 1,
+            displayType: 'menu_item',
+            handler: (rowData, gridInstance) => {
+                //rowdata = Table.row($(this).parents('tr')).data();
+                //rowData = window.__SelectedRowData;
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.CurrentStatus;//[9];
+                $("#txtID").val(ID);
+                $("#txtStatus").val(sts);
+                $("#btnPrint").click();
+            }
+        },
+        {
+            icon: '🖨️',
+            title: 'Preview',
+            className: 'dg-action-edit',
+            visible: $("#txtViewID").val() == 1,
+            displayType: 'menu_item',
+            handler: (rowData, gridInstance) => {
+                //rowData = window.__SelectedRowData;
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.StatusID;//[9];
+                $("#txtID").val(ID);
+                $("#txtStatus").val(sts);
+                $("#btnPreview").click();
+            }
+        },
+        {
+            icon: '📜',
+            title: 'PDF',
+            className: 'dg-action-edit',
+            visible: $("#txtViewID").val() == 1,
+            displayType: 'menu_item',
+            handler: (rowData, gridInstance) => {
+                //rowData = Table.row($(this).parents('tr')).data();
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.CurrentStatus;//[9];
+                $("#txtID").val(ID);
+                $("#txtStatus").val(sts);
+                $("#btnPreview").click();
+            }
+        },
+        {
+            icon: '✉️',
+            title: 'Mail',
+            className: 'dg-action-edit',
+            visible: $("#txtViewID").val() == 1,
+            displayType: 'menu_item',
+            handler: (rowData, gridInstance) => {
+                //rowData = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.CurrentStatus;//[9];
+                $("#txtID").val(ID);
+                $("#txtStatus").val(sts);
+                $("#btnEmail").click();
+            }
+        },
+        {
+            icon: '📞',
+            title: 'WhatsApp',
+            className: 'dg-action-edit',
+            visible: $("#txtViewID").val() == 1,
+            displayType: 'menu_item',
+            handler: (rowData, gridInstance) => {
+                //rowData = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.CurrentStatus;//[9];
+                $("#txtID").val(ID);
+                $("#txtStatus").val(sts);
+                $("#btniframeWhatsapp").click();
+            }
+        },
+    ]
+    var columns = [
 
+    ];
+    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+    const menuActions = allGridActions.filter(a => a.displayType === 'menu_item');
+    console.log("singleIconAction", singleIconAction)
+    var actions = {
+        "header": "View",
+        "type": "action",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": singleIconAction
+    };
+    var OtherActions = {
+        "header": "Action",
+        "type": "action3dots",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": menuActions
+    }
+
+</script>
 
 <script type="text/javascript">
     //document.body.style.zoom = "85%";
@@ -936,7 +1170,8 @@
     setDate("dtpDate", 0);
     setDate("dtpFFrom", 0);
     setDate("dtpFTo", 0);
-
+    var grid, InventoryConversion;
+    GetColumnSettingsData(2, 21, 1);
     setTimeout(function () {
         GetFilterData();
         //GetData(2, qtyonly);
@@ -1205,7 +1440,7 @@ function updateInputColumn(inputID, netValue) {
                 else {
                     if (fieldName == "Qty") {
                         $(this).prop("disabled", !chk);
-                    }                                       
+                    }
                 }
             });
             chk = true;
@@ -1223,7 +1458,7 @@ function updateInputColumn(inputID, netValue) {
                     const tagval = $(this).attr("txttag");
                     dQty = parseFloat(tagval)
                     dTotQty += parseFloat(dQty);
-                } 
+                }
                 else if (fieldName == "PurchasePrice") {
                     const tagval = $(this).attr("txttag");
                     //dPPrice = parseFloat($(this).val());
@@ -1237,7 +1472,7 @@ function updateInputColumn(inputID, netValue) {
                 result.push(allValues);
             }
         });
-        updateInputColumn("txtBatchQtyTotal", dQtyTotValue); 
+        updateInputColumn("txtBatchQtyTotal", dQtyTotValue);
         updateInputColumn("txtBatchQty", dTotQty);
     }
     let BatchAcceptArray = [];
@@ -1339,7 +1574,7 @@ function updateInputColumn(inputID, netValue) {
                 //    <th style="text-align:center;font-size: 12px;width:8%;" title="Damage Qty" class="trclrforcolheader">Adj Dmg</th>
                 //    <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Gross ₹</th>
                 //</tr>
-                 
+
                 ProductTable.row.add([
                     ProdID,//$("#txtHProdID").val(),//'<label name="ProdID">'
                     PCode,//'<label name="UOMID">' +
@@ -1348,7 +1583,7 @@ function updateInputColumn(inputID, netValue) {
                     $("#cmbReason").val(),
                     '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;',//
                     '<p style="font-size:14px;">' + Sno + '</p>',
-                    '<input disabled name = "ProName" class="gdInput" value="' + PName + '" title="' + PName + '" style="border:none;"/><br/>' + PCode,                    
+                    '<input disabled name = "ProName" class="gdInput" value="' + PName + '" title="' + PName + '" style="border:none;"/><br/>' + PCode,
                     $('#cmbUOM option:selected').text(),
                     '<input txttag="' + TotQty + '" title="' + TotQty + '" type="number" step="any" id="dgvProdQty' + ProductRID + '" name ="Qty" class="gdInput txtsettag" value="' + parseFloat(TotQty).toFixed(DecVal) + '" disabled/>',
                     '<label lbltag="' + gross + '" title="' + gross + '" name="Gross" id="dgvProdGross' + ProductRID + '" class="lblsettag">' + parseFloat(gross).toFixed(DecVal) + '</label>',
@@ -1400,7 +1635,7 @@ function updateInputColumn(inputID, netValue) {
                     //Value = $(this).val() != "" ? $(this).val() : 0;
                     Value = $(this).attr("txttag") != "" ? $(this).attr("txttag") : 0;
                     dPTQty += parseFloat(Value);
-                }               
+                }
             });
             $(this).find("label").each(function (index) {
                 const fieldName = $(this).attr("name");
@@ -1412,7 +1647,7 @@ function updateInputColumn(inputID, netValue) {
                 }
             });
         });
-        updateLabelColumn("lblPTQty", dPTQty); 
+        updateLabelColumn("lblPTQty", dPTQty);
         updateLabelColumn("lblPTAmt", dPTGross);
     }
 
@@ -1694,7 +1929,7 @@ function setDate1(FieldID,Type) {
                     $("#txtNarration").val(items.Narration),
                         $("#txtStatus").val(items.Status);
                     $('#cmbConvertionType').val(items.ConvertionType);
-                    ProductRID = 0;               
+                    ProductRID = 0;
                     console.log(items.lstBatchInfo);
                     var dataSetlstBatchInfo = items.lstBatchInfo.map(function (itemsProd, nRowIndex) {
                         return [
@@ -1737,7 +1972,7 @@ function setDate1(FieldID,Type) {
                             { title: "UOM", className: "dt-body-left", width: "7%" },
                             { title: "Adj Qty", className: "dt-body-right", width: "7%" },
                             { title: "Gross ₹", className: "dt-body-right", width: "10%" },
-                            { title: "Reason", className: "dt-body-right", width: "15%" }                            
+                            { title: "Reason", className: "dt-body-right", width: "15%" }
                         ]
                         //columns: [
                         //    { "data": "ProdID", "autoWidth": true, "visible": false, className: "dt-body-left" },
@@ -1768,7 +2003,7 @@ function setDate1(FieldID,Type) {
                         //            return _action;
                         //        }
                         //    },
-                        //    { "data": "UOMName", "autoWidth": true, className: "dt-body-left" },                           
+                        //    { "data": "UOMName", "autoWidth": true, className: "dt-body-left" },
                         //    {
                         //        className: "dt-body-left",
                         //        "mRender": function (data, type, value, meta) {
@@ -1776,7 +2011,7 @@ function setDate1(FieldID,Type) {
                         //            var _action = '<input txttag="' + value.ActQty + '" title="' + value.ActQty + '" type="number" step="any" id="dgvProdQty' + rowIndex + '" name ="Qty" class="gdInput txtsettag" value="' + parseFloat(value.ActQty).toFixed(DecVal) + '" disabled/>';
                         //            return _action;
                         //        }
-                        //    },                            
+                        //    },
                         //    {
                         //        className: "dt-body-right",
                         //        "mRender": function (data, type, value, meta) {
@@ -1785,7 +2020,7 @@ function setDate1(FieldID,Type) {
                         //            return _action;
                         //        }
                         //    },
-                        //    { "data": "Reason", "autoWidth": true, className: "dt-body-left" },    
+                        //    { "data": "Reason", "autoWidth": true, className: "dt-body-left" },
                         //],
                     });
                     ProductTable = $('#tblProductData').DataTable();
@@ -1836,7 +2071,71 @@ function setDate1(FieldID,Type) {
                 },
                 success: function (data) {
                     Table.clear().draw(); Table.clear().draw();
-                    if (data.length > 0) {                      
+                    if (data.length > 0) {
+                        InventoryConversion = data;
+
+                        grid = new GKBSDynamicGrid('#my-grid', columns, InventoryConversion, {
+                            enablePagination: true,
+                            pageSize: 10,
+                            enableSearch: true,
+                            stickyToWindow: true,
+                            enableExport: false,
+                            enablePrint: false,
+                            enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                            enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                            enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                            enableSorting: true,
+                            singleIconAction: singleIconAction, // Pass the single View action
+                            rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                            //onCellChange: handleCellUpdate,
+                            customCellRenderer: (el, col, rowData) => {
+                                if (col.field === 'Active') {
+                                    const val = rowData[col.field];
+                                    console.log("Active : ", val);
+                                    if (val === 'True') {
+                                        el.innerHTML = `<div class="dg-status-badge dg-status-active">
+    <span class="dg-status-circle"></span> Active
+</div>`;
+                                    } else if (val === 'False') {
+                                        el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+    <span class="dg-status-circle"></span> In-Active
+</div>`;
+                                    }
+                                }
+                            },
+                            customButtons: [
+                                {
+                                    icon: '⚙️',
+                                    text: 'Settings',
+                                    title: 'Settings',
+                                    visible: true,
+                                    onClick: (gridInstance, event) => {
+                                        //console.log("gridInstance : ", gridInstance);
+                                        //console.log("event : ", event);
+                                        //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                        modalGenColumnSettings.style.display = "block";
+                                        GendralColumnSettings(1, 21, 1, 0);
+                                    }
+                                },
+                                {
+                                    icon: '➕',
+                                    text: 'Add New',
+                                    title: 'Add New',
+                                    visible: $("#txtAddID").val() == 1,
+                                    onClick: (gridInstance, event) => {
+                                        //console.log("gridInstance : ", gridInstance);
+                                        //console.log("event : ", event);
+                                        //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                        nTransMode = 1;
+                                        $("#dvMain").show();
+                                        $("#dvDocuments").hide();
+                                        ClearForm();
+                                        //ProductTable.column(4).visible(true);
+                                    }
+                                },
+                            ],
+                        });
+
                         var searchValue = '';
                         if ($.fn.DataTable.isDataTable('#tblMasterData')) {
                             searchValue = $('#tblMasterData').DataTable().search(); // get current search term
@@ -2174,7 +2473,7 @@ function setDate1(FieldID,Type) {
                 if (fieldName == "Qty") {
                     val = $(this).attr("txttag");
                     dPTQty = parseFloat(val);//$(this).val()
-                }               
+                }
             });
             $(this).find("label").each(function (index) {
                 const fieldName = $(this).attr("name");
@@ -2288,4 +2587,30 @@ function setDate1(FieldID,Type) {
         $("#btnEmail,#btnWhatsapp").show();
         $("#MainHeading").text("View " + $("#txtFormName").val());
     }
+
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    console.log("columns : ", columns);
+                    columns.push(actions);
+                    columns.push(OtherActions);
+
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
+
 </script>
