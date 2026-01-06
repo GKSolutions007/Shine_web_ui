@@ -7,6 +7,7 @@
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 @*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 <script src="~/Scripts/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
@@ -15,6 +16,7 @@
 @*<script src="~/Scripts/Validation.js"></script>*@
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
 <style>
     /*each {
         border-bottom: 1px solid #555;
@@ -64,7 +66,7 @@
     .modalBatch {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        z-index: 200; /* Sit on top */
         left: 0;
         top: 0;
         width: 100%; /* Full width */
@@ -153,34 +155,37 @@
     <h4 id="MainHeading">@ViewData["FormName"]</h4>
     <hr />
     <div class="toastBox"></div>
-    <div style="padding-bottom:10px;">
+    <div style="padding-bottom:10px;" hidden>
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
 
     <div id="dvMainTable">
-        <table class="table table-bordered" id="tblMasterData" width="100%">
-            <thead>
-                @*<tr id="trAdd">
-                        <th></th>
-                        <th align="right" colspan="10">
-                            <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
-                        </th>
-                    </tr>*@
-                <tr class="trclrforcolheader">
-                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Vehicle No</th>
-                    <th style="text-align:center;font-size: 12px;width:20%;">Vehicle Name</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Purchase Date</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Insurance Date</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Insurance Expiry Date</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">FC Date</th>
-                    <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
-                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
-                    <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
-                    <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
-                </tr>
-            </thead>
-        </table>
+        <div id="my-grid" style="height: 500px; width: 100%;"></div>
+        <div hidden>
+            <table class="table table-bordered" id="tblMasterData" width="100%">
+                <thead>
+                    @*<tr id="trAdd">
+                    <th></th>
+                    <th align="right" colspan="10">
+                        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                    </th>
+                </tr>*@
+                    <tr class="trclrforcolheader">
+                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Vehicle No</th>
+                        <th style="text-align:center;font-size: 12px;width:20%;">Vehicle Name</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Purchase Date</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Insurance Date</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Insurance Expiry Date</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">FC Date</th>
+                        <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                        <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
+                        <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
     </div>
     <div class="modalBatch" id="myModalfg">
         <div class="modal-dialog" style="width:auto;">
@@ -309,6 +314,57 @@
     </div>
 </body>
 
+<script>
+    const allGridActions = [
+        {
+            icon: '👁️',
+            title: 'View Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: $("#txtModifyID").val() == 1,
+            handler: (rowData) => {
+                var VID = rowData.ID;//[0];
+                GetData(4, VID);
+                $(".FormclrField").prop("disabled", true);
+                $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
+                $("#chkActive,#btnSave,#btnClear").prop("disabled", true);
+                modal.style.display = "block";
+            }
+        },
+        {
+            icon: '✏️',
+            title: 'Edit Data',
+            className: 'dg-action-edit',
+            visible: $("#txtViewID").val() == 1,
+            displayType: 'single_icon',
+            handler: (rowData, gridInstance) => {
+                var VID = rowData.ID;//[0];
+                GetData(4, VID);
+                $(".FormclrField").prop("disabled", false);
+                $("#chkActive,#btnSave").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                modal.style.display = "block";
+            }
+        }]
+    var columns = [
+
+    ];
+    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+    const menuActions = [];// allGrid3dotActions.filter(a => a.displayType === 'menu_item');
+    var actions = {
+        "field": "Action",
+        "header": "Action",
+        "type": "action",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": allGridActions
+    };
+</script>
 
 <script type="text/javascript">
     var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
@@ -351,6 +407,8 @@
     if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
         $("#dvMainTable").hide();
     }
+    var grid, Vehicle;
+    GetColumnSettingsData(2, 4, 1);
     var arrData = [];
     var UID = '@Session["LoginUserID"]';
     var nMode = 1;
@@ -367,6 +425,7 @@
             },
             success: function (data) {
                 if (data.length > 0) {
+                    Vehicle = data;
                     if (nMode == 3) {
                         arrData = [];
                         //Table.draw().clear();
@@ -391,6 +450,69 @@
                             //    '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
                             //]).draw(false);
                         });
+
+                        grid = new GKBSDynamicGrid('#my-grid', columns, Vehicle, {
+                            enablePagination: true,
+                            pageSize: 10,
+                            enableSearch: true,
+                            stickyToWindow: true,
+                            enableExport: false,
+                            enablePrint: false,
+                            enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                            enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                            enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                            enableSorting: true,
+                            singleIconAction: singleIconAction, // Pass the single View action
+                            rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                            //onCellChange: handleCellUpdate,
+                            customCellRenderer: (el, col, rowData) => {
+                                if (col.field === 'Active') {
+                                    const val = rowData[col.field];
+                                    console.log("Active : ", val);
+                                    if (val === 'True') {
+                                        el.innerHTML = `<div class="dg-status-badge dg-status-active">
+                      <span class="dg-status-circle"></span> Active
+                  </div>`;
+                                    } else if (val === 'False') {
+                                        el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+                      <span class="dg-status-circle"></span> In-Active
+                  </div>`;
+                                    }
+                                }
+                            },
+                            customButtons: [
+                                {
+                                    icon: '⚙️',
+                                    text: 'Settings',
+                                    title: 'Settings',
+                                    visible: true,
+                                    onClick: (gridInstance, event) => {
+                                        //console.log("gridInstance : ", gridInstance);
+                                        //console.log("event : ", event);
+                                        //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                        modalGenColumnSettings.style.display = "block";
+                                        GendralColumnSettings(1, 4, 1, 0);
+                                    }
+                                },
+                                {
+                                    icon: '➕',
+                                    text: 'Add New',
+                                    title: 'Add New',
+                                    visible: $("#txtAddID").val() == 1,
+                                    onClick: (gridInstance, event) => {
+                                        //console.log("gridInstance : ", gridInstance);
+                                        //console.log("event : ", event);
+                                        //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                        nMode = 1;
+                                        $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
+                                        $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
+                                        modal.style.display = "block";
+                                        ClearForm();
+                                    }
+                                },
+                            ],
+                        });
+
                         var searchValue = '';
                         if ($.fn.DataTable.isDataTable('#tblMasterData')) {
                             searchValue = $('#tblMasterData').DataTable().search(); // get current search term
@@ -658,5 +780,30 @@
         $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
         modal.style.display = "block";
 
-    });    
+    }); 
+
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    console.log("columns : ", columns);
+                    columns.push(actions);
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
+
+
 </script>

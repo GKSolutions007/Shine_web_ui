@@ -12,6 +12,7 @@
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 @*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 <script src="~/Scripts/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
@@ -19,6 +20,7 @@
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
 <style>
     each {
         border-bottom: 1px solid #555;
@@ -68,7 +70,7 @@
     .modalBatch {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        z-index: 200; /* Sit on top */
         left: 0;
         top: 0;
         width: 100%; /* Full width */
@@ -289,37 +291,40 @@
     <h4 id="MainHeading">@ViewData["FormName"]</h4>
     <hr />
     <div class="toastBox"></div>
-    <div style="padding-bottom:10px;">
+    <div style="padding-bottom:10px;" hidden>
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
     <div id="dvMainTable">
-        <table class="table table-bordered" id="tblMasterData" width="100%">
-            <thead>
-                <tr class="trclrforcolheader">
-                    <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                    <th style="text-align:center;font-size: 12px;width:12%;">Code</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Name</th>
-                    <th style="text-align:center;font-size: 12px;width:13%;">EAN</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Manufacturer</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Brand</th>
-                    <th style="text-align:center;font-size: 12px;width:15%;">Category</th>
-                    <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
-                    <th style="text-align:center;font-size: 12px;width:10%;">User</th>
-                    <th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
-                        <span class="glyphicon glyphicon-pencil" style="font-size:16px">
-                        </span>
-                    </th>
-                    <th style="text-align:center;font-size: 12px;width:3%;" title="View">
-                        <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
-                        </span>
-                    </th>
-                    <th style="text-align:center;font-size: 12px;width:4%;" title="Variant">
-                        <span class="glyphicon glyphicon-file" style="font-size:12px">
-                        </span>
-                    </th>
-                </tr>
-            </thead>
-        </table>
+        <div id="my-grid" style="height: 500px; width: 100%;"></div>
+        <div hidden>
+            <table class="table table-bordered" id="tblMasterData" width="100%">
+                <thead>
+                    <tr class="trclrforcolheader">
+                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                        <th style="text-align:center;font-size: 12px;width:12%;">Code</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Name</th>
+                        <th style="text-align:center;font-size: 12px;width:13%;">EAN</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Manufacturer</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Brand</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Category</th>
+                        <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">User</th>
+                        <th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
+                            <span class="glyphicon glyphicon-pencil" style="font-size:16px">
+                            </span>
+                        </th>
+                        <th style="text-align:center;font-size: 12px;width:3%;" title="View">
+                            <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
+                            </span>
+                        </th>
+                        <th style="text-align:center;font-size: 12px;width:4%;" title="Variant">
+                            <span class="glyphicon glyphicon-file" style="font-size:12px">
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
     </div>
     <div class="modalBatch" id="myModalfg">
         <div class="modal-dialog" style="width:auto;">
@@ -1152,6 +1157,111 @@
     </div>
 </body>
 
+<script>
+    const allGridActions = [
+        {
+            icon: '👁️',
+            title: 'View Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: $("#txtModifyID").val() == 1,
+            handler: (rowData) => {
+                $(".clrdiv").html("");
+                $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
+                //rowData = Table.row($(this).parents('tr')).data();
+                var ID = rowData.ID;//[0];
+                $("#txtID").val(ID);
+                openTabs(null, 'ProductDetails', 1);
+                GetData(4, ID);
+                $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                $("input[type=checkbox],#btnSave,#btnClear").prop("disabled", true);
+                modal.style.display = "block";
+                $(".clrdivs").html("");
+                $("#dvErrorDetail").hide();
+                $("#lblSaveError").html("");
+                $("#txtBaseCR").prop("disabled", true);
+                setTimeout(() => {
+                    $("#chkTrackInv").prop("disabled", true);
+                }, 500);
+            }
+        },
+        {
+            icon: '✏️',
+            title: 'Edit Data',
+            className: 'dg-action-edit',
+            visible: $("#txtViewID").val() == 1,
+            displayType: 'single_icon',
+            handler: (rowData, gridInstance) => {
+                nMode = 2;
+                $(".clrdiv").html("");
+                openTabs(null, 'ProductDetails', 1);
+                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                //rowdata = Table.row($(this).parents('tr')).data();
+                var ID = rowData.ID;//[0];
+
+                $("#txtID").val(ID);
+                GetData(4, ID);
+                $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+                $("input[type=checkbox],#chkActive,#btnSave").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                modal.style.display = "block";
+                $(".clrdivs").html("");
+                $("#dvErrorDetail").hide();
+                $("#lblSaveError").html("");
+                $("#txtBaseCR").prop("disabled", true);
+            }
+        },
+            {
+            icon: '📄',
+            title: 'Variant Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: $("#txtModifyID").val() == 1,
+            handler: (rowData) => {
+                nMode = 1;
+                $(".modal-title#lblPopupheading").text("Variant " + $("#MainHeading").text());
+                $(".clrdiv").html("");
+                openTabs(null, 'ProductDetails', 1);
+                modal.style.display = "block";
+
+                //rowdata = Table.row($(this).parents('tr')).data();
+                var ID = rowData.ID;//[0];
+                GetData(4, ID, true);
+                $("#txtID").val(ID);
+
+                $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+                $("input[type=checkbox],#chkActive,#btnSave,#btnClear").prop("disabled", false);
+                $("#txtCode,#txtName,#txtEAN").val("");
+                $(".clrdivs").html("");
+                $("#dvErrorDetail").hide();
+                $("#lblSaveError").html("");
+                $("#txtBaseCR").prop("disabled", true);
+
+                setTimeout(() => {
+                    $("#chkTrackInv").prop("disabled", true);
+                    $("#chkTrackInv").prop("checked", true);
+                }, 500);
+            }
+        }]
+    var columns = [
+
+    ];
+    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+    const menuActions = [];// allGrid3dotActions.filter(a => a.displayType === 'menu_item');
+    var actions = {
+        "field": "Action",
+        "header": "Action",
+        "type": "action",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": allGridActions
+    };
+</script>
 
 <script type="text/javascript">
         var VarID = $("#txtVariantID").val();
@@ -1217,7 +1327,8 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
         $("#trAdd").hide();
         $("#btnAdd").hide();
     }
-
+    var grid, Product;
+    GetColumnSettingsData(2, 15, 1);
     if (EnableReturn == "0") {
         $("#trRetPrice").hide();
     }
@@ -1252,7 +1363,9 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
             },
             data: { Mode: 3, Name: "" },
             success: function (data) {
+                Product = data;
                 var prodjsdata = eval(data);
+               
                 var searchValue = '';
                 if ($.fn.DataTable.isDataTable('#tblMasterData')) {
                     searchValue = $('#tblMasterData').DataTable().search(); // get current search term
@@ -1261,6 +1374,68 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                 if ($.fn.DataTable.isDataTable('#tblMasterData')) {
                     searchValue = $('#tblMasterData').DataTable().search(); // get current search term
                 }
+
+                grid = new GKBSDynamicGrid('#my-grid', columns, Product, {
+                    enablePagination: true,
+                    pageSize: 10,
+                    enableSearch: true,
+                    stickyToWindow: true,
+                    enableExport: false,
+                    enablePrint: false,
+                    enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                    enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                    enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                    enableSorting: true,
+                    singleIconAction: singleIconAction, // Pass the single View action
+                    rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                    //onCellChange: handleCellUpdate,
+                    customCellRenderer: (el, col, rowData) => {
+                        if (col.field === 'Active') {
+                            const val = rowData[col.field];
+                            console.log("Active : ", val);
+                            if (val === 'True') {
+                                el.innerHTML = `<div class="dg-status-badge dg-status-active">
+       <span class="dg-status-circle"></span> Active
+   </div>`;
+                            } else if (val === 'False') {
+                                el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+       <span class="dg-status-circle"></span> In-Active
+   </div>`;
+                            }
+                        }
+                    },
+                    customButtons: [
+                        {
+                            icon: '⚙️',
+                            text: 'Settings',
+                            title: 'Settings',
+                            visible: true,
+                            onClick: (gridInstance, event) => {
+                                //console.log("gridInstance : ", gridInstance);
+                                //console.log("event : ", event);
+                                //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                modalGenColumnSettings.style.display = "block";
+                                GendralColumnSettings(1, 15, 1, 0);
+                            }
+                        },
+                        {
+                            icon: '➕',
+                            text: 'Add New',
+                            title: 'Add New',
+                            visible: $("#txtAddID").val() == 1,
+                            onClick: (gridInstance, event) => {
+                                //console.log("gridInstance : ", gridInstance);
+                                //console.log("event : ", event);
+                                //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                nMode = 1;
+                                $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
+                                $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
+                                modal.style.display = "block";
+                                ClearForm();
+                            }
+                        },
+                    ],
+                });
 
                 $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
                     scrollY: "450px",
@@ -2943,5 +3118,29 @@ function updateInputColumn(inputID, netValue) {
             $("#chkTrackInv").prop("checked", true);
         }, 500);
     });
+
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    console.log("columns : ", columns);
+                    columns.push(actions);
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
+
 
 </script>

@@ -92,7 +92,11 @@ namespace ShineWeb.Controllers
                 dtMin = dtFinancialdate;// (dtFinancialdate > dtpF_ED ? dtFinancialdate : dtpF_ED);
                 dtMax = dtpF_ED > Date ? Date : dtpF_ED;
                 DateTime dtDate = dtpF_ED > Date ? Date : dtpF_ED;
-                DateTime MonFstDt = new DateTime(dtDate.Year, dtDate.Month - 1, 1);
+                DateTime MonFstDt = new DateTime(dtDate.Year , Math.Max(1,dtDate.Month - 1), 1);
+                if((dtDate.Month - 1) == 0)
+                {
+                    MonFstDt = MonFstDt.AddMonths(-1);
+                }
                 dtValue = dtMin > MonFstDt ? dtMin : MonFstDt;//  new DateTime(dtDate.Year, dtDate.Month, 1);
             }
             else if (TypeID == 7)//Previous Month Last Date

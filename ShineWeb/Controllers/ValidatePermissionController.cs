@@ -86,6 +86,7 @@ namespace ShineWeb.Controllers
             Session["F_SD"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_SD"].ToString()).ToString("yyyy-MM-dd");//,dtCompReg.Rows[0]["F_SD"].ToString();
             Session["F_ED"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_ED"].ToString()).ToString("yyyy-MM-dd");//dtCompReg.Rows[0]["F_ED"].ToString();
             Session["CompanyCode"] = dtCompReg.Rows[0]["CompanyCode"].ToString();
+            string fsd = Convert.ToDateTime(dtCompReg.Rows[0]["F_SD"].ToString()).ToString("yyyy-MM-dd");
             Session["StateID"] = dtCompReg.Rows[0]["StateID"].ToString();
             Session["dtParent"] = dtParent;
             Session["dtPermission"] = dtPermission;
