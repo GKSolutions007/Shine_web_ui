@@ -8,7 +8,7 @@ class GKBSDynamicGrid {
         // Options with defaults
         this.options = Object.assign({
             enablePagination: false,
-            pageSize: 10,
+            pageSize: ItemsperPage,
             enableSearch: true,
             stickyToWindow: true, // NEW: If true, sticks to top of browser
             height: '200px',        // NEW: specific height for internal scroll
@@ -63,7 +63,7 @@ class GKBSDynamicGrid {
         // --- 1. Options with Defaults ---
         this.options = Object.assign({
             enablePagination: false,
-            pageSize: 10,
+            pageSize: ItemsperPage,
             enableSearch: true,
             stickyToWindow: true,
             height: '200px',
