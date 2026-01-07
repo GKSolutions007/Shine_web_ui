@@ -720,267 +720,292 @@
 </body>
 
 <script>
-    const allGridActions = [
-        {
-            icon: '👁️',
-            title: 'View Data',
-            className: 'dg-action-view',
-            // 💡 NEW TAG: This action will be rendered as a single icon
-            displayType: 'single_icon',
-            visible: $("#txtViewID").val() == 1,
-            handler: (rowData) => {
-                //$(".clrdivs").html("");
-                //rowdata = Table.row($(this).parents('tr')).data();
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                nTransMode = 5;
-                $("#txtID").val(ID);
-                GetProductViewData(5, ID);
-                $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-                $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-                $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
-                $("#btnPDF,#btnPreview").prop("disabled", false);
-                $("#btnPreview,#btnPDF,#btnPrint").show();
-                $("#btnEmail,#btnWhatsapp").show();
-                $("#dvMain").show();
-                $("#dvDocuments").hide();
-                $("#MainHeading").text("View Automatic Indent");
-                if ($("#txtEnableBranch").val() == 1) {
-                    $("#cmbBranch").prop("disabled", true);
-                }
-            }
-        },
-        {
-            icon: '✏️',
-            title: 'Edit',
-            className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
-            displayType: 'menu_item',
-            handler: (rowData, gridInstance) => {
-                //$(".clrdivs").html("");
-                ////rowdata = Table.row($(this).parents('tr')).data();
-                //rowdata = window.__SelectedRowData;
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                var sts = rowData.Status;//[9];
-                if (sts != "Cancelled") {
+    
+    let mapusersRole = {
+        canView: $("#txtViewID").val() == 1,
+        canEdit: $("#txtModifyID").val() == 1,
+        canVariant: $("#txtVariantID").val() == 1,
+        canCancel: $("#txtCancelID").val() == 1,
+        canPrint: $("#txtViewID").val() == 1,
+        canPreview: $("#txtViewID").val() == 1,
+        canPDF: $("#txtViewID").val() == 1
+    };
+    var allGridActions = [], singleIconAction = [], menuActions = [], columns = [];
+    var actions = {}, OtherActions = {};
+    
+    function LoadPermissions() {
+        var Permrdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : "3";
+        var cancelperm = !mapusersRole.canCancel ? false : Permrdo1 == "1" ? true : Permrdo1 == "2" || Permrdo1 == "3" ? true : false;
+        var ViewPerm = mapusersRole.canView && Permrdo1 != "2" ? true : false;
+        allGridActions = [
+            {
+                icon: '👁️',
+                title: 'View Data',
+                className: 'dg-action-view',
+                // 💡 NEW TAG: This action will be rendered as a single icon
+                displayType: 'single_icon',
+                visible: ViewPerm,
+                // $("#txtViewID").val() == 1,
+                handler: (rowData) => {
+                    //$(".clrdivs").html("");
+                    //rowdata = Table.row($(this).parents('tr')).data();
+                    //var selrow = Table.row($(this).parents('tr')).index();
+                    var ID = rowData.ID;//[0];
+                    nTransMode = 5;
                     $("#txtID").val(ID);
-                    nTransMode = 2;
-                    var rdo1 = $("#rdoMainTableData").is(":checked");
-                    var rdo2 = $("#rdoDraftTableData").is(":checked");
-                    //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
-                    GetProductViewData(rdo1 ? 5 : 8, ID);
-                    nTransMode = rdo1 ? 2 : 1;
-                    $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-                    //$("#btnSave,#btnClose").prop("disabled", false);
-                    //$("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-                    //$("#btnDraft").prop("disabled", rdo1);
-                    $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-                    $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-                    $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-                    $("#btnEmail,#btnWhatsapp").hide();
-                    $("#btnSave,#btnClose").prop("disabled", false);
-                    $("#btnSave,#btnClose").show();
-                    $("#btnDraft").prop("enabled", !rdo2);
+                    GetProductViewData(5, ID);
+                    $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                    $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
+                    $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
+                    $("#btnPDF,#btnPreview").prop("disabled", false);
+                    $("#btnPreview,#btnPDF,#btnPrint").show();
+                    $("#btnEmail,#btnWhatsapp").show();
                     $("#dvMain").show();
                     $("#dvDocuments").hide();
-                    $("#MainHeading").text(rdo1 ? "Modify Automatic Indent" : "Create Automatic Indent");
+                    $("#MainHeading").text("View Automatic Indent");
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
                 }
-                else {
-                    showErrorSnackbar("Cannot Modify.This document already cancelled");
-                }
-            }
-        },
-        {
-            icon: '📄',
-            title: 'Variant',
-            className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
-            displayType: 'menu_item',
-            handler: (rowData, gridInstance) => {
-                //$(".clrdivs").html("");
-                ////rowdata = Table.row($(this).parents('tr')).data();
-                //rowdata = window.__SelectedRowData;
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                $("#txtID").val(ID);
-                nTransMode = 3;
-                GetData(1, 1);
-                GetProductViewData(5, ID);
-                $("#dvMain").show();
-                $("#dvDocuments").hide();
-                $("#btnEmail,#btnWhatsapp").hide();
-                $("#MainHeading").text("Variant Automatic Indent");
-                $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-                //$("#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
-                //$("#btnPreview,#btnPDF").prop("disabled", true);
-                $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
-                $("#btnPreview,#btnPDF").prop("disabled", true);
-                $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-                $("#btnSave,#btnClose,#btnDraft").show();
-                //showErrorSnackbar("Variant functionality still developing");
-                if ($("#txtEnableBranch").val() == 1) {
-                    $("#cmbBranch").prop("disabled", true);
-                }
-            }
-        },
-        {
-            icon: '❌',
-            title: 'Cancel',
-            className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
-            displayType: 'menu_item',
-            handler: (rowData, gridInstance) => {
-                var rdo1 = $("#rdoMainTableData").is(":checked");
-                //$(".clrdivs").html("");
-                ////rowdata = Table.row($(this).parents('tr')).data();
-                //rowdata = window.__SelectedRowData;
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                var sts = rowData.Status;//[9];
-                if (sts != "Cancelled") {
-                    $("#txtID").val(ID);
-                    if (rdo1) {
-                        $("#MainHeading").text("Cancel Automatic Indent")
-                        nTransMode = 4;
-                        GetProductViewData(5, ID);
-                        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+            },
+            {
+                icon: '✏️',
+                title: 'Edit',
+                className: 'dg-action-edit',
+                visible: (row) => {
+                    var isVisible = false;
+                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled') {
+                        if (Permrdo1 == "2") {
+                            if ($("#txtDraftModifyID").val() != 0)
+                                isVisible = true;
+                            else
+                                isVisible = false;
+                        }
+                        else {
+                            if (mapusersRole.canEdit)
+                                isVisible = true;
+                        }
+                    }
+                    return isVisible;
+                },
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.Status;//[9];
+                    if (sts != "Cancelled") {
+                        $("#txtID").val(ID);
+                        nTransMode = 2;
+                        var rdo1 = $("#rdoMainTableData").is(":checked");
+                        var rdo2 = $("#rdoDraftTableData").is(":checked");
+                        GetProductViewData(rdo1 ? 5 : 8, ID);
+                        nTransMode = rdo1 ? 2 : 1;
+                        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
                         //$("#btnSave,#btnClose").prop("disabled", false);
-                        //$("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-                        $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-                        $("#btnSave,#btnClose").prop("disabled", false);
-                        $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+                        //$("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+                        //$("#btnDraft").prop("disabled", rdo1);
+                        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+                        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+                        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
                         $("#btnEmail,#btnWhatsapp").hide();
+                        $("#btnSave,#btnClose").prop("disabled", false);
                         $("#btnSave,#btnClose").show();
+                        $("#btnDraft").prop("enabled", !rdo2);
                         $("#dvMain").show();
                         $("#dvDocuments").hide();
+                        $("#MainHeading").text(rdo1 ? "Modify Automatic Indent" : "Create Automatic Indent");
                         if ($("#txtEnableBranch").val() == 1) {
                             $("#cmbBranch").prop("disabled", true);
                         }
                     }
                     else {
-                        var conf = confirm("Do you want to remove draft data?");
-                        if (conf) {
-                            GetData(10, ID);
-                        }
+                        showErrorSnackbar("Cannot Modify.This document already cancelled");
                     }
                 }
-                else {
-                    showErrorSnackbar("This document already cancelled");
+            },
+            {
+                icon: '📄',
+                title: 'Variant',
+                className: 'dg-action-edit',
+                visible: mapusersRole.canVariant && Permrdo1 == "1",
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    $("#txtID").val(ID);
+                    nTransMode = 3;
+                    GetData(1, 1);
+                    GetProductViewData(5, ID);
+                    $("#dvMain").show();
+                    $("#dvDocuments").hide();
+                    $("#btnEmail,#btnWhatsapp").hide();
+                    $("#MainHeading").text("Variant Automatic Indent");
+                    $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+                    //$("#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
+                    //$("#btnPreview,#btnPDF").prop("disabled", true);
+                    $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
+                    $("#btnPreview,#btnPDF").prop("disabled", true);
+                    $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+                    $("#btnSave,#btnClose,#btnDraft").show();
+                    //showErrorSnackbar("Variant functionality still developing");
+                    if ($("#txtEnableBranch").val() == 1) {
+                        $("#cmbBranch").prop("disabled", true);
+                    }
                 }
-            }
-        },
-        {
-            icon: '🖨️',
-            title: 'Print',
-            className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
-            displayType: 'menu_item',
-            handler: (rowData, gridInstance) => {
-                ////rowdata = Table.row($(this).parents('tr')).data();
-                //rowdata = window.__SelectedRowData;
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                var sts = rowData.CurrentStatus;//[9];
-                $("#txtID").val(ID);
-                $("#txtStatus").val(sts);
-                $("#btnPrint").click();
-            }
-        },
-        {
-            icon: '🖨️',
-            title: 'Preview',
-            className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
-            displayType: 'menu_item',
-            handler: (rowData, gridInstance) => {
-                //rowdata = window.__SelectedRowData;
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                var sts = rowData.CurrentStatus;//[9];
-                $("#txtID").val(ID);
-                $("#txtStatus").val(sts);
-                $("#btnPreview").click();
-            }
-        },
-        {
-            icon: '📜',
-            title: 'PDF',
-            className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
-            displayType: 'menu_item',
-            handler: (rowData, gridInstance) => {
-                //rowdata = Table.row($(this).parents('tr')).data();
-                //rowdata = window.__SelectedRowData;
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                var sts = rowData.CurrentStatus;//[9];
-                $("#txtID").val(ID);
-                $("#txtStatus").val(sts);
-                $("#btnPDF").click();
-            }
-        },
-        {
-            icon: '✉️',
-            title: 'Mail',
-            className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
-            displayType: 'menu_item',
-            handler: (rowData, gridInstance) => {
-                //rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                var sts = rowData.CurrentStatus;//[9];
-                $("#txtID").val(ID);
-                $("#txtStatus").val(sts);
-                $("#btnEmail").click();
-            }
-        },
-        {
-            icon: '📞',
-            title: 'WhatsApp',
-            className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
-            displayType: 'menu_item',
-            handler: (rowData, gridInstance) => {
-                //rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
-                //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowData.ID;//[0];
-                var sts = rowData.CurrentStatus;//[9];
-                $("#txtID").val(ID);
-                $("#txtStatus").val(sts);
-                $("#btniframeWhatsapp").click();
-            }
-        },
-    ]
-    var columns = [
-
-    ];
-    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
-    const menuActions = allGridActions.filter(a => a.displayType === 'menu_item');
-    var actions = {
-        "header": "View",
-        "type": "action",
-        "width": 80,
-        "align": "center",
-        "visible": true,
-        "specialColumn": true,
-        "ShowinColumnOption": false,
-        "actions": singleIconAction
-    };
-    var OtherActions = {
-        "header": "Action",
-        "type": "action3dots",
-        "width": 80,
-        "align": "center",
-        "visible": true,
-        "specialColumn": true,
-        "ShowinColumnOption": false,
-        "actions": menuActions
+            },
+            {
+                icon: '❌',
+                title: 'Cancel',
+                className: 'dg-action-edit',
+                visible: (row) => {
+                    var isVisible = false;
+                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled') {
+                        if (Permrdo1 == "2") {
+                            if ($("#txtDraftCancelID").val() != 0)
+                                isVisible = true;
+                            else
+                                isVisible = false;
+                        }
+                        else {
+                            if (mapusersRole.canCancel)
+                                isVisible = true;
+                            else
+                                isVisible = false;
+                        }
+                    }
+                    return isVisible;
+                },
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var rdo1 = $("#rdoMainTableData").is(":checked");
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.Status;//[9];
+                    if (sts != "Cancelled") {
+                        $("#txtID").val(ID);
+                        if (rdo1) {
+                            $("#MainHeading").text("Cancel Automatic Indent")
+                            nTransMode = 4;
+                            GetProductViewData(5, ID);
+                            $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                            //$("#btnSave,#btnClose").prop("disabled", false);
+                            //$("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
+                            $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
+                            $("#btnSave,#btnClose").prop("disabled", false);
+                            $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+                            $("#btnEmail,#btnWhatsapp").hide();
+                            $("#btnSave,#btnClose").show();
+                            $("#dvMain").show();
+                            $("#dvDocuments").hide();
+                            if ($("#txtEnableBranch").val() == 1) {
+                                $("#cmbBranch").prop("disabled", true);
+                            }
+                        }
+                        else {
+                            var conf = confirm("Do you want to remove draft data?");
+                            if (conf) {
+                                GetData(10, ID);
+                            }
+                        }
+                    }
+                    else {
+                        showErrorSnackbar("This document already cancelled");
+                    }
+                }
+            },
+            {
+                icon: '🖨️',
+                title: 'Print',
+                className: 'dg-action-edit',
+                visible: mapusersRole.canPrint && Permrdo1 == "1",
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btnPrint").click();
+                }
+            },
+            {
+                icon: '🖨️',
+                title: 'Preview',
+                className: 'dg-action-edit',
+                visible: mapusersRole.canPreview && Permrdo1 == "1",
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btnPreview").click();
+                }
+            },
+            {
+                icon: "<i class='fa-regular fa-file-pdf' style='color:brown'></i>",
+                title: '&ensp;PDF',
+                className: 'dg-action-edit',
+                visible: mapusersRole.canPDF && Permrdo1 == "1",
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btnPDF").click();
+                }
+            },
+            {
+                icon: "<i class='fa-solid fa-envelope' style='color:brown'></i>",
+                title: '&ensp;Mail',
+                className: 'dg-action-edit',
+                visible: Permrdo1 == "1",
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btnEmail").click();
+                }
+            },
+            {
+                icon: "<i class='fa-brands fa-whatsapp' style='color:green'></i>",
+                title: '&ensp;WhatsApp',
+                className: 'dg-action-edit',
+                visible: Permrdo1 == "1",
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btniframeWhatsapp").click();
+                }
+            },
+        ];
+        singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+        menuActions = allGridActions.filter(a => a.displayType === 'menu_item');
+        actions = {
+            "header": 'View',
+            "type": "action",
+            "width": 60,
+            "align": "center",
+            "visible": Permrdo1 == 1,
+            "specialColumn": true,
+            "ShowinColumnOption": false,
+            "actions": singleIconAction
+        };
+        OtherActions = {
+            "header": "Action",
+            "type": "action3dots",
+            "width": 60,
+            "align": "center",
+            "visible": true,
+            "specialColumn": true,
+            "ShowinColumnOption": false,
+            "actions": menuActions
+        }
     }
+    
+    LoadPermissions();
 
 </script>
 
@@ -1492,6 +1517,7 @@ setTimeout(function () { GetFilterData(); }, 800);
             var rdo1 = $("#rdoMainTableData").is(":checked") ? "1" : "2";
             var strBranch = $("#cmbFilterBranch").val(), strParty = $("#txtFilterParty").val(), dFrom = $("#dtpFFrom").val(),
                 dTo = $("#dtpFTo").val(), chkshow = $("#chkShowAll").is(":checked") ? "1" : "0";
+           
             $.ajax({
                 url: Aurl + "automaticindent/getfilterdata",
                 type: 'get',
@@ -1500,35 +1526,10 @@ setTimeout(function () { GetFilterData(); }, 800);
                 xhrFields: {
                     withCredentials: true
                 },
+                async :false,
                 success: function (data) {
-                    AutomaticIndent = data;
-                    //Table.draw().clear(); Table.draw().clear();
-                    //if (data.length > 0) {
-                    //$.each(data, function (i, items) {
-                    //    Table.row.add([
-                    //        items.ID,
-                    //        items.DocID,
-                    //        items.Date,
-                    //        items.RefNo,
-                    //        items.BranchID,
-                    //        items.VendorID,
-                    //        items.GrossAmt,
-                    //        items.Status,
-                    //        items.Status == 'Amended' || items.Status == 'Cancelled' || items.Status == 'Close' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
-                    //        items.Status == 'Amended' || items.Status == 'Cancelled' || items.Status == 'Close' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-remove-circle clsCancel" style="font-size:16px" title="Cancel"></span></a>',
-                    //        '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
-                    //        '<a href="javascript:void(0)" class="clsVariant" style = "font-size:12px"><span class="glyphicon glyphicon-file clsVariant" style="font-size:12px" title="Variant"></span></a>',
-                    //    ]).draw(false);
-                    //});
-                    //if (rdo1 == "2") {
-                    //    //Table.column(9).visible(false);
-                    //    Table.column(10).visible(false);
-                    //    Table.column(11).visible(false);
-                    //} else {
-                    //    //Table.column(9).visible(true);
-                    //    Table.column(10).visible(true);
-                    //    Table.column(11).visible(true);
-                    //}
+                    AutomaticIndent = data;        
+                    
                     grid = new GKBSDynamicGrid('#my-grid', columns, AutomaticIndent, {
                         enablePagination: true,
                         pageSize: ItemsperPage,
@@ -1544,19 +1545,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
-                            if (col.field === 'Active') {
-                                const val = rowData[col.field];
-                                console.log("Active : ", val);
-                                if (val === 'True') {
-                                    el.innerHTML = `<div class="dg-status-badge dg-status-active">
-    <span class="dg-status-circle"></span> Active
-</div>`;
-                                } else if (val === 'False') {
-                                    el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
-    <span class="dg-status-circle"></span> In-Active
-</div>`;
-                                }
-                            }
+                            
                         },
                         customButtons: [
                             {
@@ -1636,57 +1625,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 render: function () {
                                     return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
                                 }
-                            }
-                            //{
-                            //    className: "dt-body-center",
-                            //    orderable: false,
-                            //    render: function (data, type, row) {
-
-                            //        var status = row.Status;
-                            //        var edit = '', cancel = '', view = '', variant = '', Print = '', Preview = '', PDF = '';
-                            //        if ($("#txtViewID").val() == 1 && rdo1 == "1") {
-                            //            var Print = '<a class="dropdown-item clsprint" href="javascript:void(0)">🖨 Print</a>';
-                            //            var Preview = '<a class="dropdown-item clspreview" href="javascript:void(0)#">🖨 Preview</a>';
-                            //            var PDF = '<a class="dropdown-item clspdf" href="javascript:void(0)">📕 PDF</a>';
-                            //        }
-                            //        if (status !== 'Amended' && status !== 'Cancelled' && status !== 'Close') {
-                            //            if (rdo1 == "1") {
-                            //                if ($("#txtModifyID").val() != 0)
-                            //                    edit = '<a class="dropdown-item clsEdit" href="javascript:void(0)">✏️ Edit</a>';
-                            //                if ($("#txtCancelID").val() != 0)
-                            //                    cancel = '<a class="dropdown-item clsCancel" href="javascript:void(0)">❌ Cancel</a>';
-                            //            }
-                            //            else {
-                            //                if ($("#txtDraftModifyID").val() != 0)
-                            //                    edit = '<a class="dropdown-item clsEdit" href="javascript:void(0)">✏️ Edit</a>';
-                            //                if ($("#txtDraftCancelID").val() != 0)
-                            //                    cancel = '<a class="dropdown-item clsCancel" href="javascript:void(0)">❌ Cancel</a>';
-                            //                if ($("#txtDraftModifyID").val() == 0 && $("#txtDraftCancelID").val() == 0)
-                            //                    edit = '<a class="dropdown-item" href="javascript:void(0)">✖️ No Permission found</a>';
-                            //            }
-                            //        }
-
-                            //        //if ($("#txtViewID").val() != 0 && rdo1 != "2")
-                            //        //    view = '<a class="dropdown-item clsView" href="javascript:void(0)">👁️ View</a>';
-
-                            //        if ($("#txtVariantID").val() != 0 && rdo1 != "2")
-                            //            variant = '<a class="dropdown-item clsVariant" href="javascript:void(0)">📄 Variant</a>';
-                            //        return `
-                            //                <div class="dropdown">
-                            //                    <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown">
-                            //                        &#8942;
-                            //                    </button>
-                            //                    <ul class="dropdown-menu  action-dropdown" style="right:0;left:auto; z-index:9999">
-                            //                        ${edit ? `<li>${edit}</li>` : ''}
-                            //                        ${cancel ? `<li>${cancel}</li>` : ''}
-                            //                        ${variant ? `<li>${variant}</li>` : ''}
-                            //                        ${Print ? `<li>${Print}</li>` : ''}
-                            //                        ${Preview ? `<li>${Preview}</li>` : ''}
-                            //                        ${PDF ? `<li>${PDF}</li>` : ''}
-                            //                    </ul>
-                            //                </div>`;
-                            //    }
-                            //}
+                            }                           
                         ],
                         initComplete: function () {
                             // Re-apply search value after table is fully initialized
@@ -2059,14 +1998,13 @@ setTimeout(function () { GetFilterData(); }, 800);
             showErrorSnackbar("Select Vendor");
         }
     });
-    $("#rdoMainTableData").click(function () {
-        //GetData(4);
-        GetFilterData();
-    });
-    $("#rdoDraftTableData").click(function () {
-        //GetData(7);
-        GetFilterData();
-    });
+    $("#rdoMainTableData,#rdoDraftTableData").click(function () {
+        LoadPermissions();
+        GetColumnSettingsData(2, 23, 1);
+        setTimeout(() => {
+            GetFilterData();
+        }, 200); 
+    });    
 
     $('#tblProductDataAI tbody').on('click', '.clsABSBranchInfo', function (e) {
         rowdata = ProductTable.row($(this).parents('tr')).data();
