@@ -288,7 +288,121 @@ function sanitizeAlphaNumeric(input, errordiv) {
     }
 }
 
+function NumericPercentageBeforeInput(e, input, errordiv) {
+    if (errordiv) $(errordiv).html('');
+    input.style.borderColor = ''; // reset
+    // Allow delete, navigation, undo, redo
+    if (!e.data) return true;
+    // Allow paste & autofill
+    if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+        return true;
+    }
+    var regex = /^[0-9.]$/;
+    if (!regex.test(e.data)) {
+        if (errordiv) $(errordiv).html('* Numerics only allowed');
+        input.style.borderColor = 'red';
+        return false; // ❌ block typing
+    }
+    else {
+        if (e.data > 100 || e.data < 0) {
+            if (errordiv) $(errordiv).html('* Invalid Percentage');
+            input.style.borderColor = 'red';
+            return false; // ❌ block typing
+        }
+    }
+    return true;
+}
 
+function sanitizeNumericPercentage(input, errordiv) {
+    let value = input.value;
+    if (errordiv) $(errordiv).html('');
+    input.style.borderColor = '';
+
+    // Allow only digits and one dot
+    value = value.replace(/[^0-9.]/g, '');
+
+    // Prevent more than one decimal point
+    if ((value.match(/\./g) || []).length > 1) {
+        value = value.substring(0, value.length - 1);
+    }
+
+    input.value = value;
+
+    // Empty is allowed while typing
+    if (value === '') return;
+
+    let num = parseFloat(value);
+
+    if (isNaN(num)) {
+        if (errordiv) $(errordiv).html('* Numbers only allowed');
+        input.style.borderColor = 'red';
+        return;
+    }
+
+    if (num < 0 || num > 100) {
+        if (errordiv) $(errordiv).html('* % must be 0 to 100');
+        input.value = 0;
+        input.style.borderColor = 'red';
+    }
+}
+
+
+function NumericOnlyBeforeInput(e, input, errordiv) {
+    if (errordiv) $(errordiv).html('');
+    input.style.borderColor = ''; // reset
+    // Allow delete, navigation, undo, redo
+    if (!e.data) return true;
+    // Allow paste & autofill
+    if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+        return true;
+    }
+    var regex = /^[0-9.]$/;
+    if (!regex.test(e.data)) {
+        if (errordiv) $(errordiv).html('* Numerics only allowed');
+        input.style.borderColor = 'red';
+        return false; // ❌ block typing
+    }
+    else {
+        if (e.data < 0) {
+            if (errordiv) $(errordiv).html('* Invalid Value');
+            input.style.borderColor = 'red';
+            return false; // ❌ block typing
+        }
+    }
+    return true;
+}
+function sanitizeNumericOnly(input, errordiv) {
+    let value = input.value;
+    if (errordiv) $(errordiv).html('');
+    input.style.borderColor = '';
+
+    // Allow only digits and one dot
+    value = value.replace(/[^0-9.]/g, '');
+
+    // Prevent more than one decimal point
+    if ((value.match(/\./g) || []).length > 1) {
+        value = value.substring(0, value.length - 1);
+    }
+
+    input.value = value;
+
+    // Empty is allowed while typing
+    if (value === '') return;
+
+    let num = parseFloat(value);
+
+    if (isNaN(num)) {
+        if (errordiv) $(errordiv).html('* Numbers only allowed');
+        input.style.borderColor = 'red';
+        return;
+    }
+
+    if (num < 0) {
+        if (errordiv) $(errordiv).html('* Invalid Value');
+        input.value = 0;
+        input.style.borderColor = 'red';
+    }
+}
 function AlphaorNumericonly(value, errordiv) {
     $(errordiv).html('');
     var strRegex = /^[A-Za-z0-9]*$/

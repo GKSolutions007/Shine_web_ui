@@ -1418,7 +1418,9 @@
                         <td style="border:none;">
                             <div>
                                 <span class="form-label">
-                                    <input disabled class="form-control FormclrField txtsettag" txttag="0" type="number" id="txtProdDiscPern" placeholder="">
+                                    <input disabled class="form-control FormclrField txtsettag" txttag="0" type="number" id="txtProdDiscPern" placeholder=""
+                                           onbeforeinput="return NumericPercentageBeforeInput(event, this,'#divErrProdDiscPern')"
+                                           oninput="sanitizeNumericPercentage(this, '#divErrProdDiscPern')">
                                     <label class="labelup">Product %</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProdDiscPern" class="clrdivs"></div>
@@ -1438,7 +1440,9 @@
                         <td style="border:none;">
                             <div>
                                 <span class="form-label">
-                                    <input class="form-control FormclrField txtsettag" txttag="0" type="number" id="txtTradeDiscPern" placeholder="">
+                                    <input class="form-control FormclrField txtsettag" txttag="0" type="number" id="txtTradeDiscPern" placeholder=""
+                                           onbeforeinput="return NumericPercentageBeforeInput(event, this,'#divErrTradeDiscPern')"
+oninput="sanitizeNumericPercentage(this, '#divErrTradeDiscPern')">
                                     <label class="labelup">Trade %</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrTradeDiscPern" class="clrdivs"></div>
@@ -1458,7 +1462,9 @@
                         <td style="border:none;">
                             <div>
                                 <span class="form-label">
-                                    <input class="form-control FormclrField txtsettag" txttag="0" type="number" id="txtAddnlDiscPern" placeholder="">
+                                    <input class="form-control FormclrField txtsettag" txttag="0" type="number" id="txtAddnlDiscPern" 
+                                           placeholder="" onbeforeinput="return NumericPercentageBeforeInput(event, this,'#divErrAddnlDiscPern')"
+oninput="sanitizeNumericPercentage(this, '#divErrAddnlDiscPern')">
                                     <label class="labelup">Addition %</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrAddnlDiscPern" class="clrdivs"></div>
@@ -1503,7 +1509,9 @@
                         <td style="border:none;">
                             <div>
                                 <span class="form-label">
-                                    <input class="form-control FormclrField txtsettag" type="number" step="any" id="txtOtherChargPern" placeholder="">
+                                    <input class="form-control FormclrField txtsettag" type="number" step="any" 
+                                           id="txtOtherChargPern" placeholder=""
+                                            onbeforeinput="return NumericPercentageBeforeInput(event, this,'#divErrOtherChargPern')" oninput="sanitizeNumericPercentage(this, '#divErrOtherChargPern')">
                                     <label class="labelup">Other Charge %</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrOtherChargPern" class="clrdivs"></div>
@@ -2355,19 +2363,9 @@ var isEnable = InvoicePriceEdit == 0 ? "disabled" : "";
  var DefCustCode = "";
  var BatchMode = 0; // 0 - New product, 1 - Edit Product
     var nTransMode = 1, nIsDraft = 0;
+    var grid;
     GetColumnSettingsData(2, 33, 1);
-    //$("#btnPreview").hide();
-    //var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-    //    "bFilter": true,
-    //    "bSearchable": true,
-    //    "bInfo": true,
-    //    "bPaginate": true,
-    //    "ordering": false,
-    //    scrollY: "400px",
-    //    scrollX: true,
-    //    scrollCollapse: true,
-    //    "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [11,12,13,14],"class" : "text-center" }],
-    //});
+    
     var ProductTable = $('#tblProductData').DataTable({
         paging: false,
         searching: false,
@@ -3226,10 +3224,19 @@ if ($("#txtReurnPricePerm").val() == 0) {
         dPTGross = goods - pdisc;
         var val = value != "" ? parseFloat(value) : 0;
         var damt = parseFloat((val / dPTGross) * 100);//.toFixed(DecVal)
-        //setTagValue("txtTradeDiscPern", "", value);
-        //$("#txtTradeDiscPern").val(damt);
-        updateInputColumn("txtTradeDiscPern", damt);
-        CalculateTradediscpern(damt);
+
+        //updateInputColumn("txtTradeDiscPern", damt);
+        //CalculateTradediscpern(damt);
+        if (damt > 100 || damt < 0) {
+            showErrorSnackbar("Invalid Discount Value");
+            updateInputColumn("txtTradeDiscPern", 0);
+            updateInputColumn("txtTradeDiscAmt", 0);
+            CalculateAddnldiscpern(0);
+        }
+        else {
+            updateInputColumn("txtTradeDiscPern", damt);
+            CalculateTradediscpern(damt);
+        }
     });
     $("#txtAddnlDiscPern").change(function (e) {
         var value = e.target.value;
@@ -3247,8 +3254,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var val = value != "" ? parseFloat(value) : 0;
         var damt = parseFloat((val / dPTGross) * 100);//.toFixed(DecVal)
         //$("#txtAddnlDiscPern").val(damt);
-        updateInputColumn("txtAddnlDiscPern", damt);
-        CalculateAddnldiscpern(damt);
+        if (damt > 100 || damt < 0) {
+            showErrorSnackbar("Invalid Discount Value");
+            updateInputColumn("txtAddnlDiscPern", 0);
+            updateInputColumn("txtAddnlDiscAmt", 0);
+            CalculateAddnldiscpern(0);
+        }
+        else {
+            updateInputColumn("txtAddnlDiscPern", damt);
+            CalculateAddnldiscpern(damt);            
+        }
     });
     function CalculateAddnldiscpern(value) {
         var dPTGross = 0, dPTGoods = 0, dPTTax = 0, dPTNet = 0, Proddiscamt = 0, Tradediscamt = 0, Addnldiscamt = 0, CFValue = 1;
@@ -4041,26 +4056,39 @@ if ($("#txtReurnPricePerm").val() == 0) {
     });
     $("#txtOtherChargAmt").change(function (e) {
         txtValuechanged = true;
-        var FC = e.target.value != "" ? parseFloat(e.target.value) : 0;
         var WOAmt = $("#txtWriteoff").val() != "" ? parseFloat(document.getElementById('txtWriteoff').getAttribute('txttag')) : 0;
         var TCSAmt = $("#txtFright").val() != "" ? parseFloat(document.getElementById('txtFright').getAttribute('txttag')) : 0;
         var OTCAmt = $("#txtTCS").val() != "" ? parseFloat(document.getElementById('txtTCS').getAttribute('txttag')) : 0;
+
+        var FC = e.target.value != "" ? parseFloat(e.target.value) : 0;
         var Net = parseFloat(parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) + WOAmt + TCSAmt + OTCAmt);
         var OCPern = (FC / Net) * 100;
-        var SumNet = Net + parseFloat(FC);
-        var RoundNetAmt = Math.floor(SumNet);
-        var Roundoff = (RoundNetAmt - (Net + FC));
-        //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
+        if (OCPern > 100 || OCPern < 0) {
+            showErrorSnackbar("Invalid Other Charge");
+            updateInputColumn("txtOtherChargPern", 0);
+            updateInputColumn("txtOtherChargAmt", 0);
+            CalculateAddnldiscpern(0);
+        }
+        else {
+            
+            var SumNet = Net + parseFloat(FC);
+            var RoundNetAmt = Math.floor(SumNet);
+            var Roundoff = (RoundNetAmt - (Net + FC));
+            //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
 
-        updateInputColumn("txtOtherChargAmt", FC);
-        updateInputColumn("txtOtherChargPern", OCPern);
-        updateInputColumn("txtRoundOff", Roundoff); updateLabelColumn("lblRoundNet", RoundNetAmt);
-        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
-        ApplyMultimodeAmount(RoundNetAmt);
+            updateInputColumn("txtOtherChargAmt", FC);
+            updateInputColumn("txtOtherChargPern", OCPern);
+            updateInputColumn("txtRoundOff", Roundoff); updateLabelColumn("lblRoundNet", RoundNetAmt);
+            updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
+            ApplyMultimodeAmount(RoundNetAmt);
+        }
     });
     $("#txtOtherChargPern").change(function (e) {
         txtValuechanged = true;
         var OCPern = e.target.value != "" ? parseFloat(e.target.value) : 0;
+        //if (OCPern < 100) {
+            
+        
         var WOAmt = $("#txtWriteoff").val() != "" ? parseFloat(document.getElementById('txtWriteoff').getAttribute('txttag')) : 0;
         var TCSAmt = $("#txtFright").val() != "" ? parseFloat(document.getElementById('txtFright').getAttribute('txttag')) : 0;
         var OTCAmt = $("#txtTCS").val() != "" ? parseFloat(document.getElementById('txtTCS').getAttribute('txttag')) : 0;
@@ -4075,7 +4103,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn("txtOtherChargPern", OCPern);
         updateInputColumn("txtRoundOff", Roundoff); updateLabelColumn("lblRoundNet", RoundNetAmt);
         updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
-        ApplyMultimodeAmount(RoundNetAmt);
+            ApplyMultimodeAmount(RoundNetAmt);
+        //} else {
+        //    showErrorSnackbar("Other Charge % should be less than 100");
+        //    updateInputColumn("txtOtherChargPern", 0);
+        //    CalculateTradediscpern(0);
+        //}
     });
     $("#txtRoundOff").change(function (e) {
         txtValuechanged = true;
@@ -4842,7 +4875,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var MRP = parseFloat(btmrp).toFixed(4);//items.MRP
                         var BatchCount = parseInt(TableBatch.rows().count());
                         var DefQty = BatchCount > 0 ? 1 : trkivYN == 1 ? 0 : 1;
-                        //ProductTable.cell(SelRowIndex, 0).data(items.ProdID); ProductTable.cell(SelRowIndex, 1).data(items.SalesTaxID);
+                        //ProductTable.cell(SelRowIndex, 0).data(items.ProdID); ProductTable.cell(SelRowIndex, 1).data(items.SalesTaxID);                        
                         var dgvdata = [
                             items.ProdID,
                             items.SalesTaxID,
@@ -4852,13 +4885,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             '<p style="font-size:14px;">' + (SelRowIndex + 1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID + '" value="' + items.Name + '" title="' + items.Name + '"/><br/>'+items.Code+" | " + $("#txtTempABS").val(),//<br/><label>MRP : ' + parseFloat(MRP).toFixed(2) +'</label>
                             '<input disabled min="0" type="number" txttag ="' + MRP + '" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(MRP).toFixed(2) + '" title="' + MRP + '"/> ',
-                            '<input ' + isEnable +' min="0" type="number" txttag ="' + PPrice + '" step="any" id="dgvProdExl' + ProductRID + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(PPrice).toFixed(2) + '" title="' + PPrice + '"/><br/>'+
-                            '<input ' + isEnable +' min="0" type="number" txttag ="' + InclPPrice + '" step="any" id="dgvProdIncl' + ProductRID + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(InclPPrice).toFixed(2) + '" title="' + InclPPrice + '"/>',
-                            '<input min="0" type="number" txttag ="' + DefQty + '" step="any" id="dgvProdQty' + ProductRID + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + DefQty + ' " title="' + DefQty + '" autofocus/>',
-                            sel,//TradeDiscPerc
-                            '<label>%</label><input min="0" type="number" txttag ="' + parseFloat(items.ProductDiscPerc) + '" title="' + parseFloat(items.ProductDiscPerc) + '" step="any" id="dgvProdPDPern' + ProductRID + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(items.ProductDiscPerc).toFixed(2) + '"/><br/>' + '<label>₹</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdPDAmt' + ProductRID + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvdiscchange" value="0"/>',
-                            '<label>%</label><input min="0" type="number" txttag ="' + parseFloat(items.TradeDiscPerc) + '" title="' + parseFloat(items.TradeDiscPerc) + '" step="any" id="dgvProdTDPern' + ProductRID + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(items.TradeDiscPerc).toFixed(2) + '"/><br/>' + '<label>₹</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdTDAmt' + ProductRID + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvdiscchange" value="0"/>',
-                            '<label>%</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdADPern' + ProductRID + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="0"/><br/>' + '<label>₹</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdADAmt' + ProductRID + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="0"/>',
+                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + PPrice + '" step="any" id="dgvProdExl' + ProductRID + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(PPrice).toFixed(2) + '" title="' + PPrice + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/><br/>'+
+                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + InclPPrice + '" step="any" id="dgvProdIncl' + ProductRID + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(InclPPrice).toFixed(2) + '" title="' + InclPPrice + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<input min="0" type="number" txttag ="' + DefQty + '" step="any" id="dgvProdQty' + ProductRID + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + DefQty + ' " title="' + DefQty + '" autofocus ' +
+                            'onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            sel,
+                            '<label>%</label><input min="0" type="number" txttag ="' + parseFloat(items.ProductDiscPerc) + '" title="' + parseFloat(items.ProductDiscPerc) + '" step="any" id="dgvProdPDPern' + ProductRID + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(items.ProductDiscPerc).toFixed(2) + '" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' + '<label>₹</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdPDAmt' + ProductRID + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvdiscchange" value="0" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<label>%</label><input min="0" type="number" txttag ="' + parseFloat(items.TradeDiscPerc) + '" title="' + parseFloat(items.TradeDiscPerc) + '" step="any" id="dgvProdTDPern' + ProductRID + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(items.TradeDiscPerc).toFixed(2) + '" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' + '<label>₹</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdTDAmt' + ProductRID + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvdiscchange" value="0" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<label>%</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdADPern' + ProductRID + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="0" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' + '<label>₹</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdADAmt' + ProductRID + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="0" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
                             '<label name="Goods" lbltag="0" title="0" class="lblsettag" id="dgvProdGoods' + ProductRID + '">' + 0 + '</label>',
                             '<label name="Gross" lbltag="0" title="0" class="lblsettag" id="dgvProdGross' + ProductRID + '">' + 0 + '</label>',
                             '<label name="TaxAmt" lbltag="0" title="0" class="lblsettag" id="dgvProdTax' + ProductRID + '">' + 0 + '</label><br/><label name="Tax">' + items.TaxName + '</label>',
@@ -5450,16 +5484,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
                             '<input disabled min="0" type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" title="' + itemsProd.MRP + '"' + disbfields + '/>',
-                            '<input ' + isEnable +' min="0" type="number" txttag ="' + itemsProd.UomSalePrice + '" step="any" id="dgvProdExl' + nRowIndex + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(itemsProd.UomSalePrice).toFixed(DecVal) + '" title="' + itemsProd.UomSalePrice + '"' + disbfields + '/><br/>' +
-                            '<input ' + isEnable +' min="0" type="number" txttag ="' + itemsProd.UomSalePriceIncl + '" step="any" id="dgvProdIncl' + nRowIndex + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(itemsProd.UomSalePriceIncl).toFixed(DecVal) + '" title="' + itemsProd.UomSalePriceIncl + '"' + disbfields + '/>',
-                            '<input min="0" type="number" txttag ="' + itemsProd.UomQty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + parseFloat(itemsProd.UomQty).toFixed(DecVal) + '" title="' + itemsProd.UomQty + '" ' + disbfields + '/>',
-                            uomfield,
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + '/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + '/>',
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + '/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + '/>',
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + '/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + '/>',
+                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePrice + '" step="any" id="dgvProdExl' + nRowIndex + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(itemsProd.UomSalePrice).toFixed(DecVal) + '" title="' + itemsProd.UomSalePrice + '"' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/><br/>' +
+                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePriceIncl + '" step="any" id="dgvProdIncl' + nRowIndex + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(itemsProd.UomSalePriceIncl).toFixed(DecVal) + '" title="' + itemsProd.UomSalePriceIncl + '"' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<input min="0" type="number" txttag ="' + itemsProd.UomQty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + parseFloat(itemsProd.UomQty).toFixed(DecVal) + '" title="' + itemsProd.UomQty + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            uomfield,                            
+                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + 'onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + 'onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
                             '<label class="lblsettag" name="Goods" lbltag=' + itemsProd.GoodsAmt + ' id="dgvProdGoods' + nRowIndex + '" title="' + itemsProd.GoodsAmt + '">' + parseFloat(itemsProd.GoodsAmt).toFixed(DecVal) + '</label>',
                             '<label class="lblsettag" name="Gross" lbltag=' + itemsProd.GrossAmt + ' id="dgvProdGross' + nRowIndex + '" title="' + itemsProd.GrossAmt + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
                             '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>',
@@ -5691,7 +5725,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         columns[index].header = "Diff Incl";
                     }
 
-                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, InvoicejsData, {
+                    var currentSearchValue = '';
+                    if (grid) {
+                        currentSearchValue = grid ? grid.state.searchTerm : '';
+                    }
+                    grid = new GKBSDynamicGrid('#my-grid', columns, InvoicejsData, {
                         enablePagination: true,
                         pageSize: ItemsperPage,
                         enableSearch: true,
