@@ -1,60 +1,4 @@
 class GKBSDynamicGrid {
-    constructor_older(selector, columns, data, options = {}) {
-        this.container = document.querySelector(selector);
-        this.columns = columns; // Stores config including current width
-        this.originalData = data;
-        // Global click listener to close popups
-        document.addEventListener('click', this.closeAllPopups.bind(this));
-        // Options with defaults
-        this.options = Object.assign({
-            enablePagination: false,
-            pageSize: ItemsperPage,
-            enableSearch: true,
-            stickyToWindow: true, // NEW: If true, sticks to top of browser
-            height: '200px',        // NEW: specific height for internal scroll
-            rowActions: [], // Set default empty array
-        }, options);
-
-        // State
-        this.state = {
-            currentPage: 1,
-            searchTerm: '',
-            filters: {}, // { field: 'value' }
-            colFilters: {},
-            sortConfig: null, // { field: '', direction: 'asc' }
-            currentSort: { field: null, direction: 'asc' },
-            processedData: [], // Data after search/filter/sort
-            selectedRows: new Set(), // NEW: Stores unique identifiers of selected rows
-            activeAutocompletePopup: null, // NEW: Track the currently open autocomplete popup
-            filterOrder: [],
-            textFilters: {},
-            columnVisibility: columns.reduce((acc, col) => {
-                acc[col.field] = col.visible !== false; // True by default
-                return acc;
-
-            }, {}),
-        };
-        // Ensure every row has a unique ID for tracking
-        this.originalData = data.map((row, index) => ({
-            ...row,
-            _gridId: row._gridId || Symbol(index)
-        }));
-        // Update the global click handler to manage ALL popups
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.dg-filter-popup')) {
-                return; // DO NOTHING if the click originated inside the popup.
-            }
-            // Closes column filters if click is outside the header
-            if (!e.target.closest('.dg-header-cell')) {
-                this.closeAllPopups();
-            }
-            // Closes autocomplete if click is outside the input or the list
-            if (!e.target.closest('.dg-input') && !e.target.closest('.dg-autocomplete-list')) {
-                this.closeAllPopups(); // Will handle both, see utility update below
-            }
-        });
-        this.init();
-    }
     constructor(selector, columns, data, options = {}) {
         this.container = document.querySelector(selector);
         this.columns = columns; // Stores config including current width
@@ -83,7 +27,7 @@ class GKBSDynamicGrid {
         // --- 2. State Initialization ---
         this.state = {
             currentPage: 1,
-            searchTerm: '',
+            searchTerm: options.searchTerm || '',
             filters: {},
             colFilters: {},
             sortConfig: null,
@@ -873,10 +817,13 @@ class GKBSDynamicGrid {
             input.value = this.state.searchTerm;
 
             input.addEventListener('input', (e) => {
+                const selectionStart = e.target.selectionStart;
+                const selectionEnd = e.target.selectionEnd;
+
                 this.state.searchTerm = e.target.value;
                 this.state.currentPage = 1;
                 this.processData();
-                //this.render(); 
+
                 // 1. Get a reference to the element that currently has focus
                 const currentlyFocused = document.activeElement;
 
@@ -886,13 +833,10 @@ class GKBSDynamicGrid {
                 // 3. Find the newly created search input
                 const newSearchInput = this.container.querySelector('.dg-search-input');
 
-                // 4. Restore focus to the new element if the search input was the element that had focus
+                // 4. Restore focus and selection to the new element
                 if (currentlyFocused && newSearchInput) {
                     newSearchInput.focus();
-
-                    // Keep the cursor at the end of the text
-                    const len = newSearchInput.value.length;
-                    newSearchInput.setSelectionRange(len, len);
+                    newSearchInput.setSelectionRange(selectionStart, selectionEnd);
                 }
             });
             rightSection.appendChild(input);
