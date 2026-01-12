@@ -269,7 +269,7 @@ function AlphaNumericBeforeInput(e, input, errordiv) {
 
     if (!regex.test(e.data)) {
         $(errordiv).html('*Invalid special character(_@. ,%|*~&()\/- only allowed)');
-        input.style.borderColor = 'red';
+        if (errordiv) input.style.borderColor = 'red';
         return false; // ❌ block typing
     }
 
@@ -283,7 +283,7 @@ function sanitizeAlphaNumeric(input, errordiv) {
     input.value = input.value.replace(sanitizeRegex, '');
     input.style.borderColor = '';
     if (oldValue !== input.value) {
-        input.style.borderColor = 'red';
+        if (errordiv) input.style.borderColor = 'red';
         $(errordiv).html('*Invalid special character(_@. ,%|*~&()\/- only allowed)');
     }
 }
@@ -300,13 +300,13 @@ function NumericPercentageBeforeInput(e, input, errordiv) {
     var regex = /^[0-9.]$/;
     if (!regex.test(e.data)) {
         if (errordiv) $(errordiv).html('* Numerics only allowed');
-        input.style.borderColor = 'red';
+        if (errordiv) input.style.borderColor = 'red';
         return false; // ❌ block typing
     }
     else {
         if (e.data > 100 || e.data < 0) {
             if (errordiv) $(errordiv).html('* Invalid Percentage');
-            input.style.borderColor = 'red';
+            if (errordiv) input.style.borderColor = 'red';
             return false; // ❌ block typing
         }
     }
@@ -335,14 +335,14 @@ function sanitizeNumericPercentage(input, errordiv) {
 
     if (isNaN(num)) {
         if (errordiv) $(errordiv).html('* Numbers only allowed');
-        input.style.borderColor = 'red';
+        if (errordiv) input.style.borderColor = 'red';
         return;
     }
 
     if (num < 0 || num > 100) {
         if (errordiv) $(errordiv).html('* % must be 0 to 100');
         input.value = 0;
-        input.style.borderColor = 'red';
+        if (errordiv) input.style.borderColor = 'red';
     }
 }
 
@@ -359,13 +359,13 @@ function NumericOnlyBeforeInput(e, input, errordiv) {
     var regex = /^[0-9.]$/;
     if (!regex.test(e.data)) {
         if (errordiv) $(errordiv).html('* Numerics only allowed');
-        input.style.borderColor = 'red';
+        if (errordiv) input.style.borderColor = 'red';
         return false; // ❌ block typing
     }
     else {
         if (e.data < 0) {
             if (errordiv) $(errordiv).html('* Invalid Value');
-            input.style.borderColor = 'red';
+            if (errordiv) input.style.borderColor = 'red';
             return false; // ❌ block typing
         }
     }
@@ -393,14 +393,14 @@ function sanitizeNumericOnly(input, errordiv) {
 
     if (isNaN(num)) {
         if (errordiv) $(errordiv).html('* Numbers only allowed');
-        input.style.borderColor = 'red';
+        if (errordiv) input.style.borderColor = 'red';
         return;
     }
 
     if (num < 0) {
         if (errordiv) $(errordiv).html('* Invalid Value');
         input.value = 0;
-        input.style.borderColor = 'red';
+        if (errordiv) input.style.borderColor = 'red';
     }
 }
 function AlphaorNumericonly(value, errordiv) {
