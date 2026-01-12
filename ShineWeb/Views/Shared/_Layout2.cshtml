@@ -765,7 +765,7 @@
         .modalGenColumnSettings {
             display: none; /* Hidden by default */
             position: fixed; /* Stay in place */
-            z-index: 500; /* Sit on top */
+            z-index: 1000; /* Sit on top */
             left: 0;
             top: 0;
             width: 100%; /* Full width */
@@ -1401,12 +1401,13 @@
                     <div id="dvAssign" style="width:100%;padding-bottom:7px">
                         <table class="table table-bordered row-border order-column" id="tblGenColumnSettings" style="width:100%">
                             <thead>
-                                <tr>
+                                <tr class="trclrforcolheader">
                                     <th style="width:0%">ReportID</th>
                                     <th style="width:0%">TableID</th>
                                     <th style="width:0%">ColumnID</th>
                                     <th style="width:0%">FormorReport</th>
                                     <th style="width:25%">Column Name</th>
+                                    <th style="width:25%">Original Column Name</th>                                    
                                     <th style="width:30%">Display Column Name</th>
                                     <th style="width:9%">Width</th>
                                     <th style="width:12%">Visible</th>
@@ -3497,6 +3498,7 @@ function CloseConfirmDialogMsg(message) {
                         { "data": "ColumnID", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
                         { "data": "FormorReport", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
                         { "data": "ColumnName", "autoWidth": true, "visible": false, className: "dt-body-left" },//3
+                        { "data": "OriginalColumnName", "autoWidth": true, width: "15%", className: "dt-body-left" },//3                        
                         {
                             className: "dt-body-left",width:"25%",
                             "mRender": function (data, type, value, meta) {
@@ -3687,8 +3689,10 @@ function CloseConfirmDialogMsg(message) {
                         //ClearForm();                        
                         modalGenColumnSettings.style.display = "none";
                         var ColumnsData = items.ColumnData;
-                        ColumnsData.push(actions);
-                        if (OtherActions) {
+                        if (typeof actions !== "undefined" && actions) {
+                            ColumnsData.push(actions);
+                        }
+                        if (typeof OtherActions !== "undefined" && OtherActions) {
                             ColumnsData.push(OtherActions);
                         }
                         grid.columns = ColumnsData;
@@ -3719,4 +3723,24 @@ function CloseConfirmDialogMsg(message) {
         });
         //console.log("Column Setting Data ", ColumnSettingData);
     });
+    function UpdateColumnWidth(nFormID, nTableID, nFormorReport, nColumnID, strColumnName, dWidth) {
+        $.ajax({
+            url: Aurl + "columnsettings/updatecolumnwidth",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                FormID: nFormID, TableID: nTableID, FormorReport: nFormorReport, ColumnID: nColumnID,
+                ColumnName: strColumnName, Width: dWidth
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                showSuccessSnackbar("Width Updated successfully");
+            },error: function (data) {
+                console.log(data)
+                showErrorSnackbar("Error when Width Update");
+            }
+        });
+    }
 </script>

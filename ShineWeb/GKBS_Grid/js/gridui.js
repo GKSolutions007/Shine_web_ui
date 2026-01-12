@@ -22,6 +22,7 @@ class GKBSDynamicGrid {
             customButtons: [], // 💡 NEW: Custom toolbar buttons
             onCellClick: null, // 💡 NEW: Cell click callback
             onCellDoubleClick: null, // 💡 NEW: Cell double-click callback
+            onColumnResize: null, // 💡 NEW: Column resize callback
         }, options);
 
         // --- 2. State Initialization ---
@@ -2500,6 +2501,12 @@ class GKBSDynamicGrid {
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
             document.body.style.cursor = 'default';
+
+            // 💡 NEW: Dispatch event on resize end
+            const colIndex = this.columns.findIndex(c => c.field === colConfig.field);
+            if (this.options.onColumnResize && typeof this.options.onColumnResize === 'function') {
+                this.options.onColumnResize(colIndex, colConfig.field, colConfig.header || colConfig.field, colConfig.width);
+            }
         };
 
         handle.addEventListener('mousedown', (e) => {
