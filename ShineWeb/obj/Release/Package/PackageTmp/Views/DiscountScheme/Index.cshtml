@@ -339,7 +339,7 @@
         </div>
         <hr />
         <div id="dvMainTable">
-            <div id="my-grid" style="height: 500px; width: 100%;"></div>
+             <div id="my-grid" style="height: 600px; width: 100%;"></div>
             <div hidden>
                 <table class="table table-bordered" id="tblMasterData" width="100%">
                     <thead>
@@ -1093,16 +1093,16 @@ if ($("#txtAddID").val() == 0) {
     }
 
     //$("#txtProdDiscPern,#txtProdDiscPernView").change(function (e) {
-    $(document).on("change", "#txtProdDiscPern,#txtProdDiscPernView", function (e) {
+    $(document).on("change", "#txtProdDiscPern,#txtProdDiscPernView,input[name='ProdDiscPern']", function (e) {
         txtValuechanged = true;
         var id = e.target.id;
-        var val = e.target.value;
+        var val = parseFloat(e.target.value);
         var name = e.target.name;
         const PDiscAmt = id == "txtProdDiscPern" ? document.getElementById("txtProdDiscAmount").getAttribute("txttag") :
             document.getElementById("txtProdDiscAmountView").getAttribute("txttag");
         var Tbl = id == "txtProdDiscPern" ? "tblProducts" : "tblProductsView";
         if (PDiscAmt == 0) {
-            if (val <= 100) {
+            if (val >= 0 && val <= 100) {
                 updateInputColumn(id, val);
                 $("#" + Tbl +" tbody tr").each(function () {
                     $(this).find("input").each(function (index) {
@@ -1124,7 +1124,12 @@ if ($("#txtAddID").val() == 0) {
                     });
                 });
                 updateInputColumn(id, 0);
-                showErrorSnackbar("Product % should be lessthan 100 only")
+                if (val < 0) {
+                    showErrorSnackbar("Prod % cannot be negative");
+                } else {
+                    showErrorSnackbar("Prod % should be less than or equal to 100 only");
+                }
+
             }
         }
         else {
@@ -1181,16 +1186,16 @@ if ($("#txtAddID").val() == 0) {
     //dis amt end
     //
     //$("#txtTradeDiscPern,#txtTradeDiscPernView").change(function (e) {
-    $(document).on("change", "#txtTradeDiscPern,#txtTradeDiscPernView", function (e) {
+    $(document).on("change", "#txtTradeDiscPern,#txtTradeDiscPernView,input[name='TradeDiscPern']", function (e) {
         txtValuechanged = true;
         var id = e.target.id;
-        var val = e.target.value;
+        var val = parseFloat(e.target.value);
         var name = e.target.name;
         const TDiscAmt = id == "txtTradeDiscPern" ? document.getElementById("txtTradeDiscAmount").getAttribute("txttag") :
             document.getElementById("txtTradeDiscAmountView").getAttribute("txttag");
         var Tbl = id == "txtTradeDiscPern" ? "tblProducts" : "tblProductsView";
         if (TDiscAmt == 0) {
-            if (val <= 100) {
+            if (val >= 0 && val <= 100) {
                 updateInputColumn(id, val);
                 $("#" + Tbl + " tbody tr").each(function () {
                     $(this).find("input").each(function (index) {
@@ -1212,7 +1217,11 @@ if ($("#txtAddID").val() == 0) {
                     });
                 });
                 updateInputColumn(id, 0);
-                showErrorSnackbar("Trade % should be lessthan 100 only")
+                if (val < 0) {
+                    showErrorSnackbar("Trade % cannot be negative");
+                } else {
+                    showErrorSnackbar("Trade % should be less than or equal to 100 only");
+                }
             }
         }
         else {
@@ -1307,9 +1316,9 @@ function setDate(FieldID,Type) {
                 DiscountScheme = data;
                 var discountschemejsdata = eval(data);
 
-                grid = new GKBSDynamicGrid('#my-grid', columns, DiscountScheme, {
+                var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, DiscountScheme, {
                     enablePagination: true,
-                    pageSize: 10,
+                    pageSize: ItemsperPage,
                     enableSearch: true,
                     stickyToWindow: true,
                     enableExport: false,
@@ -1318,18 +1327,18 @@ function setDate(FieldID,Type) {
                     enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
                     enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
                     enableSorting: true,
-                    singleIconAction: singleIconAction, // Pass the single View action
+                    searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                     rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                     //onCellChange: handleCellUpdate,
                     customCellRenderer: (el, col, rowData) => {
                         if (col.field === 'Active') {
                             const val = rowData[col.field];
                             console.log("Active : ", val);
-                            if (val === 'True') {
+                            if (val === 'YES') {
                                 el.innerHTML = `<div class="dg-status-badge dg-status-active">
                       <span class="dg-status-circle"></span> Active
                   </div>`;
-                            } else if (val === 'False') {
+                            } else if (val === 'NO') {
                                 el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
                       <span class="dg-status-circle"></span> In-Active
                   </div>`;
@@ -1356,13 +1365,10 @@ function setDate(FieldID,Type) {
                             title: 'Add New',
                             visible: $("#txtAddID").val() == 1,
                             onClick: (gridInstance, event) => {
-                                //console.log("gridInstance : ", gridInstance);
-                                //console.log("event : ", event);
-                                //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
-                                nMode = 1;
-                                $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
-                                $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
-                                modal.style.display = "block";
+                                //dvDocuments,
+                                nTransMode = 1;
+                                $("#dvMain").show();
+                                $("#dvDocuments").hide();
                                 ClearForm();
                             }
                         },

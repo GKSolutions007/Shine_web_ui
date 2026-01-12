@@ -270,7 +270,7 @@
                     </td>
                 </tr>
             </table>
-            <div id="my-grid" style="height: 500px; width: 100%;"></div>
+             <div id="my-grid" style="height: 600px; width: 100%;"></div>
         </div>
             <div hidden>
                 <table class="table table-bordered" id="tblMasterData" width="100%">
@@ -416,7 +416,10 @@
                                             <td style="border:none;padding-right:7px" colspan="2">
 
                                                 <span class="form-label">
-                                                    <input tabindex="1" txttag="0" type="number" id="txtValue" class="form-control FormclrField txtsettag" placeholder="" />
+                                                    <input tabindex="1" txttag="0" type="number" id="txtValue" class="form-control FormclrField txtsettag" placeholder="" 
+
+                                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
+                                                           oninput="sanitizeNumericOnly(this, '#dvErrorValue')"/>
                                                     <label class="labelup">Value *</label>
                                                 </span>
                                                 <div class="clrdiv" id="dvErrorValue" style="color:red"></div>
@@ -523,33 +526,37 @@
             displayType: 'single_icon',
             visible: $("#txtModifyID").val() == 1,
             handler: (rowData) => {
-                var ID = rowData.ID;//[0];
-                var Name = rowData.Name;//[1];
-                var Active = rowData.Active;//[2];
-                nMode = 3;
-                $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
-                //showSuccessSnackbar("View " + $("#MainHeading").text())
-                $("#txtID").val(ID);
-                $("#txtName").val(Name);
-                $("#chkActive").prop("checked", Active == "True");
-                $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", true);
                 $(".clrdiv").html("");
-                modal.style.display = "block";
+                //rowdata = Table.row($(this).parents('tr')).data();
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.Status;//[8];
+                nTransMode = 5;
+                $("#txtID").val(ID);
+                GetData(3, ID);
+                $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
+                $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
+                $("#btnPreview,#btnPDF,#btnPrint").show();
+                $("#btnEmail,#btnWhatsapp").show();
+                $("#btnSave,#btnClear,#btnDraft").hide();
+                var hdfkl = $("#txtFormName").val();
+                $(".modal-title#lblPopupheading").text("View " + $("#txtFormName").val());
             }
         },
         {
             icon: '✏️',
             title: 'Edit',
             className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
+            visible: $("#txtModifyID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdiv").html("");
                 // rowdata = Table.row($(this).parents('tr')).data();
-                rowdata = window.__SelectedRowData;
-                var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowdata.ID;//[0];
-                var sts = rowdata.Status;//[8];
+                //rowdata = window.__SelectedRowData;
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.Status;//[8];
                 if (sts != "Cancelled") {
                     $("#txtID").val(ID);
                     nTransMode = 2;
@@ -573,16 +580,16 @@
             icon: '📄',
             title: 'Variant',
             className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
+            visible: $("#txtVariantID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdiv").html("");
                 nTransMode = 3;
                 //rowdata = Table.row($(this).parents('tr')).data();
-                rowdata = window.__SelectedRowData;
-                var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowdata.ID;//[0];
-                var sts = rowdata.Status;//[8];
+                //rowdata = window.__SelectedRowData;
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.Status;//[8];
                 $("#txtID").val(ID);
                 GetData(1, "");
                 GetData(3, ID);
@@ -593,21 +600,22 @@
                 $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
                 $("#btnEmail,#btnWhatsapp").hide();
                 $("#btnSave,#btnClose,#btnDraft").show();
+                //showErrorSnackbar("Variant functionality still developing");
             }
         },
         {
             icon: '❌',
             title: 'Cancel',
             className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
+            visible: $("#txtCancelID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdiv").html("");
                 //rowdata = Table.row($(this).parents('tr')).data();
-                rowdata = window.__SelectedRowData;
-                var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowdata.ID;//[0];
-                var sts = rowdata.Status;//[8];
+                //rowdata = window.__SelectedRowData;
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.Status;//[8];
                 if (sts != "Cancelled") {
                     $(".modal-title#lblPopupheading").text("Cancel " + $("#txtFormName").val());
                     $("#txtID").val(ID);
@@ -635,8 +643,8 @@
             handler: (rowData, gridInstance) => {
                 rowdata = window.__SelectedRowData;
                 var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowdata.ID;//[0];
-                var sts = rowdata.StatusID;//[9];
+                var ID = rowData.ID;//[0];
+                var sts = rowData.StatusID;//[9];
                 $("#txtID").val(ID);
                 $("#txtStatus").val(sts);
                 $("#btnPrint").click();
@@ -649,63 +657,59 @@
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
-                rowdata = window.__SelectedRowData;
-                var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowdata.ID;//[0];
-                var sts = rowdata.StatusID;//[9];
+                //rowdata = window.__SelectedRowData;
+                //var selrow = Table.row($(this).parents('tr')).index();
+                var ID = rowData.ID;//[0];
+                var sts = rowData.StatusID;//[9];
                 $("#txtID").val(ID);
                 $("#txtStatus").val(sts);
                 $("#btnPreview").click();
             }
         },
         {
-            icon: '📜',
-            title: 'PDF',
+            icon: "<i class='fa-regular fa-file-pdf' style='color:brown'></i>",
+            title: '&ensp;PDF',
             className: 'dg-action-edit',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
+                //rowdata = Table.row($(this).parents('tr')).data();
+                //rowdata = window.__SelectedRowData;
+                //var selrow = Table.row($(this).parents('tr')).index();
                 var ID = rowData.ID;//[0];
-                var Name = rowData.Name;//[1];
-                var Active = rowData.Active;//[2];
-                nMode = 2;
-                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                var sts = rowData.StatusID;//[9];
                 $("#txtID").val(ID);
-                $("#txtName").val(Name);
-                $("#chkActive").prop("checked", Active == "True");
-                $("#chkActive,#btnSave,#txtName").prop("disabled", false);
-                $("#btnClear").prop("disabled", true);
-                $(".clrdiv").html("");
-                modal.style.display = "block";
+                $("#txtStatus").val(sts);
+                $("#btnPDF").click();
             }
         },
         {
-            icon: '✉️',
-            title: 'Mail',
+            icon: "<i class='fa-solid fa-envelope' style='color:brown'></i>",
+            title: '&ensp;Mail',
             className: 'dg-action-edit',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
-                rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
+                //rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
                 //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowdata.ID;//[0];
-                var sts = rowdata.CurrentStatus;//[9];
+                var ID = rowData.ID;//[0];
+                var sts = rowData.CurrentStatus;//[9];
                 $("#txtID").val(ID);
                 $("#txtStatus").val(sts);
                 $("#btnEmail").click();
             }
         },
         {
-            icon: '📞',
-            title: 'WhatsApp',
+            icon: "<i class='fa-brands fa-whatsapp' style='color:green'></i>",
+            title: '&ensp;WhatsApp',
             className: 'dg-action-edit',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
-                rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
+                //rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
                 //var selrow = Table.row($(this).parents('tr')).index();
-                var ID = rowdata.ID;//[0];
-                var sts = rowdata.CurrentStatus;//[9];
+                var ID = rowData.ID;//[0];
+                var sts = rowData.CurrentStatus;//[9];
                 $("#txtID").val(ID);
                 $("#txtStatus").val(sts);
                 $("#btniframeWhatsapp").click();
@@ -998,9 +1002,9 @@ function updateInputColumn(inputID, netValue) {
                     console.log("singleIconAction : ", singleIconAction);
                     console.log("rowActionsMenu : ", menuActions);
                     console.log("columns : ", columns);
-                    grid = new GKBSDynamicGrid('#my-grid', columns, billjsdata, {
+                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, billjsdata, {
                         enablePagination: true,
-                        pageSize: 10,
+                        pageSize: ItemsperPage,
                         enableSearch: true,
                         stickyToWindow: true,
                         enableExport: false,
@@ -1009,7 +1013,7 @@ function updateInputColumn(inputID, netValue) {
                         enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
                         enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
                         enableSorting: true,
-                        singleIconAction: singleIconAction, // Pass the single View action
+                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
@@ -1038,7 +1042,7 @@ function updateInputColumn(inputID, netValue) {
                                     //console.log("event : ", event);
                                     //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
                                     modalGenColumnSettings.style.display = "block";
-                                    GendralColumnSettings(1, 17, 1, 0);
+                                    GendralColumnSettings(1, 16, 1, 0);
                                 }
                             },
                             {
@@ -1060,6 +1064,29 @@ function updateInputColumn(inputID, netValue) {
                                 }
                             },
                         ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+                            //let message = `Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Row Data:\n`;
+                            //for (const key in rowData) {
+                            //    if (key !== '_gridId') {
+                            //        message += `• ${key}: ${rowData[key]}\n`;
+                            //    }
+                            //}
+                            //alert(message);
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                            //// Double-click handler - shows JSON format
+                            //let message = `Double-Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
+                            //alert(message);
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(16, 1, 0, colIndex, field, newWidth)
+                        },
                     });
                     var searchValue = '';
                     if ($.fn.DataTable.isDataTable('#tblMasterData')) {

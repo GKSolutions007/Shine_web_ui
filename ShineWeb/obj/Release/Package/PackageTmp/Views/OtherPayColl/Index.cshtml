@@ -282,7 +282,7 @@
                         </td>
                     </tr>
                 </table>
-                <div id="my-grid" style="height: 500px; width: 100%;"></div>
+                 <div id="my-grid" style="height: 600px; width: 100%;"></div>
             </div>
             <div hidden>
                 <table class="table table-bordered" id="tblMasterData" width="100%">
@@ -461,7 +461,9 @@
                                             <td style="border:none;padding-right:7px" colspan="2">
 
                                                 <span class="form-label">
-                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtValue" class="form-control FormclrField txtsettag" placeholder="" />
+                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtValue" class="form-control FormclrField txtsettag" placeholder="" 
+                                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
+                                                           oninput="sanitizeNumericOnly(this, '#dvErrorValue')"/>
                                                     <label class="labelup">Value *</label>
                                                 </span>
                                                 <div class="clrdiv" id="dvErrorValue" style="color:red"></div>
@@ -470,14 +472,18 @@
                                         <tr id="trVisa">
                                             <td style="border:none;padding-right:7px">
                                                 <span class="form-label">
-                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtVisaPern" class="form-control FormclrField txtsettag" placeholder="" />
+                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtVisaPern" class="form-control FormclrField txtsettag" placeholder="" 
+                                                           onbeforeinput="return NumericPercentageBeforeInput(event, this,'#dvErrorVisaPern')"
+                                                           oninput="sanitizeNumericPercentage(this, '#dvErrorVisaPern')"/>
                                                     <label class="labelup">Visa %</label>
                                                 </span>
                                                 <div class="clrdivs" id="dvErrorVisaPern" style="color:red"></div>
                                             </td>
                                             <td style="border:none;padding-right:2px">
                                                 <span class="form-label">
-                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtVisaAmt" class="form-control FormclrField txtsettag" placeholder="" />
+                                                    <input tabindex="1" txttag="0" type="number" step="any" id="txtVisaAmt" class="form-control FormclrField txtsettag" placeholder="" 
+                                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorVisaAmt')"
+                                                           oninput="sanitizeNumericOnly(this, '#dvErrorVisaAmt')" />
                                                     <label class="labelup">Visa ₹</label>
                                                 </span>
                                                 <div class="clrdiv" id="dvErrorVisaAmt" style="color:red"></div>
@@ -800,8 +806,8 @@
             }
         },
         {
-            icon: '📜',
-            title: 'PDF',
+            icon: "<i class='fa-regular fa-file-pdf' style='color:brown'></i>",
+            title: '&ensp;PDF',
             className: 'dg-action-pdf',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
@@ -817,8 +823,8 @@
             }
         },
         {
-            icon: '✉️',
-            title: 'Mail',
+            icon: "<i class='fa-solid fa-envelope' style='color:brown'></i>",
+            title: '&ensp;Mail',
             className: 'dg-action-mail',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
@@ -833,8 +839,8 @@
             }
         },
         {
-            icon: '📞',
-            title: 'WhatsApp',
+            icon: "<i class='fa-brands fa-whatsapp' style='color:green'></i>",
+            title: '&ensp;WhatsApp',
             className: 'dg-action-whatsapp',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
@@ -1227,9 +1233,9 @@ $("#chkShowAll").prop("checked", Showall == '1');
                 success: function (data) {
                     Table.draw().clear(); Table.draw().clear();
                     var billjsdata = eval(data);
-                    grid = new GKBSDynamicGrid('#my-grid', columns, billjsdata, {
+                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, billjsdata, {
                         enablePagination: true,
-                        pageSize: 10,
+                        pageSize: ItemsperPage,
                         enableSearch: true,
                         stickyToWindow: true,
                         enableExport: false,
@@ -1238,7 +1244,7 @@ $("#chkShowAll").prop("checked", Showall == '1');
                         enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
                         enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
                         enableSorting: true,
-                        singleIconAction: singleIconAction, // Pass the single View action
+                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
@@ -1288,6 +1294,29 @@ $("#chkShowAll").prop("checked", Showall == '1');
                                 }
                             },
                         ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+                            //let message = `Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Row Data:\n`;
+                            //for (const key in rowData) {
+                            //    if (key !== '_gridId') {
+                            //        message += `• ${key}: ${rowData[key]}\n`;
+                            //    }
+                            //}
+                            //alert(message);
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                            //// Double-click handler - shows JSON format
+                            //let message = `Double-Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
+                            //alert(message);
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(19, 1, 0, colIndex, field, newWidth)
+                        },
                     });
                     var searchValue = '';
                     if ($.fn.DataTable.isDataTable('#tblMasterData')) {

@@ -160,7 +160,7 @@
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
     <div id="dvMainTable">
-        <div id="my-grid" style="height: 500px; width: 100%;"></div>
+         <div id="my-grid" style="height: 600px; width: 100%;"></div>
         <div hidden>
             <table class="table table-bordered" id="tblMasterData" width="100%">
                 <thead>
@@ -302,7 +302,7 @@
             className: 'dg-action-view',
             // 💡 NEW TAG: This action will be rendered as a single icon
             displayType: 'single_icon',
-            visible: $("#txtModifyID").val() == 1,
+            visible: $("#txtViewID").val() == 1,
             handler: (rowData) => {
                 var ID = rowData.ID;//[0];
                 GetData(4, ID);
@@ -316,9 +316,12 @@
             icon: '✏️',
             title: 'Edit Data',
             className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
+            visible: $("#txtModifyID").val() == 1,
             displayType: 'single_icon',
             handler: (rowData, gridInstance) => {
+                $(".clrdiv").html("");
+                nMode = 2;
+                rowdata = Table.row($(this).parents('tr')).data();
                 var ID = rowData.ID;//[0];
                 GetData(4, ID);
                 $(".FormclrField").prop("disabled", false);
@@ -423,9 +426,9 @@
                             //]).draw(false);
                         });
 
-                        grid = new GKBSDynamicGrid('#my-grid', columns, Services, {
+                        var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, Services, {
                             enablePagination: true,
-                            pageSize: 10,
+                            pageSize: ItemsperPage,
                             enableSearch: true,
                             stickyToWindow: true,
                             enableExport: false,
@@ -434,7 +437,7 @@
                             enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
                             enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
                             enableSorting: true,
-                            singleIconAction: singleIconAction, // Pass the single View action
+                            searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                             rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                             //onCellChange: handleCellUpdate,
                             customCellRenderer: (el, col, rowData) => {
@@ -483,6 +486,29 @@
                                     }
                                 },
                             ],
+                            onCellClick: (rowData, fieldName, cellValue, column) => {
+                                //let message = `Clicked Cell:\n`;
+                                //message += `• Field: ${fieldName}\n`;
+                                //message += `• Value: ${cellValue}\n\n`;
+                                //message += `Row Data:\n`;
+                                //for (const key in rowData) {
+                                //    if (key !== '_gridId') {
+                                //        message += `• ${key}: ${rowData[key]}\n`;
+                                //    }
+                                //}
+                                //alert(message);
+                            },
+                            onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                                //// Double-click handler - shows JSON format
+                                //let message = `Double-Clicked Cell:\n`;
+                                //message += `• Field: ${fieldName}\n`;
+                                //message += `• Value: ${cellValue}\n\n`;
+                                //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
+                                //alert(message);
+                            },
+                            onColumnResize: (colIndex, field, header, newWidth) => {
+                                UpdateColumnWidth(3, 1, 0, colIndex, field, newWidth)
+                            },
                         });
 
 

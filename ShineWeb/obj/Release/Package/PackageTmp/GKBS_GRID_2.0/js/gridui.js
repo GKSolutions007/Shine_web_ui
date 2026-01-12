@@ -78,12 +78,13 @@ class GKBSDynamicGrid {
             customButtons: [], // 💡 NEW: Custom toolbar buttons
             onCellClick: null, // 💡 NEW: Cell click callback
             onCellDoubleClick: null, // 💡 NEW: Cell double-click callback
+            onColumnResize: null, // 💡 NEW: Column resize callback
         }, options);
 
         // --- 2. State Initialization ---
         this.state = {
             currentPage: 1,
-            searchTerm: '',
+            searchTerm: options.searchTerm || '',
             filters: {},
             colFilters: {},
             sortConfig: null,
@@ -581,7 +582,7 @@ class GKBSDynamicGrid {
             }
 
             // Only calculate for 'number' types
-            if (col.type === 'number' || col.total === true) {
+            if (col.type === 'number' || col.Total === true) {
                 const values = dataToCalculate
                     .map(row => parseFloat(row[col.field]))
                     .filter(val => !isNaN(val)); // Filter out bad data
@@ -936,10 +937,13 @@ class GKBSDynamicGrid {
             input.value = this.state.searchTerm;
 
             input.addEventListener('input', (e) => {
+                const selectionStart = e.target.selectionStart;
+                const selectionEnd = e.target.selectionEnd;
+
                 this.state.searchTerm = e.target.value;
                 this.state.currentPage = 1;
                 this.processData();
-                //this.render(); 
+
                 // 1. Get a reference to the element that currently has focus
                 const currentlyFocused = document.activeElement;
 
@@ -949,13 +953,10 @@ class GKBSDynamicGrid {
                 // 3. Find the newly created search input
                 const newSearchInput = this.container.querySelector('.dg-search-input');
 
-                // 4. Restore focus to the new element if the search input was the element that had focus
+                // 4. Restore focus and selection to the new element
                 if (currentlyFocused && newSearchInput) {
                     newSearchInput.focus();
-
-                    // Keep the cursor at the end of the text
-                    const len = newSearchInput.value.length;
-                    newSearchInput.setSelectionRange(len, len);
+                    newSearchInput.setSelectionRange(selectionStart, selectionEnd);
                 }
             });
             rightSection.appendChild(input);
@@ -2753,6 +2754,12 @@ class GKBSDynamicGrid {
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
             document.body.style.cursor = 'default';
+
+            // 💡 NEW: Dispatch event on resize end
+            const colIndex = this.columns.findIndex(c => c.field === colConfig.field);
+            if (this.options.onColumnResize && typeof this.options.onColumnResize === 'function') {
+                this.options.onColumnResize(colIndex, colConfig.field, colConfig.header || colConfig.field, colConfig.width);
+            }
         };
 
         const onTouchMove = (e) => {

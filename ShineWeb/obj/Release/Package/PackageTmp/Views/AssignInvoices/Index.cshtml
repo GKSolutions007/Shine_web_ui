@@ -8,6 +8,7 @@
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 @*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 @*<script src="~/Scripts/bootstrap.min.js"></script>
     <script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
@@ -17,6 +18,8 @@
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
+
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
 </header>
@@ -69,7 +72,7 @@
     .modalBatch {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        z-index: 200; /* Sit on top */
         left: 0;
         top: 0;
         width: 100%; /* Full width */
@@ -390,7 +393,7 @@
             <input hidden id="txtStatus" />
             <table width="100%">
                 <tr>
-                    <td>
+                    <td hidden>
                         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
                     </td>
                     <td width="60%" align="right">
@@ -425,10 +428,11 @@
                     </td>
                 </tr>
             </table>
+             <div id="my-grid" style="height: 600px; width: 100%;"></div>
 
         </div>
         @*<button id="btnLoadDraft" class="btn btn-primary"><span class="glyphicon glyphicon-download-alt	" style="color: white"></span>&#x2009;Load Draft Data</button>*@
-
+    <div hidden>
         <table class="table table-bordered" id="tblMasterData" width="100%">
             <thead>
                 <tr class="trclrforcolheader">
@@ -450,25 +454,26 @@
                         </span>
                     </th>
                     @*<th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
-                            <span class="glyphicon glyphicon-pencil" style="font-size:16px">
-                            </span>
-                        </th>
-                        <th style="text-align:center;font-size: 12px;width:3%;" title="Cancel">
-                            <span class="glyphicon glyphicon-remove-circle" style="font-size:16px">
-                            </span>
-                        </th>
-                        <th style="text-align:center;font-size: 12px;width:3%;" title="View">
-                            <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
-                            </span>
-                        </th>
-                        <th style="text-align:center;font-size: 12px;width:3%;" title="Return">
-                            <span class="glyphicon glyphicon-share-alt" style="font-size:16px">
-                            </span>
-                        </th>*@
+                        <span class="glyphicon glyphicon-pencil" style="font-size:16px">
+                        </span>
+                    </th>
+                    <th style="text-align:center;font-size: 12px;width:3%;" title="Cancel">
+                        <span class="glyphicon glyphicon-remove-circle" style="font-size:16px">
+                        </span>
+                    </th>
+                    <th style="text-align:center;font-size: 12px;width:3%;" title="View">
+                        <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
+                        </span>
+                    </th>
+                    <th style="text-align:center;font-size: 12px;width:3%;" title="Return">
+                        <span class="glyphicon glyphicon-share-alt" style="font-size:16px">
+                        </span>
+                    </th>*@
                 </tr>
 
             </thead>
         </table>
+    </div>
     </div>
     <div id="dvMain">
         <div class="row">
@@ -573,8 +578,8 @@
             <button class="btn btn-info" id="btnAddInvoices"><span class="glyphicon glyphicon-plus"></span>Add</button>
             <button class="btn btn-primary" id="btnViewInvoices"><span class="glyphicon glyphicon-eye-open"></span> View</button>
             @*<span class="form-label">
-                <input class="form-control FormclrField" id="txtScanDocid" placeholder="Scan Doc ID" />                
-            </span>*@
+                    <input class="form-control FormclrField" id="txtScanDocid" placeholder="Scan Doc ID" />
+                </span>*@
 
             <table class="table table-bordered row-border order-column" id="tblInvoiceData" width="100%">
                 <thead>
@@ -687,6 +692,263 @@
 </body>
 
 
+<script>
+
+    let mapusersRole = {
+        canView: $("#txtViewID").val() == 1,
+        canEdit: $("#txtModifyID").val() == 1,
+        canVariant: $("#txtVariantID").val() == 1,
+        canCancel: $("#txtCancelID").val() == 1,
+        canReturn: $("#txtReturnID").val() == 1,
+        canPrint: $("#txtViewID").val() == 1,
+        canPreview: $("#txtViewID").val() == 1,
+        canPDF: $("#txtViewID").val() == 1
+    };
+    var allGridActions = [], singleIconAction = [], menuActions = [], columns = [];
+    var actions = {}, OtherActions = {};
+
+    function LoadPermissions() {       
+        allGridActions = [
+            {
+                icon: '👁️',
+                title: 'View Data',
+                className: 'dg-action-view',
+                // 💡 NEW TAG: This action will be rendered as a single icon
+                displayType: 'single_icon',
+                visible: mapusersRole.canView,
+                // $("#txtViewID").val() == 1,
+                handler: (rowdata) => {
+                    $(".clrdivs").html("");
+                    var ID = rowdata.ID;//[0];
+                    nTransMode = 5;
+                    $("#txtID").val(ID);
+                    GetData(3, ID);
+                    $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                    $("#btnSave,#btnClear,#btnDocFilter,#btnViewInvoices, #btnAddInvoices,#chkSelectAllInvoice").prop("disabled", true);
+                    //$("#btnClose").prop("disabled", false);
+                    $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
+                    $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
+                    $("#btnPreview,#btnPDF,#btnPrint").show();
+                    $("#btnSave,#btnClear,#btnDraft").hide();
+                    $("#dvMain").show();
+                    $("#dvDocuments").hide();
+                    $("#btnEmail,#btnWhatsapp").show();
+                    $("#MainHeading").text("View Assign Invoices");
+                }
+            },
+            {
+                icon: '✏️',
+                title: 'Edit',
+                className: 'dg-action-edit',
+                visible: (row) => {
+                    var isVisible = false;
+                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed') {
+                        if (mapusersRole.canEdit)
+                            isVisible = true;
+                    }
+                    return isVisible;
+                },
+                displayType: 'menu_item',
+                handler: (rowdata, gridInstance) => {
+                    $(".clrdivs").html("");
+                    var ID = rowdata.ID;//[0];
+                    var sts = rowdata.Status;//[9];
+                    if (sts != "Cancelled") {
+                        $("#txtID").val(ID);
+                        nTransMode = 2;
+                        //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
+                        GetData(3, ID);
+                        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+                        $("#btnSave,#btnClose,#btnDocFilter,#btnViewInvoices, #btnAddInvoices,#chkSelectAllInvoice").prop("disabled", false);
+                        //$("#btnClear").prop("disabled", true);
+                        $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
+                        $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+                        $("#btnSave").show();
+                        $("#btnSave,#btnClose").prop("disabled", false);
+                        $("#dvMain").show();
+                        $("#dvDocuments").hide();
+                        $("#btnEmail,#btnWhatsapp").hide();
+                        $("#MainHeading").text("Modify Assign Invoices");
+                    }
+                    else {
+                        showErrorSnackbar("Cannot Modify.This document already cancelled");
+                    }
+                }
+            },
+            {
+                icon: '↩️',
+                title: 'Return',
+                className: 'dg-action-return',
+                visible: (row) => {
+                    var isVisible = false;
+                    var RTNYN = row.Status == 'Amended' || row.Status == 'Cancelled' || row.Status == 'Close' || row.Status == 'Processed' ? false : true;
+                    if (mapusersRole.canReturn && RTNYN) {
+                        isVisible = true;                        
+                    }                    
+                    return isVisible;
+                },
+                displayType: 'menu_item',
+                handler: (rowdata, gridInstance) => {
+                    $(".clrdivs").html("");
+                    var ID = rowdata.ID;//[0];
+                    var sts = rowdata.Status[9];
+                    if (sts != "Cancelled") {
+                        $("#txtID").val(ID);
+                        $("#MainHeading").text("Return Assign Invoices")
+                        nTransMode = 6;
+                        GetData(3, ID);
+                        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                        //$("#btnSave,#btnClose").prop("disabled", false);
+                        //$("#btnClear,#btnDocFilter").prop("disabled", true);
+                        $("#btnSave,#btnClose").prop("disabled", false);
+                        $("#btnPreview,#btnPDF,#btnClear,#btnDraft,#btnPrint").prop("disabled", true);
+                        $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+                        $("#btnEmail,#btnWhatsapp").hide();
+                        $("#btnSave").show();
+                        //,#btnViewInvoices, #btnAddInvoices,#chkSelectAllInvoice
+                        $("#dvMain").show();
+                        $("#dvDocuments").hide();
+                    }
+                    else {
+                        showErrorSnackbar("This document already cancelled");
+                    }
+                }
+            },
+            {
+                icon: '❌',
+                title: 'Cancel',
+                className: 'dg-action-edit',
+                visible: (row) => {
+                    var isVisible = false;
+                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed') {
+                        if (mapusersRole.canCancel)
+                            isVisible = true;
+                        else
+                            isVisible = false;
+                    }
+                    return isVisible;
+                },
+                displayType: 'menu_item',
+                handler: (rowdata, gridInstance) => {
+                    $(".clrdivs").html("");
+                    var ID = rowdata.ID;//[0];
+                    var sts = rowdata.Status[9];
+                    if (sts != "Cancelled") {
+                        $("#txtID").val(ID);
+                        $("#MainHeading").text("Cancel Assign Invoices")
+                        nTransMode = 4;
+                        GetData(3, ID);
+                        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                        $("#btnSave,#btnClose").prop("disabled", false);
+                        $("#btnClear,#btnDocFilter,#btnViewInvoices, #btnAddInvoices,#chkSelectAllInvoice").prop("disabled", true);
+                        $("#dvMain").show();
+                        $("#dvDocuments").hide();
+                        $("#btnEmail,#btnWhatsapp").hide();
+                    }
+                    else {
+                        showErrorSnackbar("This document already cancelled");
+                    }
+                }
+            },
+            {
+                icon: '🖨️',
+                title: 'Print',
+                className: 'dg-action-edit',
+                visible: mapusersRole.canPrint,
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btnPrint").click();
+                }
+            },
+            {
+                icon: '🖨️',
+                title: 'Preview',
+                className: 'dg-action-edit',
+                visible: mapusersRole.canPreview,
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btnPreview").click();
+                }
+            },
+            {
+                icon: "<i class='fa-regular fa-file-pdf' style='color:brown'></i>",
+                title: '&ensp;PDF',
+                className: 'dg-action-edit',
+                visible: mapusersRole.canPDF,
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btnPDF").click();
+                }
+            },
+            {
+                icon: "<i class='fa-solid fa-envelope' style='color:brown'></i>",
+                title: '&ensp;Mail',
+                className: 'dg-action-edit',
+                visible: true,
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btnEmail").click();
+                }
+            },
+            {
+                icon: "<i class='fa-brands fa-whatsapp' style='color:green'></i>",
+                title: '&ensp;WhatsApp',
+                className: 'dg-action-edit',
+                visible: true,
+                displayType: 'menu_item',
+                handler: (rowData, gridInstance) => {
+                    var ID = rowData.ID;//[0];
+                    var sts = rowData.CurrentStatus;//[9];
+                    $("#txtID").val(ID);
+                    $("#txtStatus").val(sts);
+                    $("#btniframeWhatsapp").click();
+                }
+            },
+        ];
+        singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+        menuActions = allGridActions.filter(a => a.displayType === 'menu_item');
+        actions = {
+            "header": 'View',
+            "type": "action",
+            "width": 60,
+            "align": "center",
+            "visible": mapusersRole.canView,
+            "specialColumn": true,
+            "ShowinColumnOption": false,
+            "actions": singleIconAction
+        };
+        OtherActions = {
+            "header": "Action",
+            "type": "action3dots",
+            "width": 60,
+            "align": "center",
+            "visible": true,
+            "specialColumn": true,
+            "ShowinColumnOption": false,
+            "actions": menuActions
+        }
+    }
+
+    LoadPermissions();
+
+</script>
+
 <script type="text/javascript">
     //document.body.style.zoom = "85%";
     $("#txtDocID").prop("disabled", true);
@@ -733,7 +995,9 @@
 if ($("#txtAddID").val() == 0) {
     $("#trAdd").hide();
     $("#btnAdd").hide();
-}
+    }
+    var grid, AssignInvoices;
+    GetColumnSettingsData(2, 30, 1);
     GetPrintProfile(PrintTransID);
     function GetPrintProfile(nTransID) {
         $.ajax({
@@ -867,6 +1131,98 @@ setTimeout(function () { GetFilterData(); }, 800);
                     SetAutlistforFields();
                 }
                 else if (nMode == 2) {
+                    AssignInvoices = data;
+
+                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, AssignInvoices, {
+                        enablePagination: true,
+                        pageSize: ItemsperPage,
+                        enableSearch: true,
+                        stickyToWindow: true,
+                        enableExport: false,
+                        enablePrint: false,
+                        enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                        enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                        enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                        enableSorting: true,
+                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
+                        rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                        //onCellChange: handleCellUpdate,
+                        customCellRenderer: (el, col, rowData) => {
+                            if (col.field === 'Active') {
+                                const val = rowData[col.field];
+                                console.log("Active : ", val);
+                                if (val === 'True') {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-active">
+    <span class="dg-status-circle"></span> Active
+</div>`;
+                                } else if (val === 'False') {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+    <span class="dg-status-circle"></span> In-Active
+</div>`;
+                                }
+                            }
+                        },
+                        customButtons: [
+                            {
+                                icon: '⚙️',
+                                text: 'Settings',
+                                title: 'Settings',
+                                visible: true,
+                                onClick: (gridInstance, event) => {
+                                    //console.log("gridInstance : ", gridInstance);
+                                    //console.log("event : ", event);
+                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                    modalGenColumnSettings.style.display = "block";
+                                    GendralColumnSettings(1, 30, 1, 0);
+                                }
+                            },
+                            {
+                                icon: '➕',
+                                text: 'Add New',
+                                title: 'Add New',
+                                visible: $("#txtAddID").val() == 1,
+                                onClick: (gridInstance, event) => {
+                                    //console.log("gridInstance : ", gridInstance);
+                                    //console.log("event : ", event);
+                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                    //dvDocuments,
+                                    //dvDocuments,
+                                    //dvDocuments,
+                                    nTransMode = 1;
+                                    $("#dvMain").show();
+                                    $("#dvDocuments").hide();
+                                    ClearForm();
+                                    setTimeout(() => {
+                                        GetData(5, 0, $("#cmbFilterBeat").val(), $("#cmbFilterSalesman").val(), $("#txtFilterCustomer").val(), null,
+                                            $("#dtpDocTo").val());
+                                    }, 500);
+                                }
+                            },
+                        ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+                            //let message = `Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Row Data:\n`;
+                            //for (const key in rowData) {
+                            //    if (key !== '_gridId') {
+                            //        message += `• ${key}: ${rowData[key]}\n`;
+                            //    }
+                            //}
+                            //alert(message);
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                            //// Double-click handler - shows JSON format
+                            //let message = `Double-Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
+                            //alert(message);
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(30, 1, 0, colIndex, field, newWidth)
+                        },
+                    });
                     var custjsdata = data;
                     if ($.fn.DataTable.isDataTable('#tblMasterData')) {
                         searchValue = $('#tblMasterData').DataTable().search(); // get current search term
@@ -1730,4 +2086,29 @@ setTimeout(function () { GetFilterData(); }, 800);
             SaveData();
         }
     });
+
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    console.log("columns : ", columns);
+                    columns.push(actions);
+                    columns.push(OtherActions);
+
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
 </script>

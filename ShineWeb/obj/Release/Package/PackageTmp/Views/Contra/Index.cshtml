@@ -271,7 +271,7 @@
                     </td>
                 </tr>
             </table>
-            <div id="my-grid" style="height: 500px; width: 100%;"></div>
+             <div id="my-grid" style="height: 600px; width: 100%;"></div>
         </div>
             <div hidden>
                 <table class="table table-bordered" id="tblMasterData" width="100%">
@@ -455,7 +455,9 @@
                                         <td style="border:none" colspan="2">
 
                                             <span class="form-label">
-                                                <input tabindex="6" type="number" step="any" id="txtValue" class="form-control FormclrField txtsettag" placeholder="" />
+                                                <input tabindex="6" type="number" step="any" id="txtValue" class="form-control FormclrField txtsettag" placeholder=""
+                                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
+                                                           oninput="sanitizeNumericOnly(this, '#dvErrorValue')"/>
                                                 <label class="labelup">Value *</label>
                                             </span>
                                             <div class="clrdivs" id="dvErrorValue" style="color:red"></div>
@@ -624,7 +626,7 @@
             icon: '✏️',
             title: 'Edit',
             className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
+            visible: $("#txtModifyID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 console.log("rowData:", rowData);
@@ -655,7 +657,7 @@
             icon: '📄',
             title: 'Variant',
             className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
+            visible: $("#txtVariantID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdivs").html("");
@@ -682,7 +684,7 @@
             icon: '❌',
             title: 'Cancel',
             className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
+            visible: $("#txtCancelID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdivs").html("");
@@ -744,15 +746,15 @@
             }
         },
         {
-            icon: '📜',
-            title: 'PDF',
+            icon: "<i class='fa-regular fa-file-pdf' style='color:brown'></i>",
+            title: '&ensp;PDF',
             className: 'dg-action-edit',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 ////rowdata = Table.row($(this).parents('tr')).data();
                 //rowData = window.__SelectedRowData;
-                var selrow = Table.row($(this).parents('tr')).index();
+                //var selrow = Table.row($(this).parents('tr')).index();
                 var ID = rowData.ID;//[0];
                 var sts = rowData.StatusID;//[9];
                 $("#txtID").val(ID);
@@ -761,8 +763,8 @@
             }
         },
         {
-            icon: '✉️',
-            title: 'Mail',
+            icon: "<i class='fa-solid fa-envelope' style='color:brown'></i>",
+            title: '&ensp;Mail',
             className: 'dg-action-edit',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
@@ -777,8 +779,8 @@
             }
         },
         {
-            icon: '📞',
-            title: 'WhatsApp',
+            icon: "<i class='fa-brands fa-whatsapp' style='color:green'></i>",
+            title: '&ensp;WhatsApp',
             className: 'dg-action-edit',
             visible: $("#txtViewID").val() == 1,
             displayType: 'menu_item',
@@ -1117,9 +1119,9 @@ $("#chkShowAll").prop("checked", Showall == '1');
                     Table.draw().clear(); Table.draw().clear();
                     Contra = data;
                     var billjsdata = eval(data);
-                    grid = new GKBSDynamicGrid('#my-grid', columns, billjsdata, {
+                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, billjsdata, {
                         enablePagination: true,
-                        pageSize: 10,
+                        pageSize: ItemsperPage,
                         enableSearch: true,
                         stickyToWindow: true,
                         enableExport: false,
@@ -1128,7 +1130,7 @@ $("#chkShowAll").prop("checked", Showall == '1');
                         enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
                         enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
                         enableSorting: true,
-                        singleIconAction: singleIconAction, // Pass the single View action
+                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
@@ -1157,7 +1159,7 @@ $("#chkShowAll").prop("checked", Showall == '1');
                                     //console.log("event : ", event);
                                     //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
                                     modalGenColumnSettings.style.display = "block";
-                                    GendralColumnSettings(1, 17, 1, 0);
+                                    GendralColumnSettings(1, 18, 1, 0);
                                 }
                             },
                             {
@@ -1166,9 +1168,6 @@ $("#chkShowAll").prop("checked", Showall == '1');
                                 title: 'Add New',
                                 visible: $("#txtAddID").val() == 1,
                                 onClick: (gridInstance, event) => {
-                                    //console.log("gridInstance : ", gridInstance);
-                                    //console.log("event : ", event);
-                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
                                     nMode = 1;
                                     nTransMode = 1;
                                     ClearForm();
@@ -1181,6 +1180,29 @@ $("#chkShowAll").prop("checked", Showall == '1');
                                 }
                             },
                         ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+                            //let message = `Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Row Data:\n`;
+                            //for (const key in rowData) {
+                            //    if (key !== '_gridId') {
+                            //        message += `• ${key}: ${rowData[key]}\n`;
+                            //    }
+                            //}
+                            //alert(message);
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                            //// Double-click handler - shows JSON format
+                            //let message = `Double-Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
+                            //alert(message);
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(18, 1, 0, colIndex, field, newWidth)
+                        },
                     });
                     var searchValue = '';
                     if ($.fn.DataTable.isDataTable('#tblMasterData')) {
