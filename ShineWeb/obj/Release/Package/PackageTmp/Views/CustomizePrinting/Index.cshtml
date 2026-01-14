@@ -63,6 +63,7 @@
         --font-secondary: 'Poppins', sans-serif;
         
         /* Spacing */
+        --space-0: 0.1rem;
         --space-1: 0.25rem;
         --space-2: 0.5rem;
         --space-3: 0.75rem;
@@ -560,7 +561,7 @@
         -moz-transition: all 0.2s ease-in-out;
         transition: all 0.2s ease-in-out;
         position: absolute;
-        top: -40%;
+        top: -45%;
         left: 1em;
         background: #fffefe;
         color: #2b2828;
@@ -785,7 +786,7 @@
     .button-group {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--space-2);
+        gap: var(--space-0);
         justify-content: right;
         margin-top: var(--space-4);
     }
@@ -795,7 +796,7 @@
             color: white;
             border: none;
             border-radius: var(--radius-md);
-            padding: var(--space-2) var(--space-4);
+            padding: var(--space-0) var(--space-4);
             font-family: var(--font-primary);
             font-weight: 500;
             cursor: pointer;
@@ -1068,7 +1069,7 @@
                                                    cursor: pointer;
                                                    transition: all var(--transition-base);
                                                    box-shadow: var(--shadow-sm);" id="txtColors"/>
-                        <input type="number" id="txtFontsize" placeholder="Size" value="8" style="max-width: 75px; border-radius: var(--radius-md); 
+                        <input type="number" id="txtFontsize" placeholder="Size" title="Font Size" value="8" style="max-width: 75px; border-radius: var(--radius-md); 
                                                                                                   border: 2px solid rgba(255,255,255,0.3); 
                                                                                                   background: rgba(255,255,255,0.95);                                                                                                   
                                                                                                   font-family: var(--font-primary);
@@ -1368,7 +1369,8 @@
                                 </div>
                                 <div class="button-group">                                    
                                     <button id="btnScript" hidden>Script</button>
-                                    <button id="btnDeleteProfile" title="Delete"><span class="glyphicon glyphicon-trash"></span></button>
+                                    <button id="btnHelp" title="Help"><span class="glyphicon glyphicon-question-sign"></span></button>
+                                    <button id="btnDeleteProfile" title="Delete"><span class="glyphicon glyphicon-trash"></span></button>                                    
                                     <button id="btnClear">Clear</button>
                                     <button id="saveAsToDB">Save As</button>
                                     <button id="saveToDB">Save</button>
@@ -1560,6 +1562,67 @@
             </div>
         </div>
     </div>
+
+    <!-- Help Modal -->
+    <div class="modalQRBarcode" id="mymodalHelp">
+        <div class="modal-dialog" style="width: auto; max-width: 600px;">
+            <div class="modalQRBarcode-content" style="width: 95%; max-width: 600px;">
+                <div class="modal-header">
+                    <button type="button" class="closemodalQRBarcode" id="btnCloseHelpX">&times;</button>
+                    <h5 class="modal-title" style="color:black"><b>User Manual & Shortcuts</b></h5>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered table-striped" style="color:black;">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Shortcut / Interaction</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><b>Multi-Select Controls</b></td>
+                                <td>Hold <code>Alt</code> + Click on controls</td>
+                            </tr>                            
+                            <tr>
+                                <td><b>Edit Text</b></td>
+                                <td>Double Click control OR press <code>F2</code></td>
+                            </tr>
+                            <tr>
+                                <td><b>Move Control(s)</b></td>
+                                <td>Select & Drag OR use <code>Arrow Keys</code></td>
+                            </tr>
+                            <tr>
+                                <td><b>Resize Control</b></td>
+                                <td>Hold <code>Ctrl</code> + <code>Arrow Keys</code></td>
+                            </tr>
+                            <tr>
+                                <td><b>Delete Control(s)</b></td>
+                                <td><code>Delete</code> Key</td>
+                            </tr>
+                            <tr>
+                                <td><b>Duplicate Control(s)</b></td>
+                                <td>Hold <code>Ctrl</code> + <code>D</code></td>
+                            </tr>
+                            <tr>
+                                <td><b>Select All</b></td>
+                                <td>Hold <code>Ctrl</code> + <code>A</code></td>
+                            </tr>
+                             <tr>
+                                <td><b>Context Menu</b></td>
+                                <td>Right Click on control</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div align="right">
+                        <button type="button" class="btn btn-warning" id="btnCloseHelp"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 <script>
     var Aurl = '@Session["APIurl"]';
@@ -1648,6 +1711,21 @@
     $('#btnFormula').click(function (e) {
         formulaselected = true;
         modalFormula.style.display = "block";
+    });
+
+    // --- Help Modal Logic ---
+    var modalHelp = document.getElementById("mymodalHelp");
+    $('#btnHelp').click(function () {
+        modalHelp.style.display = "block";
+    });
+    $('#btnCloseHelp, #btnCloseHelpX').click(function () {
+        modalHelp.style.display = "none";
+    });
+    // Close when clicking outside
+    window.addEventListener('click', function(e) {
+        if (e.target == modalHelp) {
+            modalHelp.style.display = "none";
+        }
     });
     var QRCodeItems = [{
         ID: 1,
@@ -1871,8 +1949,13 @@ const paperType = document.getElementById('paperType');
             console.log(`Selected all ${selectedElements.size} control(s)`);
         }
         
+        // Check if we're in edit mode (contentEditable or input/textarea focused)
+        const isInEditMode = document.activeElement.tagName === 'INPUT' || 
+                             document.activeElement.tagName === 'TEXTAREA' || 
+                             document.activeElement.contentEditable === 'true';
+        
         // Resize selected controls with Ctrl + Arrow keys
-        if ((e.ctrlKey || e.metaKey) && selectedElements.size > 0 && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        if ((e.ctrlKey || e.metaKey) && selectedElements.size > 0 && !isInEditMode) {
             const resizeStep = 1; // pixels to resize per keypress
             
             if (e.key === 'ArrowUp') {
@@ -1944,7 +2027,7 @@ const paperType = document.getElementById('paperType');
         }
         
         // Delete selected controls with Delete or Backspace key
-        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElements.size > 0 && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        if ((e.key === 'Delete') && selectedElements.size > 0 && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
             e.preventDefault();
             
             const confirmDelete = confirm(`Delete ${selectedElements.size} selected control(s)?`);
@@ -2289,21 +2372,64 @@ const paperType = document.getElementById('paperType');
             }
             
             if (e.target.classList.contains('resize-handle') || e.target.classList.contains('rotate-handle') || e.button === 2) return;
-            handleSelection(el, e);
-            if (selectedElements.size === 1) {  // only drag single
-                const startX = e.clientX, startY = e.clientY;
-                const rect = el.getBoundingClientRect(), paperRect = paper.getBoundingClientRect();
-                const offsetX = startX - rect.left, offsetY = startY - rect.top;
-                function onMove(ev) {
-                    let x = ev.clientX - paperRect.left - offsetX;
-                    let y = ev.clientY - paperRect.top - offsetY;
-                    x = Math.max(0, Math.min(x, paper.clientWidth - el.offsetWidth));
-                    y = Math.max(0, Math.min(y, paper.clientHeight - el.offsetHeight));
-                    el.style.left = x + 'px'; el.style.top = y + 'px';
-                }
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', () => document.removeEventListener('mousemove', onMove), { once: true });
+            
+            // If the element is not connected to selection (not selected), handle standard selection (single select)
+            // If it IS selected, we don't want to deselect others immediately because we might be staring a multi-move.
+             if (!selectedElements.has(el)) {
+                 handleSelection(el, e);
             }
+            
+            const startX = e.clientX, startY = e.clientY;
+            
+            // Store initial positions for all selected elements
+            // We use a Map to store { startLeft, startTop } for each element
+            const initialPositions = new Map();
+            selectedElements.forEach(item => {
+                initialPositions.set(item, {
+                    left: parseInt(item.style.left) || 0,
+                    top: parseInt(item.style.top) || 0
+                });
+            });
+
+            const paperRect = paper.getBoundingClientRect();
+           
+            function onMove(ev) {
+                const currentX = ev.clientX;
+                const currentY = ev.clientY;
+                
+                const deltaX = currentX - startX;
+                const deltaY = currentY - startY;
+                
+                selectedElements.forEach(item => {
+                     const initPos = initialPositions.get(item);
+                     if(initPos) {
+                        let newLeft = initPos.left + deltaX;
+                        let newTop = initPos.top + deltaY;
+                        
+                        // Optional: Boundary checks can be complex for groups. 
+                        // For now, let's allow moving; if one hits edge, others might go out, or we clamp all.
+                        // Simple individual clamping:
+                         newLeft = Math.max(0, Math.min(newLeft, paper.clientWidth - item.offsetWidth));
+                         newTop = Math.max(0, Math.min(newTop, paper.clientHeight - item.offsetHeight));
+                         
+                         item.style.left = newLeft + 'px';
+                         item.style.top = newTop + 'px';
+                     }
+                });
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', () => {
+                 document.removeEventListener('mousemove', onMove);
+                 // If no move happened (just a click on an already selected item), 
+                 // and no modifier key, we might want to reduce selection to just this item?
+                 // Standard behavior is often: mousedown selects only this if not selected. 
+                 // If selected, mousedown waits. properties of click/mouseup handle the deselect.
+                 // For now simplicity: if we didn't drag, `handleSelection` logic in `click` might take over? 
+                 // Actually `click` isn't used for selection here, `handleSelection` is called in mousedown.
+                 // We called handleSelection ONLY if !selectedElements.has(el). 
+                 // So if it was already selected, and we just clicked (no drag), we might want to ensure it becomes the ONLY selection (unless Mod key).
+                 // But implementing that requires detecting 'click' vs 'drag'.
+            }, { once: true });
         });
 
         el.addEventListener('dblclick', () => {
@@ -2635,14 +2761,23 @@ const paperType = document.getElementById('paperType');
             e.preventDefault(); duplicateSelected();
         }
         else if (!e.ctrlKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
-            e.preventDefault();
-            for (const el of selectedElements) {
-                let x = parseInt(el.style.left) || 0;
-                let y = parseInt(el.style.top) || 0;
-                if (e.key === 'ArrowLeft') el.style.left = Math.max(0, x - step) + 'px';
-                if (e.key === 'ArrowRight') el.style.left = Math.min(paper.clientWidth - el.offsetWidth, x + step) + 'px';
-                if (e.key === 'ArrowUp') el.style.top = Math.max(0, y - step) + 'px';
-                if (e.key === 'ArrowDown') el.style.top = Math.min(paper.clientHeight - el.offsetHeight, y + step) + 'px';
+            // Check if we're in edit mode (contentEditable or input/textarea focused)
+            const isInEditMode = document.activeElement.tagName === 'INPUT' || 
+                                 document.activeElement.tagName === 'TEXTAREA' || 
+                                 document.activeElement.contentEditable === 'true';
+            
+            // Only move elements if NOT in edit mode
+            if (!isInEditMode) {
+                e.preventDefault();
+                
+                for (const el of selectedElements) {
+                    let x = parseInt(el.style.left) || 0;
+                    let y = parseInt(el.style.top) || 0;
+                    if (e.key === 'ArrowLeft') el.style.left = Math.max(0, x - step) + 'px';
+                    if (e.key === 'ArrowRight') el.style.left = Math.min(paper.clientWidth - el.offsetWidth, x + step) + 'px';
+                    if (e.key === 'ArrowUp') el.style.top = Math.max(0, y - step) + 'px';
+                    if (e.key === 'ArrowDown') el.style.top = Math.min(paper.clientHeight - el.offsetHeight, y + step) + 'px';
+                }
             }
         }
         else if (e.key === 'Escape') { deselectAll(); }
@@ -3307,9 +3442,7 @@ const paperType = document.getElementById('paperType');
             showErrorSnackbar("Field should not empty.Select valid values");
         }
     });
-    $("#cmbTransactionName").change(function (e) {
-        TransactionControls();
-    });
+    
     //rdoheader,rdobody,rdofooter
     //tbHeader,tbBody,tbFooter
     $('#tbHeader').click(function (e) {
@@ -3407,6 +3540,7 @@ const paperType = document.getElementById('paperType');
         if (UID == 1) {
             $('#btnScript').show();
         }
+        TransactionControls();
     });
     $('#cmbTransactionName').change(function (e) {
         var TransID = e.target.value;
@@ -3414,6 +3548,7 @@ const paperType = document.getElementById('paperType');
         if (IsModify) {
             LoadConfigNames(TransID);
         }
+        TransactionControls();
     });
     $('#btnRename').click(function (e) {
         $("#divRename").html("");

@@ -26,6 +26,67 @@
     <link rel="stylesheet" href="~/Content/index.css">
 </header>
 <style>
+    .loader, .loader:after {
+        border-radius: 50%;
+        width: 10em;
+        height: 10em;
+    }
+
+    .loader {
+        margin: 60px auto;
+        font-size: 10px;
+        position: center;
+        text-indent: -9999em;
+        border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+        border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+        border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+        border-left: 1.1em solid #ffffff;
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        transform: translateZ(0);
+        -webkit-animation: load8 1.1s infinite linear;
+        animation: load8 2.1s infinite linear;
+    }
+
+    @@-webkit-keyframes load8 {
+        0% {
+            -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+        }
+
+        100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes load8 {
+        0% {
+            -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+        }
+
+        100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+        }
+    }
+
+    #loadingDiv {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 150%;
+        opacity: 90%;
+        background-color: #C7E1BA;
+    }
+
+    .LoaderMsg {
+        font-size: 20px;
+        text-align: center;
+    }
+
     .gdInput {
         width: 100%;
         height: 25px;
@@ -400,6 +461,7 @@
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
     @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    <input hidden id="txtWebCollID" />
     <input hidden id="txtCustomerID" />
     <input hidden id="txtBAdd1" /><input hidden id="txtBAdd2" /><input hidden id="txtBAdd3" />
     <input hidden id="txtSAdd1" /><input hidden id="txtSAdd2" /><input hidden id="txtSAdd3" />
@@ -467,7 +529,7 @@
                     </td>
                 </tr>
             </table>
-             <div id="my-grid" style="height: 600px; width: 100%;"></div>
+            <div id="my-grid" style="height: 600px; width: 100%;"></div>
         </div>
         @*<button id="btnLoadDraft" class="btn btn-primary"><span class="glyphicon glyphicon-download-alt	" style="color: white"></span>&#x2009;Load Draft Data</button>*@
 
@@ -798,6 +860,7 @@
                                     <th style="text-align: center; font-size: 12px; width: 8%; padding-right: 1px;" class="trclrforcolheader">Full Adj</th>
                                     <th style="text-align: center; font-size: 12px; width: 12%; padding-right: 15px;" class="trclrforcolheader">Total Amt Adj</th>
                                     <th style="text-align: center; font-size: 12px; width: 10%; padding-right: 15px;" class="trclrforcolheader">Balance</th>
+                                    <th style="text-align: center; font-size: 12px; width: 10%; padding-right: 15px;" class="trclrforcolheader">Reason</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -844,6 +907,7 @@
                                             0.00
                                         </label>
                                     </th>
+                                    <th></th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -1532,13 +1596,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        var rdo1 = $("#rdoMainTableData").is(":checked");
-        //var rdo2 = $("#rdoDraftTableData").is(":checked");
-        $("#dvMain").hide();
-        $("#dvDocuments").show();
-        $("#MainHeading").text($("#txtFormName").val());
-        //GetData(rdo1 ? 6 : 10);
-        GetFilterData();
+        if ($("#txtTransType").val() == 3) {
+            this.close();
+        } else {            
+            $("#dvMain").hide();
+            $("#dvDocuments").show();
+            $("#MainHeading").text($("#txtFormName").val());
+            //GetData(rdo1 ? 6 : 10);
+            GetFilterData();
+        }
     }
 
     $('input[type=number]').focusin(function (e) {
@@ -2777,12 +2843,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
             updateInputColumn("txtAdjustedAmount", AdjustedValue + G2DiscValue + G2WriteoffAmt);
             //showSuccessSnackbar("Adjusted Amount : " + AdjustedValue + G2DiscValue + G2WriteoffAmt);
         }
-        var totadjmtamt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag"));
-        var totadjtedamt = parseFloat(document.getElementById("txtAdjustedAmount").getAttribute("txttag"));
+        var totadjmtamt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag")).toFixed(4);
+        var totadjtedamt = parseFloat(document.getElementById("txtAdjustedAmount").getAttribute("txttag")).toFixed(4);
         console.log("totadjmtamt", totadjmtamt, "totadjtedamt", totadjtedamt);
-        //parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag"))
-        var RemAmt = totadjmtamt - parseFloat(document.getElementById("txtAdjustedAmount").getAttribute("txttag"))
-        updateInputColumn("txtRemainingAmount", RemAmt + G2DiscValue);
+
+        var cRemAmt = parseFloat(totadjmtamt) - parseFloat(totadjtedamt) //Math.round((parseFloat(totadjmtamt) - parseFloat(totadjtedamt)) * 1) / 1;
+
+            //parseFloat(totadjmtamt) - parseFloat(totadjtedamt)
+        updateInputColumn("txtRemainingAmount", cRemAmt + G2DiscValue);
         updateInputColumn("txtTotDiscountAmount", G2DiscValue);
         //bal cal for disc amt
         var clsbl = $("#txtHDClosingBalance").val() != "" ? parseFloat($("#txtHDClosingBalance").val()) : 0;
@@ -3365,9 +3433,9 @@ function setDate1(FieldID,Type) {
             GetData(6, DocID);
         }
     });
-    var TempAL = [], arrBankAccountData = [],arrPartyPreviousbankinfo=[];
+    var TempAL = [], arrBankAccountData = [], arrPartyPreviousbankinfo = [], arrReasons=[];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0 ,DefBankAcc = 0;
-    var prodids = 0;
+    var prodids = 0, strReasons = "";
 
     function GetData(nMode, strName = null, strID = null, dtpDt = null) {
         $.ajax({
@@ -3385,8 +3453,8 @@ function setDate1(FieldID,Type) {
                         value: 0,
                         text: "-- Select --",
                     }));
-                    arrVendor = [], arrVendorCode = [], arrVendorName = [], arrBankAccountData = [];
-                    nIndexarrVendor = 0, nIndexarrProd = 0;
+                    arrVendor = [], arrVendorCode = [], arrVendorName = [], arrBankAccountData = [], arrReasons = [];
+                    nIndexarrVendor = 0, nIndexarrProd = 0, strReasons = '<option value="0">-Reason-</option>';
                     $.each(data, function (i, items) {
                         if (items.FType == 1) {
                             var ven = {
@@ -3477,6 +3545,14 @@ function setDate1(FieldID,Type) {
                                 value: items.ID,
                                 text: items.Name,
                             }));
+                        }
+                        if (items.FType == 12) {
+                            strReasons += '<option value="' + items.ID + '">' + items.Name + '</option>';
+                            var sch = {
+                                "label": items.Name,
+                                "id": items.ID,
+                            }
+                            arrReasons.push(sch);
                         }
                     });
                     SetAutlistforFields();
@@ -3756,10 +3832,12 @@ function setDate1(FieldID,Type) {
                 //end
                 //g2start
                 console.log("g2data ", g2data);
+
                 var G2dataSet = g2data.map(function (items, nRowIndex) {
                     G2Bal += parseFloat(items.Balance);
                     G2DocValue += parseFloat(items.NetAmt);
                     var rmos = parseFloat(items.Balance) - parseFloat(items.TotalAdjAmt);
+                    var Reasons = "<select name= 'Reasons' class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + strReasons + "</select>";
                     return [
                         items.ID,
                         items.DocPrefix,
@@ -3780,6 +3858,7 @@ function setDate1(FieldID,Type) {
                         '<br/><label style="padding-top:10px" name="WriteoffAmt" lbltag="0" title="0" class="lblsettag dgv2WriteoffAmt" id="dgv2WriteoffAmt' + nRowIndex + '">' + parseFloat(0).toFixed(DecVal) + '</label>',
                         '<label name="G2TotalAdjAmount" lbltag="0" title="0" class="lblsettag dgv2lblTotAdjAmt" id="dgv2TotalAdjAmount' + nRowIndex + '">' + parseFloat(0).toFixed(DecVal) + '</label>',
                         '<label name="G2Balance" lbltag="' + items.Balance + '" title="' + items.Balance + '" class="lblsettag" id="dgv2Bal' + nRowIndex + '">' + parseFloat(items.Balance).toFixed(DecVal) + '</label>',
+                        Reasons
                     ];
                 });
                 $('#tblGridtwoData').DataTable({
@@ -3800,8 +3879,8 @@ function setDate1(FieldID,Type) {
                         { title: "FAID", visible: false, className: "dt-body-left" },
                         { title: "InvDocVal", visible: false, className: "dt-body-left" },
                         { title: "#", className: "dt-body-left", width: "3%" },
-                        { title: "Doc ID", className: "dt-body-left", width: "20%" },
-                        { title: "Ageing", className: "dt-body-right", width: "10%" },
+                        { title: "Doc ID", className: "dt-body-left", width: "9%" },
+                        { title: "Ageing", className: "dt-body-right", width: "6%" },
                         { title: "Date", className: "dt-body-right", width: "7%" },
                         { title: "Ref No", className: "dt-body-right", width: "6%" },
                         { title: "Doc Type", className: "dt-body-left", width: "6%" },
@@ -3810,9 +3889,10 @@ function setDate1(FieldID,Type) {
                         { title: "Coll Amt", className: "dt-body-right", width: "6%" },
                         { title: "Adj Amt(+/-)", className: "dt-body-right", width: "6%" },
                         { title: "Disc %/₹", className: "dt-body-right", width: "6%" },
-                        { title: "Full Adj", className: "dt-body-right", width: "6%" },
+                        { title: "Full Adj", className: "dt-body-right", width: "8%" },
                         { title: "Total Amt Adj", className: "dt-body-right", width: "6%" },
                         { title: "Balance", className: "dt-body-right", width: "6%" },
+                        { title: "Reasons", className: "dt-body-right", width: "10%" },
                     ]
                 });
                 TableGridtwoData = $('#tblGridtwoData').DataTable();
@@ -3952,12 +4032,7 @@ function setDate1(FieldID,Type) {
                     } else {
                         $("#trVisa").hide();
                     }
-                    var rdo1 = $("#rdoMainTableData").is(":checked");
-                    if (rdo1) {
-                        $("#txtID").val(items.ID);
-                    } else {
-                        $("#txtDraftID").val(items.ID);
-                    }
+                    $("#txtID").val(items.ID);                    
                     $("#cmbCreditTerm").val(items.PaymentTermID),$("#cmbPaymode").val(items.PaymentModeID),
                     $("#txtCustomerID").val(items.CustomerID);
 
@@ -4033,7 +4108,12 @@ function setDate1(FieldID,Type) {
                     var G2dataSet = g2data.map(function (Docsitems, nRowIndex) {
                         G2Bal += parseFloat(Docsitems.Balance);
                         G2DocValue += parseFloat(Docsitems.NetAmt);
-                        var rmos = parseFloat(Docsitems.Balance) - parseFloat(Docsitems.TotalAdjAmt);
+                        var rmos = nTransMode == 5 ? 0 : parseFloat(Docsitems.Balance) - parseFloat(Docsitems.TotalAdjAmt);
+                        var ReasonoptionsHtml = strReasons.replace(
+                            new RegExp('value="' + Docsitems.ReasonID + '"', 'g'),
+                            'value="' + Docsitems.ReasonID + '" selected'
+                        );
+                        var Reasons = "<select title=" + Docsitems.ReasonName +" name= 'Reasons' " + disbfields +" class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
                         return [
                             Docsitems.ID,
                             Docsitems.DocPrefix,
@@ -4054,7 +4134,8 @@ function setDate1(FieldID,Type) {
                             '<select name="FullyAdj" ' + disbfields + ' id="dgvFulladj' + nRowIndex + '" class="gdInput cmbFullyAdj"><option value="0">No</option><option value="1">Yes</option></select>' +
                             '<br/><label name="WriteoffAmt"  style="padding-top:10px" lbltag="0" title="0" class="lblsettag dgv2WriteoffAmt" id="dgv2WriteoffAmt' + nRowIndex + '">' + parseFloat(0).toFixed(DecVal) + '</label>',
                             '<label name="G2TotalAdjAmount" lbltag="' + Docsitems.TotalAdjAmt + '" title="' + Docsitems.TotalAdjAmt + '" class="lblsettag dgv2lblTotAdjAmt" id="dgv2TotalAdjAmount' + nRowIndex +  '">' + parseFloat(Docsitems.TotalAdjAmt).toFixed(DecVal) + '</label>',
-                            '<label name="G2Balance" lbltag="' + rmos + '" title="' + rmos + '" class="lblsettag" id="dgv2Bal' + nRowIndex +  '">' + parseFloat(rmos).toFixed(DecVal) + '</label>',
+                            '<label name="G2Balance" lbltag="' + rmos + '" title="' + rmos + '" class="lblsettag" id="dgv2Bal' + nRowIndex + '">' + parseFloat(rmos).toFixed(DecVal) + '</label>',
+                            Reasons
                         ];
                     });
                     $('#tblGridtwoData').DataTable({
@@ -4075,8 +4156,8 @@ function setDate1(FieldID,Type) {
                             { title: "FAID", visible: false, className: "dt-body-left" },
                             { title: "InvDocVal", visible: false, className: "dt-body-left" },
                             { title: "#", className: "dt-body-left", width: "3%" },
-                            { title: "Doc ID", className: "dt-body-left", width: "20%" },
-                            { title: "Ageing", className: "dt-body-right", width: "10%" },
+                            { title: "Doc ID", className: "dt-body-left", width: "8%" },
+                            { title: "Ageing", className: "dt-body-right", width: "8%" },
                             { title: "Date", className: "dt-body-right", width: "7%" },
                             { title: "Ref No", className: "dt-body-right", width: "6%" },
                             { title: "Doc Type", className: "dt-body-left", width: "6%" },
@@ -4085,9 +4166,10 @@ function setDate1(FieldID,Type) {
                             { title: "Coll Amt", className: "dt-body-right", width: "6%" },
                             { title: "Adj Amt(+/-)", className: "dt-body-right", width: "6%" },
                             { title: "Disc %/₹", className: "dt-body-right", width: "6%" },
-                            { title: "Full Adj", className: "dt-body-right", width: "6%" },
+                            { title: "Full Adj", className: "dt-body-right", width: "8%" },
                             { title: "Total Amt Adj", className: "dt-body-right", width: "6%" },
                             { title: "Balance", className: "dt-body-right", width: "6%" },
+                            { title: "Reasons", className: "dt-body-right", width: "10%" },
                         ]
                     });
                     TableGridtwoData = $('#tblGridtwoData').DataTable();
@@ -4158,6 +4240,254 @@ function setDate1(FieldID,Type) {
                     }, 300);
                     SumG2FooterLabels();
                 });
+            }
+        });
+    }
+
+    function LoadWebcollectionData( strID = null) {
+        $.ajax({
+            url: Aurl + "collectionpayment/webcollosdocs",
+            type: 'get',
+            contentType: 'json',
+            data: { ID: strID},
+            xhrFields: {
+                withCredentials: true
+            },
+            async :false,
+            success: function (data) {
+                $("#loadingDiv").remove();                
+                if (data[0].Header.length > 0) {
+                    TableGrid1Data.draw().clear(); TableGrid1Data.draw().clear();
+                    TableGridtwoData.draw().clear(); TableGridtwoData.draw().clear();
+                    var HeaderData = data[0].Header;
+                    var InvoiceData = data[0].Invoices;
+                    var PartyData = data[0].PartyInfo;
+                    $.each(HeaderData, function (i, items) {
+
+                        $("#txtID").val(items.ID),
+                            $("#dtpDate").val(items.DocDate),
+                            $("#cmbBranch").val(items.BranchID),
+                            $("#lblDocID").val(items.DocID),
+                            $("#txtCustomerID").val(items.CustomerID),
+                            $("#cmbBeat").val(items.BeatID),
+                            $("#cmbSalesman").val(items.SalesmanID),
+                            $("#txtRefNo").val(items.RefNo),
+                            $("#cmbPaymode").val(items.PaymentModeID),
+                            $("#txtStatus").val(items.Status),
+                            $("#txtRemarks").val(items.Remarks),
+                            $("#txtNarration").val(items.Narration),
+                            $("#txtNEFT").val(items.NEFTNo),
+                            $("#cmbFromAccount").val(items.BankAccID),
+                            $("#cmbChequeNo ").val(items.ChequeID),
+                            $("#dtpChequeDate").val(items.ChequeDate),
+                            $("#txtIFSC").val(items.IFSC),
+                            $("cmbBankName").val(items.BankID),
+                            $("#txtBranchName").val(items.Branch);
+
+                        updateInputColumn("txtAmount", items.CollAmt);
+                        updateInputColumn("txtVisaPern", items.VisaPern);
+                        updateInputColumn("txtVisaAmt", items.VisaAmt);
+                        if (items.PaymentModeID == 5) {
+                            $("#trVisa").show();
+                        } else {
+                            $("#trVisa").hide();
+                        }                        
+                        var lPMID = $("#cmbPaymode").val();
+                        PaymodeChangeFieldValidation(lPMID);
+                        
+                        if (lPMID != 1) {                            
+                            $("#txtNEFT").val(lPMID == 4 ? items.NEFTNo : items.ChequeNo);
+                            $("#cmbFromAccount").val(items.BankAccID);
+                            $("#dtpChequeDate").val(items.ChequeDate);
+                            $("#txtIFSC").val(items.IFSC);
+                            $("#cmbBankName").val(items.BankID);
+                            $("#txtBranchName").val(items.Branch);                           
+                        }
+                    });
+                    $.each(PartyData, function (i, itemsParty) {
+                        $("#txtSearch").val(itemsParty.Name),
+                            $("#lblName").text(itemsParty.Code),
+                            $("#cmbRating").text(itemsParty.Ratings),
+                            $("#lblMob1").text(itemsParty.Mob1),
+                            $("#lblGSTIN").text(itemsParty.GSTIN),
+                            $("#txtBAdd1").val(itemsParty.Billadd1),
+                            $("#txtBAdd2").val(itemsParty.Billadd2),
+                            $("#txtBAdd3").val(itemsParty.Billadd3),
+                            $("#txtSAdd1").val(itemsParty.Shipadd1),
+                            $("#txtSAdd2").val(itemsParty.shipadd2),
+                            $("#txtSAdd3").val(itemsParty.Shipadd3),
+                            $("#txtPincode").val(itemsParty.Pincode);
+
+                        var osval = parseFloat(itemsParty.OSValue).toFixed(DecVal);
+                        var ostype = itemsParty.CreditlimitOS;
+                        var Osbytype = ostype == "Cr" ? osval * -1 : osval;
+                        $("#txtHDClosingBalance").val(Osbytype);
+                        $("#txtBalance").val(osval + " " + ostype);
+                        $("#txtClosingBalance").val(osval + " " + ostype);
+                        $("#txtClosingBalance,#txtBalance").css("color", ostype == "Dr" ? "Red" : "Green");
+
+                       
+                    });
+                    $.each(InvoiceData, function (i, Docsitems) {
+                        var G1So = 1, G2So = 1, G1Bal = 0, G2Bal = 0, G2DocValue = 0;
+                        var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
+                        var g1data = InvoiceData.filter(d => d.TypeID == "1");
+                        var g2data = InvoiceData.filter(d => d.TypeID == "2");
+                        //start
+                        var G1dataSet = g1data.map(function (Docsitems, nRowIndex) {
+                            G1Bal += parseFloat(Docsitems.Balance);
+                            return [
+                                Docsitems.ID,
+                                Docsitems.DocPrefix,
+                                Docsitems.FAID,
+                                Docsitems.DocValue,
+                                (nRowIndex + 1),
+                                Docsitems.DocID,
+                                Docsitems.Tran_Date,
+                                Docsitems.DocRef,
+                                Docsitems.TransName,
+                                '<label name="G1NetAmount" lbltag="' + Docsitems.NetAmt + '" title="' + Docsitems.NetAmt + '" class="lblsettag" id="dgv1NetAmount' + nRowIndex + '">' + parseFloat(Docsitems.NetAmt).toFixed(DecVal) + '</label>',
+                                '<label name="G1Balance" lbltag="' + Docsitems.Balance + '" title="' + Docsitems.Balance + '" class="lblsettag lblHeaderBal" id="dgv1Balance' + nRowIndex + '" refadjid="dgv1AdjAmt' + nRowIndex + '">' + parseFloat(Docsitems.Balance).toFixed(DecVal) + '</label>',
+                                '<input type="number" ' + disbfields + ' txttag="0" value="0" title="0" name="AdjCollAmtHeader"  class="txtsettag AdjCollAmtHeader gdInput"  id="dgv1AdjAmt' + nRowIndex + '"  min="0" max="' + Docsitems.Balance + '" oninput="maxCheckGrid1(this)"/>'
+                            ];
+                        });
+                        $('#tblGridoneData').DataTable({
+                            scrollY: "250px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: false,
+                            destroy: true,
+                            data: G1dataSet,
+                            fixedColumns: false,
+                            searching: false,
+                            ordering: false,
+                            sorting: true,
+                            info: false,
+                            columns: [
+                                { title: "ID", visible: false, className: "dt-body-left" },
+                                { title: "DocPrefix", visible: false, className: "dt-body-left" },
+                                { title: "FAID", visible: false, className: "dt-body-left" },
+                                { title: "InvDocVal", visible: false, className: "dt-body-left" },
+                                { title: "#", className: "dt-body-left", width: "3%" },
+                                { title: "Doc ID", className: "dt-body-left", width: "30%" },
+                                { title: "Date", className: "dt-body-right", width: "7%" },
+                                { title: "Ref No", className: "dt-body-right", width: "6%" },
+                                { title: "Doc Type", className: "dt-body-left", width: "6%" },
+                                { title: "Doc Value", className: "dt-body-right", width: "7%" },
+                                { title: "Outstandings", className: "dt-body-right", width: "7%" },
+                                { title: "Adj Amt", className: "dt-body-right", width: "6%" },
+                            ]
+                        });
+                        TableGrid1Data = $('#tblGridoneData').DataTable();
+                        //end
+                        //g2start
+                        console.log("g2 ", g2data);
+                        var G2dataSet = g2data.map(function (Docsitems, nRowIndex) {
+                            G2Bal += parseFloat(Docsitems.Balance);
+                            G2DocValue += parseFloat(Docsitems.NetAmt);
+                            
+                            var ReasonoptionsHtml = strReasons.replace(
+                                new RegExp('value="' + Docsitems.ReasonID + '"', 'g'),
+                                'value="' + Docsitems.ReasonID + '" selected'
+                            );
+                            var Reasons = "<select title=" + Docsitems.ReasonName + " name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
+                            if (parseFloat(Docsitems.CollAmt) > 0)
+                            {
+                                console.log("CollAmt : " + Docsitems.CollAmt);
+                            }
+                            var TotAdjAmt = parseFloat(Docsitems.CollAmt) + parseFloat(Docsitems.DiscAmt)  +
+                                (parseFloat(Docsitems.AdjAmt) <= 0 ? Math.abs(parseFloat(Docsitems.AdjAmt)) : 0)
+                            var rmos = nTransMode == 5 ? 0 : parseFloat(Docsitems.Balance) - parseFloat(TotAdjAmt);
+                            return [
+                                Docsitems.ID,
+                                Docsitems.DocPrefix,
+                                Docsitems.FAID,
+                                Docsitems.DocValue,
+                                (nRowIndex + 1),
+                                //Docsitems.DocID,
+                                Docsitems.DocPrefix == "15" ? '<a href="javascript:void(0)" style="cursor: pointer;" class="clsInvoiceCollection">' + Docsitems.DocID + '</a>' : Docsitems.DocID,
+                                Docsitems.Ageing,
+                                Docsitems.Tran_Date,
+                                Docsitems.DocRef,
+                                Docsitems.TransName,
+                                '<label name="G2NetAmount" lbltag="' + Docsitems.NetAmt + '" title="' + Docsitems.NetAmt + '" class="lblsettag" id="dgv2NetAmount' + nRowIndex + '">' + parseFloat(Docsitems.NetAmt).toFixed(DecVal) + '</label>',
+                                '<label name="G2OS" lbltag="' + Docsitems.Balance + '" title="' + Docsitems.Balance + '" class="lblsettag lblFooterBal" id="dgv2Balance' + nRowIndex + '" refadjid="dgv2CollAmt' + nRowIndex + '">' + parseFloat(Docsitems.Balance).toFixed(DecVal) + '</label>',
+                                '<input type="number" ' + disbfields + ' txttag="' + Docsitems.CollAmt + '" title="' + Docsitems.CollAmt + '" value="' + parseFloat(Docsitems.CollAmt).toFixed(DecVal) + '" name="AdjCollAmtFooter"  class="txtsettag AdjCollAmtFooter gdInput"  id="dgv2CollAmt' + nRowIndex + '"  min="0" max="' + Docsitems.TotalAdjAmt + '"/>',// oninput="maxCheckGrid2(this)"
+                                '<input type="number" ' + disbfields + ' txttag="' + Docsitems.AdjAmt + '" title="' + Docsitems.AdjAmt + '" value="' + parseFloat(Docsitems.AdjAmt).toFixed(DecVal) + '" name="AdjAmt"  class="txtsettag AdjFooter gdInput"  id="dgv2AdjAmt' + nRowIndex + '"/>',
+                                '<input type="number" ' + disbfields + ' txttag="' + Docsitems.DiscPern + '" title="' + Docsitems.DiscPern + '" value="' + parseFloat(Docsitems.DiscPern).toFixed(DecVal) + '" name="AdjDiscPern"  class="txtsettag AdjDiscPern gdInput"  id="dgv2DiscPern' + nRowIndex + '"/></br><input type="number" ' + disbfields + ' txttag="' + Docsitems.DiscAmt + '" title="' + Docsitems.DiscAmt + '" value="' + parseFloat(Docsitems.DiscAmt) + '" name="AdjDiscAmt"  class="txtsettag AdjDiscAmt gdInput"  id="dgv2DiscAmt' + nRowIndex + '"/>',
+                                '<select name="FullyAdj" ' + disbfields + ' id="dgvFulladj' + nRowIndex + '" class="gdInput cmbFullyAdj"><option value="0">No</option><option value="1">Yes</option></select>' +
+                                '<br/><label name="WriteoffAmt"  style="padding-top:10px" lbltag="0" title="0" class="lblsettag dgv2WriteoffAmt" id="dgv2WriteoffAmt' + nRowIndex + '">' + parseFloat(0).toFixed(DecVal) + '</label>',
+                                '<label name="G2TotalAdjAmount" lbltag="' + TotAdjAmt + '" title="' + TotAdjAmt + '" class="lblsettag dgv2lblTotAdjAmt" id="dgv2TotalAdjAmount' + nRowIndex + '">' + parseFloat(TotAdjAmt).toFixed(DecVal) + '</label>',
+                                '<label name="G2Balance" lbltag="' + rmos + '" title="' + rmos + '" class="lblsettag" id="dgv2Bal' + nRowIndex + '">' + parseFloat(rmos).toFixed(DecVal) + '</label>',
+                                Reasons
+                            ];
+                        });
+                        $('#tblGridtwoData').DataTable({
+                            scrollY: "250px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: false,
+                            destroy: true,
+                            data: G2dataSet,
+                            fixedColumns: false,
+                            searching: false,
+                            ordering: false,
+                            sorting: true,
+                            info: false,
+                            columns: [
+                                { title: "ID", visible: false, className: "dt-body-left" },
+                                { title: "DocPrefix", visible: false, className: "dt-body-left" },
+                                { title: "FAID", visible: false, className: "dt-body-left" },
+                                { title: "InvDocVal", visible: false, className: "dt-body-left" },
+                                { title: "#", className: "dt-body-left", width: "3%" },
+                                { title: "Doc ID", className: "dt-body-left", width: "8%" },
+                                { title: "Ageing", className: "dt-body-right", width: "8%" },
+                                { title: "Date", className: "dt-body-right", width: "7%" },
+                                { title: "Ref No", className: "dt-body-right", width: "6%" },
+                                { title: "Doc Type", className: "dt-body-left", width: "6%" },
+                                { title: "Doc Value", className: "dt-body-right", width: "7%" },
+                                { title: "Outstandings", className: "dt-body-right", width: "7%" },
+                                { title: "Coll Amt", className: "dt-body-right", width: "6%" },
+                                { title: "Adj Amt(+/-)", className: "dt-body-right", width: "6%" },
+                                { title: "Disc %/₹", className: "dt-body-right", width: "6%" },
+                                { title: "Full Adj", className: "dt-body-right", width: "8%" },
+                                { title: "Total Amt Adj", className: "dt-body-right", width: "6%" },
+                                { title: "Balance", className: "dt-body-right", width: "6%" },
+                                { title: "Reasons", className: "dt-body-right", width: "10%" },
+                            ]
+                        });
+                        TableGridtwoData = $('#tblGridtwoData').DataTable();
+                        var G1Count = TableGrid1Data.rows().count();
+                        var G2Count = TableGridtwoData.rows().count();
+                        //$("#lblAdvDocCount").text("(" + G1Count + ")"); $("#lblOSDocCount").text("(" + G2Count + ")");
+
+                        if (nDocPrefix == 19) {
+                            $("#lblrdoAdv").html("Payable" + "(<b style='color:red'>" + G1Count + "</b>)");
+                            $("#lblrdoOS").html("Receivable" + "(<b style='color:red'>" + G2Count + "</b>)");
+                        } else {
+                            $("#lblrdoAdv").html("Receivable" + "(<b style='color:red'>" + G1Count + "</b>)");
+                            $("#lblrdoOS").html("Payable" + "(<b style='color:red'>" + G2Count + "</b>)");
+                        }
+                        updateLabelColumn("lblG1TotalBalance", G1Bal);
+                        updateLabelColumn("lblG2TotalDocValue", G2DocValue);
+                        updateLabelColumn("lblG2TotalOS", G2Bal);
+                        setTimeout(() => {
+                            calculateGrid1Value();
+                            //calculateGrid2Value();
+                        }, 300);
+                        
+                        SumG2FooterLabels();
+                    });
+                }
+                else {
+                    showErrorSnackbar("Document already Processed or Cancelled");
+                    setTimeout(()=>{
+                        window.close();
+                    }, 3000)
+                }
+               
+            }, error: function (data) {
+                $("#loadingDiv").remove();
             }
         });
     }
@@ -4420,6 +4750,8 @@ function setDate1(FieldID,Type) {
         var ID = rowdata[0];//[0];
         InvoiceCollectionModalPopup(ID)
     });
+   
+    
     $('#tblMasterData tbody').on('click', '.clsView', function (e) {
         $(".clrdivs").html("");
         rowdata = Table.row($(this).parents('tr')).data();
@@ -4469,7 +4801,6 @@ function setDate1(FieldID,Type) {
 
     $(document).on('click', '.clsCancel', function (e) {
         $(".clrdivs").html("");
-        var rdo1 = $("#rdoMainTableData").is(":checked");
         rowdata = window.__SelectedRowData;// Table.row($(this).parents('tr')).data();
         //var selrow = Table.row($(this).parents('tr')).index();
         var ID = rowdata.ID;//[0];
@@ -4544,6 +4875,7 @@ function setDate1(FieldID,Type) {
     });
     $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
     function ClearForm() {
+       
         ProductRID = 0;
         $(".FormclrField").val("");
         $(".FormclrcmbField").val(0);
@@ -4843,7 +5175,7 @@ function setDate1(FieldID,Type) {
         DocsArray = [];
         var strTypeID = "", strDocID = "",strDocPrefix = "", strTran_Date = "", strDocRef = "", strTransName = "", strNetAmt = "", strBalance = "", strID = "", strFAID = "",
             strDocPrefix = "", strDocValue = "", strUDFDocId = "", strCollAmt = 0, strAdjAmtMP = 0,
-            strDiscPern = 0, strDiscAmt = 0, strFullAdjYN = 0, strTotAdjAmt = 0, strTotWriteoff = "";
+            strDiscPern = 0, strDiscAmt = 0, strFullAdjYN = 0, strTotAdjAmt = 0, strTotWriteoff = "",strReasonID = "0";
         if (G1Count > 0) {
             $("#tblGridoneData tbody tr").each(function () {
                 rowdata = TableGrid1Data.row($(this)).data();
@@ -4892,7 +5224,8 @@ function setDate1(FieldID,Type) {
                         "DiscAmt": 0,
                         "FullAdjYN": 0,
                         "TotalAdjAmt": strCollAmt,
-                        "WriteOffAmt": 0
+                        "WriteOffAmt": 0,
+                        "ReasonID": 0
                     };
                     DocsArray.push(lst);
                 }
@@ -4949,6 +5282,9 @@ function setDate1(FieldID,Type) {
                     if (fieldName == "FullyAdj") {
                         strFullAdjYN = $(this).val();
                     }
+                    if (fieldName == "Reasons") {
+                        strReasonID = $(this).val();
+                    }
                 });
                 if (strCollAmt > 0) {
                     var lst = {
@@ -4970,7 +5306,8 @@ function setDate1(FieldID,Type) {
                         "DiscAmt": strDiscAmt,
                         "FullAdjYN": strFullAdjYN,
                         "TotalAdjAmt": strTotAdjAmt,
-                        "WriteOffAmt": strTotWriteoff
+                        "WriteOffAmt": strTotWriteoff,
+                        "ReasonID" : strReasonID
                     };
                     DocsArray.push(lst);
                 }
@@ -5013,9 +5350,10 @@ function setDate1(FieldID,Type) {
             "ChequeNo": $("#cmbChequeNo ").val() > 0 ? $("#cmbChequeNo option:selected").text() : "",
             "ChequeDate": $("#dtpChequeDate").val(),
             "IFSC": $("#txtIFSC").val(),
-            "BankID": $("cmbBankName").val(),
+            "BankID": $("#cmbBankName").val(),
             "BankName": $("#cmbBankName ").val() > 0 ? $("#cmbBankName option:selected").text() : "",
             "Branch": $("#txtBranchName").val(),
+            "WebCollID": $("#txtWebCollID").val(),
             "lstCollPayDtl": DocsArray
         }
         $.ajax({
@@ -5046,7 +5384,14 @@ function setDate1(FieldID,Type) {
                                 EmailDocument(items.ID, PrintTransID, PrintConfigID);
                             }
                         }
-                        ClearForm();
+                        if ($("#txtTransType").val() == 3) {                            
+                            setTimeout(() => {
+                                window.close();
+                            }, 3000);
+                        }
+                        else {
+                            ClearForm();
+                        }
                     }
                     else {
                         //$("#dvErrorName").html(items.Message);
@@ -5148,7 +5493,25 @@ function setDate1(FieldID,Type) {
         $("#btnEmail,#btnWhatsapp").show();
         $("#MainHeading").text("View " + $("#txtFormName").val());
     }
-
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {
+        nTransMode = 1;        
+        var ID = $("#txtID").val();        
+        $("#txtWebCollID").val(ID);
+        $("#txtID").val("");
+        $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Document Loading... Please wait</div></div>');
+        setTimeout(() => { 
+            LoadWebcollectionData(ID);
+        }, 1500);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnSave,#btnClose").prop("disabled", false);
+        $("#btnSave,#btnClose").show();
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+        $("#dvMain").show();
+        $("#dvDocuments").hide();
+        $("#btnEmail,#btnWhatsapp").hide();
+        $("#MainHeading").text("Create " + $("#txtFormName").val());
+        $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
+    }
     function GetColumnSettingsData(nMode, nFormID, nTableID) {
         $.ajax({
             url: Aurl + "columnsettings/getcolumnsettings",
