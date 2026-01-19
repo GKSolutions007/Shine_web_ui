@@ -72,7 +72,7 @@ class GKBSDynamicGrid {
             enableColumnsBtn: false,
             enableAddRow: false,
             enableRemoveRow: false,
-            enableSorting: false,
+            enableSorting: true,
             enablePrint: false,
             enableDarkMode: false,
             customButtons: [], // 💡 NEW: Custom toolbar buttons
@@ -456,9 +456,23 @@ class GKBSDynamicGrid {
         if (this.state.currentSort && this.state.currentSort.field) {
             const { field, direction } = this.state.currentSort;
             result.sort((a, b) => {
-                // ... (Your existing robust sorting logic here) ...
-                if (a[field] < b[field]) return direction === 'asc' ? -1 : 1;
-                if (a[field] > b[field]) return direction === 'asc' ? 1 : -1;
+                let valA = a[field];
+                let valB = b[field];
+
+                // Handle nulls/undefined to ensure they don't break sorting
+                if (valA === null || valA === undefined) valA = '';
+                if (valB === null || valB === undefined) valB = '';
+
+                // Check if both are strings for case-insensitive sort
+                if (typeof valA === 'string' && typeof valB === 'string') {
+                    // Use localeCompare for robust string comparison (handles accents, case, etc.)
+                    const comparison = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
+                    return direction === 'asc' ? comparison : -comparison;
+                }
+
+                // Default comparison for numbers and other types
+                if (valA < valB) return direction === 'asc' ? -1 : 1;
+                if (valA > valB) return direction === 'asc' ? 1 : -1;
                 return 0;
             });
         }
@@ -1354,7 +1368,30 @@ class GKBSDynamicGrid {
             // Header Content
             const text = document.createElement('span');
             text.innerHTML = col.header;
+            // 💡 NEW: Click to Sort Logic
+            if (this.options.enableSorting) {
+                cell.style.cursor = 'pointer';
+                cell.onclick = (e) => {
+                    // Prevent sort if clicking resize handle or other interactive elements
+                    if (e.target.classList.contains('dg-col-resize-handle') ||
+                        e.target.classList.contains('dg-options-btn')) {
+                        return;
+                    }
+                    this.handleSort(col.field);
+                };
 
+                // 💡 NEW: Sort Indicator
+                if (this.state.currentSort && this.state.currentSort.field === col.field) {
+                    const arrow = document.createElement('span');
+                    arrow.style.marginLeft = '5px';
+                    arrow.style.fontSize = '0.8em';
+                    // Display arrow based on direction
+                    arrow.innerText = this.state.currentSort.direction === 'asc' ? '▲' : '▼';
+                    // Optional: Add color to highlight active sort
+                    // arrow.style.color = '#1890ff';
+                    text.appendChild(arrow);
+                }
+            }
             // --- NEW: Options Button (Three Dots) ---
             const optionsBtn = document.createElement('button');
             optionsBtn.innerText = '⋮'; // Vertical ellipsis

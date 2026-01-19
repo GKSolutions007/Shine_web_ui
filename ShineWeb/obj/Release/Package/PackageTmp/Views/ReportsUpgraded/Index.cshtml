@@ -751,6 +751,7 @@
     var Aurl = '@Session["APIurl"]';
     var CompanyName = '@Session["CompanyName"]';
     var RID = '@Session["RoleID"]';
+    var ItemsperPage =  parseInt('@Session["ItemsperPage"]', 10) < 0 ? 'All' :parseInt('@Session["ItemsperPage"]', 10)  || 10;
     var SelectTableID = 1;
     var tblReportSettings = $('#tblReportSettings').DataTable({
         "bFilter": false,
@@ -830,6 +831,7 @@
         if (lowerName == "outstanding report") return 'fa-file-invoice-dollar';
         if (lowerName == "analysis reports") return 'fa-chart-pie';
         if (lowerName == "master management") return 'fas fa-database';
+        if (lowerName == "favourite") return 'fa-regular fa-star';        
 
     }
     function createMenu(data) {
@@ -1018,7 +1020,7 @@
                         { "data": "ColumnID", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
                         { "data": "FormorReport", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
                         { "data": "ColumnName", "autoWidth": true, "visible": false, className: "dt-body-left" },//3
-                        { "data": "OriginalColumnName", "autoWidth": true, width: "15%", className: "dt-body-left" },//3                
+                        { "data": "OriginalColumnName", "autoWidth": true, width: "15%", className: "dt-body-left" },//3
                         {
                             className: "dt-body-left", width: "25%",
                             "mRender": function (data, type, value, meta) {
@@ -1378,7 +1380,7 @@ function setDate(FieldID,Type) {
         //}
         grid = new GKBSDynamicGrid('#Grid', columnsettings, data, {
             enablePagination: true,
-            pageSize: 10,
+            pageSize: ItemsperPage,
             height: nHeight,
             enableSearch: true,
             stickyToWindow: true,
@@ -1556,7 +1558,7 @@ function setDate(FieldID,Type) {
         var Reporthd = $("#MainHeading").text();
         Detailsgrid = new GKBSDynamicGrid('#DetailGrid', detailcolumnsettings, data, {
             enablePagination: true,
-            pageSize: 10,
+            pageSize: ItemsperPage,
             height: "300px",
             enableSearch: true,
             stickyToWindow: true,
@@ -1639,7 +1641,7 @@ function setDate(FieldID,Type) {
         console.log("data", data, "const columns", columns);
         grid = new GKBSDynamicGrid('#Grid', columnsettings, data, {
             enablePagination: true,
-            pageSize: 10,
+            pageSize: ItemsperPage,
             height: nHeight,
             enableSearch: true,
             stickyToWindow: true,
@@ -1777,7 +1779,7 @@ function setDate(FieldID,Type) {
             },
             onColumnResize: (colIndex, field, header, newWidth) => {
                 //alert(`Column Resized via Callback:\nIndex: ${colIndex}\nName: ${header}\nNew Width: ${newWidth}`);
-                //UpdateColumnWidth(FID, 1, 1, colIndex, header, newWidth);                
+                //UpdateColumnWidth(FID, 1, 1, colIndex, header, newWidth);
             },
         });
     }
@@ -2087,10 +2089,10 @@ function setDate(FieldID,Type) {
             var compdata = [];
             headerData.forEach(function (row) {
                 console.log("Header row data : ", row);
-               
+
                 getFooterAlldata(row);
             })
-            
+
             compdata.push(...arrAllFooterData);
             console.log("Compdata : ", compdata);
             // Get all footer data (all customer records)
@@ -2269,11 +2271,11 @@ function setDate(FieldID,Type) {
             var headerColumns = gridInstance.columns.filter(col =>
                 !col.specialColumn && col.visible && col.field
             );
-            
+
             // Get footer columns
             var footerColumns = detailcolumnsettings.filter(col => col.field);
-          
-            
+
+
             // Colors from gridui.js
             var METADATA_BG = "E0F2F1"; // Light Teal
             var HEADER_BG = "1A237E";   // Navy
@@ -2485,7 +2487,7 @@ function setDate(FieldID,Type) {
             success: function (data) {
                 var FooterData = eval(data);
                 footerrowdata.push(FooterData)
-                      
+
             }
         });
         return footerrowdata;

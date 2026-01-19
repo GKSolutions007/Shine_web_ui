@@ -82,7 +82,7 @@ namespace ShineWeb.Controllers
             Session["RetainDate"] = dtAppconfig.Rows[0]["RetainDate"].ToString();
             Session["BeatMandatoryinCustomer"] = dtAppconfig.Rows[0]["BeatMandatoryinCustomer"].ToString();
             Session["DraftAutoSaveTimeInterval"] = dtAppconfig.Rows[0]["DraftAutoSaveTimeInterval"].ToString();
-            
+            Session["HomePeriod"] = dtAppconfig.Rows[0]["HomePeriod"].ToString();
             Session["F_SD"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_SD"].ToString()).ToString("yyyy-MM-dd");//,dtCompReg.Rows[0]["F_SD"].ToString();
             Session["F_ED"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_ED"].ToString()).ToString("yyyy-MM-dd");//dtCompReg.Rows[0]["F_ED"].ToString();
             Session["CompanyCode"] = dtCompReg.Rows[0]["CompanyCode"].ToString();

@@ -31,8 +31,97 @@
     window.history.forward();
     function noBack() { window.history.forward(); }
 </script>
+<style>
+    /* Snackbar container */
+    .RepLoadersnackbar {
+        visibility: hidden; /* hidden by default */
+        min-width: 250px;
+        background-color: #333;
+        color: #fff;
+        text-align: left;
+        border-radius: 8px;
+        padding: 12px 20px;
+        position: fixed;
+        top: 50px; /* ⬅️ instead of bottom */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    }
 
+        /* Show animation */
+        .RepLoadersnackbar.show {
+            visibility: visible;
+            animation: slideDown 0.3s, fadeout 0.3s 3s;
+        }
+
+    /* Slide from top */
+    @@keyframes slideDown {
+        from {
+            top: 0;
+            opacity: 0;
+        }
+
+        to {
+            top: 20px;
+            opacity: 1;
+        }
+    }
+
+    @@keyframes fadeout {
+        from {
+            top: 20px;
+            opacity: 1;
+        }
+
+        to {
+            top: 0;
+            opacity: 0;
+        }
+    }
+
+    /* Spinner */
+    .Reploader {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #4caf50;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    ul li > .menu-name:hover {
+        font-weight: bold;
+        color: var(--report-menu-hover);
+    }
+</style>
 <body onload="noBack();" onpageshow="if (event.persisted) noBack()">
+    <div id="RepLoadersnackbarMap" class="RepLoadersnackbar">
+        <table>
+            <tr>
+                <td>
+                    <div class="Reploader"></div>
+                </td>
+                <td style="padding-left:10px;font-size:16px;">
+                    <span>Saving Data... Please wait</span>
+                </td>
+            </tr>
+        </table>
+    </div>
     <div class="row" style="margin-bottom:50px;">
         <h3 style="text-align:center;font-weight:bold;color:#0067c6;">Map Role</h3>
         <hr class="style14" />
@@ -345,6 +434,8 @@
             $("#btnSubmit").prop("disabled", true);
             getCheckedIDs();
             $('#divSaveMsg').html('');
+            let sb = document.getElementById("RepLoadersnackbarMap");
+            sb.classList.add("show");
             $.ajax({
                 //url: "@Url.Action("SaveMapUserDetails", "MapRole")",
                 url: Aurl + "maprole/savemaprole",
@@ -356,6 +447,7 @@
                     withCredentials: true
                 },
                 success: function (data) {
+                    sb.classList.remove("show");
                     $("#btnSubmit").prop("disabled", false);
                     $('#divSaveMsg').html('Saved Successfully');
                     showSuccessSnackbar("Saved Successfully");
@@ -369,6 +461,7 @@
                     }, 2000);
 
                 }, error: function (data) {
+                    sb.classList.remove("show");
                     $("#btnSubmit").prop("disabled", false);
                     if (data.status == "401") {
                         var msg = data.responseJSON.Message;
