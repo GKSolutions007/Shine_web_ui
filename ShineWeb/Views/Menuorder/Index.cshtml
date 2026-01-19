@@ -212,8 +212,17 @@
             <div class="col-sm-12 col-md-4 col-lg-4">
                 <div class="modern-card">
                     <div class="card-header-modern">
-                        <i class="fa-solid fa-layer-group"></i> Modules
+                        <i class="fa-solid fa-layer-group"></i> Types & Modules
                     </div>
+                    <div>
+                        <label for="ddlTypesmodules">Select Module Type:</label>
+                        <select id="ddlTypesmodules" name="Typesmodules" class="form-control">
+                            <option value="1" selected>Menu</option>
+                            <option value="2">Reports</option>
+                            <option value="3">FinancialReports</option>
+                        </select>
+                    </div>
+                    <br />
                     <div class="form-floating-modern">
                         <label class="labelup">Module</label>
                         <select id="cmbModule" class="form-control form-control-modern"></select>
@@ -239,11 +248,12 @@
                     <div class="table-responsive">
                         <table class="table table-modern" id="tblMasterData" width="100%">
                             <thead>
-                                <tr class="trclrforcolheader">
-                                    <th style="width:10%;">#</th>
+                                <tr>
+                                    <th style="width:10%;"  class="trclrforcolheader">#</th>
                                     <th style="width:0%; display:none;">ID</th>
-                                    <th style="width:60%;">Menu Name</th>
-                                    <th style="width:30%; text-align:center;">Display Order</th>
+                                    <th style="width:60%;" class="trclrforcolheader">Menu Name</th>
+                                    <th style="width:30%; text-align:center;" class="trclrforcolheader">Display Order</th>
+                                    <th style="width: 60%; text-align: center;" class="trclrforcolheader">Favourite</th>
                                 </tr>
                             </thead>
                         </table>
@@ -280,12 +290,24 @@
     var FID = $("#txtFormID").val();
     GetData(1,0);
     var arrData = [];
-    function GetData(nMode,nMenuID) {
+    $("#ddlTypesmodules").on("change", function () {
+        if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+            $('#tblMasterData').DataTable().clear().destroy();
+        }
+
+        // Reload the module dropdown
+        GetData(1, 0);
+    });
+
+
+
+    function GetData(nMode, nMenuID) {
+        var selectedType = $("#ddlTypesmodules").val();
         $.ajax({
             url: Aurl + "menuorder/get",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, Name: nMenuID },
+            data: { Mode: nMode, Type: selectedType || 0, Name: nMenuID },
             xhrFields: {
                 withCredentials: true
             },
@@ -301,6 +323,7 @@
                             value: items.ID,
                             text: items.Name,
                         }));
+
                     });
                 }
                 else if (nMode == 2) {
@@ -341,7 +364,15 @@
                                     "mRender": function (data, type, value) {
                                         return '<input type="number" min="1" class="form-control form-control-modern order-input" value="' + value.Value + '" onkeypress="return isNumberKey(event)">';
                                     }
-                                }                                
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value) {
+                                        var checked = value.Favourite == 1 ? "checked" : "";
+                                        return '<input type="checkbox" class="favorite-checkbox" ' + checked + '>';
+                                    }
+                                }
+
                             ],
                             language: {
                                 search: "_INPUT_",
@@ -436,17 +467,22 @@
         $(".clrdiv").html("");
         var listmenu = [];
         $("#tblMasterData tbody tr").each(function () {
-            var nOrder = 0;
-            rowdata = Table.row($(this)).data();
-            var nMenuID = rowdata.ID;//[1];
-            var valhasvalue = true;
-            $(this).find("input").each(function (index) {
-                var lst = {
-                    "MenuID": nMenuID,
-                    "Order": $(this).val()
-                }
-                listmenu.push(lst);
-            });
+
+            var rowdata = Table.row($(this)).data();
+            var nMenuID = rowdata.ID;
+
+            var favChecked = $(this).find(".favorite-checkbox").is(":checked") ? 1 : 0;
+
+            var orderVal = $(this).find(".order-input").val();
+            orderVal = orderVal ? parseInt(orderVal, 10) : 0;
+
+            var lst = {
+                MenuID: nMenuID,
+                Order: orderVal,
+                Favourite: favChecked
+            };
+
+            listmenu.push(lst);
         });
         var lstMaster = {
             "Mode": 3,
