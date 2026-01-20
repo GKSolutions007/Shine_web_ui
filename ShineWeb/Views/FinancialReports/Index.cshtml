@@ -1,7 +1,7 @@
 ﻿@model ShineWeb.Models.SingleMasterModel
 @{
     ViewBag.Title = ViewData["FormName"];
-    Layout = "~/Views/Shared/_LayoutReport.cshtml";
+    Layout = "~/Views/Shared/_LayoutFinancialReport.cshtml";
 }
 <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />
@@ -22,6 +22,7 @@
 
 @*<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>*@
 <script src="~/Scripts/xlsx.bundle.js"></script>
+
 <style>
 
     .each {
@@ -785,7 +786,7 @@
     getAllReports();
     function getAllReports() {
         $.ajax({
-            url: Aurl + "Reportpermissions",
+            url: Aurl + "FinancialReportpermissions",
             type: 'get',
             contentType: 'json',
             data: { UID: UID },
@@ -796,8 +797,8 @@
             success: function (data) {
                 var repdata = JSON.parse(data);
                 console.log(repdata);
-                var ParentMenus = repdata.ParentRepMenu;
-                var ChildMenus = repdata.UserRepMenus;
+                var ParentMenus = repdata.ParentFinRepMenu;
+                var ChildMenus = repdata.UserFinRepMenus;
                 //$.each(ParentMenus, function (i, items) {
                 //    var childs = ChildMenus.filter(ch => ch.ParentId == items.ReportID)
                 //    console.log("childs ", childs);
@@ -822,17 +823,12 @@
     }
     function getMenuIcon(name, hasChildren) {
         if (!name) return hasChildren ? 'fa-folder' : 'fa-file-lines';
-
         const lowerName = name.toLowerCase();
-        if (lowerName == "sales reports") return 'fa-cart-shopping';
-        if (lowerName == "purchase reports") return 'fas fa-shopping-bag';
-        if (lowerName == "inventory reports") return 'fa-warehouse';
-        if (lowerName == "accounts reports") return 'fa-calculator';
-        if (lowerName == "outstanding report") return 'fa-file-invoice-dollar';
-        if (lowerName == "analysis reports") return 'fa-chart-pie';
-        if (lowerName == "master management") return 'fas fa-database';
-        if (lowerName == "favourite") return 'fa-regular fa-star';        
-
+        if (lowerName == "accounting reports") return 'fa-calculator';
+        if (lowerName == "financial report") return 'fa-solid fa-briefcase';
+        if (lowerName == "outstanding") return 'fa-solid fa-file-invoice-dollar';
+        if (lowerName == "transactions") return 'fa-solid fa-file-invoice';
+        if (lowerName == "favourite") return 'fa-regular fa-star';
     }
     function createMenu(data) {
         const ul = document.createElement('ul');
@@ -937,7 +933,7 @@
             url: Aurl + "columnsettings/getcolumnsettings",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 1 },
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 2 },
             xhrFields: {
                 withCredentials: true
             },
@@ -995,7 +991,7 @@
             url: Aurl + "columnsettings/getcolumnsettings",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, FormID: nReportID, TableID: nTableID, FormorReport: 1 },
+            data: { Mode: nMode, FormID: nReportID, TableID: nTableID, FormorReport: 2 },
             xhrFields: {
                 withCredentials: true
             },
@@ -1129,7 +1125,7 @@
     function GetData(nMode) {
         if (FID != 0) {
             $.ajax({
-                url: Aurl + "reportparameters/get",
+                url: Aurl + "financialreportparameters/get",
                 type: 'get',
                 contentType: 'json',
                 data: { Mode: nMode, ReportID: FID },
@@ -1290,7 +1286,7 @@ function setDate(FieldID,Type) {
                 console.log("Field Type : ", items.firstChild);
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
-                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
+                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : $("#" + input).val();
                 if (s == null) {
                     //alert("No Value");
                 }
@@ -1330,7 +1326,7 @@ function setDate(FieldID,Type) {
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
                 var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : $("#" + input).val();
                 insert = true;
             }
             if (insert) {
@@ -1344,7 +1340,7 @@ function setDate(FieldID,Type) {
         let sb = document.getElementById("RepLoadersnackbar");
         sb.classList.add("show");
         $.ajax({
-            url: Aurl + "reportgenerate/get",
+            url: Aurl + "financialreportgenerate/get",
             type: 'post',
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify(listParams),
@@ -1372,7 +1368,7 @@ function setDate(FieldID,Type) {
             return; // No data to display
         }
         var Reporthd = $("#MainHeading").text();
-        var nHeight = Frames == 1 ? "400px" : "200px";
+        var nHeight = Frames == 1 ? "425px" : "225px";
         console.log("columnsettings ", columnsettings);
         var currentSearchValue = '';
         //if (grid) {
@@ -1441,6 +1437,7 @@ function setDate(FieldID,Type) {
                         showPrintOptionsModal(gridInstance);
                     }
                 },
+
             ],
             onCellClick: (rowData, fieldName, cellValue, column) => {
                 if (Frames == 2) {
@@ -1460,7 +1457,7 @@ function setDate(FieldID,Type) {
                             if (i % 2 == 1) {
                                 var input = items.firstChild.id;
                                 var inputtype = items.firstChild.type;
-                                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
+                                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : $("#" + input).val();
                                 if (s == null) {
                                     //alert("No Value");
                                 }
@@ -1508,29 +1505,26 @@ function setDate(FieldID,Type) {
             customCellRenderer: (el, col, rowData) => {
 
             },
-            onCellDoubleClick: (rowData, fieldName, cellValue, column) => {                
+            onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
                 // Double-click handler - shows JSON format
                 let message = `Double-Clicked Cell:\n`;
                 message += `• Field: ${fieldName}\n`;
                 message += `• Value: ${cellValue}\n\n`;
                 message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
                 //alert(message);
-                navigator.clipboard.writeText(cellValue);
-
-                showSuccessSnackbar("Value Copied.");
+                
+                var dTransID = rowData.DocPrefix;
+                var DocID = rowData.DocID;
+                QuickAccessDocument(dTransID, DocID);
+                //navigator.clipboard.writeText(cellValue);
+                //showSuccessSnackbar("Value Copied.");
             },
             onColumnResize: (colIndex, field, header, newWidth) => {
                 //alert(`Column Resized via Callback:\nIndex: ${colIndex}\nName: ${header}\nNew Width: ${newWidth}`);
-                UpdateColumnWidth(FID, 1, 1, colIndex, field, newWidth);
+                UpdateColumnWidth(FID, 1, 2, colIndex, field, newWidth);
             },
         });
     }
-    
-    $("#Grid").on('onCellDoubleClick','div',function (rowData, fieldName, cellValue, column) {
-        navigator.clipboard.writeText(cellValue);
-
-        showSuccessSnackbar("Saperate Value Copied.");
-    });
     function bindDetailDataTable(data, filterdata) {
         if (data.length === 0) {
             return; // No data to display
@@ -1549,7 +1543,7 @@ function setDate(FieldID,Type) {
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
                 var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : $("#" + input).val();
                 insert = true;
             }
             if (insert) {
@@ -1610,7 +1604,7 @@ function setDate(FieldID,Type) {
             },
             onColumnResize: (colIndex, field, header, newWidth) => {
                 //alert(`Column Resized via Callback:\nIndex: ${colIndex}\nName: ${header}\nNew Width: ${newWidth}`);
-                UpdateColumnWidth(FID, 2, 1, colIndex, field, newWidth);
+                UpdateColumnWidth(FID, 2, 2, colIndex, field, newWidth);
             },
         });
     }
@@ -1726,7 +1720,7 @@ function setDate(FieldID,Type) {
                             if (i % 2 == 1) {
                                 var input = items.firstChild.id;
                                 var inputtype = items.firstChild.type;
-                                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
+                                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : $("#" + input).val();
                                 if (s == null) {
                                     //alert("No Value");
                                 }
@@ -1842,7 +1836,7 @@ function setDate(FieldID,Type) {
                 "FormID": rowdata.FormID,
                 "TableID": rowdata.TableID,
                 "ColumnID": rowdata.ColumnID,
-                "FormorReport": 1,
+                "FormorReport": 2,
                 "ColumnName": rowdata.ColumnName,
                 "DisplayColumnName": aDisplayName,
                 "Width": aWidth,
@@ -1934,7 +1928,7 @@ function setDate(FieldID,Type) {
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
                 var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 'True' : 'False' : inputtype == "select-one" ? ifselval : $("#" + input).val();
                 insert = true;
             }
             if (insert) {
@@ -2514,6 +2508,95 @@ function setDate(FieldID,Type) {
             }, error: function (data) {
                 console.log(data)
                 //showErrorSnackbar("Error when Width Update");
+            }
+        });
+    }
+    function QuickAccessDocument(dTransID, DocID) {
+        $.ajax({
+            url: Aurl + "quicaccessdocument/validate",
+            type: 'get',
+            contentType: 'json',
+            data: { TransID: dTransID, strDocID: DocID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == "0") {
+                        if (dTransID == 1) {
+                            window.open(
+                                'PurchaseBill?name=Vd%2B%2BrU8QQpt1lN1iIJW1a%2FK0VGZeYK0pqK2Sc7MnuHQ%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 2) {
+                            window.open(
+                                'AutomaticIndent?name=w2ZCPJkGFF0AoGvRO1%2BMNrYg%2FTlGSP7RFKOTKnKk7TZy%2BjK6iu0iUfEo8qMSw%2BYi&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 3) {
+                            window.open(
+                                'PurchaseOrder?name=Vd%2B%2BrU8QQpt1lN1iIJW1a5vMQ8aDbizObKKScceojgs%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+
+
+                        if (dTransID == 12) {
+                            window.open(
+                                'PurchaseReturn?name=Vd%2B%2BrU8QQpt1lN1iIJW1a4zfOkO06OcdMkE6UiXKDWE%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 13) {
+                            window.open(
+                                'InventoryAdjustment?name=i3DMZtc%2FTn0UH9DhV75tUuopguddgZuQmQzrgq7DF2pb%2BgzoOuIpBbtZod7IAoud&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 14) {
+                            window.open(
+                                'Quotation?name=BTQgLv%2BebY48FN9pEezgnyVrVumuVVzPVnoCFOjqIsU%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 15) {
+                            window.open(
+                                'Invoice?name=KUGYxS%2BKhoQB3%2FYrx1I0cQ%3D%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 16) {
+                            window.open(
+                                'SalesReturn?name=6%2B9sxOBkg1PjlBjpubNIcRsbDdS%2F%2BKzbighA08XDWD0%3D&strFormID=EvsdnH%2BUlJpTVhFYh%2Bi13g%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        //if (dTransID == 17) {
+                        //    window.open(
+                        //        'SalesReturn?name=cPfu941CFnux5sU80vV6w6mcrcNWP7Vs7hhrLOCLYgo%3D&strFormID=WHYf4alVgNJY%2FX917pnZ3w%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                        //        '_blank'
+                        //    );
+                        //}
+                        if (dTransID == 19) {
+                            window.open(
+                                'CollectionPayment?name=V5BIclDO7YSWXMUYe9qSUbB92jlocOM14lUepH77xc4%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 18) {
+                            window.open(
+                                'CollectionPayment?name=w3tjkQAA1vr%2BSnaRJEKUVw%3D%3D&strFormID=IXL1NOfIxouMMmMKvHxKbA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+
+
+                    } else {
+                        showErrorSnackbar("Doc ID not matched. Enter correct Doc ID");
+                    }
+                });
             }
         });
     }

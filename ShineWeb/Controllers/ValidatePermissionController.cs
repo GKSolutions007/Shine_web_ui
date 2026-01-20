@@ -12,7 +12,8 @@ namespace ShineWeb.Controllers
 {
     public class ValidatePermissionController : Controller
     {
-        DataTable dtRes,dtParent, dtPermission, dtReportParent, dtReportPermission, dtAppconfig, dtCompReg = new DataTable();
+        DataTable dtRes,dtParent, dtPermission, dtReportParent, dtReportPermission, dtAppconfig, dtFinancialReportParent,
+            dtFinancialReportPermission,dtCompReg = new DataTable();
         // GET: ValidatePermission
         clsBusinessLayer bl = new clsBusinessLayer();
         public ActionResult Index(string ID)
@@ -38,6 +39,8 @@ namespace ShineWeb.Controllers
                     dtPermission = dtResult.Tables[4];
                     dtReportParent = dtResult.Tables[5];
                     dtReportPermission = dtResult.Tables[6];
+                    dtFinancialReportParent = dtResult.Tables[7];
+                    dtFinancialReportPermission = dtResult.Tables[8];
                 }
             }
             //DataTable dtRes = bl.BL_ExecuteParamSP("uspManageUsers", 4, ID);            
@@ -83,6 +86,7 @@ namespace ShineWeb.Controllers
             Session["BeatMandatoryinCustomer"] = dtAppconfig.Rows[0]["BeatMandatoryinCustomer"].ToString();
             Session["DraftAutoSaveTimeInterval"] = dtAppconfig.Rows[0]["DraftAutoSaveTimeInterval"].ToString();
             Session["HomePeriod"] = dtAppconfig.Rows[0]["HomePeriod"].ToString();
+            Session["AutoRefresh"] = dtAppconfig.Rows[0]["AutoRefresh"].ToString();
             Session["F_SD"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_SD"].ToString()).ToString("yyyy-MM-dd");//,dtCompReg.Rows[0]["F_SD"].ToString();
             Session["F_ED"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_ED"].ToString()).ToString("yyyy-MM-dd");//dtCompReg.Rows[0]["F_ED"].ToString();
             Session["CompanyCode"] = dtCompReg.Rows[0]["CompanyCode"].ToString();
@@ -92,6 +96,8 @@ namespace ShineWeb.Controllers
             Session["dtPermission"] = dtPermission;
             Session["dtReportParent"] = dtReportParent;
             Session["dtReportPermission"] = dtReportPermission;
+            Session["dtFinancialReportParent"] = dtFinancialReportParent;
+            Session["dtFinancialReportPermission"] = dtFinancialReportPermission;
             Session["dtCompany"] = dtCompReg;
             return RedirectToAction("Index", "Home");
         }
