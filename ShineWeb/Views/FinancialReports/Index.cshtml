@@ -1151,15 +1151,16 @@
                                 var ParamType = items.ParameterType;
                                 var ParVal = "";
                                 var defval = items.AutolistName == "1" ? "checked" : "";
+                                var IsMand = items.IsMandatory 
                                 var isoddoreven = i % 2 == 0 ? "odd" : "even";
                                 if (ParamType == "Autolist") {
-                                    ParVal = '<input type="text" class="form-control" name=' + items.AutolistName + ' id=' + (items.AutolistName + i) + ' />';
+                                    ParVal = '<input isMandatory =' + IsMand +' type="text" class="form-control" name=' + items.AutolistName + ' id=' + (items.AutolistName + i) + ' />';
                                 }
                                 else if (ParamType == "Dropdown") {
                                     ParVal = '<select class="form-control" name=' + items.AutolistName + ' id=Combo' + (i) + '></select>'
                                 }
                                 else if (ParamType == "Date") {
-                                    ParVal = '<input type="date" class="form-control" name=' + items.AutolistName + ' id="dtp' + (items.AutolistName + i) + '" />';
+                                    ParVal = '<input isMandatory =' + IsMand +' type="date" class="form-control" name=' + items.AutolistName + ' id="dtp' + (items.AutolistName + i) + '" />';
                                     var Datetype = items.AutolistName == "CD" ? 0 : items.AutolistName == "MF" ? 8 : 0;
                                     setDate("dtp"+(items.AutolistName + i), Datetype);
                                 }
@@ -1167,10 +1168,10 @@
                                    ParVal = '<input type="checkbox" name=' + items.AutolistName + ' id=chk' + (items.AutolistName + i) + ' ' + defval + ' />';
                                 }
                                 else if (ParamType == "Number") {
-                                   ParVal = '<input type="number" class="form-control" name=' + items.AutolistName + ' id=chk' + (items.AutolistName + i) + ' value =' + items.AutolistName + ' />';
+                                    ParVal = '<input isMandatory =' + IsMand +' type="number" class="form-control" name=' + items.AutolistName + ' id=chk' + (items.AutolistName + i) + ' value =' + items.AutolistName + ' />';
                                 }
                                 else if (ParamType == "Text") {
-                                    ParVal = '<input type="text" class="form-control" name="text' + items.AutolistName + '" id="txt' + (items.AutolistName + i) + '" value ="' + items.AutolistName + '" />';
+                                    ParVal = '<input isMandatory =' + IsMand +' type="text" class="form-control" name="text' + items.AutolistName + '" id="txt' + (items.AutolistName + i) + '" value ="' + items.AutolistName + '" />';
                                 }
                                 Table.row.add([
                                     '<label id="lblparamName' + i + '"><b>' + items.ParameterName + '</b></label>',
@@ -1224,7 +1225,7 @@ function setDate(FieldID,Type) {
             var id = items.id
             var arrData = [];
             $.ajax({
-                url: Aurl + "reportparameters/get",
+                url: Aurl + "financialreportparameters/get",
                 type: 'get',
                 contentType: 'json',
                 data: { Mode: 2, ReportID: FID, ALName: strALName },
@@ -1277,91 +1278,114 @@ function setDate(FieldID,Type) {
             });
         });
     }
+    function CheckMandatory() {
+        var IsValid = true;
+        $('#tblFilterData tr td input').each(function (i, items) {
+            var FieldType = this.type;
+            var FieldID = this.id;
+            var FieldValue = this.value;
+            
+            $(this).css("border-color", "");
+            if (FieldType == "text" || FieldType == "number" || FieldType == "date") {
+                var IsMand = document.getElementById(this.id).getAttribute('ismandatory');
+                if (IsMand == 1 && FieldValue == "") {
+                    $(this).css("border-color", "red");
+                    IsValid = false;
+                    showErrorSnackbar("Mandatory fields should not empty");
+                }
+            }
+            //console.log("Input Fields", this, "Type : ", this.type, "ID : ", this.id, "IsMand : ", );
+        });
+        return IsValid;
+    }
     var arrParams = [], ParamIndex = 1;
 
     $('#btnPopupGenerate,#btnGenerate').click(function (e) {
-        arrParams = [], ParamIndex = 1;
-        $('#tblFilterData tr td').each(function (i, items) {
-            if (i % 2 == 1) {
-                console.log("Field Type : ", items.firstChild);
-                var input = items.firstChild.id;
-                var inputtype = items.firstChild.type;
-                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : $("#" + input).val();
-                if (s == null) {
-                    //alert("No Value");
-                }
-                else
-                {
-                    //alert("Values " + s);
-                    var strpv = "Param" + ParamIndex;
-                    var PV = {
-                        "Param1": s
-                    }
-                    arrParams.push(PV);
-                    ParamIndex++;
-                }
-            }
-        });
-        GenerateData();
-    });
-    function GenerateData() {
-        $("#Grid").html("");
-        $("#DetailGrid").html("");
-        var listParams = {
-            "ReportID": FID,
-            "ProcedureName": arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
-            "lstvFilters": arrParams
-        };
-        var Excelfilter = [];
-        var Col2Data = "";
-        $('#tblFilterData tr td').each(function (i, items) {
-            var insert = false;
-            if (i % 2 == 0) {
-                var lbl = items.firstChild.id;
-                Col1Data = $("#" + lbl).text();
-                //console.log("Col 1", Col2Data);
-                insert = false;
-            }
-            else if (i % 2 == 1) {
-                var input = items.firstChild.id;
-                var inputtype = items.firstChild.type;
-                var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : $("#" + input).val();
-                insert = true;
-            }
-            if (insert) {
-                var lst = {
-                    FilterName: Col1Data,
-                    Value: Col2Data
-                };
-                Excelfilter.push(lst);
-            }
-        });
-        let sb = document.getElementById("RepLoadersnackbar");
-        sb.classList.add("show");
-        $.ajax({
-            url: Aurl + "financialreportgenerate/get",
-            type: 'post',
-            contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(listParams),
-            xhrFields: {
-                withCredentials: true
-            },
-            success: function (data) {
-                sb.classList.remove("show");
-                if (data.length > 0) {
-                    if (IsDynamicReport == 1) {//FID == 14
-                        bindDataTableforDynamicReport(eval(data), Excelfilter);
+        if (CheckMandatory()) {
+            arrParams = [], ParamIndex = 1;
+            $('#tblFilterData tr td').each(function (i, items) {
+                if (i % 2 == 1) {
+                    console.log("Field Type : ", items.firstChild);
+                    var input = items.firstChild.id;
+                    var inputtype = items.firstChild.type;
+                    var s = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : $("#" + input).val();
+                    if (s == null) {
+                        //alert("No Value");
                     }
                     else {
-                        bindDataTable(eval(data), Excelfilter);
+                        //alert("Values " + s);
+                        var strpv = "Param" + ParamIndex;
+                        var PV = {
+                            "Param1": s
+                        }
+                        arrParams.push(PV);
+                        ParamIndex++;
                     }
                 }
-                else {
-                    showErrorSnackbar("No data found");
+            });
+            GenerateData();
+        }
+    });
+    function GenerateData() {
+        
+            $("#Grid").html("");
+            $("#DetailGrid").html("");
+            var listParams = {
+                "ReportID": FID,
+                "ProcedureName": arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
+                "lstvFilters": arrParams
+            };
+            var Excelfilter = [];
+            var Col2Data = "";
+            $('#tblFilterData tr td').each(function (i, items) {
+                var insert = false;
+                if (i % 2 == 0) {
+                    var lbl = items.firstChild.id;
+                    Col1Data = $("#" + lbl).text();
+                    //console.log("Col 1", Col2Data);
+                    insert = false;
                 }
-            }
-        });
+                else if (i % 2 == 1) {
+                    var input = items.firstChild.id;
+                    var inputtype = items.firstChild.type;
+                    var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
+                    Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                    insert = true;
+                }
+                if (insert) {
+                    var lst = {
+                        FilterName: Col1Data,
+                        Value: Col2Data
+                    };
+                    Excelfilter.push(lst);
+                }
+            });
+            let sb = document.getElementById("RepLoadersnackbar");
+            sb.classList.add("show");
+            $.ajax({
+                url: Aurl + "financialreportgenerate/get",
+                type: 'post',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(listParams),
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    sb.classList.remove("show");
+                    if (data.length > 0) {
+                        if (IsDynamicReport == 1) {//FID == 14
+                            bindDataTableforDynamicReport(eval(data), Excelfilter);
+                        }
+                        else {
+                            bindDataTable(eval(data), Excelfilter);
+                        }
+                    }
+                    else {
+                        showErrorSnackbar("No data found");
+                    }
+                }
+            });
+        
     }
     function bindDataTable(data, filterdata) {
         if (data.length === 0) {
@@ -1503,19 +1527,34 @@ function setDate(FieldID,Type) {
                 }
             },
             customCellRenderer: (el, col, rowData) => {
-
+                //if (col.field === 'Account Name') {
+                //    const val = rowData[col.field];
+                //    console.log("Active : ", val);
+                //    if (val === 'Total') {
+                //        el.innerHTML = `<div class="dg-status-badge dg-status-active"><span class="dg-status-circle"></span> Total</div>`;
+                //    } 
+                //}
+            },
+            rowStyler: (rowData) => {                
+                if (rowData['Account Name'] === 'Total') {
+                    return 'row-total';
+                }
+                else if (rowData['Account Name'] === 'Opening Balance') {
+                    return 'row-openbalance';
+                }
+                else if (rowData['Account Name'] === 'Closing Balance') {
+                    return 'row-closebalance';
+                }
+                // You can add more conditions here
+                // Example: if (rowData['Status'] === 'Cancelled') return 'row-cancelled';
+                return null; // No special styling
             },
             onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                // Double-click handler - shows JSON format
-                let message = `Double-Clicked Cell:\n`;
-                message += `• Field: ${fieldName}\n`;
-                message += `• Value: ${cellValue}\n\n`;
-                message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
-                //alert(message);
                 
                 var dTransID = rowData.DocPrefix;
                 var DocID = rowData.DocID;
-                QuickAccessDocument(dTransID, DocID);
+                if (DocID != "" && dTransID > 0)
+                    QuickAccessDocument(dTransID, DocID);
                 //navigator.clipboard.writeText(cellValue);
                 //showSuccessSnackbar("Value Copied.");
             },
@@ -2541,8 +2580,54 @@ function setDate(FieldID,Type) {
                                 '_blank'
                             );
                         }
-
-
+                        if (dTransID == 4) {
+                            window.open(
+                                'CreditDebitnote?name=nBxUn%2FtpXKqXVndiW9mojOigG9qCNPC9PrJE0uE0x%2FI%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 5) {
+                            window.open(
+                                'CreditDebitnote?name=MKxJsHy9h07aqMpiVzgwadc8buUGPTNEEd4sx8%2BnI7Q%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 6) {
+                            window.open(
+                                'PayableReceivable?name=dpntkBuON0CBaPci%2F0pcMiDLtIuObkSLdZqyRGdFwI0%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 7) {
+                            window.open(
+                                'PayableReceivable?name=9j780Yb8yqN6RZOxup%2FJ22C89VGOWPP51vwcuj6UAelypRfEnWRXac9RzklPJU96&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 8) {//contra
+                            window.open(
+                                'Contra?name=s6yomdGRelZM7YQpcYKfqg%3D%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 9) {//Jornal Entry
+                            window.open(
+                                'JournalEntry?name=ASUn1J4tDaquH75nFzQBjN4kEweQF1%2F1B3gN6DHdqFo%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 10) {//Other Collection
+                            window.open(
+                                'OtherPayColl?name=O%2FfVkbje7R%2BD8p9NBxz1HxT%2FSk%2BB5tAUitpVTCaJQLk56AjICa8CqnVOuSpGPRL4&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
+                        if (dTransID == 11) {//Other Payment
+                            window.open(
+                                'OtherPayColl?name=LnEMhiZHyFGlUZoVFpuf9jIXtZfsF9os4RffgFHsL6s%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
                         if (dTransID == 12) {
                             window.open(
                                 'PurchaseReturn?name=Vd%2B%2BrU8QQpt1lN1iIJW1a4zfOkO06OcdMkE6UiXKDWE%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
@@ -2591,7 +2676,12 @@ function setDate(FieldID,Type) {
                                 '_blank'
                             );
                         }
-
+                        if (dTransID == 22) {//Inventory Conversion                            
+                            window.open(
+                                'InventoryConversion?name=i3DMZtc%2FTn0UH9DhV75tUuHjdtmqgq5lQj0C4yiivAKRctLDENVNUH%2FhBbeSFLKa&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                                '_blank'
+                            );
+                        }
 
                     } else {
                         showErrorSnackbar("Doc ID not matched. Enter correct Doc ID");
