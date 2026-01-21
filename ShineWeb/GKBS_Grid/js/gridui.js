@@ -1381,6 +1381,20 @@ class GKBSDynamicGrid {
             rowEl.className = 'dg-row';
             rowEl.style.minWidth = totalMinWidth + 'px';
             rowEl.setAttribute('data-grid-id', row._gridId.toString());
+            // 💡 NEW: Apply custom row styling if rowStyler callback is provided
+            if (this.options.rowStyler && typeof this.options.rowStyler === 'function') {
+                const styleResult = this.options.rowStyler(row);
+                if (styleResult) {
+                    // If styleResult is a string, assume it's a class name
+                    if (typeof styleResult === 'string') {
+                        rowEl.classList.add(styleResult);
+                    }
+                    // If styleResult is an object, apply styles directly
+                    else if (typeof styleResult === 'object') {
+                        Object.assign(rowEl.style, styleResult);
+                    }
+                }
+            }
             // --- NEW: Selection Checkbox Cell ---
             const selectCell = document.createElement('div');
             selectCell.className = 'dg-cell';
