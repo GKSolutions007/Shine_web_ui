@@ -7,6 +7,7 @@
 <link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
 <link rel="stylesheet" href="~/Content/jquery-ui.css">
 <link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />
 
@@ -14,8 +15,9 @@
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="~/Scripts/bootstrap-typeahead.min.js"></script>
-<script src="~/Scripts/jquery.dataTables.min.js"></script>
-<script src="~/Scripts/dataTables.bootstrap.min.js"></script>
+@*<script src="~/Scripts/jquery.dataTables.min.js"></script>
+<script src="~/Scripts/dataTables.bootstrap.min.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_GRID_2.0/js/gridui.js"></script>
@@ -23,7 +25,13 @@
 @*<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>*@
 <script src="~/Scripts/xlsx.bundle.js"></script>
 <style>
-
+    .modal-body {
+        padding: 0px 20px 10px 20px !important;
+    }
+   
+    table.dataTable > tbody > tr > th, table.dataTable > tbody > tr > td {
+         padding: 1px 2px !important; 
+    }
     .each {
         border-bottom: 1px solid #555 !important;
         padding: 3px 0 !important;
@@ -666,14 +674,14 @@
                     <div id="dvAssign" style="width:100%;padding-bottom:7px">
                         <table class="table table-bordered row-border order-column" id="tblReportSettings" style="width:100%">
                             <thead>
-                                <tr class="trclrforcolheader">
+                                <tr class="trclrforcolheader" style="font-size:10px;">
                                     <th style="width:0%">ReportID</th>
                                     <th style="width:0%">TableID</th>
                                     <th style="width:0%">ColumnID</th>
                                     <th style="width:0%">FormorReport</th>
                                     <th style="width:25%">Column Name</th>
-                                    <th style="width:25%">Original Column Name</th>
-                                    <th style="width:30%">Display Column Name</th>
+                                    <th style="width:25%">Original Name</th>
+                                    <th style="width:30%">Display Name</th>
                                     <th style="width:9%">Width</th>
                                     <th style="width:12%">Visible</th>
                                     <th style="width:12%">Alignment</th>
@@ -683,8 +691,23 @@
                                     <th style="width:12%">Average</th>
                                     <th style="width:12%">Column Menu</th>
                                     <th style="width:12%">Show Column Option</th>
+                                    <th style="width:12%">Print</th>
+                                    <th style="width:12%">Print Name</th>
+                                    <th style="width:12%">Print Width</th>
                                 </tr>
                             </thead>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="17">
+                                    </th>
+                                    <th align="right">
+                                        Total Print Width :
+                                    </th>
+                                    <th align="right">
+                                        <label id="lblPrintWidth"></label>
+                                    </th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -741,6 +764,44 @@
             <div class="export-modal-footer">
                 <button class="export-btn export-btn-primary" onclick="handleExport()">Export</button>
                 <button class="export-btn export-btn-secondary" onclick="closeExportModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Print Options Modal -->
+    <div id="printOptionsModal" class="export-modal">
+        <div class="export-modal-content">
+            <div class="export-modal-header">
+                <h3>Print Options</h3>
+                <span class="export-modal-close" onclick="closePrintModal()">&times;</span>
+            </div>
+            <div class="export-modal-body">
+                <div class="export-option" id="rdoPrintHeaderonly">
+                    <label>
+                        <input type="radio" name="printType" value="header" checked>
+                        <span class="radio-label">Header</span>
+                        <small>Print header grid data with filter information</small>
+                    </label>
+                </div>
+                <div class="export-option" id="rdoPrintFooteronly">
+                    <label>
+                        <input type="radio" name="printType" value="footer">
+                        <span class="radio-label">Footer</span>
+                        <small>Print footer grid data with filter information</small>
+                    </label>
+                </div>
+                <div class="export-option" id="rdoPrintHeaderFooterCombined">
+                    <label>
+                        <input type="radio" name="printType" value="combined">
+                        <span class="radio-label">Header & Footer (Combined)</span>
+                        <small>Print both header and footer data combined</small>
+                    </label>
+                </div>
+            </div>
+            <div class="export-modal-footer">
+                <button class="export-btn export-btn-primary" onclick="handlePrint()">Print</button>
+                <button class="export-btn export-btn-secondary" onclick="closePrintModal()">Close</button>
             </div>
         </div>
     </div>
@@ -1020,28 +1081,31 @@
                         { "data": "ColumnID", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
                         { "data": "FormorReport", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
                         { "data": "ColumnName", "autoWidth": true, "visible": false, className: "dt-body-left" },//3
-                        { "data": "OriginalColumnName", "autoWidth": true, width: "15%", className: "dt-body-left" },//3
+                        { "data": "OriginalColumnName", "autoWidth": true, width: "10%", className: "dt-body-left" },//3
                         {
-                            className: "dt-body-left", width: "25%",
+                            className: "dt-body-left", width: "20%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 return '<input type="text" value="' + value.DisplayColumnName + '" name ="DisplayColumnName" class="form-control" id="txtDisplayColumnName' + rowIndex + '"/>';
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%",
+                            className: "dt-body-left", width: "6%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 return '<input type="number" value="' + value.Width + '" name ="Width" class="form-control" id="txtWidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%",
+                            className: "dt-body-center", width: "5%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.Visible == '0' ? 'selected' : '';
                                 var isTrueSelect = value.Visible == '1' ? 'selected' : '';
-                                var field = "<select name='Visible' class='form-control' id='cmbVisible" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                //var field = "<select name='Visible' class='form-control' id='cmbVisible" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                var ischk = value.Visible == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="Visible" ' + ischk + ' id="cmbVisible' + rowIndex + '"/>';
                                 return field;
                             }
                         },
@@ -1064,61 +1128,109 @@
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", "visible": true,
+                            className: "dt-body-center", width: "5%", "visible": true,
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.TotalYN == '0' ? 'selected' : '';
                                 var isTrueSelect = value.TotalYN == '1' ? 'selected' : '';
                                 var isDisable = value.Total == '1' ? 'disabled' : '';
                                 var field = "<select " + isDisable + " name='Total' class='form-control' id='cmbTotal" + rowIndex + "'><option value= '0' " + isFalseSelect + ">No</option><option value= '1'" + isTrueSelect + ">Yes</option></select>";
+                                var ischk = value.TotalYN == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="Total" ' + ischk + ' id="cmbTotal' + rowIndex + '" ' + isDisable + '/>';
                                 return field;
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", width: "8%", "visible": true,
+                            className: "dt-body-center", width: "4%", "visible": true,
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isDisable = value.Total == '1' ? 'disabled' : '';
                                 var isFalseSelect = value.EnableSum == '0' ? 'selected' : '';
                                 var isTrueSelect = value.EnableSum == '1' ? 'selected' : '';
                                 var field = "<select " + isDisable + " name='EnableSum' class='form-control' id='EnableSum" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableSum == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableSum" ' + ischk + ' id="EnableSum' + rowIndex + '" ' + isDisable + '/>';
                                 return field;
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", "visible": true,
+                            className: "dt-body-center", width: "4%", "visible": true,
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isDisable = value.Total == '1' ? 'disabled' : '';
                                 var isFalseSelect = value.EnableAvg == '0' ? 'selected' : '';
                                 var isTrueSelect = value.EnableAvg == '1' ? 'selected' : '';
                                 var field = "<select " + isDisable + " name='EnableAvg' class='form-control' id='EnableAvg" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableAvg == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableAvg" ' + ischk + ' id="EnableAvg' + rowIndex + '" ' + isDisable + '/>';
+
                                 return field;
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", "visible": false,
+                            className: "dt-body-center", width: "5%", "visible": false,
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.EnableColumnMenu == '0' ? 'selected' : '';
                                 var isTrueSelect = value.EnableColumnMenu == '1' ? 'selected' : '';
                                 var field = "<select name='EnableColumnMenu' class='form-control' id='EnableColumnMenu" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableColumnMenu == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableColumnMenu" ' + ischk + ' id="EnableColumnMenu' + rowIndex + '" />';
+
                                 return field;
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", "visible": (RID == 1),
+                            className: "dt-body-left", width: "5%", "visible": (RID == 1),
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.ShowinColumnOption == '0' ? 'selected' : '';
                                 var isTrueSelect = value.ShowinColumnOption == '1' ? 'selected' : '';
                                 var field = "<select name='ShowinColumnOption' class='form-control' id='ShowinColumnOption" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.ShowinColumnOption == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="ShowinColumnOption" ' + ischk + ' id="ShowinColumnOption' + rowIndex + '" />';
+
+
                                 return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.PrintYN == '0' ? 'selected' : '';
+                                var isTrueSelect = value.PrintYN == '1' ? 'selected' : '';
+                                var field = "<select name='PrintYN' class='form-control' id='cmbPrintYN" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+
+                                var ischk = value.PrintYN == '1' ? 'checked' : '';
+                                field = '<input type="checkbox" class="dgvPrintYN" name ="PrintYN" ' + ischk + ' id="cmbPrintYN' + rowIndex + '" />';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "18%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="text" value="' + value.PrintColumnName + '" name ="PrintColumnName" class="form-control" id="txtPrintColumnName' + rowIndex + '"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.PrintWidth + '" name ="Printwidth" class="form-control dgvPrintWidth" id="txtPrintwidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
                             }
                         },
                     ],
                 });
                 tblReportSettings = $('#tblReportSettings').DataTable();
+                GetPrintYesWidth();
             }
         });
     }
@@ -1281,32 +1393,53 @@ function setDate(FieldID,Type) {
             });
         });
     }
+    function CheckMandatory() {
+        var IsValid = true;
+        $('#tblFilterData tr td input').each(function (i, items) {
+            var FieldType = this.type;
+            var FieldID = this.id;
+            var FieldValue = this.value;
+
+            $(this).css("border-color", "");
+            if (FieldType == "text" || FieldType == "number" || FieldType == "date") {
+                var IsMand = document.getElementById(this.id).getAttribute('ismandatory');
+                if (IsMand == 1 && FieldValue == "") {
+                    $(this).css("border-color", "red");
+                    IsValid = false;
+                    showErrorSnackbar("Mandatory fields should not empty");
+                }
+            }
+            //console.log("Input Fields", this, "Type : ", this.type, "ID : ", this.id, "IsMand : ", );
+        });
+        return IsValid;
+    }
     var arrParams = [], ParamIndex = 1;
 
     $('#btnPopupGenerate,#btnGenerate').click(function (e) {
-        arrParams = [], ParamIndex = 1;
-        $('#tblFilterData tr td').each(function (i, items) {
-            if (i % 2 == 1) {
-                console.log("Field Type : ", items.firstChild);
-                var input = items.firstChild.id;
-                var inputtype = items.firstChild.type;
-                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
-                if (s == null) {
-                    //alert("No Value");
-                }
-                else
-                {
-                    //alert("Values " + s);
-                    var strpv = "Param" + ParamIndex;
-                    var PV = {
-                        "Param1": s
+        if (CheckMandatory()) {
+            arrParams = [], ParamIndex = 1;
+            $('#tblFilterData tr td').each(function (i, items) {
+                if (i % 2 == 1) {
+                    console.log("Field Type : ", items.firstChild);
+                    var input = items.firstChild.id;
+                    var inputtype = items.firstChild.type;
+                    var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
+                    if (s == null) {
+                        //alert("No Value");
                     }
-                    arrParams.push(PV);
-                    ParamIndex++;
+                    else {
+                        //alert("Values " + s);
+                        var strpv = "Param" + ParamIndex;
+                        var PV = {
+                            "Param1": s
+                        }
+                        arrParams.push(PV);
+                        ParamIndex++;
+                    }
                 }
-            }
-        });
-        GenerateData();
+            });
+            GenerateData();
+        }
     });
     function GenerateData() {
         $("#Grid").html("");
@@ -1330,7 +1463,7 @@ function setDate(FieldID,Type) {
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
                 var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : $("#" + input).val();
                 insert = true;
             }
             if (insert) {
@@ -1399,7 +1532,7 @@ function setDate(FieldID,Type) {
             //onCellChange: handleCellUpdate,
             customButtons: [
                 {
-                    icon: '⚙️',
+                    icon: '🛠️',
                     text: 'Settings',
                     title: 'Settings',
                     onClick: (gridInstance, event) => {
@@ -1434,11 +1567,19 @@ function setDate(FieldID,Type) {
                     icon: '🖨️',
                     text: 'Print',
                     title: 'Print Grid Data',
-                    visible : false,
+                    visible: true,
                     onClick: (gridInstance, event) => {
                         console.log("Print clicked");
                         // Show the print options modal
                         showPrintOptionsModal(gridInstance);
+                        $("#rdoPrintFooteronly,#rdoPrintHeaderonly,#rdoPrintHeaderFooterCombined").hide();
+                        if (Frames == 1) {
+                            //$("#rdoFooteronly,#rdoHeaderandFooter").prop("disabled", true);
+                            $("#rdoPrintHeaderonly").show();
+                        }
+                        else {
+                            $("#rdoPrintFooteronly,#rdoPrintHeaderonly,#rdoPrintHeaderFooterCombined").show();
+                        }
                     }
                 },
             ],
@@ -1581,7 +1722,7 @@ function setDate(FieldID,Type) {
             //onCellChange: handleCellUpdate,
             customButtons: [
                 {
-                    icon: '⚙️',
+                    icon: '🛠️',
                     text: 'Settings',
                     title: 'Settings',
                     onClick: (gridInstance, event) => {
@@ -1664,7 +1805,7 @@ function setDate(FieldID,Type) {
             //onCellChange: handleCellUpdate,
             customButtons: [
                 {
-                    icon: '⚙️',
+                    icon: '🛠️',
                     text: 'Settings',
                     title: 'Settings',
                     onClick: (gridInstance, event) => {
@@ -1699,11 +1840,19 @@ function setDate(FieldID,Type) {
                     icon: '🖨️',
                     text: 'Print',
                     title: 'Print Grid Data',
-                    visible: false,
+                    visible: true,
                     onClick: (gridInstance, event) => {
                         console.log("Print clicked");
                         // Show the print options modal
                         showPrintOptionsModal(gridInstance);
+                        $("#rdoPrintFooteronly,#rdoPrintHeaderonly,#rdoPrintHeaderFooterCombined").hide();
+                        if (Frames == 1) {
+                            //$("#rdoFooteronly,#rdoHeaderandFooter").prop("disabled", true);
+                            $("#rdoPrintHeaderonly").show();
+                        }
+                        else {
+                            $("#rdoPrintFooteronly,#rdoPrintHeaderonly,#rdoPrintHeaderFooterCombined").show();
+                        }
                     }
                 },
 
@@ -1790,74 +1939,92 @@ function setDate(FieldID,Type) {
     }
     var ColumnSettingData = [];
     $("#btnSubmitmodalReportColumnSettings").click(function () {
+        var totwidth = $("#lblPrintWidth").text();
+        if (totwidth <= 210) {
         ColumnSettingData = [];
-        $("#tblReportSettings tbody tr").each(function () {
-            var allValues = {};
-            rowdata = tblReportSettings.row($(this)).data();
-            console.log("Row Data : ", rowdata);
-            var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
-                aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
-                aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
-                aShowinColumnOption = rowdata.ShowinColumnOption;
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "DisplayColumnName") {
-                    aDisplayName = $(this).val();
-                }
-                if (fieldName == "Width") {
-                    aWidth = $(this).val();
-                }
-                if (fieldName == "DisplayIndex") {
-                    aDisplayIndex = $(this).val();
-                }
-            });
-            $(this).find("select").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "Alignment") {
-                    aAlign = $(this).val();
-                }
-                if (fieldName == "Visible") {
-                    aVisible = $(this).val();
-                }
-                if (fieldName == "Total") {
-                    aTotal = $(this).val();
-                }
-                if (fieldName == "EnableColumnMenu") {
-                    aEnableColumnMenu = $(this).val();
-                }
-                if (fieldName == "EnableSum") {
-                    aEnableSum = $(this).val();
-                }
-                if (fieldName == "EnableAvg") {
-                    aEnableAvg = $(this).val();
-                }
-                if (fieldName == "ShowinColumnOption") {
-                    aShowinColumnOption = $(this).val();
-                }
-            });
+            $("#tblReportSettings tbody tr").each(function () {
+                var allValues = {};
+                rowdata = tblReportSettings.row($(this)).data();
+                console.log("Row Data : ", rowdata);
+                //Printwidth,PrintColumnName,PrintYN
+                var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
+                    aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
+                    aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
+                    aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
+                    aShowinColumnOption = rowdata.ShowinColumnOption;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "DisplayColumnName") {
+                        aDisplayName = $(this).val();
+                    }
+                    if (fieldName == "Width") {
+                        aWidth = $(this).val();
+                    }
+                    if (fieldName == "DisplayIndex") {
+                        aDisplayIndex = $(this).val();
+                    }
+                    if (fieldName == "Printwidth") {
+                        aPrintwidth = $(this).val();
+                    }
+                    if (fieldName == "PrintColumnName") {
+                        aPrintColumnName = $(this).val();
+                    }
 
-            var coldata = {
-                "FormID": rowdata.FormID,
-                "TableID": rowdata.TableID,
-                "ColumnID": rowdata.ColumnID,
-                "FormorReport": 1,
-                "ColumnName": rowdata.ColumnName,
-                "DisplayColumnName": aDisplayName,
-                "Width": aWidth,
-                "Visible": aVisible,
-                "Alignment": aAlign,
-                "TotalYN": aTotal,
-                "DisplayIndex": aDisplayIndex,
-                "EnableColumnMenu": aEnableColumnMenu,
-                "EnableAvg": aEnableAvg,
-                "EnableSum": aEnableSum,
-                "EnableColumnMenu": aEnableColumnMenu,
-                "ShowinColumnOption": aShowinColumnOption
-            };
-            ColumnSettingData.push(coldata);
-        });
+                    if (fieldName == "Visible") {
+                        aVisible = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "Total") {
+                        aTotal = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableColumnMenu") {
+                        aEnableColumnMenu = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableSum") {
+                        aEnableSum = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableAvg") {
+                        aEnableAvg = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "ShowinColumnOption") {
+                        aShowinColumnOption = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "PrintYN") {
+                        aPrintYN = this.checked;
+                    }
+
+                });
+                $(this).find("select").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "Alignment") {
+                        aAlign = $(this).val();
+                    }
+                });
+
+                var coldata = {
+                    "FormID": rowdata.FormID,
+                    "TableID": rowdata.TableID,
+                    "ColumnID": rowdata.ColumnID,
+                    "FormorReport": 1,
+                    "ColumnName": rowdata.ColumnName,
+                    "DisplayColumnName": aDisplayName,
+                    "Width": aWidth,
+                    "Visible": aVisible,
+                    "Alignment": aAlign,
+                    "TotalYN": aTotal,
+                    "DisplayIndex": aDisplayIndex,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "EnableAvg": aEnableAvg,
+                    "EnableSum": aEnableSum,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "ShowinColumnOption": aShowinColumnOption,
+                    "PrintYN": aPrintYN,
+                    "PrintColumnName": aPrintColumnName,
+                    "Printwidth": aPrintwidth
+                };
+                ColumnSettingData.push(coldata);
+            });
         console.log("ColumnSettingData : ", ColumnSettingData);
         $.ajax({
             url: Aurl + "columnsettings/Savecolumnsettings",
@@ -1899,7 +2066,10 @@ function setDate(FieldID,Type) {
                 }
             }
         });
-        //console.log("Column Setting Data ", ColumnSettingData);
+            //console.log("Column Setting Data ", ColumnSettingData);
+        } else {
+            showErrorSnackbar('Total Print Width (Print - Yes) cannot exceed 210');
+        }
     });
     // Store grid instance globally for export
     let currentGridInstance = null;
@@ -2517,4 +2687,446 @@ function setDate(FieldID,Type) {
             }
         });
     }
+
+
+    // ========== PRINT FUNCTIONS ==========
+
+    // Store grid instance globally for print
+    let currentPrintGridInstance = null;
+
+    // Show print options modal
+    function showPrintOptionsModal(gridInstance) {
+        currentPrintGridInstance = gridInstance;
+        document.getElementById('printOptionsModal').style.display = 'block';        
+    }
+
+    // Close print modal
+    function closePrintModal() {
+        document.getElementById('printOptionsModal').style.display = 'none';
+        // Reset to default selection
+        document.querySelector('input[name="printType"][value="header"]').checked = true;
+    }
+
+    // Handle print based on selected option
+    function handlePrint() {
+        var selectedOption = document.querySelector('input[name="printType"]:checked').value;
+        console.log('Print type selected:', selectedOption);       
+        if (!currentPrintGridInstance) {
+            alert('Grid instance not found!');
+            return;
+        }
+        var Excelfilter = [];
+        var Col2Data = "";
+        $('#tblFilterData tr td').each(function (i, items) {
+            var insert = false;
+            if (i % 2 == 0) {
+                var lbl = items.firstChild.id;
+                Col1Data = $("#" + lbl).text();
+                //console.log("Col 1", Col2Data);
+                insert = false;
+            }
+            else if (i % 2 == 1) {
+                var input = items.firstChild.id;
+                var inputtype = items.firstChild.type;
+                var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 'True' : 'False' : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                insert = true;
+            }
+            if (insert) {
+                var lst = {
+                    FilterName: Col1Data,
+                    Value: Col2Data
+                };
+                Excelfilter.push(lst);
+            }
+        });
+        switch (selectedOption) {
+            case 'header':
+                printHeaderOnly(currentPrintGridInstance, Excelfilter);
+                break;
+            case 'footer':
+                printFooterOnly(Excelfilter);
+                break;
+            case 'combined':
+                printHeaderFooterCombined(currentPrintGridInstance, Excelfilter);
+                break;
+        }
+
+        closePrintModal();
+    }
+
+    // ========== PRINT IMPLEMENTATION ==========
+
+    function printHeaderOnly(gridInstance, fitersdata) {
+        var ReportName = $("#MainHeading").text();
+        console.log('Printing Header Only');
+        var data = gridInstance.getCurrentData();
+        var cols = gridInstance.columns.filter(c => !c.specialColumn && c.visible && c.field);
+        var title = (ReportName || 'Grid Print');
+
+        var content = generatePrintContent(title, data, cols, fitersdata);
+        openPrintWindow(content);
+    }
+
+    function printFooterOnly(fitersdata) {
+        var ReportName = $("#MainHeading").text();
+        console.log('Printing Footer Only');
+        if (!Detailsgrid) {
+            alert('Detail grid not available');
+            return;
+        }
+        var data = Detailsgrid.getCurrentData();
+        var cols = detailcolumnsettings.filter(c => c.field);
+        var title = (ReportName || 'Grid Print');
+
+        var content = generatePrintContent(title, data, cols, fitersdata);
+        openPrintWindow(content);
+    }
+
+    function printHeaderFooterCombined(gridInstance, fitersdata) {
+        console.log('Printing Combined');
+        var ReportName = $("#MainHeading").text();
+        var headerData = gridInstance.getCurrentData();
+        var headerCols = gridInstance.columns.filter(c => !c.specialColumn && c.PrintYN && c.field);
+        var footerCols = detailcolumnsettings.filter(c => c.field && c.PrintYN);
+        var title = (ReportName || 'Grid Print') + " - Combined View";
+        console.log("headerData", headerData);
+        // Build combined structure
+        var rows = [];
+        var combinedDataRows = [];
+        headerData.forEach(hRow => {
+            var relatedFooterRows = getHeadersFooterdataonly(hRow);
+            relatedFooterRows = Array.from(relatedFooterRows).flat();
+            // Remove the first column (by property order)
+            console.log("Footer data ", relatedFooterRows, "Footer Cols ", footerCols);
+            //if (relatedFooterRows.length > 0) {
+            //    var hidecolumns = detailcolumnsettings.filter(cl => cl.PrintYN == false);
+            //    for (var i = 0; i < hidecolumns.length; i++) {
+            //        relatedFooterRows.forEach(row => {
+            //            delete row[hidecolumns[i].header];
+            //        });
+            //    }
+
+            //}
+            if (relatedFooterRows.length === 0) {
+                // If no footer data, add header row with empty footer columns
+                var rowData = [
+                    ...headerCols.map(col => {
+                        let value = hRow[col.field];
+                        if (typeof value === 'string' && value.includes('<')) {
+                            var tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = value;
+                            value = tempDiv.textContent || tempDiv.innerText || '';
+                        }
+                        return value ?? '';
+                    }),
+                    //...footerCols.map(() => '')
+                ];
+                combinedDataRows.push(rowData);
+            } else {
+                // For each footer row, duplicate the header data
+                relatedFooterRows.forEach(footerRow => {
+                    //var rowData = [
+                    //    ...headerCols.map(col => {
+                    //        let value = hRow[col.field];
+                    //        if (typeof value === 'string' && value.includes('<')) {
+                    //            var tempDiv = document.createElement('div');
+                    //            tempDiv.innerHTML = value;
+                    //            value = tempDiv.textContent || tempDiv.innerText || '';
+                    //        }
+                    //        return value ?? '';
+                    //    }),
+                    //    ...footerCols.map(col => relatedFooterRows[col.field] ?? '')
+                    //];
+                    console.log("Footer Row : ", footerRow)
+                    var nrowData = Object.fromEntries([
+                        ...headerCols.map(col => {
+                            let value = hRow[col.field];
+
+                            //if (typeof value === 'string' && value.includes('<')) {
+                            //    const tempDiv = document.createElement('div');
+                            //    tempDiv.innerHTML = value;
+                            //    value = tempDiv.textContent || tempDiv.innerText || '12';
+                            //}
+                            //console.log("Key : ", col.field, " Value : ", value)
+                            return [col.field, hRow[col.field]];
+                        }),
+                        ...footerCols.map(fcol => {
+                            if (footerRow) {
+                                let fvalue = footerRow[fcol.field];
+                                console.log("Footer Key : ", fcol.field, "Footer Value : ", fvalue)
+                                return [fcol.field, fvalue ?? '']
+                            }
+                            else {
+                                return [fcol.field, '']
+                            }
+                        })
+                    ]);
+                    console.log("rowData ", nrowData);
+                    combinedDataRows.push(nrowData);
+                });
+            }
+        });
+        console.log("combinedDataRows ", combinedDataRows);
+        // Combine columns for display
+        var displayCols = [
+            ...headerCols.map(c => ({ ...c, header: c.PrintColumnName + " (H)" })),
+            ...footerCols.map(c => ({ ...c, field: c.field, header: c.PrintColumnName + " (F)" }))
+        ];
+
+        var content = generatePrintContent(title, combinedDataRows, displayCols, fitersdata);//rows
+        openPrintWindow(content);
+    }
+
+    function generatePrintContent(title, data, columns, fitersdata) {
+        console.log("Row Data ", data);
+        console.log("columns Data ", columns)
+        // Calculate Totals for columns with EnableSum: true
+        var totals = {};
+        var hasTotals = false;
+
+        columns.forEach(c => {
+            if (c.PrintYN && c.EnableSum === true) {
+                totals[c.field] = 0;
+                hasTotals = true;
+            }
+        });
+
+        if (hasTotals) {
+            data.forEach(row => {
+                columns.forEach(c => {
+                    if (c.PrintYN && c.EnableSum === true) {
+                        var val = parseFloat(row[c.field]);
+                        if (!isNaN(val)) {
+                            totals[c.field] += val;
+                        }
+                    }
+                });
+            });
+        }
+        console.log("data b4 print ", data);
+        var html = `
+                <html>
+                <head>
+                    <title>${title}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; margin: 15mm; }
+                        .report-header { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #1A237E; }
+                        .company-name { font-size: 24px; font-weight: bold; color: #1A237E; margin: 0; }
+                        .report-title { font-size: 18px; margin: 5px 0; color: #555; }
+                        .filters-section { background: #f5f5f5; padding: 10px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #ddd; }
+                        .filters-title { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+                        .filter-item { font-size: 12px; margin-bottom: 2px; display: inline-block; width: 45%; }
+
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                        th { background-color: #1A237E !important; color: white !important; text-align: left; padding: 8px; border: 1px solid #ddd; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        td { padding: 5px; border: 1px solid #ddd; color: #000; }
+                        td { padding: 5px; border: 1px solid #ddd; color: #000; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                        .total-row td { font-weight: bold; background-color: #e0e0e0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+                        @@page {
+                            /* Hide browser default header (Time, Title, URL) by removing top margin */
+                            margin-top: 5mm;
+                            margin-bottom: 10mm;
+                            margin-left: 5mm;
+                            margin-right: 5mm;
+
+                            @@bottom-right {
+                                content: "Page " counter(page) " of " counter(pages);
+                                font-size: 10px;
+                            }
+                        }
+
+                        @@media print {
+                            body { margin: 2mm; zoom: 80%; }
+                            button { display: none; }
+
+                            /* Page Numbering Fallback */
+                            .page-number-header {
+                                position: fixed;
+                                bottom: 0;
+                                right: 0;
+                                font-size: 10px;
+                                color: #555;
+                                background-color: white;
+                                padding: 5px;
+                            }
+                        }
+                        .wrap-text {
+    white-space: normal !important;
+    word-break: break-word;
+}
+                    </style>
+                </head>
+                <body>
+                    <!-- Fixed Header for Page Numbering -->
+                    <div class="page-number-header">
+                       
+                    </div>
+
+                    <div class="report-header">
+                        <p class="company-name">${CompanyName}</p>
+                        <p class="report-title">${title}</p>
+                    </div>
+
+                    <div class="filters-section">
+                        <div class="filters-title">Report Filters:</div>
+                        ${fitersdata.map(f => `
+                            <div class="filter-item">
+                                <strong>${f.FilterName}:</strong> ${f.Value}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                ${columns.map(c => {
+            var width = c.PrintWidth ? (typeof c.PrintWidth === `number` ? (c.PrintWidth * 3.78) + `px` : c.PrintWidth) : `auto`;
+                                    return c.PrintYN ? `<th class="wrap-text" style="max-width: ${width} !important;">${c.header}</th>` : '';
+        }).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(row => `
+                                <tr>
+                                    ${columns.map(c => {
+            var val = row[c.field];
+            // Strip HTML
+            if (typeof val === `string` && val.includes('<')) {
+                var tmp = document.createElement('div');
+                tmp.innerHTML = val;
+                val = tmp.textContent || tmp.innerText;
+            }
+            var valucolor = val == `Total` ? `blue` : val == `Opening Balance` ? `brown` : val == `Closing Balance` ? `darkorange` : `black`;
+            return c.PrintYN ? `<td class="wrap-text" style="color:` + valucolor + `" align=` + c.align + `>${val ?? ''}</td>` : '';
+        }).join('')}
+                                </tr>
+                            `).join('')}
+
+                            ${hasTotals ? `
+                                <tr class="total-row">
+                                    ${columns.map((c, index) => {
+            if (!c.PrintYN) return '';
+
+            if (c.EnableSum === true) {
+                var sum = totals[c.field] || 0;
+                return `<td align=` + c.align + `>${sum.toFixed(2)}</td>`;
+            } else if (index === 0 || (columns.filter(col => col.PrintYN)[0] === c)) {
+                // First printable column gets "Total" label
+                return `<td>Total</td>`;
+            } else {
+                return `<td></td>`;
+            }
+        }).join('')}
+                                </tr>
+                            ` : ''}
+                        </tbody>
+                    </table>
+
+                    <div class="no-print" style="margin-top: 20px; text-align: right;">
+                        <!-- Manual button removed for direct printing -->
+                    </div>
+                </body>
+                </html>
+            `;
+        return html;
+    }
+
+    function openPrintWindow(content) {
+        // Create a hidden iframe for direct printing
+        var iframe = document.createElement('iframe');
+        iframe.style.visibility = 'hidden';
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+
+        var doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(content);
+        doc.close();
+
+        // Trigger print once content is loaded
+        iframe.contentWindow.focus();
+        setTimeout(() => {
+            iframe.contentWindow.print();
+            // Cleanup: remove the iframe after the print dialog opens
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 1000);
+        }, 500);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function (event) {
+        var expModal = document.getElementById('exportOptionsModal');
+        var prntModal = document.getElementById('printOptionsModal');
+        if (event.target === expModal) {
+            closeExportModal();
+        }
+        if (event.target === prntModal) {
+            closePrintModal();
+        }
+    }
+    function GetPrintYesWidth() {
+        let totalWidth = 0;
+        $('#tblReportSettings tbody tr').each(function () {
+
+            // PrintYN checkbox in this row
+            let isPrintChecked = $(this).find('.dgvPrintYN').is(':checked');
+
+            if (isPrintChecked) {
+                let widthVal = parseInt(
+                    $(this).find('.dgvPrintWidth').val() || 0
+                );
+                totalWidth += widthVal;
+            }
+        });
+        $("#lblPrintWidth").text(totalWidth);
+    }
+    let prevPrintWidth = 0;
+
+    // store previous value before editing
+    $('#tblReportSettings').on('focus', '.dgvPrintWidth', function () {
+        prevPrintWidth = parseInt(this.value || 0);
+    });
+
+    // validate on change
+    $('#tblReportSettings').on('change', '.dgvPrintWidth,.dgvPrintYN', function () {
+        GetPrintYesWidth();
+        //let totalWidth = 0;
+        //const maxWidth = 210;
+
+        //$('#tblReportSettings tbody tr').each(function () {
+
+        //    // PrintYN checkbox in this row
+        //    let isPrintChecked = $(this).find('.dgvPrintYN').is(':checked');
+
+        //    if (isPrintChecked) {
+        //        let widthVal = parseInt(
+        //            $(this).find('.dgvPrintWidth').val() || 0
+        //        );
+        //        totalWidth += widthVal;
+        //    }
+        //});
+
+        //if (totalWidth > maxWidth) {
+        //    // revert only current input
+        //    this.value = prevPrintWidth;
+
+        //    $(this).addClass('is-invalid');
+
+        //    showErrorSnackbar(
+        //        'Total Print Width (PrintYN rows only) cannot exceed 210'
+        //    );
+        //} else {
+        //    $(this).removeClass('is-invalid');
+        //}
+    });
+
 </script>
