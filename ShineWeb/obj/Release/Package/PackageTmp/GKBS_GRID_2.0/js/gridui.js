@@ -1609,6 +1609,21 @@ class GKBSDynamicGrid {
             rowEl.className = 'dg-row';
             rowEl.style.minWidth = totalMinWidth + 'px';
             rowEl.setAttribute('data-grid-id', row._gridId.toString());
+
+            // 💡 NEW: Apply custom row styling if rowStyler callback is provided
+            if (this.options.rowStyler && typeof this.options.rowStyler === 'function') {
+                const styleResult = this.options.rowStyler(row);
+                if (styleResult) {
+                    // If styleResult is a string, assume it's a class name
+                    if (typeof styleResult === 'string') {
+                        rowEl.classList.add(styleResult);
+                    }
+                    // If styleResult is an object, apply styles directly
+                    else if (typeof styleResult === 'object') {
+                        Object.assign(rowEl.style, styleResult);
+                    }
+                }
+            }
             // --- NEW: Selection Checkbox Cell ---
             const selectCell = document.createElement('div');
             selectCell.className = 'dg-cell';
@@ -3177,6 +3192,23 @@ class GKBSDynamicGrid {
         this.render();
     }
     printGrid() {
+        // 💡 NEW: Filter columns based on Print property
+        // Get indices of columns that should be printed (Print === "Yes")
+        const printableColumns = this.columns
+            .map((col, index) => ({
+                col: col,
+                index: index,
+                shouldPrint: col.visible !== false && col.Print === "Yes"
+            }))
+            .filter(item => item.shouldPrint);
+
+        const printableIndices = printableColumns.map(item => item.index);
+
+        if (printableIndices.length === 0) {
+            alert('No columns are marked for printing. Please configure column Print properties.');
+            return;
+        }
+
         // 1. Isolate the grid container (dg-scroll-wrapper)
         const scrollWrapper = this.container.querySelector('.dg-scroll-wrapper');
         if (!scrollWrapper) {
@@ -3187,6 +3219,55 @@ class GKBSDynamicGrid {
         // 2. Clone the content to prepare it for printing cleanup
         const printableClone = scrollWrapper.cloneNode(true);
         printableClone.className = 'dg-printable-view';
+
+        // 💡 NEW: Update header cells with printHeader and remove non-printable columns
+        const headerRow = printableClone.querySelector('.dg-header-row');
+        if (headerRow) {
+            const headerCells = Array.from(headerRow.querySelectorAll('.dg-header-cell'));
+
+            // Remove non-printable columns from header (iterate backwards to avoid index issues)
+            for (let i = headerCells.length - 1; i >= 0; i--) {
+                if (!printableIndices.includes(i)) {
+                    headerCells[i].remove();
+                } else {
+                    // Update header text with printHeader if available
+                    const columnConfig = this.columns[i];
+                    if (columnConfig.printHeader) {
+                        const headerSpan = headerCells[i].querySelector('span');
+                        if (headerSpan) {
+                            headerSpan.textContent = columnConfig.printHeader;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 💡 NEW: Remove non-printable cells from data rows
+        const dataRows = printableClone.querySelectorAll('.dg-row');
+        dataRows.forEach(rowEl => {
+            const cells = Array.from(rowEl.querySelectorAll('.dg-cell'));
+
+            // Remove cells for non-printable columns (iterate backwards)
+            for (let i = cells.length - 1; i >= 0; i--) {
+                if (!printableIndices.includes(i)) {
+                    cells[i].remove();
+                }
+            }
+        });
+
+        // 💡 NEW: Remove non-printable cells from status bar
+        const statusBar = printableClone.querySelector('.dg-status-bar');
+        if (statusBar) {
+            const statusCells = Array.from(statusBar.querySelectorAll('.dg-status-cell'));
+
+            // Remove status cells for non-printable columns (iterate backwards)
+            for (let i = statusCells.length - 1; i >= 0; i--) {
+                if (!printableIndices.includes(i)) {
+                    statusCells[i].remove();
+                }
+            }
+        }
+
 
         // 3. Remove non-printable elements from the clone (optional, but clean)
         // Remove resize handles
