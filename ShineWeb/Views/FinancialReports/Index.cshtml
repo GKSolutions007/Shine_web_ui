@@ -218,8 +218,8 @@
     .dg-toolbar-report-name {
         font-size: 1.2em !important;
     }
-    modalReportColumnSettings.modal-body {        
-        padding: 0px !important;
+    .modal-body {
+        padding: 0px 20px 10px 20px !important;
     }
 </style>
 <style>
@@ -688,11 +688,23 @@
                                     <th style="width:12%">Average</th>
                                     <th style="width:12%">Column Menu</th>
                                     <th style="width:12%">Show Column Option</th>
-                                    <th style="width:12%">Print Y/N</th>
+                                    <th style="width:12%">Print</th>
                                     <th style="width:12%">Print Name</th>
                                     <th style="width:12%">Print Width</th>
                                 </tr>
                             </thead>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="17">
+                                    </th>
+                                    <th align="right">
+                                        Total Print Width :
+                                    </th>
+                                    <th align="right">
+                                        <label id="lblPrintWidth"></label>
+                                    </th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -749,6 +761,43 @@
             <div class="export-modal-footer">
                 <button class="export-btn export-btn-primary" onclick="handleExport()">Export</button>
                 <button class="export-btn export-btn-secondary" onclick="closeExportModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Options Modal -->
+    <div id="printOptionsModal" class="export-modal">
+        <div class="export-modal-content">
+            <div class="export-modal-header">
+                <h3>Print Options</h3>
+                <span class="export-modal-close" onclick="closePrintModal()">&times;</span>
+            </div>
+            <div class="export-modal-body">
+                <div class="export-option">
+                    <label>
+                        <input type="radio" name="printType" value="header" checked>
+                        <span class="radio-label">Header</span>
+                        <small>Print header grid data with filter information</small>
+                    </label>
+                </div>
+                <div class="export-option">
+                    <label>
+                        <input type="radio" name="printType" value="footer">
+                        <span class="radio-label">Footer</span>
+                        <small>Print footer grid data with filter information</small>
+                    </label>
+                </div>
+                <div class="export-option">
+                    <label>
+                        <input type="radio" name="printType" value="combined">
+                        <span class="radio-label">Header & Footer (Combined)</span>
+                        <small>Print both header and footer data combined</small>
+                    </label>
+                </div>
+            </div>
+            <div class="export-modal-footer">
+                <button class="export-btn export-btn-primary" onclick="handlePrint()">Print</button>
+                <button class="export-btn export-btn-secondary" onclick="closePrintModal()">Close</button>
             </div>
         </div>
     </div>
@@ -1044,7 +1093,7 @@
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.Visible == '0' ? 'selected' : '';
                                 var isTrueSelect = value.Visible == '1' ? 'selected' : '';
-                                
+
                                 //var field = "<select name='Visible' class='form-control' id='cmbVisible" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
                                 var ischk = value.Visible == '1' ? 'checked' : '';
                                 field = '<input type="checkbox"  name ="Visible" ' + ischk +' id="cmbVisible' + rowIndex + '"/>';
@@ -1150,7 +1199,7 @@
 
 
                                 var ischk = value.PrintYN == '1' ? 'checked' : '';
-                                field = '<input type="checkbox"  name ="PrintYN" ' + ischk + ' id="cmbPrintYN' + rowIndex + '" />';
+                                field = '<input type="checkbox" class="dgvPrintYN" name ="PrintYN" ' + ischk + ' id="cmbPrintYN' + rowIndex + '" />';
 
                                 return field;
                             }
@@ -1164,14 +1213,15 @@
                         },
                         {
                             className: "dt-body-left", width: "8%",
-                            "mRender": function (data, type, value, meta) {                                
+                            "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
-                                return '<input type="number" value="' + value.PrintWidth + '" name ="Printwidth" class="form-control" id="txtPrintwidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                                return '<input type="number" value="' + value.PrintWidth + '" name ="Printwidth" class="form-control dgvPrintWidth" id="txtPrintwidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
                             }
                         },
                     ],
                 });
                 tblReportSettings = $('#tblReportSettings').DataTable();
+                GetPrintYesWidth();
             }
         });
     }
@@ -1208,7 +1258,7 @@
                                 var ParamType = items.ParameterType;
                                 var ParVal = "";
                                 var defval = items.AutolistName == "1" ? "checked" : "";
-                                var IsMand = items.IsMandatory 
+                                var IsMand = items.IsMandatory
                                 var isoddoreven = i % 2 == 0 ? "odd" : "even";
                                 if (ParamType == "Autolist") {
                                     ParVal = '<input isMandatory =' + IsMand +' type="text" class="form-control" name=' + items.AutolistName + ' id=' + (items.AutolistName + i) + ' />';
@@ -1341,7 +1391,7 @@ function setDate(FieldID,Type) {
             var FieldType = this.type;
             var FieldID = this.id;
             var FieldValue = this.value;
-            
+
             $(this).css("border-color", "");
             if (FieldType == "text" || FieldType == "number" || FieldType == "date") {
                 var IsMand = document.getElementById(this.id).getAttribute('ismandatory');
@@ -1384,7 +1434,7 @@ function setDate(FieldID,Type) {
         }
     });
     function GenerateData() {
-        
+
             $("#Grid").html("");
             $("#DetailGrid").html("");
             var listParams = {
@@ -1442,7 +1492,7 @@ function setDate(FieldID,Type) {
                     }
                 }
             });
-        
+
     }
     function bindDataTable(data, filterdata) {
         if (data.length === 0) {
@@ -1476,7 +1526,7 @@ function setDate(FieldID,Type) {
             //onCellChange: handleCellUpdate,
             customButtons: [
                 {
-                    icon: '⚙️',
+                    icon: '🛠️',
                     text: 'Settings',
                     title: 'Settings',
                     onClick: (gridInstance, event) => {
@@ -1511,14 +1561,12 @@ function setDate(FieldID,Type) {
                     icon: '🖨️',
                     text: 'Print',
                     title: 'Print Grid Data',
-                    visible : false,
                     onClick: (gridInstance, event) => {
                         console.log("Print clicked");
                         // Show the print options modal
                         showPrintOptionsModal(gridInstance);
                     }
                 },
-
             ],
             onCellClick: (rowData, fieldName, cellValue, column) => {
                 if (Frames == 2) {
@@ -1589,10 +1637,10 @@ function setDate(FieldID,Type) {
                 //    console.log("Active : ", val);
                 //    if (val === 'Total') {
                 //        el.innerHTML = `<div class="dg-status-badge dg-status-active"><span class="dg-status-circle"></span> Total</div>`;
-                //    } 
+                //    }
                 //}
             },
-            rowStyler: (rowData) => {                
+            rowStyler: (rowData) => {
                 if (rowData['Account Name'] === 'Total') {
                     return 'row-total';
                 }
@@ -1607,7 +1655,7 @@ function setDate(FieldID,Type) {
                 return null; // No special styling
             },
             onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                
+
                 var dTransID = rowData.DocPrefix;
                 var DocID = rowData.DocID;
                 if (DocID != "" && dTransID > 0)
@@ -1671,7 +1719,7 @@ function setDate(FieldID,Type) {
             //onCellChange: handleCellUpdate,
             customButtons: [
                 {
-                    icon: '⚙️',
+                    icon: '🛠️',
                     text: 'Settings',
                     title: 'Settings',
                     onClick: (gridInstance, event) => {
@@ -1754,7 +1802,7 @@ function setDate(FieldID,Type) {
             //onCellChange: handleCellUpdate,
             customButtons: [
                 {
-                    icon: '⚙️',
+                    icon: '🛠️',
                     text: 'Settings',
                     title: 'Settings',
                     onClick: (gridInstance, event) => {
@@ -1878,134 +1926,140 @@ function setDate(FieldID,Type) {
             },
         });
     }
+    
     var ColumnSettingData = [];
     $("#btnSubmitmodalReportColumnSettings").click(function () {
-        ColumnSettingData = [];
-        $("#tblReportSettings tbody tr").each(function () {
-            var allValues = {};
-            rowdata = tblReportSettings.row($(this)).data();
-            console.log("Row Data : ", rowdata);
-            //Printwidth,PrintColumnName,PrintYN
-            var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
-                aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
-                aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
-                aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
-                aShowinColumnOption = rowdata.ShowinColumnOption;
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "DisplayColumnName") {
-                    aDisplayName = $(this).val();
-                }
-                if (fieldName == "Width") {
-                    aWidth = $(this).val();
-                }
-                if (fieldName == "DisplayIndex") {
-                    aDisplayIndex = $(this).val();
-                }
-                if (fieldName == "Printwidth") {
-                    aPrintwidth = $(this).val();
-                }
-                if (fieldName == "PrintColumnName") {
-                    aPrintColumnName = $(this).val();
-                }
-
-                if (fieldName == "Visible") {
-                    aVisible = this.checked ? "1" : "0";
-                }
-                if (fieldName == "Total") {
-                    aTotal = this.checked ? "1" : "0";
-                }
-                if (fieldName == "EnableColumnMenu") {
-                    aEnableColumnMenu = this.checked ? "1" : "0";
-                }
-                if (fieldName == "EnableSum") {
-                    aEnableSum = this.checked ? "1" : "0";
-                }
-                if (fieldName == "EnableAvg") {
-                    aEnableAvg = this.checked ? "1" : "0";
-                }
-                if (fieldName == "ShowinColumnOption") {
-                    aShowinColumnOption = this.checked ? "1" : "0";
-                }
-                if (fieldName == "PrintYN") {
-                    aPrintYN = this.checked;
-                }
-
-            });
-            $(this).find("select").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "Alignment") {
-                    aAlign = $(this).val();
-                }                
-            });
-
-            var coldata = {
-                "FormID": rowdata.FormID,
-                "TableID": rowdata.TableID,
-                "ColumnID": rowdata.ColumnID,
-                "FormorReport": 2,
-                "ColumnName": rowdata.ColumnName,
-                "DisplayColumnName": aDisplayName,
-                "Width": aWidth,
-                "Visible": aVisible,
-                "Alignment": aAlign,
-                "TotalYN": aTotal,
-                "DisplayIndex": aDisplayIndex,
-                "EnableColumnMenu": aEnableColumnMenu,
-                "EnableAvg": aEnableAvg,
-                "EnableSum": aEnableSum,
-                "EnableColumnMenu": aEnableColumnMenu,
-                "ShowinColumnOption": aShowinColumnOption,
-                "PrintYN": aPrintYN,
-                "PrintColumnName": aPrintColumnName,
-                "Printwidth": aPrintwidth
-            };
-            ColumnSettingData.push(coldata);
-        });
-        console.log("ColumnSettingData : ", ColumnSettingData);
-        $.ajax({
-            url: Aurl + "financialrepcolumnsettings/Savecolumnsettings",
-            type: 'POST',
-            contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(ColumnSettingData),
-            cache: false,
-            processData: false,
-            xhrFields: {
-                withCredentials: true
-            },
-            success: function (data) {
-                $.each(data, function (i, items) {
-                    if (items.MsgID == 0) {
-                        showSuccessSnackbar(items.Message);
-                        //ClearForm();
-                        modalReportColumnsetting.style.display = "none";
-                        GetColumnSettingsData(2, FID, SelectTableID);
-                        setTimeout(() => {
-                            if (SelectTableID == 1) {
-                                grid.columns = columnsettings;
-                                grid.refreshColumns();
-                            } else {
-                                Detailsgrid.columns = detailcolumnsettings;
-                                Detailsgrid.refreshColumns();
-                            }
-                        }, 500);
+        var totwidth = $("#lblPrintWidth").text();
+        if (totwidth <= 210) {
+            ColumnSettingData = [];
+            $("#tblReportSettings tbody tr").each(function () {
+                var allValues = {};
+                rowdata = tblReportSettings.row($(this)).data();
+                console.log("Row Data : ", rowdata);
+                //Printwidth,PrintColumnName,PrintYN
+                var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
+                    aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
+                    aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
+                    aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
+                    aShowinColumnOption = rowdata.ShowinColumnOption;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "DisplayColumnName") {
+                        aDisplayName = $(this).val();
                     }
-                    else {
-                        showErrorSnackbar(items.Message);
-                        //alert(items.Message);
+                    if (fieldName == "Width") {
+                        aWidth = $(this).val();
+                    }
+                    if (fieldName == "DisplayIndex") {
+                        aDisplayIndex = $(this).val();
+                    }
+                    if (fieldName == "Printwidth") {
+                        aPrintwidth = $(this).val();
+                    }
+                    if (fieldName == "PrintColumnName") {
+                        aPrintColumnName = $(this).val();
+                    }
+
+                    if (fieldName == "Visible") {
+                        aVisible = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "Total") {
+                        aTotal = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableColumnMenu") {
+                        aEnableColumnMenu = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableSum") {
+                        aEnableSum = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableAvg") {
+                        aEnableAvg = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "ShowinColumnOption") {
+                        aShowinColumnOption = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "PrintYN") {
+                        aPrintYN = this.checked;
+                    }
+
+                });
+                $(this).find("select").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "Alignment") {
+                        aAlign = $(this).val();
                     }
                 });
-            },
-            error: function (data) {
-                if (data.status == "401") {
-                    var msg = data.responseJSON.Message;
-                    ////showErrorSnackbar(msg + " Logout and Login again.");
+
+                var coldata = {
+                    "FormID": rowdata.FormID,
+                    "TableID": rowdata.TableID,
+                    "ColumnID": rowdata.ColumnID,
+                    "FormorReport": 2,
+                    "ColumnName": rowdata.ColumnName,
+                    "DisplayColumnName": aDisplayName,
+                    "Width": aWidth,
+                    "Visible": aVisible,
+                    "Alignment": aAlign,
+                    "TotalYN": aTotal,
+                    "DisplayIndex": aDisplayIndex,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "EnableAvg": aEnableAvg,
+                    "EnableSum": aEnableSum,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "ShowinColumnOption": aShowinColumnOption,
+                    "PrintYN": aPrintYN,
+                    "PrintColumnName": aPrintColumnName,
+                    "Printwidth": aPrintwidth
+                };
+                ColumnSettingData.push(coldata);
+            });
+            console.log("ColumnSettingData : ", ColumnSettingData);
+            $.ajax({
+                url: Aurl + "financialrepcolumnsettings/Savecolumnsettings",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(ColumnSettingData),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            //ClearForm();
+                            modalReportColumnsetting.style.display = "none";
+                            GetColumnSettingsData(2, FID, SelectTableID);
+                            setTimeout(() => {
+                                if (SelectTableID == 1) {
+                                    grid.columns = columnsettings;
+                                    grid.refreshColumns();
+                                } else {
+                                    Detailsgrid.columns = detailcolumnsettings;
+                                    Detailsgrid.refreshColumns();
+                                }
+                            }, 500);
+                        }
+                        else {
+                            showErrorSnackbar(items.Message);
+                            //alert(items.Message);
+                        }
+                    });
+                },
+                error: function (data) {
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        ////showErrorSnackbar(msg + " Logout and Login again.");
+                    }
                 }
-            }
-        });
-        //console.log("Column Setting Data ", ColumnSettingData);
+            });
+            //console.log("Column Setting Data ", ColumnSettingData);
+        } else {
+                showErrorSnackbar('Total Print Width (Print - Yes) cannot exceed 210');
+        }
     });
     // Store grid instance globally for export
     let currentGridInstance = null;
@@ -2749,7 +2803,7 @@ function setDate(FieldID,Type) {
                                 '_blank'
                             );
                         }
-                        if (dTransID == 22) {//Inventory Conversion                            
+                        if (dTransID == 22) {//Inventory Conversion
                             window.open(
                                 'InventoryConversion?name=i3DMZtc%2FTn0UH9DhV75tUuHjdtmqgq5lQj0C4yiivAKRctLDENVNUH%2FhBbeSFLKa&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
                                 '_blank'
@@ -2763,4 +2817,387 @@ function setDate(FieldID,Type) {
             }
         });
     }
+
+    // ========== PRINT FUNCTIONS ==========
+
+    // Store grid instance globally for print
+    let currentPrintGridInstance = null;
+
+    // Show print options modal
+    function showPrintOptionsModal(gridInstance) {
+        currentPrintGridInstance = gridInstance;
+        //document.getElementById('printOptionsModal').style.display = 'block';
+        handlePrint();
+    }
+
+    // Close print modal
+    function closePrintModal() {
+        document.getElementById('printOptionsModal').style.display = 'none';
+        // Reset to default selection
+        document.querySelector('input[name="printType"][value="header"]').checked = true;
+    }
+
+    // Handle print based on selected option
+    function handlePrint() {
+        var selectedOption = document.querySelector('input[name="printType"]:checked').value;
+        console.log('Print type selected:', selectedOption);
+        selectedOption = 'header'
+        if (!currentPrintGridInstance) {
+            alert('Grid instance not found!');
+            return;
+        }
+        var Excelfilter = [];
+        var Col2Data = "";
+        $('#tblFilterData tr td').each(function (i, items) {
+            var insert = false;
+            if (i % 2 == 0) {
+                var lbl = items.firstChild.id;
+                Col1Data = $("#" + lbl).text();
+                //console.log("Col 1", Col2Data);
+                insert = false;
+            }
+            else if (i % 2 == 1) {
+                var input = items.firstChild.id;
+                var inputtype = items.firstChild.type;
+                var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 'True' : 'False' : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                insert = true;
+            }
+            if (insert) {
+                var lst = {
+                    FilterName: Col1Data,
+                    Value: Col2Data
+                };
+                Excelfilter.push(lst);
+            }
+        });
+        switch (selectedOption) {
+            case 'header':
+                printHeaderOnly(currentPrintGridInstance, Excelfilter);
+                break;
+            case 'footer':
+                printFooterOnly(Excelfilter);
+                break;
+            case 'combined':
+                printHeaderFooterCombined(currentPrintGridInstance, Excelfilter);
+                break;
+        }
+
+        closePrintModal();
+    }
+
+    // ========== PRINT IMPLEMENTATION ==========
+
+    function printHeaderOnly(gridInstance, fitersdata) {
+        var ReportName = $("#MainHeading").text();
+            console.log('Printing Header Only');
+            var data = gridInstance.getCurrentData();
+            var cols = gridInstance.columns.filter(c => !c.specialColumn && c.visible && c.field);
+            var title = (ReportName || 'Grid Print');
+
+        var content = generatePrintContent(title, data, cols, fitersdata);
+            openPrintWindow(content);
+        }
+
+    function printFooterOnly(fitersdata) {
+        var ReportName = $("#MainHeading").text();
+            console.log('Printing Footer Only');
+            if (!detailsGrid) {
+                alert('Detail grid not available');
+                return;
+            }
+            var data = detailsGrid.getCurrentData();
+            var cols = detailcolumns.filter(c => c.field);
+            var title = (ReportName || 'Grid Print') + " - Footer Details";
+
+        var content = generatePrintContent(title, data, cols, fitersdata);
+            openPrintWindow(content);
+        }
+
+    function printHeaderFooterCombined(gridInstance, fitersdata) {
+        console.log('Printing Combined');
+        var ReportName = $("#MainHeading").text();
+            var headerData = gridInstance.getCurrentData();
+            var headerCols = gridInstance.columns.filter(c => !c.specialColumn && c.visible && c.field);
+            var footerCols = detailcolumns.filter(c => c.field);
+            var title = (ReportName || 'Grid Print') + " - Combined View";
+
+            // Build combined structure
+            var rows = [];
+            headerData.forEach(hRow => {
+                var related = detailrows.filter(f => f['Customer Code'] === hRow['Customer Code']);
+                if (related.length === 0) {
+                    var combinedRow = { ...hRow };
+                    footerCols.forEach(c => combinedRow['F_' + c.field] = '');
+                    rows.push(combinedRow);
+                } else {
+                    related.forEach(fRow => {
+                        var combinedRow = { ...hRow };
+                        footerCols.forEach(c => combinedRow['F_' + c.field] = fRow[c.field]);
+                        rows.push(combinedRow);
+                    });
+                }
+            });
+
+            // Combine columns for display
+            var displayCols = [
+                ...headerCols.map(c => ({ ...c, header: c.header + " (H)" })),
+                ...footerCols.map(c => ({ ...c, field: 'F_' + c.field, header: c.header + " (F)" }))
+            ];
+
+        var content = generatePrintContent(title, rows, displayCols, fitersdata);
+            openPrintWindow(content);
+        }
+
+    function generatePrintContent(title, data, columns, fitersdata) {
+        console.log("Row Data ", data);
+        console.log("columns Data ", columns)
+            // Calculate Totals for columns with EnableSum: true
+            var totals = {};
+            var hasTotals = false;
+
+            columns.forEach(c => {
+                if (c.PrintYN && c.EnableSum === true) {
+                    totals[c.field] = 0;
+                    hasTotals = true;
+                }
+            });
+
+            if (hasTotals) {
+                data.forEach(row => {
+                    columns.forEach(c => {
+                        if (c.PrintYN && c.EnableSum === true) {
+                            var val = parseFloat(row[c.field]);
+                            if (!isNaN(val)) {
+                                totals[c.field] += val;
+                            }
+                        }
+                    });
+                });
+            }
+
+            var html = `
+                <html>
+                <head>
+                    <title>${title}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; margin: 15mm; }
+                        .report-header { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #1A237E; }
+                        .company-name { font-size: 24px; font-weight: bold; color: #1A237E; margin: 0; }
+                        .report-title { font-size: 18px; margin: 5px 0; color: #555; }
+                        .filters-section { background: #f5f5f5; padding: 10px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #ddd; }
+                        .filters-title { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+                        .filter-item { font-size: 12px; margin-bottom: 2px; display: inline-block; width: 45%; }
+
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                        th { background-color: #1A237E !important; color: white !important; text-align: left; padding: 8px; border: 1px solid #ddd; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        td { padding: 5px; border: 1px solid #ddd; color: #000; }
+                        td { padding: 5px; border: 1px solid #ddd; color: #000; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                        .total-row td { font-weight: bold; background-color: #e0e0e0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+                        @@page {
+                            /* Hide browser default header (Time, Title, URL) by removing top margin */
+                            margin-top: 5mm;
+                            margin-bottom: 10mm;
+                            margin-left: 5mm;
+                            margin-right: 5mm;
+
+                            @@bottom-right {
+                                content: "Page " counter(page) " of " counter(pages);
+                                font-size: 10px;
+                            }
+                        }
+
+                        @@media print {
+                            body { margin: 2mm; zoom: 80%; }
+                            button { display: none; }
+
+                            /* Page Numbering Fallback */
+                            .page-number-header {
+                                position: fixed;
+                                bottom: 0;
+                                right: 0;
+                                font-size: 10px;
+                                color: #555;
+                                background-color: white;
+                                padding: 5px;
+                            }
+                        }
+                        .wrap-text {
+    white-space: normal !important;
+    word-break: break-word;
+}
+                    </style>
+                </head>
+                <body>
+                    <!-- Fixed Header for Page Numbering -->
+                    <div class="page-number-header">
+                       
+                    </div>
+
+                    <div class="report-header">
+                        <p class="company-name">${CompanyName}</p>
+                        <p class="report-title">${title}</p>
+                    </div>
+
+                    <div class="filters-section">
+                        <div class="filters-title">Report Filters:</div>
+                        ${fitersdata.map(f => `
+                            <div class="filter-item">
+                                <strong>${f.FilterName}:</strong> ${f.Value}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                ${columns.map(c => {
+                var width = c.PrintWidth ? (typeof c.PrintWidth === `number` ? (c.PrintWidth * 3.78) + `px` : c.PrintWidth) : `auto`;
+                                    return c.PrintYN ? `<th class="wrap-text" style="max-width: ${width} !important;">${c.PrintColumnName}</th>` : '';
+            }).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(row => `
+                                <tr>
+                                    ${columns.map(c => {
+                var val = row[c.field];
+                // Strip HTML
+                if (typeof val === `string` && val.includes('<')) {
+                    var tmp = document.createElement('div');
+                    tmp.innerHTML = val;
+                    val = tmp.textContent || tmp.innerText;
+                                        }
+                                        var valucolor = val == `Total` ? `blue` : val == `Opening Balance` ? `brown` : val == `Closing Balance` ? `darkorange` : `black`;
+                                        return c.PrintYN ? `<td class="wrap-text" style="color:` + valucolor +`" align=` + c.align+`>${val ?? ''}</td>` : '';
+            }).join('')}
+                                </tr>
+                            `).join('')}
+
+                            ${hasTotals ? `
+                                <tr class="total-row">
+                                    ${columns.map((c, index) => {
+                                        if (!c.PrintYN) return '';
+
+                if (c.EnableSum === true) {
+                    var sum = totals[c.field] || 0;
+                    return `<td>${sum.toFixed(2)}</td>`;
+                } else if (index === 0 || (columns.filter(col => col.PrintYN)[0] === c)) {
+                    // First printable column gets "Total" label
+                    return `<td>Total</td>`;
+                } else {
+                    return `<td></td>`;
+                }
+            }).join('')}
+                                </tr>
+                            ` : ''}
+                        </tbody>
+                    </table>
+
+                    <div class="no-print" style="margin-top: 20px; text-align: right;">
+                        <!-- Manual button removed for direct printing -->
+                    </div>
+                </body>
+                </html>
+            `;
+            return html;
+        }
+
+        function openPrintWindow(content) {
+            // Create a hidden iframe for direct printing
+            var iframe = document.createElement('iframe');
+            iframe.style.visibility = 'hidden';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+
+            var doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(content);
+            doc.close();
+
+            // Trigger print once content is loaded
+            iframe.contentWindow.focus();
+            setTimeout(() => {
+                iframe.contentWindow.print();
+                // Cleanup: remove the iframe after the print dialog opens
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            }, 500);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            var expModal = document.getElementById('exportOptionsModal');
+            var prntModal = document.getElementById('printOptionsModal');
+            if (event.target === expModal) {
+                closeExportModal();
+            }
+            if (event.target === prntModal) {
+                closePrintModal();
+            }
+    }
+    function GetPrintYesWidth() {
+        let totalWidth = 0;
+        $('#tblReportSettings tbody tr').each(function () {
+
+            // PrintYN checkbox in this row
+            let isPrintChecked = $(this).find('.dgvPrintYN').is(':checked');
+
+            if (isPrintChecked) {
+                let widthVal = parseInt(
+                    $(this).find('.dgvPrintWidth').val() || 0
+                );
+                totalWidth += widthVal;
+            }
+        });
+        $("#lblPrintWidth").text(totalWidth);
+    }
+    let prevPrintWidth = 0;
+
+    // store previous value before editing
+    $('#tblReportSettings').on('focus', '.dgvPrintWidth', function () {
+        prevPrintWidth = parseInt(this.value || 0);
+    });
+
+    // validate on change
+    $('#tblReportSettings').on('change', '.dgvPrintWidth,.dgvPrintYN', function () {
+        GetPrintYesWidth();
+        //let totalWidth = 0;
+        //const maxWidth = 210;
+
+        //$('#tblReportSettings tbody tr').each(function () {
+
+        //    // PrintYN checkbox in this row
+        //    let isPrintChecked = $(this).find('.dgvPrintYN').is(':checked');
+
+        //    if (isPrintChecked) {
+        //        let widthVal = parseInt(
+        //            $(this).find('.dgvPrintWidth').val() || 0
+        //        );
+        //        totalWidth += widthVal;
+        //    }
+        //});
+
+        //if (totalWidth > maxWidth) {
+        //    // revert only current input
+        //    this.value = prevPrintWidth;
+
+        //    $(this).addClass('is-invalid');
+
+        //    showErrorSnackbar(
+        //        'Total Print Width (PrintYN rows only) cannot exceed 210'
+        //    );
+        //} else {
+        //    $(this).removeClass('is-invalid');
+        //}
+    });
+
 </script>
