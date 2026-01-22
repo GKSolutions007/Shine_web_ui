@@ -8,23 +8,24 @@
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 <link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
 <link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />
 
 <script src="~/Scripts/bootstrap.min.js"></script>
-<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-1.11.1.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="~/Scripts/bootstrap-typeahead.min.js"></script>
-<script src="~/Scripts/jquery.dataTables.min.js"></script>
-<script src="~/Scripts/dataTables.bootstrap.min.js"></script>
+@*<script src="~/Scripts/jquery.dataTables.min.js"></script>
+<script src="~/Scripts/dataTables.bootstrap.min.js"></script>*@
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_GRID_2.0/js/gridui.js"></script>
 
-@*<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>*@
 <script src="~/Scripts/xlsx.bundle.js"></script>
 
 <style>
-
+    
     .each {
         border-bottom: 1px solid #555 !important;
         padding: 3px 0 !important;
@@ -176,7 +177,7 @@
             margin: 1% auto; /* 15% from the top and centered */
             padding: 2px;
             border: 1px solid #888;
-            width: 85%; /* Could be more or less, depending on screen size */
+            width: 95%; /* Could be more or less, depending on screen size */
             max-height: 60% !important;
             top: 2% !important;
             overflow: auto;
@@ -216,6 +217,9 @@
 
     .dg-toolbar-report-name {
         font-size: 1.2em !important;
+    }
+    modalReportColumnSettings.modal-body {        
+        padding: 0px !important;
     }
 </style>
 <style>
@@ -667,14 +671,14 @@
                     <div id="dvAssign" style="width:100%;padding-bottom:7px">
                         <table class="table table-bordered row-border order-column" id="tblReportSettings" style="width:100%">
                             <thead>
-                                <tr class="trclrforcolheader">
+                                <tr class="trclrforcolheader" style="font-size:10px;">
                                     <th style="width:0%">ReportID</th>
                                     <th style="width:0%">TableID</th>
                                     <th style="width:0%">ColumnID</th>
                                     <th style="width:0%">FormorReport</th>
                                     <th style="width:25%">Column Name</th>
-                                    <th style="width:25%">Original Column Name</th>
-                                    <th style="width:30%">Display Column Name</th>
+                                    <th style="width:25%">Original Name</th>
+                                    <th style="width:30%">Display Name</th>
                                     <th style="width:9%">Width</th>
                                     <th style="width:12%">Visible</th>
                                     <th style="width:12%">Alignment</th>
@@ -684,6 +688,9 @@
                                     <th style="width:12%">Average</th>
                                     <th style="width:12%">Column Menu</th>
                                     <th style="width:12%">Show Column Option</th>
+                                    <th style="width:12%">Print Y/N</th>
+                                    <th style="width:12%">Print Name</th>
+                                    <th style="width:12%">Print Width</th>
                                 </tr>
                             </thead>
                         </table>
@@ -930,7 +937,7 @@
     //GetColumnSettingsData(2, FID, 1);
     function GetColumnSettingsData(nMode, nFormID, nTableID) {
         $.ajax({
-            url: Aurl + "columnsettings/getcolumnsettings",
+            url: Aurl + "financialrepcolumnsettings/getcolumnsettings",
             type: 'get',
             contentType: 'json',
             data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 2 },
@@ -988,7 +995,7 @@
     }
     function ColumnSettings(nMode, nReportID, nTableID) {
         $.ajax({
-            url: Aurl + "columnsettings/getcolumnsettings",
+            url: Aurl + "financialrepcolumnsettings/getcolumnsettings",
             type: 'get',
             contentType: 'json',
             data: { Mode: nMode, FormID: nReportID, TableID: nTableID, FormorReport: 2 },
@@ -1016,28 +1023,31 @@
                         { "data": "ColumnID", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
                         { "data": "FormorReport", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
                         { "data": "ColumnName", "autoWidth": true, "visible": false, className: "dt-body-left" },//3
-                        { "data": "OriginalColumnName", "autoWidth": true, width: "15%", className: "dt-body-left" },//3
+                        { "data": "OriginalColumnName", "autoWidth": true, width: "10%", className: "dt-body-left" },//3
                         {
-                            className: "dt-body-left", width: "25%",
+                            className: "dt-body-left", width: "20%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 return '<input type="text" value="' + value.DisplayColumnName + '" name ="DisplayColumnName" class="form-control" id="txtDisplayColumnName' + rowIndex + '"/>';
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%",
+                            className: "dt-body-left", width: "6%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 return '<input type="number" value="' + value.Width + '" name ="Width" class="form-control" id="txtWidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%",
+                            className: "dt-body-center", width: "5%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.Visible == '0' ? 'selected' : '';
                                 var isTrueSelect = value.Visible == '1' ? 'selected' : '';
-                                var field = "<select name='Visible' class='form-control' id='cmbVisible" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                
+                                //var field = "<select name='Visible' class='form-control' id='cmbVisible" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                var ischk = value.Visible == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="Visible" ' + ischk +' id="cmbVisible' + rowIndex + '"/>';
                                 return field;
                             }
                         },
@@ -1060,56 +1070,103 @@
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", "visible": true,
+                            className: "dt-body-center", width: "5%", "visible": true,
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.TotalYN == '0' ? 'selected' : '';
                                 var isTrueSelect = value.TotalYN == '1' ? 'selected' : '';
                                 var isDisable = value.Total == '1' ? 'disabled' : '';
                                 var field = "<select " + isDisable + " name='Total' class='form-control' id='cmbTotal" + rowIndex + "'><option value= '0' " + isFalseSelect + ">No</option><option value= '1'" + isTrueSelect + ">Yes</option></select>";
+                                var ischk = value.TotalYN == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="Total" ' + ischk + ' id="cmbTotal' + rowIndex + '" ' + isDisable +'/>';
                                 return field;
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", width: "8%", "visible": true,
+                            className: "dt-body-center", width: "4%", "visible": true,
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isDisable = value.Total == '1' ? 'disabled' : '';
                                 var isFalseSelect = value.EnableSum == '0' ? 'selected' : '';
                                 var isTrueSelect = value.EnableSum == '1' ? 'selected' : '';
                                 var field = "<select " + isDisable + " name='EnableSum' class='form-control' id='EnableSum" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableSum == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableSum" ' + ischk + ' id="EnableSum' + rowIndex + '" ' + isDisable + '/>';
                                 return field;
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", "visible": true,
+                            className: "dt-body-center", width: "4%", "visible": true,
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isDisable = value.Total == '1' ? 'disabled' : '';
                                 var isFalseSelect = value.EnableAvg == '0' ? 'selected' : '';
                                 var isTrueSelect = value.EnableAvg == '1' ? 'selected' : '';
                                 var field = "<select " + isDisable + " name='EnableAvg' class='form-control' id='EnableAvg" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableAvg == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableAvg" ' + ischk + ' id="EnableAvg' + rowIndex + '" ' + isDisable + '/>';
+
                                 return field;
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", "visible": false,
+                            className: "dt-body-center", width: "5%", "visible": false,
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.EnableColumnMenu == '0' ? 'selected' : '';
                                 var isTrueSelect = value.EnableColumnMenu == '1' ? 'selected' : '';
                                 var field = "<select name='EnableColumnMenu' class='form-control' id='EnableColumnMenu" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableColumnMenu == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableColumnMenu" ' + ischk + ' id="EnableColumnMenu' + rowIndex + '" />';
+
                                 return field;
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%", "visible": (RID == 1),
+                            className: "dt-body-left", width: "5%", "visible": (RID == 1),
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.ShowinColumnOption == '0' ? 'selected' : '';
                                 var isTrueSelect = value.ShowinColumnOption == '1' ? 'selected' : '';
                                 var field = "<select name='ShowinColumnOption' class='form-control' id='ShowinColumnOption" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.ShowinColumnOption == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="ShowinColumnOption" ' + ischk + ' id="ShowinColumnOption' + rowIndex + '" />';
+
+
                                 return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.PrintYN == '0' ? 'selected' : '';
+                                var isTrueSelect = value.PrintYN == '1' ? 'selected' : '';
+                                var field = "<select name='PrintYN' class='form-control' id='cmbPrintYN" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+
+                                var ischk = value.PrintYN == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="PrintYN" ' + ischk + ' id="cmbPrintYN' + rowIndex + '" />';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "18%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="text" value="' + value.PrintColumnName + '" name ="PrintColumnName" class="form-control" id="txtPrintColumnName' + rowIndex + '"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%",
+                            "mRender": function (data, type, value, meta) {                                
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.PrintWidth + '" name ="Printwidth" class="form-control" id="txtPrintwidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
                             }
                         },
                     ],
@@ -1828,7 +1885,9 @@ function setDate(FieldID,Type) {
             var allValues = {};
             rowdata = tblReportSettings.row($(this)).data();
             console.log("Row Data : ", rowdata);
+            //Printwidth,PrintColumnName,PrintYN
             var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
+                aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
                 aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
                 aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
                 aShowinColumnOption = rowdata.ShowinColumnOption;
@@ -1844,31 +1903,42 @@ function setDate(FieldID,Type) {
                 if (fieldName == "DisplayIndex") {
                     aDisplayIndex = $(this).val();
                 }
+                if (fieldName == "Printwidth") {
+                    aPrintwidth = $(this).val();
+                }
+                if (fieldName == "PrintColumnName") {
+                    aPrintColumnName = $(this).val();
+                }
+
+                if (fieldName == "Visible") {
+                    aVisible = this.checked ? "1" : "0";
+                }
+                if (fieldName == "Total") {
+                    aTotal = this.checked ? "1" : "0";
+                }
+                if (fieldName == "EnableColumnMenu") {
+                    aEnableColumnMenu = this.checked ? "1" : "0";
+                }
+                if (fieldName == "EnableSum") {
+                    aEnableSum = this.checked ? "1" : "0";
+                }
+                if (fieldName == "EnableAvg") {
+                    aEnableAvg = this.checked ? "1" : "0";
+                }
+                if (fieldName == "ShowinColumnOption") {
+                    aShowinColumnOption = this.checked ? "1" : "0";
+                }
+                if (fieldName == "PrintYN") {
+                    aPrintYN = this.checked;
+                }
+
             });
             $(this).find("select").each(function (index) {
                 const fieldName = $(this).attr("name");
                 const fieldID = $(this).attr("id");
                 if (fieldName == "Alignment") {
                     aAlign = $(this).val();
-                }
-                if (fieldName == "Visible") {
-                    aVisible = $(this).val();
-                }
-                if (fieldName == "Total") {
-                    aTotal = $(this).val();
-                }
-                if (fieldName == "EnableColumnMenu") {
-                    aEnableColumnMenu = $(this).val();
-                }
-                if (fieldName == "EnableSum") {
-                    aEnableSum = $(this).val();
-                }
-                if (fieldName == "EnableAvg") {
-                    aEnableAvg = $(this).val();
-                }
-                if (fieldName == "ShowinColumnOption") {
-                    aShowinColumnOption = $(this).val();
-                }
+                }                
             });
 
             var coldata = {
@@ -1887,13 +1957,16 @@ function setDate(FieldID,Type) {
                 "EnableAvg": aEnableAvg,
                 "EnableSum": aEnableSum,
                 "EnableColumnMenu": aEnableColumnMenu,
-                "ShowinColumnOption": aShowinColumnOption
+                "ShowinColumnOption": aShowinColumnOption,
+                "PrintYN": aPrintYN,
+                "PrintColumnName": aPrintColumnName,
+                "Printwidth": aPrintwidth
             };
             ColumnSettingData.push(coldata);
         });
         console.log("ColumnSettingData : ", ColumnSettingData);
         $.ajax({
-            url: Aurl + "columnsettings/Savecolumnsettings",
+            url: Aurl + "financialrepcolumnsettings/Savecolumnsettings",
             type: 'POST',
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify(ColumnSettingData),
