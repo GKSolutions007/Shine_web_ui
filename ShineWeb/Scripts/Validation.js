@@ -322,11 +322,11 @@ function sanitizeNumericPercentage(input, errordiv) {
     value = value.replace(/[^0-9.]/g, '');
 
     // Prevent more than one decimal point
-    if ((value.match(/\./g) || []).length > 1) {
-        value = value.substring(0, value.length - 1);
-    }
+    //if ((value.match(/\./g) || []).length > 1) {
+    //    value = value.substring(0, value.length - 1);
+    //}
 
-    input.value = value;
+    //input.value = value;
 
     // Empty is allowed while typing
     if (value === '') return;
@@ -380,11 +380,11 @@ function sanitizeNumericOnly(input, errordiv) {
     value = value.replace(/[^0-9.]/g, '');
 
     // Prevent more than one decimal point
-    if ((value.match(/\./g) || []).length > 1) {
-        value = value.substring(0, value.length - 1);
-    }
+    //if ((value.match(/\./g) || []).length > 1) {
+    //    value = value.substring(0, value.length - 1);
+    //}
 
-    input.value = value;
+    //input.value = value;
 
     // Empty is allowed while typing
     if (value === '') return;
