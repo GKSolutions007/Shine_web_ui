@@ -3125,6 +3125,378 @@ if ($("#txtAddID").val() == 0) {
             showErrorSnackbar("Select anyone Document");
         }
     });
+    function getTagEl($row, selector) {
+        return parseFloat($row.find(selector).attr("txttag") || $row.find(selector).attr("lbltag")) || 0;
+    }
+    function updateLbl($row, selector, val) {
+        let id = $row.find(selector).attr("id");
+        updateLabelColumn(id, val);
+    }
+    function updateInput($row, selector, val) {
+        let id = $row.find(selector).attr("id");
+        updateInputColumn(id, val);
+    }
+    //dgvProddiscAmtchange,dgvProddiscPernchange
+    $('#tblProductData tbody').on('change', '.dgvProddiscPernchange', function (e) {
+        var id = e.target.id;
+        var val = e.target.value;
+        var name = e.target.name;
+        ProdGridChange = true;
+
+        updateInputColumn(id, val);
+        var $input = $(this);
+        var $r = $input.closest('tr');
+
+        rowdata = ProductTable.row($(this).parents('tr')).data();
+
+        var taxpern = parseFloat(rowdata[2]);
+        var TInvoicePrice = parseFloat(rowdata[28]);
+
+        let existTradeDiscPern = getTagEl($r, "input[name='TradeDiscPern']");
+        let existAddnlDiscPern = getTagEl($r, "input[name='AddnlDiscPern']");
+        let existGoodsAmt = getTagEl($r, "label[name='Goods']");
+        let Qty = getTagEl($r, "input[name='Qty']");
+
+        var ProdDiscAmt = (existGoodsAmt * val) / 100;
+        updateInput($r, "input[name='ProdDiscAmt']", ProdDiscAmt);
+
+        var price = (existGoodsAmt - ProdDiscAmt);
+        var trdamt = ((existTradeDiscPern * price) / 100);
+        updateInput($r, "input[name='TradeDiscAmt']", trdamt);
+        if (trdamt <= 0) {
+            updateInput($r, "input[name='TradeDiscPern']", 0);
+        }
+        //
+        var addnlamt = ((existAddnlDiscPern * price) / 100);
+        updateInput($r, "input[name='AddnlDiscAmt']", addnlamt);
+        if (trdamt <= 0) {
+            updateInput($r, "input[name='AddnlDiscPern']", 0);
+        }
+
+        var dGross = (existGoodsAmt - (trdamt + addnlamt + ProdDiscAmt));
+        updateLbl($r, "label[name='Gross']", dGross);
+
+        var tamt = ((taxpern * dGross) / 100);
+        updateLbl($r, "label[name='TaxAmt']", tamt);
+
+        var neta = (parseFloat(dGross) + parseFloat(tamt));
+        updateLbl($r, "label[name='NetAmt']", neta);
+
+        var UOMField = $(rowdata[18]);
+        var seluomid = UOMField[0].id;
+        var CFValue = $("#" + seluomid + " option:selected").attr('name');
+
+        var PerQty = dGross / Qty;
+        var Diff = PerQty - (TInvoicePrice * CFValue);
+        updateLbl($r, "label[name='DiffValue']", Diff);
+        let difffid = $r.find("label[name='DiffValue']").attr("id");
+        var clrcolor = Diff >= 0 ? "green" : "red";
+        document.getElementById(difffid).style.color = clrcolor
+
+        calculateProdGrid();
+    });
+    $('#tblProductData tbody').on('change', '.dgvProddiscAmtchange', function (e) {
+        var id = e.target.id;
+        var val = e.target.value;
+        var name = e.target.name;
+        ProdGridChange = true;
+
+        updateInputColumn(id, val);
+        var $input = $(this);
+        var $r = $input.closest('tr');
+
+        rowdata = ProductTable.row($(this).parents('tr')).data();
+
+        var taxpern = parseFloat(rowdata[2]);
+        var TInvoicePrice = parseFloat(rowdata[28]);
+
+        let existTradeDiscPern = getTagEl($r, "input[name='TradeDiscPern']");
+        let existAddnlDiscPern = getTagEl($r, "input[name='AddnlDiscPern']");
+        let existGoodsAmt = getTagEl($r, "label[name='Goods']");
+        let Qty = getTagEl($r, "input[name='Qty']");
+
+        var ProdDiscAmt = 0;
+
+        var ProdDiscPern = ((val / existGoodsAmt) * 100);
+        if (ProdDiscPern > 100) {
+            updateInputColumn(id, 0);
+            updateInput($r, "input[name='ProdDiscPern']", 0);
+            ProdDiscAmt = 0;
+            ProdDiscPern = 0;
+        } else {
+            updateInput($r, "input[name='ProdDiscPern']", ProdDiscPern);
+        }
+        ProdDiscAmt = (existGoodsAmt * ProdDiscPern) / 100;
+
+
+        var price = (existGoodsAmt - ProdDiscAmt);
+        var trdamt = ((existTradeDiscPern * price) / 100);
+        updateInput($r, "input[name='TradeDiscAmt']", trdamt);
+        if (trdamt <= 0) {
+            updateInput($r, "input[name='TradeDiscPern']", 0);
+        }
+        //
+        var addnlamt = ((existAddnlDiscPern * price) / 100);
+        updateInput($r, "input[name='AddnlDiscAmt']", addnlamt);
+        if (trdamt <= 0) {
+            updateInput($r, "input[name='AddnlDiscPern']", 0);
+        }
+
+        var dGross = (existGoodsAmt - (trdamt + addnlamt + ProdDiscAmt));
+        updateLbl($r, "label[name='Gross']", dGross);
+
+        var tamt = ((taxpern * dGross) / 100);
+        updateLbl($r, "label[name='TaxAmt']", tamt);
+
+        var neta = (parseFloat(dGross) + parseFloat(tamt));
+        updateLbl($r, "label[name='NetAmt']", neta);
+
+        var UOMField = $(rowdata[18]);
+        var seluomid = UOMField[0].id;
+        var CFValue = $("#" + seluomid + " option:selected").attr('name');
+
+        var PerQty = dGross / Qty;
+        var Diff = PerQty - (TInvoicePrice * CFValue);
+        updateLbl($r, "label[name='DiffValue']", Diff);
+        let difffid = $r.find("label[name='DiffValue']").attr("id");
+        var clrcolor = Diff >= 0 ? "green" : "red";
+        document.getElementById(difffid).style.color = clrcolor
+
+        calculateProdGrid();
+    });
+
+    //dgvTradediscAmtchange,dgvTradediscPernchange
+    $('#tblProductData tbody').on('change', '.dgvTradediscPernchange', function (e) {
+        var id = e.target.id;
+        var val = e.target.value;
+        var name = e.target.name;
+        ProdGridChange = true;
+
+        updateInputColumn(id, val);
+        var $input = $(this);
+        var $r = $input.closest('tr');
+
+        rowdata = ProductTable.row($(this).parents('tr')).data();
+
+        var taxpern = parseFloat(rowdata[2]);
+        var TInvoicePrice = parseFloat(rowdata[28]);
+        let existProdDiscPern = parseFloat(getTagEl($r, "input[name='ProdDiscPern']"));
+        let existProdDiscAmt = parseFloat(getTagEl($r, "input[name='ProdDiscAmt']"));
+        let existAddnlDiscPern = parseFloat(getTagEl($r, "input[name='AddnlDiscPern']"));
+        let existAddnlDiscAmt = getTagEl($r, "input[name='AddnlDiscAmt']");
+        let existGoodsAmt = getTagEl($r, "label[name='Goods']");
+        let Qty = getTagEl($r, "input[name='Qty']");
+
+        var price = (existGoodsAmt - existProdDiscAmt);
+        if ((parseFloat(val) + existAddnlDiscPern) > 100) {
+            updateInputColumn(id, 0);
+            val = 0;
+        }
+        var trdamt = ((val * price) / 100);
+        updateInput($r, "input[name='TradeDiscAmt']", trdamt);
+        if (trdamt <= 0) {
+            updateInputColumn(id, 0);
+        }
+
+        var dGross = (existGoodsAmt - (trdamt + existAddnlDiscAmt + existProdDiscAmt));
+        updateLbl($r, "label[name='Gross']", dGross);
+
+        var tamt = ((taxpern * dGross) / 100);
+        updateLbl($r, "label[name='TaxAmt']", tamt);
+
+        var neta = (parseFloat(dGross) + parseFloat(tamt));
+        updateLbl($r, "label[name='NetAmt']", neta);
+
+        var UOMField = $(rowdata[18]);
+        var seluomid = UOMField[0].id;
+        var CFValue = $("#" + seluomid + " option:selected").attr('name');
+
+        var PerQty = dGross / Qty;
+        var Diff = PerQty - (TInvoicePrice * CFValue);
+        updateLbl($r, "label[name='DiffValue']", Diff);
+        let difffid = $r.find("label[name='DiffValue']").attr("id");
+        var clrcolor = Diff >= 0 ? "green" : "red";
+        document.getElementById(difffid).style.color = clrcolor
+
+        calculateProdGrid();
+    });
+    $('#tblProductData tbody').on('change', '.dgvTradediscAmtchange', function (e) {
+        var id = e.target.id;
+        var val = e.target.value;
+        var name = e.target.name;
+        ProdGridChange = true;
+
+        updateInputColumn(id, val);
+        var $input = $(this);
+        var $r = $input.closest('tr');
+
+        rowdata = ProductTable.row($(this).parents('tr')).data();
+
+        var taxpern = parseFloat(rowdata[2]);
+        var TInvoicePrice = parseFloat(rowdata[28]);
+
+        let existProdDiscPern = parseFloat(getTagEl($r, "input[name='ProdDiscPern']"));
+        let existProdDiscAmt = parseFloat(getTagEl($r, "input[name='ProdDiscAmt']"));
+        let existAddnlDiscPern = parseFloat(getTagEl($r, "input[name='AddnlDiscPern']"));
+        let existAddnlDiscAmt = getTagEl($r, "input[name='AddnlDiscAmt']");
+        let existGoodsAmt = getTagEl($r, "label[name='Goods']");
+        let Qty = getTagEl($r, "input[name='Qty']");
+        var price = (existGoodsAmt - existProdDiscAmt);
+        var TradeDiscAmt = 0;
+
+        var TradeDiscPern = ((val / price) * 100);
+
+        if ((TradeDiscPern + existAddnlDiscPern) > 100) {
+            updateInputColumn(id, 0);
+            updateInput($r, "input[name='TradeDiscPern']", 0);
+            TradeDiscAmt = 0;
+            TradeDiscPern = 0;
+        } else {
+            updateInput($r, "input[name='TradeDiscPern']", TradeDiscPern);
+            TradeDiscAmt = parseFloat(val);
+        }
+
+        var dGross = (existGoodsAmt - (TradeDiscAmt + existAddnlDiscAmt + existProdDiscAmt));
+        updateLbl($r, "label[name='Gross']", dGross);
+
+        var tamt = ((taxpern * dGross) / 100);
+        updateLbl($r, "label[name='TaxAmt']", tamt);
+
+        var neta = (parseFloat(dGross) + parseFloat(tamt));
+        updateLbl($r, "label[name='NetAmt']", neta);
+
+        var UOMField = $(rowdata[18]);
+        var seluomid = UOMField[0].id;
+        var CFValue = $("#" + seluomid + " option:selected").attr('name');
+
+        var PerQty = dGross / Qty;
+        var Diff = PerQty - (TInvoicePrice * CFValue);
+        updateLbl($r, "label[name='DiffValue']", Diff);
+        let difffid = $r.find("label[name='DiffValue']").attr("id");
+        var clrcolor = Diff >= 0 ? "green" : "red";
+        document.getElementById(difffid).style.color = clrcolor
+
+        calculateProdGrid();
+    });
+    //dgvAddnldiscPernchange,dgvAddnldiscAmtchange
+    $('#tblProductData tbody').on('change', '.dgvAddnldiscPernchange', function (e) {
+        var id = e.target.id;
+        var val = e.target.value;
+        var name = e.target.name;
+        ProdGridChange = true;
+
+        updateInputColumn(id, val);
+        var $input = $(this);
+        var $r = $input.closest('tr');
+
+        rowdata = ProductTable.row($(this).parents('tr')).data();
+        //let existProdDiscPern = getTagEl($r, "input[name='ProdDiscPern']");
+        //let existTradeDiscPern = getTagEl($r, "input[name='TradeDiscPern']");
+        //let existAddnlDiscPern = getTagEl($r, "input[name='AddnlDiscPern']");
+        //let existProdDiscAmt = getTagEl($r, "input[name='ProdDiscAmt']");
+        //let existAddnlDiscAmt = getTagEl($r, "input[name='TradeDiscAmt']");
+        //let existTradeDiscAmt = getTagEl($r, "input[name='AddnlDiscAmt']");
+        //let existGrossAmt = getTagEl($r, "label[name='Gross']");
+        var taxpern = parseFloat(rowdata[2]);
+        var TInvoicePrice = parseFloat(rowdata[28]);
+        let existProdDiscPern = parseFloat(getTagEl($r, "input[name='ProdDiscPern']"));
+        let existProdDiscAmt = parseFloat(getTagEl($r, "input[name='ProdDiscAmt']"));
+        let existTradeDiscPern = parseFloat(getTagEl($r, "input[name='TradeDiscPern']"));
+        let existTradeDiscAmt = getTagEl($r, "input[name='TradeDiscAmt']");
+        let existGoodsAmt = getTagEl($r, "label[name='Goods']");
+        let Qty = getTagEl($r, "input[name='Qty']");
+
+        var price = (existGoodsAmt - existProdDiscAmt);
+        if ((parseFloat(val) + existTradeDiscPern) > 100) {
+            updateInputColumn(id, 0);
+            val = 0;
+        }
+        var addnldamt = ((val * price) / 100);
+        updateInput($r, "input[name='AddnlDiscAmt']", addnldamt);
+        if (addnldamt <= 0) {
+            updateInputColumn(id, 0);
+        }
+
+        var dGross = (existGoodsAmt - (addnldamt + existTradeDiscAmt + existProdDiscAmt));
+        updateLbl($r, "label[name='Gross']", dGross);
+
+        var tamt = ((taxpern * dGross) / 100);
+        updateLbl($r, "label[name='TaxAmt']", tamt);
+
+        var neta = (parseFloat(dGross) + parseFloat(tamt));
+        updateLbl($r, "label[name='NetAmt']", neta);
+
+        var UOMField = $(rowdata[18]);
+        var seluomid = UOMField[0].id;
+        var CFValue = $("#" + seluomid + " option:selected").attr('name');
+
+        var PerQty = dGross / Qty;
+        var Diff = PerQty - (TInvoicePrice * CFValue);
+        updateLbl($r, "label[name='DiffValue']", Diff);
+        let difffid = $r.find("label[name='DiffValue']").attr("id");
+        var clrcolor = Diff >= 0 ? "green" : "red";
+        document.getElementById(difffid).style.color = clrcolor
+
+        calculateProdGrid();
+    });
+    $('#tblProductData tbody').on('change', '.dgvAddnldiscAmtchange', function (e) {
+        var id = e.target.id;
+        var val = e.target.value;
+        var name = e.target.name;
+        ProdGridChange = true;
+
+        updateInputColumn(id, val);
+        var $input = $(this);
+        var $r = $input.closest('tr');
+
+        rowdata = ProductTable.row($(this).parents('tr')).data();
+
+        var taxpern = parseFloat(rowdata[2]);
+        var TInvoicePrice = parseFloat(rowdata[28]);
+
+        let existProdDiscPern = parseFloat(getTagEl($r, "input[name='ProdDiscPern']"));
+        let existProdDiscAmt = parseFloat(getTagEl($r, "input[name='ProdDiscAmt']"));
+        let existTradeDiscPern = parseFloat(getTagEl($r, "input[name='TradeDiscPern']"));
+        let existTradeDiscAmt = getTagEl($r, "input[name='TradeDiscAmt']");
+        let existGoodsAmt = getTagEl($r, "label[name='Goods']");
+        let Qty = getTagEl($r, "input[name='Qty']");
+        var price = (existGoodsAmt - existProdDiscAmt);
+        var AddnlDiscAmt = 0;
+
+        var AddnlDiscPern = ((val / price) * 100);
+
+        if ((AddnlDiscPern + existTradeDiscPern) > 100) {
+            updateInputColumn(id, 0);
+            updateInput($r, "input[name='AddnlDiscPern']", 0);
+            AddnlDiscAmt = 0;
+            AddnlDiscPern = 0;
+        } else {
+            updateInput($r, "input[name='AddnlDiscPern']", AddnlDiscPern);
+            AddnlDiscAmt = parseFloat(val);
+        }
+
+        var dGross = (existGoodsAmt - (AddnlDiscAmt + existTradeDiscAmt + existProdDiscAmt));
+        updateLbl($r, "label[name='Gross']", dGross);
+
+        var tamt = ((taxpern * dGross) / 100);
+        updateLbl($r, "label[name='TaxAmt']", tamt);
+
+        var neta = (parseFloat(dGross) + parseFloat(tamt));
+        updateLbl($r, "label[name='NetAmt']", neta);
+
+        var UOMField = $(rowdata[18]);
+        var seluomid = UOMField[0].id;
+        var CFValue = $("#" + seluomid + " option:selected").attr('name');
+
+        var PerQty = dGross / Qty;
+        var Diff = PerQty - (TInvoicePrice * CFValue);
+        updateLbl($r, "label[name='DiffValue']", Diff);
+        let difffid = $r.find("label[name='DiffValue']").attr("id");
+        var clrcolor = Diff >= 0 ? "green" : "red";
+        document.getElementById(difffid).style.color = clrcolor
+
+        calculateProdGrid();
+    });
     //$("#tblProductData").change(function (e) {
     $('#tblProductData tbody').on('change', '.dgvdiscchange', function (e) {
         var id = e.target.id;
@@ -4505,12 +4877,15 @@ if ($("#txtAddID").val() == 0) {
                             '<input ' + isEnable + ' min="0" type="number" txttag ="' + InclPPrice + '" step="any" id="dgvProdIncl' + ProductRID + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(InclPPrice).toFixed(2) + '" title="' + InclPPrice + '" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
                             '<input min="0" type="number" txttag ="1" step="any" id="dgvProdQty' + ProductRID + '" name ="Qty" class="gdInput dgvqty txtsettag" value="1" title="1" autofocus onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
                             sel,//
-                            '<input min="0" type="number" txttag ="' + parseFloat(items.ProductDiscPerc) + '" title="' + parseFloat(items.ProductDiscPerc) + '" step="any" id="dgvProdPDPern' + ProductRID + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(items.ProductDiscPerc).toFixed(2) + '" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="0" step="any" id="dgvProdPDAmt' + ProductRID + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvdiscchange" value="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="' + parseFloat(items.TradeDiscPerc) + '" title="' + parseFloat(items.TradeDiscPerc) + '" step="any" id="dgvProdTDPern' + ProductRID + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(items.TradeDiscPerc).toFixed(2) + '" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="0" step="any" id="dgvProdTDAmt' + ProductRID + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvdiscchange" value="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="0" step="any" id="dgvProdADPern' + ProductRID + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="0" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="0" step="any" id="dgvProdADAmt' + ProductRID + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                            '<input min="0" type="number" txttag ="' + parseFloat(items.ProductDiscPerc) + '" title="' + parseFloat(items.ProductDiscPerc) + '" step="any" id="dgvProdPDPern' + ProductRID + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(items.ProductDiscPerc).toFixed(2) + '" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="0" step="any" id="dgvProdPDAmt' + ProductRID + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
+                            '<input min="0" type="number" txttag ="' + parseFloat(items.TradeDiscPerc) + '" title="' + parseFloat(items.TradeDiscPerc) + '" step="any" id="dgvProdTDPern' + ProductRID + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvTradediscPernchange" value="' + parseFloat(items.TradeDiscPerc).toFixed(2) + '" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="0" step="any" id="dgvProdTDAmt' + ProductRID + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvTradediscAmtchange" value="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
+                            '<input min="0" type="number" txttag ="0" step="any" id="dgvProdADPern' + ProductRID + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvAddnldiscPernchange" value="0" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="0" step="any" id="dgvProdADAmt' + ProductRID + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
                             '<label name="Goods" lbltag="0" title="0" class="lblsettag" id="dgvProdGoods' + ProductRID + '">' + 0 + '</label>',
                             '<label name="Gross" lbltag="0" title="0" class="lblsettag" id="dgvProdGross' + ProductRID + '">' + 0 + '</label>',
                             '<label name="TaxAmt" lbltag="0" title="0" class="lblsettag" id="dgvProdTax' + ProductRID + '">' + 0 + '</label><br/><label name="Tax">' + items.TaxName + '</label>',
@@ -5093,12 +5468,15 @@ if ($("#txtAddID").val() == 0) {
                             '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePriceIncl + '" step="any" id="dgvProdIncl' + nRowIndex + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(itemsProd.UomSalePriceIncl).toFixed(2) + '" title="' + itemsProd.UomSalePriceIncl + '"' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
                             '<input min="0" type="number" txttag ="' + itemsProd.UomQty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + parseFloat(itemsProd.UomQty).toFixed(2) + '" title="' + itemsProd.UomQty + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
                             uomfield,
-                            '<input min="0" type="number" txttag ="' + itemsProd.ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="' + itemsProd.ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="' + itemsProd.TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="' + itemsProd.TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="' + itemsProd.AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="' + itemsProd.AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                            '<input min="0" type="number" txttag ="' + itemsProd.ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="' + itemsProd.ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
+                            '<input min="0" type="number" txttag ="' + itemsProd.TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvTradediscPernchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="' + itemsProd.TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvTradediscAmtchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
+                            '<input min="0" type="number" txttag ="' + itemsProd.AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvAddnldiscPernchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="' + itemsProd.AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
                             '<label class="lblsettag" name="Goods" lbltag=' + itemsProd.GoodsAmt + ' id="dgvProdGoods' + nRowIndex + '" title="' + itemsProd.GoodsAmt + '">' + parseFloat(itemsProd.GoodsAmt).toFixed(DecVal) + '</label>',
                             '<label class="lblsettag" name="Gross" lbltag=' + itemsProd.GrossAmt + ' id="dgvProdGross' + nRowIndex + '" title="' + itemsProd.GrossAmt + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
                             '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>',
@@ -6269,12 +6647,15 @@ if ($("#txtAddID").val() == 0) {
                             '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePriceIncl + '" step="any" id="dgvProdIncl' + nRowIndex + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(itemsProd.UomSalePriceIncl).toFixed(2) + '" title="' + itemsProd.UomSalePriceIncl + '"' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
                             '<input min="0" type="number" txttag ="' + itemsProd.UomQty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + parseFloat(itemsProd.UomQty).toFixed(2) + '" title="' + itemsProd.UomQty + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
                             uomfield,
-                            '<input min="0" type="number" txttag ="' + itemsProd.ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="' + itemsProd.ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="' + itemsProd.TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="' + itemsProd.TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="' + itemsProd.AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input min="0" type="number" txttag ="' + itemsProd.AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvdiscchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                            '<input min="0" type="number" txttag ="' + itemsProd.ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="' + itemsProd.ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
+                            '<input min="0" type="number" txttag ="' + itemsProd.TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvTradediscPernchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="' + itemsProd.TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvTradediscAmtchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
+                            '<input min="0" type="number" txttag ="' + itemsProd.AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvAddnldiscPernchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                            '<input min="0" type="number" txttag ="' + itemsProd.AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+
                             '<label class="lblsettag" name="Goods" lbltag=' + itemsProd.GoodsAmt + ' id="dgvProdGoods' + nRowIndex + '" title="' + itemsProd.GoodsAmt + '">' + parseFloat(itemsProd.GoodsAmt).toFixed(DecVal) + '</label>',
                             '<label class="lblsettag" name="Gross" lbltag=' + itemsProd.GrossAmt + ' id="dgvProdGross' + nRowIndex + '" title="' + itemsProd.GrossAmt + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
                             '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>',
