@@ -16,7 +16,7 @@
 <script src="~/Scripts/datatable.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
-
+<script src="~/Scripts/redirectform.js"></script>
 <link href="https://cdn.syncfusion.com/ej2/27.1.48/ej2-base/styles/bootstrap5.css" rel="stylesheet">
 <link href="https://cdn.syncfusion.com/ej2/27.1.48/ej2-grids/styles/bootstrap5.css" rel="stylesheet">
 <link href="https://cdn.syncfusion.com/ej2/27.1.48/ej2-buttons/styles/bootstrap5.css" rel="stylesheet">
@@ -277,6 +277,11 @@
         <div class="left-section">
             <div class="party-box">
                 @*<button class="btn btn-info" id="btnTable1Settings"><span class="glyphicon glyphicon-tasks"></span> Settings</button>*@
+                <div align="center">
+                    <input type="radio" name="partytype" id="rdoCustomer" checked /><label for="rdoCustomer">&ensp; Customer</label>
+                   &emsp; <input type="radio" name="partytype" id="rdoVendor" /><label for="rdoVendor">&ensp;Vendor</label>
+                </div>
+                
                 <div id="Grid"></div>
             </div>
 
@@ -639,17 +644,22 @@
     });
     $("#PartyInfo").hide();
     setTimeout(() => {
-        GetParty();
+        GetParty(1);
     }, 1000);
-    
-    function GetParty() {
-        //$("#Grid").html("");
-        //$("#DocumentGrid").html("");
+    $('#rdoCustomer').change(function (e) {        
+        GetParty(1);
+    });
+    $('#rdoVendor').change(function (e) {
+        GetParty(2);
+    });
+    function GetParty(nPartyType) {
+        $("#Grid").html("");
+        $("#DocumentGrid").html("");
         $.ajax({
             url: Aurl + "partyanalticalreport/getparty",
             type: 'get',
             contentType: 'json',
-            data: {  },
+            data: { PartyType: nPartyType },
             xhrFields: {
                 withCredentials: true
             },
@@ -859,6 +869,9 @@
                 //showErrorSnackbar("Column resized: " + field + " → New width: " + newWidth);
                 // You can store or use the new width as needed
             },
+            recordDoubleClick: function (args) {
+                console.log("Header record Click ", args);
+            },
             columnVisibilityChanged: function (args) {
                 console.log("Column visibility changed:");
                 console.log("Field:", args.column.field);
@@ -866,18 +879,11 @@
             },
             queryCellInfo: function (args) {
                 // Example: color code the 'CB' (Closing Balance) column
-                if (args.column.field === 'Name' || args.column.field === 'Code') {
-                    var value = args.data.PartyType;
-                    if (value == 1) {
-                        args.cell.style.backgroundColor = 'lightcyan';
-                    } else {
-                        args.cell.style.backgroundColor = 'lightyellow';
-                    }
-                }
+                
                 if (args.column.field === 'CB') {
                     var value = args.data.CB;
                     var PartyType = args.data.PartyType;
-                    
+
                     if (PartyType == 1) {//customer
                         if (value >= 0) {
                             args.cell.style.color = 'red';
@@ -887,7 +893,8 @@
                             args.cell.innerText = formatIndianCurrency(Math.abs(value));//Math.abs
                         }
                         args.cell.style.backgroundColor = 'lightcyan';
-                    } else {//vendor
+                    }
+                    else {//vendor
                         if (value >= 0) {
                             args.cell.style.color = 'green';
                             args.cell.innerText = formatIndianCurrency(value);
@@ -895,6 +902,14 @@
                             args.cell.style.color = 'red';
                             args.cell.innerText = formatIndianCurrency(Math.abs(value));//Math.abs
                         }
+                        args.cell.style.backgroundColor = 'lightyellow';
+                    }
+                }
+                else {
+                    var value = args.data.PartyType;
+                    if (value == 1) {
+                        args.cell.style.backgroundColor = 'lightcyan';
+                    } else {
                         args.cell.style.backgroundColor = 'lightyellow';
                     }
                 }
@@ -1065,7 +1080,14 @@
                 console.log("Column visibility changed:");
                 console.log("Field:", args.column.field);
                 console.log("Now Visible:", args.visible);
-            }
+            },
+            recordDoubleClick: function (args) {
+                console.log("Doc record Click ", args.rowData);
+                var rowdata = args.rowData;
+                var dTransID = rowdata.TransID;
+                var DocID = rowdata["Doc ID"];
+                OpenTransactionDocument(dTransID, DocID);
+            },
         });
 
         Documetsgrid.appendTo('#DocumentGrid');
