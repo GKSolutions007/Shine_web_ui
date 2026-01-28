@@ -1184,7 +1184,7 @@
                             }
                         },
                         {
-                            className: "dt-body-left", width: "5%", "visible": (RID == 1),
+                            className: "dt-body-center", width: "5%", "visible": (RID == 1),
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.ShowinColumnOption == '0' ? 'selected' : '';
@@ -1266,16 +1266,17 @@
                             $.each(data, function (i, items) {
                                 var ParamType = items.ParameterType;
                                 var ParVal = "";
+                                var IsMand = items.IsMandatory;
                                 var defval = items.AutolistName == "1" ? "checked" : "";
                                 var isoddoreven = i % 2 == 0 ? "odd" : "even";
                                 if (ParamType == "Autolist") {
-                                    ParVal = '<input type="text" class="form-control" name=' + items.AutolistName + ' id=' + (items.AutolistName + i) + ' />';
+                                    ParVal = '<input isMandatory =' + IsMand +' type="text" class="form-control" name=' + items.AutolistName + ' id=' + (items.AutolistName + i) + ' />';
                                 }
                                 else if (ParamType == "Dropdown") {
                                     ParVal = '<select class="form-control" name=' + items.AutolistName + ' id=Combo' + (i) + '></select>'
                                 }
                                 else if (ParamType == "Date") {
-                                    ParVal = '<input type="date" class="form-control" name=' + items.AutolistName + ' id="dtp' + (items.AutolistName + i) + '" />';
+                                    ParVal = '<input isMandatory =' + IsMand +' type="date" class="form-control" name=' + items.AutolistName + ' id="dtp' + (items.AutolistName + i) + '" />';
                                     var Datetype = items.AutolistName == "CD" ? 0 : items.AutolistName == "MF" ? 8 : 0;
                                     setDate("dtp"+(items.AutolistName + i), Datetype);
                                 }
@@ -1283,10 +1284,10 @@
                                    ParVal = '<input type="checkbox" name=' + items.AutolistName + ' id=chk' + (items.AutolistName + i) + ' ' + defval + ' />';
                                 }
                                 else if (ParamType == "Number") {
-                                   ParVal = '<input type="number" class="form-control" name=' + items.AutolistName + ' id=chk' + (items.AutolistName + i) + ' value =' + items.AutolistName + ' />';
+                                    ParVal = '<input isMandatory =' + IsMand +' type="number" class="form-control" name=' + items.AutolistName + ' id=chk' + (items.AutolistName + i) + ' value =' + items.AutolistName + ' />';
                                 }
                                 else if (ParamType == "Text") {
-                                    ParVal = '<input type="text" class="form-control" name="text' + items.AutolistName + '" id="txt' + (items.AutolistName + i) + '" value ="' + items.AutolistName + '" />';
+                                    ParVal = '<input isMandatory =' + IsMand +' type="text" class="form-control" name="text' + items.AutolistName + '" id="txt' + (items.AutolistName + i) + '" value ="' + items.AutolistName + '" />';
                                 }
                                 Table.row.add([
                                     '<label id="lblparamName' + i + '"><b>' + items.ParameterName + '</b></label>',
@@ -1497,6 +1498,9 @@ function setDate(FieldID,Type) {
                 else {
                     showErrorSnackbar("No data found");
                 }
+            },
+            error: function (errr) {
+                sb.classList.remove("show"); showErrorSnackbar("Error in data retrieval");
             }
         });
     }
@@ -1759,27 +1763,38 @@ function setDate(FieldID,Type) {
         if (data.length === 0) {
             return; // No data to display
         }
-        const columns = Object.keys(data[0]);
+        console.log("Col Setting", columnsettings);
+        let allcolumns = Object.keys(data[0]);
+        const obj1Fields = columnsettings.map(item => item.field);
 
+        // Get non-matching values
+        const columns = allcolumns.filter(
+            item => !obj1Fields.includes(item)
+        );
+
+        console.log(columns);
         var Reporthd = $("#MainHeading").text();
         var nHeight = Frames == 1 ? "400px" : "200px";
-        columnsettings = [];
+        //columnsettings = [];
         for (var i = 0; i < columns.length; i++) {
             var coldata = {
                 "field": columns[i],
                 "header": columns[i],
                 "type": "label",
-                "width": 150,
-                "align": "left",
+                "width": 100,
+                "align": "right",
                 "visible": true,
                 "EnableColumnMenu": true,
                 "ShowinColumnOption": true,
-                "Total": false,
+                "Total": true,
                 "TotalYN": "1",
-                "EnableSum": false,
+                "EnableSum": true,
                 "EnableAvg": false,
                 "precision": "2",
-                "ClickPopup": false
+                "ClickPopup": false,
+                PrintColumnName: columns[i],
+                PrintYN: true,
+                Printwidth: 20
             }
             columnsettings.push(coldata)
         }
