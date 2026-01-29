@@ -631,6 +631,10 @@
         .export-btn-secondary:hover {
             background: #d0d0d0;
         }
+    .dg-label {
+        font-size: 10px !important;
+        border: 0px solid transparent !important;
+    }
 </style>
 <body>
     <div id="RepLoadersnackbar" class="RepLoadersnackbar">
@@ -892,6 +896,7 @@
         if (lowerName == "outstanding report") return 'fa-file-invoice-dollar';
         if (lowerName == "analysis reports") return 'fa-chart-pie';
         if (lowerName == "master management") return 'fas fa-database';
+        if (lowerName == "margin reports") return 'fa-chart-line';
         if (lowerName == "favourite") return 'fa-regular fa-star';        
 
     }
@@ -1509,7 +1514,7 @@ function setDate(FieldID,Type) {
             return; // No data to display
         }
         var Reporthd = $("#MainHeading").text();
-        var nHeight = Frames == 1 ? "400px" : "200px";
+        var nHeight = Frames == 1 ? "400px" : "300px";
         console.log("columnsettings ", columnsettings);
         var currentSearchValue = '';
         //if (grid) {
@@ -1774,7 +1779,7 @@ function setDate(FieldID,Type) {
 
         console.log(columns);
         var Reporthd = $("#MainHeading").text();
-        var nHeight = Frames == 1 ? "400px" : "200px";
+        var nHeight = Frames == 1 ? "425px" : "200px";
         //columnsettings = [];
         for (var i = 0; i < columns.length; i++) {
             var coldata = {
@@ -1948,7 +1953,7 @@ function setDate(FieldID,Type) {
             },
             onColumnResize: (colIndex, field, header, newWidth) => {
                 //alert(`Column Resized via Callback:\nIndex: ${colIndex}\nName: ${header}\nNew Width: ${newWidth}`);
-                //UpdateColumnWidth(FID, 1, 1, colIndex, header, newWidth);
+                UpdateColumnWidth(FID, 1, 1, colIndex, field, newWidth);
             },
         });
     }
@@ -2060,6 +2065,39 @@ function setDate(FieldID,Type) {
                         GetColumnSettingsData(2, FID, SelectTableID);
                         setTimeout(() => {
                             if (SelectTableID == 1) {
+                                if (IsDynamicReport == 1) {
+                                    var PreviousColl = grid.columns
+                                    //let allcolumns = Object.keys(data[0]);
+                                    const obj1Fields = columnsettings.map(item => item.field);
+                                    let allcolumns = PreviousColl.map(item => item.field);
+                                    // Get non-matching values
+                                    const columns = allcolumns.filter(
+                                        item => !obj1Fields.includes(item)
+                                    );
+
+                                    for (var i = 0; i < columns.length; i++) {
+                                        var coldata = {
+                                            "field": columns[i],
+                                            "header": columns[i],
+                                            "type": "label",
+                                            "width": 100,
+                                            "align": "right",
+                                            "visible": true,
+                                            "EnableColumnMenu": true,
+                                            "ShowinColumnOption": true,
+                                            "Total": true,
+                                            "TotalYN": "1",
+                                            "EnableSum": true,
+                                            "EnableAvg": false,
+                                            "precision": "2",
+                                            "ClickPopup": false,
+                                            PrintColumnName: columns[i],
+                                            PrintYN: true,
+                                            Printwidth: 20
+                                        }
+                                        columnsettings.push(coldata)
+                                    }
+                                }
                                 grid.columns = columnsettings;
                                 grid.refreshColumns();
                             } else {
