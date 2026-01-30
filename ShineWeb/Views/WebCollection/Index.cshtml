@@ -541,17 +541,39 @@
                 }
                 else if (nMode == 5) {
                     $("#btnSave").prop("disabled", false);
-                    //showSuccessSnackbar("Cancelled successfully");
+                    $("#tblCollectionData tbody tr").css("color", "black").attr("title", "");                    
                     $.each(data, function (i, items) {
                         if (items.MsgID == 0) {
-                            //alert(items.Message);
                             showSuccessSnackbar(items.Message);
                             ClearForm();
                         }
                         else {
-                            //$("#dvErrorName").html(items.Message);
-                            //alert(items.Message);
-                            showErrorSnackbar(items.Message);
+                            var ErrorIDs = items.RowID.split(',');
+                            var ErrorMSGs = items.Message.split(',');                            
+                            for (var i = 0; i < ErrorIDs.length; i++) {
+                                var WCID = ErrorIDs[i];
+                                var WCErrorMsg = ErrorMSGs[i];
+                                if (WCID != "") {                                    
+                                    $("#tblCollectionData tbody tr").each(function () {
+                                        var rowdata = CollectionTable.row($(this)).data();
+                                        var isChk = $(this).find('input[type=checkbox]').is(':checked');
+                                        var CustomerName = rowdata.CustomerName;                                        
+                                        if (WCID == rowdata.ID) {
+                                            $(this).css("color", "red").attr("title", WCErrorMsg);
+                                        }
+                                        else if (isChk) {
+                                            $(this).css("color", "green").attr("title", "Saved Successfully");
+                                        }
+                                    });
+                                }
+                                if (ErrorIDs.length == (i + 1)) {
+                                    var errorCount = ErrorIDs.filter(id => id !== "").length;
+                                    if (errorCount > 0) {
+                                        showErrorSnackbar(errorCount + " records have errors. Hover on red rows for details.");
+                                    }                                    
+                                }
+                            }
+                            
                         }
                     });
 

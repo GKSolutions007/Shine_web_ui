@@ -2160,6 +2160,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
         const isSpace = key === 32;
         if (isSpace && !e.ctrlKey) {
             e.preventDefault();
+
+            var G2CollValue = getG2FooterSum(1);
+            var G2AdjValue = getG2FooterSum(2);
+            var G2DiscValue = getG2FooterSum(3);
+            var G2WriteoffAmt = getG2FooterSum(5);
+
             var dG1AdjAmt = parseFloat(document.getElementById("lblG1AdjAmt").getAttribute("lbltag"));
             var dCollAmt = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
             const row = $(this).closest("tr");
@@ -2172,6 +2178,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             let DiscAmt = getTagEl($r, "input[name='AdjDiscAmt']");
             let Writeoff = getTagEl($r, "label[name='WriteoffAmt']");
             let G2RemBal = getTagEl($r, "label[name='G2Balance']");
+            let G2PrevCollAmt = getTagEl($r, "input[name='AdjCollAmtFooter']");
             let currentadjcollamtid = $r.find("input[name='AdjCollAmtFooter']").attr("id");
             var totaladjamtwoucurrent = 0
             $("#tblGridtwoData tbody tr").each(function () {
@@ -2183,23 +2190,44 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     }
                 });
             });
-            var rowtotaladjvalues = (dCollAmt + dG1AdjAmt - DiscAmt - (AdjAmtPM <= 0 ? Math.abs(AdjAmtPM) : 0)) - Writeoff - totaladjamtwoucurrent;
-            var balancewithdiscminus = (Balance - (DiscAmt + (AdjAmtPM <= 0 ? Math.abs(AdjAmtPM) : 0) + Writeoff))
+            var OCPos = 0, OCNeg = 0;
+            $('.AdjFooter').each(function () {
+                let val = parseFloat($(this).attr('txttag'));
+                if (!isNaN(val)) {
+                    if (val > 0) OCPos += val;
+                    else OCNeg += Math.abs(val);
+                }
+            });
+            
+            var rowtotaladjvalues = (dCollAmt + dG1AdjAmt - OCPos) - (totaladjamtwoucurrent);//G2DiscValue + OCNeg + Writeoff + //(AdjAmtPM <= 0 ? Math.abs(AdjAmtPM) : 0)
+            var balancewithdiscminus = (Balance - (DiscAmt + (AdjAmtPM <= 0 ? Math.abs(AdjAmtPM) : 0) + Writeoff));//(AdjAmtPM <= 0 ? Math.abs(AdjAmtPM) : 0)
             if (rowtotaladjvalues <= balancewithdiscminus) {//Balance
                 updateInputColumn(currentadjcollamtid, rowtotaladjvalues);
             }
-            else {                
+            else {
                 updateInputColumn(currentadjcollamtid, balancewithdiscminus);
-            }            
-            //var availAmt = remAmt >= G2RemBal ? G2RemBal : remAmt;
-            //var totadj = availAmt + DiscAmt + Writeoff + (AdjAmtPM >= 0 ? 0 : Math.abs(AdjAmtPM));
-            //var newg2rembal = Balance - totadj;
+            }
             let nowadjamt = getTagEl($r, "input[name='AdjCollAmtFooter']");
             var totadj = nowadjamt + (AdjAmtPM >= 0 ? 0 : Math.abs(AdjAmtPM)) + DiscAmt + Writeoff;
             var newg2rembal = Balance - totadj;
             updateLbl($r, "label[name='G2TotalAdjAmount']", totadj);
             updateLbl($r, "label[name='G2Balance']", newg2rembal);
 
+            //let remAmt = getTag("#txtRemainingAmount", "txttag");
+            //var availAmt = (remAmt + G2PrevCollAmt) >= G2RemBal ? G2RemBal : (remAmt + G2PrevCollAmt);
+            //row.find("input").each(function () {
+            //    const field = $(this);
+            //    const name = field.attr("name");
+
+            //    if (name === "AdjCollAmtFooter") {
+            //        //balance = parseFloat(field.attr("lbltag"));
+            //        updateInputColumn(field[0].id, availAmt)
+            //    }
+            //});
+            //var totadj = availAmt + DiscAmt + Writeoff + (AdjAmtPM >= 0 ? 0 : Math.abs(AdjAmtPM));
+            //var newg2rembal = Balance - totadj;
+            //updateLbl($r, "label[name='G2TotalAdjAmount']", totadj);
+            //updateLbl($r, "label[name='G2Balance']", newg2rembal);
             CalculateAdjustvalues();
             SumG2FooterLabels();
         }
@@ -2519,7 +2547,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var val = parseFloat(e.target.value) || 0;
         var name = e.target.name;
         ProdGridChange = true;
-
+        const $r = $(e.target).closest("tr");
+        let OlderCollAmt = getTagEl($r, "input[name='AdjCollAmtFooter']");
         if (dTotAdjAmt <= 0) {
             showErrorSnackbar("Adjustment Amount should be greater than zero");
             updateInputColumn(id, 0);
@@ -2531,7 +2560,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         // -----------------------------------------
         // PROCESS ONLY CURRENT ROW
         // -----------------------------------------
-        const $r = $(e.target).closest("tr");
+       
 
         const G1AdjAmt = getTag("#lblG1AdjAmt", "lbltag");
         const orgCollAmt = getTag("#txtAmount", "txttag");
@@ -2562,7 +2591,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             else if (PMID != 9 && CollAmt > (orgCollAmt + G1AdjAmt)) {
                 CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount should be less than Given Collection Amount");
             }
-            else if (CollAmt > remAmt) {
+            else if (CollAmt > (remAmt + OlderCollAmt)) {
                 CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Amount(" + CollAmt +") should be less than Remaining Amount (" + remAmt+")");
             }
         } else {
@@ -2829,28 +2858,41 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var G2AdjValue = getG2FooterSum(2);
         var G2DiscValue = getG2FooterSum(3);
         var G2WriteoffAmt = getG2FooterSum(5);
+        var OCPos = 0, OCNeg = 0;
+        $('.AdjFooter').each(function () {
+            let val = parseFloat($(this).attr('txttag'));
+            if (!isNaN(val)) {
+                if (val > 0) OCPos += val;
+                else OCNeg += Math.abs(val);                
+            }
+        });
+        G2DiscValue = parseFloat(G2DiscValue) + OCNeg;
+        AdjustUpto = parseFloat(AdjustUpto);
 
-        //console.log("G2AdjValue", G2AdjValue);
-        //console.log("AdjustedAmount", AdjustedValue + G2DiscValue + G2WriteoffAmt);
-        if (G2AdjValue <= 0) {
-            var AdjustedValue = AdjustUpto + Math.abs(G2AdjValue);
-            updateInputColumn("txtAdjustedAmount", (G2CollValue + G2DiscValue + G2WriteoffAmt) + Math.abs(G2AdjValue));
-            updateInputColumn("txtTotAdjustmentAmount", AdjustedValue);
-        } else {
+        updateInputColumn("txtTotAdjustmentAmount", AdjustUpto);
+        updateInputColumn("txtAdjustedAmount", G2CollValue + G2DiscValue + G2WriteoffAmt);
 
-            var AdjustedValue = G2CollValue +  Math.abs(G2AdjValue);
-            updateInputColumn("txtTotAdjustmentAmount", AdjustUpto);
-            updateInputColumn("txtAdjustedAmount", AdjustedValue + G2DiscValue + G2WriteoffAmt);
-            //showSuccessSnackbar("Adjusted Amount : " + AdjustedValue + G2DiscValue + G2WriteoffAmt);
-        }
+        //if (G2AdjValue <= 0) {
+        //    var AdjustedValue = AdjustUpto + Math.abs(G2AdjValue);
+        //    updateInputColumn("txtAdjustedAmount", (G2CollValue + G2DiscValue + G2WriteoffAmt) + Math.abs(G2AdjValue));
+        //    updateInputColumn("txtTotAdjustmentAmount", AdjustUpto);//AdjustedValue
+        //} else {
+
+        //    var AdjustedValue = G2CollValue +  Math.abs(G2AdjValue);
+        //    updateInputColumn("txtTotAdjustmentAmount", AdjustUpto);
+        //    updateInputColumn("txtAdjustedAmount", AdjustedValue + G2DiscValue + G2WriteoffAmt);
+        //    //showSuccessSnackbar("Adjusted Amount : " + AdjustedValue + G2DiscValue + G2WriteoffAmt);
+        //}
+
+
         var totadjmtamt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag")).toFixed(4);
         var totadjtedamt = parseFloat(document.getElementById("txtAdjustedAmount").getAttribute("txttag")).toFixed(4);
         console.log("totadjmtamt", totadjmtamt, "totadjtedamt", totadjtedamt);
 
-        var cRemAmt = parseFloat(totadjmtamt) - parseFloat(totadjtedamt) //Math.round((parseFloat(totadjmtamt) - parseFloat(totadjtedamt)) * 1) / 1;
+        var cRemAmt = parseFloat(totadjmtamt) - parseFloat(G2CollValue + OCPos) //Math.round((parseFloat(totadjmtamt) - parseFloat(totadjtedamt)) * 1) / 1;
 
             //parseFloat(totadjmtamt) - parseFloat(totadjtedamt)
-        updateInputColumn("txtRemainingAmount", cRemAmt + G2DiscValue);
+        updateInputColumn("txtRemainingAmount", cRemAmt);// + G2DiscValue
         updateInputColumn("txtTotDiscountAmount", G2DiscValue);
         //bal cal for disc amt
         var clsbl = $("#txtHDClosingBalance").val() != "" ? parseFloat($("#txtHDClosingBalance").val()) : 0;
@@ -3623,6 +3665,7 @@ function setDate1(FieldID,Type) {
                         arrVendorName[nIndexarrVendor] = items.Name;
                         nIndexarrVendor++;
                     });
+                    
                     $("#txtSearch").autocomplete({
                         minLength: 0, autoFocus: true,
                         source: arrVendor,
@@ -4115,7 +4158,8 @@ function setDate1(FieldID,Type) {
                             new RegExp('value="' + Docsitems.ReasonID + '"', 'g'),
                             'value="' + Docsitems.ReasonID + '" selected'
                         );
-                        var Reasons = "<select title=" + Docsitems.ReasonName +" name= 'Reasons' " + disbfields +" class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
+                        var Reasons = "<select title=" + Docsitems.ReasonName + " name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
+                        var fullYN = Docsitems.FullAdjYN == "1" ? "selected" : "";
                         return [
                             Docsitems.ID,
                             Docsitems.DocPrefix,
@@ -4133,8 +4177,8 @@ function setDate1(FieldID,Type) {
                             '<input type="number" ' + disbfields + ' txttag="' + Docsitems.CollAmt + '" title="' + Docsitems.CollAmt + '" value="' + parseFloat(Docsitems.CollAmt).toFixed(DecVal) + '" name="AdjCollAmtFooter"  class="txtsettag AdjCollAmtFooter gdInput"  id="dgv2CollAmt' + nRowIndex +  '"  min="0" max="' + Docsitems.TotalAdjAmt + '"/>',// oninput="maxCheckGrid2(this)"
                             '<input type="number" ' + disbfields + ' txttag="' + Docsitems.AdjAmt + '" title="' + Docsitems.AdjAmt + '" value="' + parseFloat(Docsitems.AdjAmt).toFixed(DecVal) + '" name="AdjAmt"  class="txtsettag AdjFooter gdInput"  id="dgv2AdjAmt' + nRowIndex +  '"/>',
                             '<input type="number" ' + disbfields + ' txttag="' + Docsitems.DiscPern + '" title="' + Docsitems.DiscPern + '" value="' + parseFloat(Docsitems.DiscPern).toFixed(DecVal) + '" name="AdjDiscPern"  class="txtsettag AdjDiscPern gdInput"  id="dgv2DiscPern' + nRowIndex +  '"/></br><input type="number" ' + disbfields + ' txttag="' + Docsitems.DiscAmt + '" title="' + Docsitems.DiscAmt + '" value="' + parseFloat(Docsitems.DiscAmt) + '" name="AdjDiscAmt"  class="txtsettag AdjDiscAmt gdInput"  id="dgv2DiscAmt' + nRowIndex +  '"/>',
-                            '<select name="FullyAdj" ' + disbfields + ' id="dgvFulladj' + nRowIndex + '" class="gdInput cmbFullyAdj"><option value="0">No</option><option value="1">Yes</option></select>' +
-                            '<br/><label name="WriteoffAmt"  style="padding-top:10px" lbltag="0" title="0" class="lblsettag dgv2WriteoffAmt" id="dgv2WriteoffAmt' + nRowIndex + '">' + parseFloat(0).toFixed(DecVal) + '</label>',
+                            '<select name="FullyAdj" ' + disbfields + ' id="dgvFulladj' + nRowIndex + '" class="gdInput cmbFullyAdj"><option value="0">No</option><option ' + fullYN +' value="1">Yes</option></select>' +
+                            '<br/><label name="WriteoffAmt"  style="padding-top:10px" lbltag="' + Docsitems.WriteOffAmt + '" title="' + Docsitems.WriteOffAmt + '" class="lblsettag dgv2WriteoffAmt" id="dgv2WriteoffAmt' + nRowIndex + '">' + parseFloat(Docsitems.WriteOffAmt).toFixed(DecVal) + '</label>',
                             '<label name="G2TotalAdjAmount" lbltag="' + Docsitems.TotalAdjAmt + '" title="' + Docsitems.TotalAdjAmt + '" class="lblsettag dgv2lblTotAdjAmt" id="dgv2TotalAdjAmount' + nRowIndex +  '">' + parseFloat(Docsitems.TotalAdjAmt).toFixed(DecVal) + '</label>',
                             '<label name="G2Balance" lbltag="' + rmos + '" title="' + rmos + '" class="lblsettag" id="dgv2Bal' + nRowIndex + '">' + parseFloat(rmos).toFixed(DecVal) + '</label>',
                             Reasons
@@ -4550,20 +4594,10 @@ function setDate1(FieldID,Type) {
                         searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
-                        customCellRenderer: (el, col, rowData) => {
-                            if (col.field === 'Active') {
-                                const val = rowData[col.field];
-                                console.log("Active : ", val);
-                                if (val === 'True') {
-                                    el.innerHTML = `<div class="dg-status-badge dg-status-active">
-    <span class="dg-status-circle"></span> Active
-</div>`;
-                                } else if (val === 'False') {
-                                    el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
-    <span class="dg-status-circle"></span> In-Active
-</div>`;
-                                }
-                            }
+                        customCellRenderer: (el, col, rowData) => {                            
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(27, 1, 0, colIndex, field, newWidth)
                         },
                         customButtons: [
                             {
@@ -5325,6 +5359,7 @@ function setDate1(FieldID,Type) {
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         //alert("Validation success");
+        
         AddDocstoSave();
         var listTrans = {
             "IsDraft": nIsDraft,
@@ -5510,7 +5545,8 @@ function setDate1(FieldID,Type) {
             LoadWebcollectionData(ID);
         }, 1500);
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-        $("#btnSave,#btnClose").prop("disabled", false);
+        $("#btnSave,#btnClose").prop("disabled", false);        
+        $("#cmbPaymode,#txtAmount,#txtSearch,#cmbBeat,#cmbSalesman").prop("disabled", true);
         $("#btnSave,#btnClose").show();
         $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
         $("#dvMain").show();
