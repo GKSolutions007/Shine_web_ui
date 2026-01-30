@@ -1068,7 +1068,7 @@
             success: function (data) {
                 var jsData = JSON.parse(data);
                 $('#tblReportSettings').DataTable({
-                    scrollY: "325px",
+                    scrollY: "275px",
                     scrollX: true,
                     scrollCollapse: true,
                     paging: false,
@@ -1957,10 +1957,42 @@ function setDate(FieldID,Type) {
             },
         });
     }
+    function ReportColumnValidation() {
+        var isValid = true;
+        
+        var totwidth = $("#lblPrintWidth").text();
+        if (totwidth > 210) {
+            isValid = false;
+            showErrorSnackbar('Total Print Width (Print - Yes) cannot exceed 210');
+        }
+        if (isValid) {            
+            $("#tblReportSettings tbody tr").each(function () {
+                rowdata = tblReportSettings.row($(this)).data();
+                var aPrintYN = false;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "PrintYN") {
+                        aPrintYN = this.checked;
+                    }
+                    if (fieldName == "Printwidth" && aPrintYN) {
+                        var PrintWidth = parseInt($(this).val());
+                        if (PrintWidth < 5) {
+                            isValid = false;
+                        }
+                    }
+                });
+            });
+            if (!isValid) {
+                showErrorSnackbar('Set Print Width greater 5');
+            }
+        }
+        return isValid;
+    }
     var ColumnSettingData = [];
     $("#btnSubmitmodalReportColumnSettings").click(function () {
         var totwidth = $("#lblPrintWidth").text();
-        if (totwidth <= 210) {
+        if (ReportColumnValidation()) {
         ColumnSettingData = [];
             $("#tblReportSettings tbody tr").each(function () {
                 var allValues = {};
@@ -2120,9 +2152,7 @@ function setDate(FieldID,Type) {
             }
         });
             //console.log("Column Setting Data ", ColumnSettingData);
-        } else {
-            showErrorSnackbar('Total Print Width (Print - Yes) cannot exceed 210');
-        }
+        } 
     });
     // Store grid instance globally for export
     let currentGridInstance = null;
@@ -2958,6 +2988,7 @@ function setDate(FieldID,Type) {
             });
         }
         console.log("data b4 print ", data);
+        var selectedOption = document.querySelector('input[name="printType"]:checked').value;
         var html = `
                 <html>
                 <head>
@@ -3036,9 +3067,9 @@ function setDate(FieldID,Type) {
                         <thead>
                             <tr>
                                 ${columns.map(c => {
-                                    var width = c.PrintWidth ? (typeof c.PrintWidth === `number` ? (c.PrintWidth * 3.78) + `px` : c.PrintWidth) : `auto`;
+                                    var width = c.Printwidth ? (typeof c.Printwidth === `number` ? (c.Printwidth * 3.78) + `px` : c.Printwidth) : `auto`;
                                     console.log(`width`, width);
-                                    return c.PrintYN ? `<th class="wrap-text" style="max-width: ${width} !important;">${c.header}</th>` : '';
+                                    return c.PrintYN ? `<th class="wrap-text" style="max-width: ${width} !important;min-width: ${width} !important;">${selectedOption == `combined` ? c.header : c.PrintColumnName}</th>` : '';
         }).join('')}
                             </tr>
                         </thead>
@@ -3053,8 +3084,10 @@ function setDate(FieldID,Type) {
                 tmp.innerHTML = val;
                 val = tmp.textContent || tmp.innerText;
             }
-            var valucolor = val == `Total` ? `blue` : val == `Opening Balance` ? `brown` : val == `Closing Balance` ? `darkorange` : `black`;
-            return c.PrintYN ? `<td class="wrap-text" style="color:` + valucolor + `" align=` + c.align + `>${val ?? ''}</td>` : '';
+                                        var valucolor = val == `Total` ? `blue` : val == `Opening Balance` ? `brown` : val == `Closing Balance` ? `darkorange` : `black`;
+                                        var fontwidth = Math.round((c.Printwidth * 3.78) / 12);
+                                        var width = c.Printwidth ? (typeof c.Printwidth === `number` ? (c.Printwidth * 3.78) + `px` : c.Printwidth) : `auto`;
+                                        return c.PrintYN ? `<td class="wrap-text" style="color:` + valucolor + `;max-width: ${width} !important;min-width: ${width} !important;" align=` + c.align + `>${val ?? ''}</td>` : '';
         }).join('')}
                                 </tr>
                             `).join('')}

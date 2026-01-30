@@ -142,9 +142,16 @@
         background-color: #deebff;
         border-left: 4px solid #0052cc;
     }
-
+    .bg-stockvalue {
+        background-color: #f7daf3;
+        border-left: 4px solid #8804cb;
+    }
+    .bg-netos {
+        background-color: #fbf6ef;
+        border-left: 4px solid #ead7c3;
+    }
     .summary-label {
-        font-size: 11px;
+        font-size: 10px;
         color: var(--secondary-color);
         margin-bottom: 2px;
         text-transform: uppercase;
@@ -152,7 +159,7 @@
     }
 
     .summary-value {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
         color: #172b4d;
     }
@@ -211,6 +218,42 @@
         flex-direction: column;
         box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     }
+    
+    /* Stock Tooltip */
+    .stock-tooltip {
+        display: none;
+        position: absolute;
+        background: #fff;
+        border: 1px solid #ccc;
+        padding: 10px;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border-radius: 6px;
+        font-size: 11px;
+        min-width: 300px;
+        top: -5px;
+        left: 100%;
+        margin-left: 15px;
+    }
+    .stock-tooltip table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .stock-tooltip th, .stock-tooltip td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #eee;
+        font-size:8px;
+        text-align: left;
+    }
+        .stock-tooltip th {
+            background-color: #f8f9fa;
+            font-weight: 800;
+            font-size: 9px;
+            color: #5e6c84;
+        }
+    .stock-tooltip td:last-child, .stock-tooltip th:last-child {
+        text-align: right;
+    }
 </style>
 <body>
     <div class="toastBox"></div>
@@ -229,7 +272,7 @@
             <!-- Sidebar / Side Widgets -->
             <div class="col-md-3">
                 <!-- Balance Tiles-->
-                <div class="col-md-12" style="margin-bottom: 24px;" id="dvBalances">
+                <div class="col-md-12 dvBalances" style="margin-bottom: 24px;">
                     <div style="display: flex; gap: 20px;">
                         <div class="summary-tile bg-cash">
                             <div class="summary-label">Cash Balance</div>
@@ -238,6 +281,27 @@
                         <div class="summary-tile bg-bank">
                             <div class="summary-label">Bank Balance</div>
                             <div class="summary-value" id="dvBank">₹ 0.00</div>
+                        </div>                        
+                    </div>
+                </div>
+                <div class="col-md-12 dvBalances" style="margin-bottom: 24px;">
+                    <div style="display: flex; gap: 20px;">
+                       
+                        <div class="summary-tile bg-stockvalue">
+                            <div class="summary-label" style="position: relative; display: inline-block;">
+                                Stock Value 
+                                <span class="glyphicon glyphicon-info-sign stock-info-icon" style="cursor: pointer; margin-left: 5px; color: #8804cb;"></span>
+                                <div id="stockTooltip" class="stock-tooltip"></div>
+                            </div>
+                            <div class="summary-value" id="dvStockvalue">₹ 0.00</div>
+                        </div>
+                        <div class="summary-tile bg-netos">
+                            <div class="summary-label" style="position: relative; display: inline-block;">
+                                Net OS
+                                <span class="glyphicon glyphicon-info-sign netos-info-icon" style="cursor: pointer; margin-left: 5px; color: #a07c5a;"></span>
+                                <div id="netosTooltip" class="stock-tooltip"></div>
+                            </div>
+                            <div class="summary-value" id="dvNetOS">₹ 0.00</div>
                         </div>
                     </div>
                 </div>
@@ -654,7 +718,7 @@
     //txtBalancesEnable, txtQuickAccessEnable, txtPendingDraftEnable, txtTransactionSummaryEnable
     //dvBalances,dvQuickAccess,dvPendingDrafts,dvTransSummaryDetail
     if ($("#txtBalancesEnable").val() == 0) {
-        $("#dvBalances").hide();
+        $(".dvBalances").hide();
     }
     if ($("#txtQuickAccessEnable").val() == 0) {
         $("#dvQuickAccess").hide();
@@ -667,8 +731,43 @@
     }
     GetData(1, 0);
     GetData(5, 0);
+    GetData(8, 0);
+    GetData(9, 0);
     GetData(6, RID);
-    var arrTrans = [];
+    var arrTrans = [], arrStockValues = [], arrPartyOS = [];
+
+    $(document).ready(function() {
+        $('.stock-info-icon').hover(
+            function() {
+                var tooltipContent = '<table><thead><tr><th>Branch Name</th><th>Stock Value</th></tr></thead><tbody>';
+                var totalStock = 0;
+                $.each(arrStockValues, function(index, item) {
+                    tooltipContent += '<tr style="color:black;"><td>' + item.BranchName + '</td><td>' + item.StockValue + '</td></tr>';
+                    // Optional: sum up total if needed, but item.StockValue is string with commas
+                });
+                tooltipContent += '</tbody></table>';
+                $('#stockTooltip').html(tooltipContent).show();
+            },
+            function() {
+                $('#stockTooltip').hide();
+            }
+        );
+
+        $('.netos-info-icon').hover(
+            function() {
+                var tooltipContent = '<table><thead><tr><th>OS Type</th><th>Party OS</th></tr></thead><tbody>';
+                $.each(arrPartyOS, function(index, item) {
+                    var rowColor = item.OSType === 'Receivable' ? 'green' : (item.OSType === 'Payable' ? 'red' : '');
+                    tooltipContent += '<tr style="color: ' + rowColor + ';"><td>' + item.OSType + '</td><td>' + item.ParyOS + '</td></tr>';
+                });
+                tooltipContent += '</tbody></table>';
+                $('#netosTooltip').html(tooltipContent).show();
+            },
+            function() {
+                $('#netosTooltip').hide();
+            }
+        );
+    });
     function GetData(nMode, ID) {
         $.ajax({
             url: Aurl + "homescreendraft/get",
@@ -718,12 +817,13 @@
                     }
                 }
                 if (nMode == 5) {
-                    $("#dvCash").html("₹ 0.00");
-                    $("#dvBank").html("₹ 0.00");
+                    $("#dvCash,#dvBank").html("₹ 0.00");//,#dvStockvalue,#dvNetOS
                     var pmdata = eval(data);
                     if (pmdata.length > 0) {
-                        $("#dvCash").html("₹ " + pmdata[0].Balance);
-                        $("#dvBank").html("₹ " + pmdata[1].Balance);
+                        $("#dvCash").html(formatIndianCurrency(pmdata[0].Balance));
+                        $("#dvBank").html(formatIndianCurrency(pmdata[1].Balance));
+                        //$("#dvStockvalue").html("₹ " + pmdata[2].Balance);
+                        //$("#dvNetOS").html("₹ " + pmdata[3].Balance);
                     }
                 }
                 if (nMode == 6) {
@@ -746,6 +846,27 @@
                     } else {
                         //showErrorSnackbar("You dont have any Transaction permissions");
                     }
+                }
+                if (nMode == 8) {
+                    $("#dvStockvalue").html("₹ 0.00");
+                    arrStockValues = [];
+                    var pmdata = JSON.parse(data);
+                    arrStockValues = pmdata;
+                    var sumofstock = arrStockValues.reduce((sum, a) => {
+                        return sum + Number(a.orgStockValue || 0);
+                    }, 0);
+                    $("#dvStockvalue").html(formatIndianCurrency(sumofstock));
+                    console.log(arrStockValues);
+                }                
+                if (nMode == 9) {
+                    $("#dvNetOS").html("₹ 0.00");
+                    var pmdata = JSON.parse(data);
+                    arrPartyOS = pmdata;
+                    var Receivableos = arrPartyOS[0].OrgOS;
+                    var Payableos = arrPartyOS[1].OrgOS;
+                    var NetOS = Receivableos - Payableos;
+                    $("#dvNetOS").html(formatIndianCurrency(NetOS));
+                    console.log(arrPartyOS);
                 }
             }
         });

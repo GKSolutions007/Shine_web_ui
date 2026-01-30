@@ -25,7 +25,13 @@
 <script src="~/Scripts/xlsx.bundle.js"></script>
 
 <style>
-    
+    .modal-body {
+        padding: 0px 20px 10px 20px !important;
+    }
+
+    table.dataTable > tbody > tr > th, table.dataTable > tbody > tr > td {
+        padding: 1px 2px !important;
+    }
     .each {
         border-bottom: 1px solid #555 !important;
         padding: 3px 0 !important;
@@ -1175,7 +1181,7 @@
                             }
                         },
                         {
-                            className: "dt-body-left", width: "5%", "visible": (RID == 1),
+                            className: "dt-body-center", width: "5%", "visible": (RID == 1),
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isFalseSelect = value.ShowinColumnOption == '0' ? 'selected' : '';
@@ -1926,11 +1932,42 @@ function setDate(FieldID,Type) {
             },
         });
     }
-    
+    function ReportColumnValidation() {
+        var isValid = true;
+
+        var totwidth = $("#lblPrintWidth").text();
+        if (totwidth > 210) {
+            isValid = false;
+            showErrorSnackbar('Total Print Width (Print - Yes) cannot exceed 210');
+        }
+        if (isValid) {            
+            $("#tblReportSettings tbody tr").each(function () {
+                rowdata = tblReportSettings.row($(this)).data();
+                var aPrintYN = false;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "PrintYN") {
+                        aPrintYN = this.checked;
+                    }
+                    if (fieldName == "Printwidth" && aPrintYN) {
+                        var PrintWidth = parseInt($(this).val());
+                        if (PrintWidth < 5) {
+                            isValid = false;
+                        }
+                    }
+                });
+            });
+            if (!isValid) {
+                showErrorSnackbar('Set Print Width greater 5');
+            }
+        }
+        return isValid;
+    }
     var ColumnSettingData = [];
     $("#btnSubmitmodalReportColumnSettings").click(function () {
         var totwidth = $("#lblPrintWidth").text();
-        if (totwidth <= 210) {
+        if (ReportColumnValidation()) {
             ColumnSettingData = [];
             $("#tblReportSettings tbody tr").each(function () {
                 var allValues = {};
@@ -2057,9 +2094,7 @@ function setDate(FieldID,Type) {
                 }
             });
             //console.log("Column Setting Data ", ColumnSettingData);
-        } else {
-                showErrorSnackbar('Total Print Width (Print - Yes) cannot exceed 210');
-        }
+        } 
     });
     // Store grid instance globally for export
     let currentGridInstance = null;
@@ -3060,7 +3095,7 @@ function setDate(FieldID,Type) {
                         <thead>
                             <tr>
                                 ${columns.map(c => {
-                var width = c.PrintWidth ? (typeof c.PrintWidth === `number` ? (c.PrintWidth * 3.78) + `px` : c.PrintWidth) : `auto`;
+                                    var width = c.Printwidth ? (typeof c.Printwidth === `number` ? (c.Printwidth * 3.78) + `px` : c.Printwidth) : `auto`;
                                     return c.PrintYN ? `<th class="wrap-text" style="max-width: ${width} !important;">${c.PrintColumnName}</th>` : '';
             }).join('')}
                             </tr>
@@ -3077,7 +3112,8 @@ function setDate(FieldID,Type) {
                     val = tmp.textContent || tmp.innerText;
                                         }
                                         var valucolor = val == `Total` ? `blue` : val == `Opening Balance` ? `brown` : val == `Closing Balance` ? `darkorange` : `black`;
-                                        return c.PrintYN ? `<td class="wrap-text" style="color:` + valucolor +`" align=` + c.align+`>${val ?? ''}</td>` : '';
+                                        var width = c.Printwidth ? (typeof c.Printwidth === `number` ? (c.Printwidth * 3.78) + `px` : c.Printwidth) : `auto`;
+                                        return c.PrintYN ? `<td class="wrap-text" style="color:` + valucolor + `;max-width: ${width} !important;" align=` + c.align+`>${val ?? ''}</td>` : '';
             }).join('')}
                                 </tr>
                             `).join('')}
