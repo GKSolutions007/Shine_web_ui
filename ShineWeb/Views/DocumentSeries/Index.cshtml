@@ -5,18 +5,28 @@
 <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
-<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
 
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="~/Scripts/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
-@*<script src="~/Scripts/Validation.js"></script>*@
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
 <style>
+    table.dataTable tfoot th, table.dataTable tfoot td {
+        text-align: right !important;
+    }
 
+    table.dataTable thead th, table.dataTable thead td {
+        text-align: left !important;
+    }
     each {
         border-bottom: 1px solid #555;
         padding: 3px 0;
@@ -65,12 +75,12 @@
     .modalBatch {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        z-index: 200; /* Sit on top */
         left: 0;
         top: 0;
         width: 100%; /* Full width */
         height: 100%; /* Full height */
-        /*overflow: auto;*/ /* Enable scroll if needed */
+        overflow: auto; /* Enable scroll if needed */
         background-color: rgb(0,0,0); /* Fallback color */
         background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
     }
@@ -80,9 +90,9 @@
         .modalBatch-content {
             background-color: #ffffff;
             margin: 3% auto; /* 15% from the top and centered */
-            padding: 10px;
+            padding: 2px;
             border: 1px solid #888;
-            width: 35%; /* Could be more or less, depending on screen size */
+            width: 65%; /* Could be more or less, depending on screen size */
             height: 70%;
             top: 5%;
             /* overflow: auto;*/
@@ -93,7 +103,7 @@
         .modalBatch-content {
             background-color: #ffffff;
             margin: 10% auto; /* 15% from the top and centered */
-            padding: 25px;
+            padding: 2px;
             border: 1px solid #888;
             width: 95%; /* Could be more or less, depending on screen size */
             height: 80%;
@@ -150,30 +160,128 @@
     <h4 id="MainHeading">@ViewData["FormName"]</h4>
     <hr />
     <div class="toastBox"></div>
-    <div class="row">        
-        <div class="col-sm-12 col-md-7 col-lg-7"></div>
-        <div class="col-sm-12 col-md-5 col-lg-5">
-            <table class="table table-bordered" id="tblMasterData" width="100%">
-                <thead>
-                    <tr class="trclrforcolheader">
-                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                        <th style="text-align:center;font-size: 12px;width:3%;">#</th>
-                        <th style="text-align:center;font-size: 12px;width:50%;">Transaction</th>
-                        <th style="text-align:center;font-size: 12px;width:30%;">Prefix</th>
-                        <th style="text-align:center;font-size: 12px;width:17%;">Doc Value</th>
-                    </tr>
-                </thead>
-               
-            </table>
-            <div style="padding-top:0px" align="right">
-                <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
-                <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+    <div>        
+        <div id="dvMainTable">
+            <div id="my-grid" style="height: 600px; width: 100%;"></div>
+        </div>
+    </div>
+    <div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:auto;">
+            <div class="modalBatch-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="closefg">&times;</button>
+                    <h5 class="modal-title" style="color: black; font-weight: 800" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+                    @*<hr />*@
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px">
+                        <div id="dvAssign" style="width:100%;padding-bottom:7px">
+                            <table class="table" style="width:100%">
+                                <tr>
+                                    <td style="border:none;padding-left:12px;padding-right:7px">
+                                        <span class="form-label">
+                                            <input type="text" id="txtOrgFromDate" placeholder="" hidden />
+                                            <input type="text" id="txtOrgToDate" placeholder="" hidden />
+                                            <input type="date" id="txtFromDate" class="form-control" placeholder="" />
+                                            <label class="labelup">From Date *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorFromDate" style="color:red"></div>
+                                    </td>
+                                    <td style="border:none;padding-left:12px;padding-right:7px">
+                                        <span class="form-label">
+                                            <input type="date" id="txtToDate" class="form-control" placeholder="" />
+                                            <label class="labelup">To Date *</label>
+                                        </span>
+                                        <div class="clrdiv" id="dvErrorToDate" style="color:red"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <table class="table table-bordered" id="tblMasterData" width="100%">
+                                <thead>
+                                    <tr class="trclrforcolheader">
+                                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
+                                        <th style="text-align:center;font-size: 12px;width:3%;">#</th>
+                                        <th style="text-align:center;font-size: 12px;width:50%;">Transaction</th>
+                                        <th style="text-align:center;font-size: 12px;width:30%;">Prefix</th>
+                                        <th style="text-align:center;font-size: 12px;width:17%;">Doc Value</th>
+                                    </tr>
+                                </thead>
+
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button tabindex="4" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                        <button tabindex="3" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                        <button tabindex="5" type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </body>
 
+<script>
+    const allGridActions = [
+        {
+            icon: '👁️',
+            title: 'View Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: true,// $("#txtViewID").val() == 1,
+            handler: (rowData) => {
+                nMode = 3;
+                var fromdate = rowData.hdFromDate;
+                var todate = rowData.hdToDate;
+                GetData(3, fromdate, todate);                
+                $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
+                $(".clrdiv").html("");
+                $("#btnSave,#txtFromDate,#txtToDate,#btnClear").prop("disabled", true);
+                modal.style.display = "block";
+            }
+        },
+        {
+            icon: '✏️',
+            title: 'Edit Data',
+            className: 'dg-action-edit',           
+            visible: true,//$("#txtModifyID").val() == 1,
+            // 💡 NEW TAG: This action will be rendered in the 3-dot menu
+            displayType: 'single_icon',
+            handler: (rowData, gridInstance) => {
+                nMode = 2;
+                var fromdate = rowData.hdFromDate;
+                var todate = rowData.hdToDate;
+                GetData(3, fromdate, todate)                
+                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());               
+                $("#btnSave,#txtFromDate,#txtToDate").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                $(".clrdiv").html("");
+                modal.style.display = "block";
+            }
+        }]
+    var columns = [
 
+    ];
+    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+    const menuActions = [];// allGrid3dotActions.filter(a => a.displayType === 'menu_item');
+    var actions = {
+        "field": "Action",
+        "header": "Action",
+        "type": "action",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": allGridActions
+    };
+</script>
 <script type="text/javascript">
     var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
         "bFilter": false,
@@ -191,37 +299,91 @@
     var UID = '@Session["LoginUserID"]';
     var nMode = 1;
     var FID = $("#txtFormID").val();
-    GetData(1,0);
+    var grid;
+    GetColumnSettingsData(2, 34, 1);
+    //GetData(1, 0);
+    setTimeout(() => {
+        GetData(2);
+    }, 500);
     var arrData = [];
-    function GetData(nMode,nMenuID) {
+    function GetData(dMode,strFDate = "",strTDate = "") {
         $.ajax({
             url: Aurl + "documentseries/get",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, Name: nMenuID },
+            data: { Mode: dMode, FromDate: strFDate,ToDate : strTDate },
             xhrFields: {
                 withCredentials: true
             },
             success: function (data) {
-                if (nMode == 1) {
+                if (dMode == 1) {
                     //Table.draw().clear(); Table.draw().clear();
                     if (data.length > 0) {
-                        //$.each(data, function (i, items) {
-                        //    Table.row.add([
-                        //        items.ID,
-                        //        (i + 1),                                
-                        //        items.Name,
-                        //        '<input name = "Prefix" type="text" class="form-control" value="' + items.Mode + '">',
-                        //        '<input name= "DocValue" type="number" class="form-control" value="' + items.Value +'">'
-                        //    ]).draw(false);
-                        //});
                         $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
                             scrollY: "450px",
                             scrollX: true,
                             scrollCollapse: true,
-                            paging: true,
+                            paging: false,
                             destroy: true,
                             data: data,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-center", Width: "5%",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var _action = (rowIndex + 1);// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }
+                                },
+                                { "data": "Name", "autoWidth": true, className: "dt-body-left", Width: "75%" },
+                                {
+                                    className: "dt-body-center", Width: "10%",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var _action = '<input name = "Prefix" type="text" class="form-control" value="">';
+                                        return _action;
+                                    }
+                                },
+                                {
+                                    className: "dt-body-center", Width: "10%",
+                                    "mRender": function (data, type, value, meta) {
+                                        var _action = '<input name= "DocValue" type="number" class="form-control" value="1" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)">';
+                                        return _action;
+                                    }
+                                },
+                            ],
+                        });
+                        Table = $('#tblMasterData').DataTable();
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+                if (dMode == 3) {
+                    Table.draw().clear(); Table.draw().clear();
+                    if (data.length > 0) {
+                        //txtOrgFromDate,txtOrgToDate
+                        var dsdata = JSON.parse(data);
+                        var FromDate = dsdata[0].FromDate;
+                        var ToDate = dsdata[0].ToDate;
+                        FromDate = FromDate.split('T')[0];
+                        ToDate = ToDate.split('T')[0];
+                        $("#txtFromDate,#txtOrgFromDate").val(FromDate);
+                        $("#txtToDate,#txtOrgToDate").val(ToDate);
+                        
+                        $('#tblMasterData').DataTable({
+                            pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: false,
+                            destroy: true,
+                            data: dsdata,
                             fixedColumns: false,
                             searching: true,
                             ordering: true,
@@ -236,18 +398,20 @@
                                         return _action;
                                     }
                                 },
-                                { "data": "Name", "autoWidth": true, className: "dt-body-left" },                                
+                                { "data": "Name", "autoWidth": true, className: "dt-body-left" },
                                 {
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value) {
-                                        var _action = '<input name = "Prefix" type="text" class="form-control" value="' + value.Mode + '">';
+                                        var disb = nMode == 3 ? "disabled" : "";
+                                        var _action = '<input ' + disb +' name = "Prefix" type="text" class="form-control" value="' + value.DocPrefix + '">';
                                         return _action;
                                     }
                                 },
                                 {
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value) {
-                                        var _action = '<input name= "DocValue" type="number" class="form-control" value="' + value.Value + '" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)">';
+                                        var disb = nMode == 3 ? "disabled" : "";
+                                        var _action = '<input ' + disb +' name= "DocValue" type="number" class="form-control" value="' + value.DocValue + '" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)">';
                                         return _action;
                                     }
                                 },
@@ -258,6 +422,79 @@
                     else {
                         showErrorSnackbar("No Records Found");
                     }
+                }
+                if (dMode == 2) {
+                    var DocSeries = JSON.parse(data)
+                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
+                    grid = new GKBSDynamicGrid('#my-grid', columns, DocSeries, {
+                        enablePagination: true,
+                        pageSize: ItemsperPage,
+                        enableSearch: true,
+                        stickyToWindow: true,
+                        enableExport: false,
+                        enablePrint: false,
+                        enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                        enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                        enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                        enableSorting: true,
+
+                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
+                        rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                        //onCellChange: handleCellUpdate,
+                        customCellRenderer: (el, col, rowData) => {
+                        },
+                        customButtons: [
+                            {
+                                icon: '⚙️',
+                                text: 'Settings',
+                                title: 'Settings',
+                                visible: true,
+                                onClick: (gridInstance, event) => {
+                                    //console.log("gridInstance : ", gridInstance);
+                                    //console.log("event : ", event);
+                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                    modalGenColumnSettings.style.display = "block";
+                                    GendralColumnSettings(1, 34, 1, 0);
+                                }
+                            },
+                            {
+                                icon: '➕',
+                                text: 'Add New',
+                                title: 'Add New',
+                                visible: true,//$("#txtAddID").val() == 1,
+                                onClick: (gridInstance, event) => {
+                                    nMode = 1;
+                                    $("#btnSave,#txtFromDate,#txtToDate,#btnClear").prop("disabled", false);
+                                    $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
+                                    modal.style.display = "block";
+                                    ClearForm();
+                                }
+                            },
+                        ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+                            //let message = `Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Row Data:\n`;
+                            //for (const key in rowData) {
+                            //    if (key !== '_gridId') {
+                            //        message += `• ${key}: ${rowData[key]}\n`;
+                            //    }
+                            //}
+                            //alert(message);
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                            //// Double-click handler - shows JSON format
+                            //let message = `Double-Clicked Cell:\n`;
+                            //message += `• Field: ${fieldName}\n`;
+                            //message += `• Value: ${cellValue}\n\n`;
+                            //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
+                            //alert(message);
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(34, 1, 0, colIndex, field, newWidth)
+                        },
+                    });
                 }
             }, error: function (data) {
                 if (data.status == "401") {
@@ -270,56 +507,29 @@
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
-    
-    $('#cmbModule').change(function (e) {
-        var val = e.target.value;
-        if (val > 0) {
-            GetData(2, val);
-        }
-        else{
-            Table.draw().clear(); Table.draw().clear();
-        }
+    var modal = document.getElementById("myModalfg");
+    var span = document.getElementsByClassName("closefg")[0];
+    span.onclick = function () {
+        modal.style.display = "none";
+    }
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
+    function CloseForm() {
+        modal.style.display = "none";
+    }
     $('#btnClear').click(function (e) {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
     function ClearForm() {
         $(".clrdiv").html("");
-        GetData(1, 0);
-    }
-    function AddMenus() {
-        $("#tblMasterData tbody tr").each(function () {
-            var nOrder = 0;
-            rowdata = Table.row($(this)).data();
-            nMenuID = rowdata.ID;//[0];
-            $(this).find("input").each(function (index) {
-                nOrder = $(this).val();
-            });
-        });
+        var crdate = new Date().toISOString().split('T')[0];
+        $("#txtFromDate,#txtToDate").val(crdate);
+        $("#txtOrgToDate,#txtOrgFromDate").val("");
+        GetData(1);
     }
     function ValidateOrder() {
-        var IsValid = true;
-        $("#tblMasterData tbody tr").each(function () {
-            var nOrder = 0;
-            rowdata = Table.row($(this)).data();
-            var nMenuID = rowdata;//[0];
-            nMenuID = rowdata.Name;//[2];
-           
-            var valhasvalue = true;
-            $(this).css("color", "black");
-            $(this).find("input").each(function (index) {
-                $(this).css("border-color", "black");                
-                if ($(this).val() == "") {
-                    IsValid = false;
-                    valhasvalue = false;
-                    $(this).css("border-color", "red");
-                }
-            });
-            if (!valhasvalue) {
-                $(this).css("color", "red");
-            }
-        });
-        return IsValid;
+        return true;
     }
     $("#btnSave").click(function () {
         $(".clrdiv").html("");
@@ -333,13 +543,34 @@
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
+
+        var fromDate = $("#txtFromDate").val();
+        var toDate = $("#txtToDate").val();
+
+        if (fromDate === "") {
+            $("#dvErrorFromDate").html("From Date is mandatory");
+            $("#txtFromDate").focus();
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
+        if (toDate === "") {
+            $("#dvErrorToDate").html("To Date is mandatory");
+            $("#txtToDate").focus();
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
+if(fromDate > toDate){
+    showErrorSnackbar("From Date should be less than To Date");
+    $("#btnSave").prop("disabled", false);
+    return;
+}
         var listdoc = [];
+        var isValid = true;
         $("#tblMasterData tbody tr").each(function () {
             var strPrefix = "", strDocval = "";
             rowdata = Table.row($(this)).data();
-            var nMenuID = rowdata.ID;//[0];
-            var valhasvalue = true;
-            
+            var nTrans = rowdata.ID;//[0];
+
             $(this).find("input").each(function (index) {
                 const fieldName = $(this).attr("name");
                 if (fieldName == "Prefix") {
@@ -349,15 +580,33 @@
                     strDocval = $(this).val();
                 }
             });
+
+            if (strPrefix === "" || strDocval === "") {
+                isValid = false;
+                $(this).css("background-color", "#ffdddd"); // Highlight invalid row
+            } else {
+                $(this).css("background-color", ""); // Reset background
+            }
+
             var lst = {
-                "ID": nMenuID,
+                "ID": nTrans,
                 "Prefix": strPrefix,
                 "DocValue": strDocval
             }
             listdoc.push(lst);
         });
+
+        if (!isValid) {
+            showErrorSnackbar("Prefix and Doc Value are mandatory for all rows.");
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
         var lstMaster = {
-            "Mode": 2,
+            "Mode": nMode,
+            "FromDate": fromDate,
+            "ToDate": toDate,
+            "orgFromDate": $("#txtOrgFromDate").val(),
+            "orgToDate": $("#txtOrgToDate").val(),
             "UserID": UID,
             "lstDocSeries": listdoc
         };
@@ -376,11 +625,13 @@
                 $.each(data, function (i, items) {
                     if (items.MsgID == 0) {
                         showSuccessSnackbar(items.Message);
+                        modal.style.display = "none";
+                        GetData(2);
                         //alert(items.Message);
                     }
                     else {
                         //$("#dvErrorName").html(items.Message);
-                        showSuccessSnackbar(items.Message);
+                        showErrorSnackbar(items.Message);
                     }
                 });
             }, error: function (data) {
@@ -391,7 +642,7 @@
                 }
             }
         });
-    }    
+    }
     $('input, select ,button, textarea').on('keydown', function (e) {
         if (e.key === "Enter") {
             if (e.target.localName != "button") {
@@ -414,4 +665,25 @@
             $canfocus.eq(index).focus();
         }
     });
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    columns.push(actions);
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
 </script>
