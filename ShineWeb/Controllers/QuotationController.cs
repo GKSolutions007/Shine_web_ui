@@ -34,6 +34,7 @@ namespace ShineWeb.Controllers
                 string VarPerm = dtPermission.Select("MenuName = 'Variant " + Name + "'", null).Length > 0 ? "1" : "0";
                 string DrftMod = dtPermission.Select("MenuID = 386", null).Length > 0 ? "1" : "0";
                 string DrftCan = dtPermission.Select("MenuID = 387", null).Length > 0 ? "1" : "0";
+                string EnbBranch = dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
 
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
@@ -47,6 +48,7 @@ namespace ShineWeb.Controllers
                 dam.TransVariantID = TransVariantID;
                 dam.DraftModify = DrftMod;
                 dam.DraftCancel = DrftCan;
+                dam.EnableBranch = EnbBranch;
 
                 return View(dam);
             }

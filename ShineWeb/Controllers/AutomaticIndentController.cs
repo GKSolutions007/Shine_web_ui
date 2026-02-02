@@ -33,8 +33,8 @@ namespace ShineWeb.Controllers
                 string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";
                 string VarPerm = dtPermission.Select("MenuName = 'Variant " + Name + "'", null).Length > 0 ? "1" : "0";
                 string CanPerm = dtPermission.Select("MenuName = 'Cancel " + Name + "'", null).Length > 0 ? "1" : "0";
-                string EnbBranch = dtPermission.Select("MenuName = 'Enable Branch in Transactions'", null).Length > 0 ? "1" : "0";
-
+                //string EnbBranch = dtPermission.Select("MenuName = 'Enable Branch in Transactions'", null).Length > 0 ? "1" : "0";
+                string EnbBranch = dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
                 string DrftMod = dtPermission.Select("MenuID = 380", null).Length > 0 ? "1" : "0";
                 string DrftCan = dtPermission.Select("MenuID = 381", null).Length > 0 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();

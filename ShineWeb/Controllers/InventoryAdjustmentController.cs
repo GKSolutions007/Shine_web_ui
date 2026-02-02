@@ -29,10 +29,13 @@ namespace ShineWeb.Controllers
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string AddPerm = dtPermission.Select("MenuName = 'Create " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";
+                string EnbBranch = dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
+                Console.WriteLine("EnbBranch: " + EnbBranch);
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 dam.ID = TranID;
                 dam.TransType = TypeID;
+                dam.EnableBranch = EnbBranch;
                 dam.Add = AddPerm;// Convert.ToString(objBL.BL_CheckPermission(Convert.ToInt32(Session["LoginUserID"]), "Create " + Name, Convert.ToInt32(Session["RoleID"])) ? 1 : 0);
                 dam.View = ViewPerm;// Convert.ToString(objBL.BL_CheckPermission(Convert.ToInt32(Session["LoginUserID"]), "View " + Name, Convert.ToInt32(Session["RoleID"])) ? 1 : 0);
                 return View(dam);
