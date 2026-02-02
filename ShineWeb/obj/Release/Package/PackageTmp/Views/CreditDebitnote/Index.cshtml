@@ -404,6 +404,15 @@
                                     <table class="table" style="width:100%">
                                         <tr>
                                             <td style="border:none;padding-right:7px" colspan="2">
+                                                <span class="form-label">
+                                                    <select class="form-control FormclrcmbField" id="txtBranchName"><option value="0">Select Branch</option></select>
+                                                    <label class="labelup" for="txtCode"> Branch *</label>
+                                                </span>
+                                                <div class="clrdiv" id="dvErrorBranchName" style="color:red"></div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border:none;padding-right:7px" colspan="2">
 
                                                 <span class="form-label">
                                                     <input tabindex="1" type="text" id="txtPartyName" class="form-control FormclrField" placeholder="" />
@@ -416,10 +425,9 @@
                                             <td style="border:none;padding-right:7px" colspan="2">
 
                                                 <span class="form-label">
-                                                    <input tabindex="1" txttag="0" type="number" id="txtValue" class="form-control FormclrField txtsettag" placeholder="" 
-
+                                                    <input tabindex="1" txttag="0" type="number" id="txtValue" class="form-control FormclrField txtsettag" placeholder=""
                                                            onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
-                                                           oninput="sanitizeNumericOnly(this, '#dvErrorValue')"/>
+                                                           oninput="sanitizeNumericOnly(this, '#dvErrorValue')" />
                                                     <label class="labelup">Value *</label>
                                                 </span>
                                                 <div class="clrdiv" id="dvErrorValue" style="color:red"></div>
@@ -431,8 +439,8 @@
                                                 <div>
                                                     <span class="form-label">
                                                         <input tabindex="1" class="form-control FormclrField" type="text" id="txtRemarks" placeholder=""
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
-                                                        oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')"/>
+                                                               onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
+                                                               oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
                                                         <label class="labelup" for="txtCode">Remarks</label>
                                                     </span>
                                                     <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdiv"></div>
@@ -495,6 +503,7 @@
                                     <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
                                 </div>
                             </td>
+
                             <td width="80%" align="right">
                                 <div style="padding-right:20px" align="right">
                                     <button type="button" class="btn" id="btnWhatsapp" style="background-color:green;color:white"><i class='fa-brands fa-whatsapp' style='color:white'></i> Whatsapp</button>
@@ -769,6 +778,7 @@
         $("#trAdd").hide();
         $("#btnAdd").hide();
     }
+    var DefBranch = '@Session["DefaultBranch"]';
     //if ($("#txtModifyID").val() == 0) {
     //    Table.column(9).visible(false);
     //}
@@ -825,7 +835,7 @@
             }
         });
     }
-    var arrPartyData = [], arrAccountData = [], arrALPartyData = [], arrALAccountData = [], nIndexarrParty = 0, nIndexarrAccount = 0;
+    var arrPartyData = [], arrAccountData = [], arrBranchData = [], arrALPartyData = [], arrALAccountData = [], arrALBranchData = [], nIndexarrParty = 0, nIndexarrAccount = 0, nIndexarrBranch;
     function GetData(nMode,nID) {
         $.ajax({
             url: Aurl + "creditdebitnote/get",
@@ -838,15 +848,15 @@
             success: function (data) {
                 if (nMode == 1) {
                     CreditNoteDebitNote = data;
-                    $('#cmbUDN').find("option").remove();
+                    $('#cmbUDN,#txtBranchName').find("option").remove();
                     $('#cmbUDN').append($('<option/>', {
                         value: 0,
                         text: "-- Select --",
                     }));
 
-                    
-                    arrPartyData = [], arrAccountData = [], arrALPartyData = [], arrALAccountData = [];
-                    nIndexarrParty = 0, nIndexarrAccount = 0;
+
+                    arrPartyData = [], arrAccountData = [], arrBranchData = [], arrALPartyData = [], arrALAccountData = [], arrALBranchData = [];
+                    nIndexarrParty = 0, nIndexarrAccount = 0, nIndexarrBranch = 0;
                     $.each(data, function (i, items) {
                         if (items.FType == 1) {
                             var al = {
@@ -873,8 +883,21 @@
                         if (items.FType == 4) {
                             $("#lblDocID").text(items.Name);
                         }
+                        if (items.FType == 5) {
+                            var al = {
+                                "label": items.Name,
+                            }
+                            arrALBranchData.push(al);
+                            arrBranchData[nIndexarrBranch] = items.Name;
+                            nIndexarrBranch++;
+                            $('#txtBranchName').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
                     });
                     SetAutlistforFields();
+                    $("#txtBranchName").val(DefBranch);
                 }
                 if (nMode == 2) {
                     Table.draw().clear();
@@ -885,6 +908,7 @@
                                 items.DocID,
                                 items.DocDate,
                                 items.RefNo,
+                                items.ID,
                                 items.PartyID,
                                 items.FAID,
                                 items.NoteValue,
@@ -907,7 +931,8 @@
                             $("#lblDocID").text(items.DocID);
 
                             $("#txtID").val(items.ID), $("#dtpDate").val(items.DocDate),
-                        $("#txtRefNo").val(items.RefNo), $("#txtPartyName").val(items.PartyID), $("#txtAccountName").val(items.FAID),
+                                $("#txtRefNo").val(items.RefNo), $("#txtBranchName").val(items.BranchID),
+                                $("#txtPartyName").val(items.PartyID), $("#txtAccountName").val(items.FAID),
                          $("#txtRemarks").val(items.Remark), $("#txtNarration").val(items.Narration),
                             $("#cmbUDN").val(items.UDFId), $("#txtStatus").val(items.Status);
                         updateInputColumn("txtValue", items.NoteValue);
@@ -1174,7 +1199,7 @@ function updateInputColumn(inputID, netValue) {
 //</div>`;
 //                                }
 //                            }
-                            
+
                         ],
                         initComplete: function () {
                             // Re-apply search value after table is fully initialized
@@ -1370,6 +1395,7 @@ function setDate1(FieldID,Type) {
         setDate("dtpDate", 0);
         SetFilterDate();
         SetTagZero();
+        $("#txtBranchName").val(DefBranch);
         //setTimeout(function () { GetFilterData(); }, 800);
         if (nTransMode != 1)
             modal.style.display = "none";
@@ -1381,6 +1407,11 @@ function setDate1(FieldID,Type) {
     $("#btnSave").click(function () {
         $(".clrdiv").html("");
         var IsValid = true, ChkFormation = true;
+        if ($("#txtBranchName ").val() == 0) {
+            IsValid = false;
+            $("#divErrBranch").html("Select Branch");
+            showErrorSnackbar("Select Branch");
+        }
         if ($("#txtPartyName").val() == "") {
             IsValid = false;
             $("#dvErrorPartyName").html("Party Name should not be empty");
@@ -1439,6 +1470,7 @@ function setDate1(FieldID,Type) {
             "ID": $("#txtID").val(),
             "DocDate": $("#dtpDate").val(),
             "RefNo": $("#txtRefNo").val(),
+            "BranchID": $("#txtBranchName").val(),
             "PartyID": $("#txtPartyName").val(),
             "FAID": $("#txtAccountName").val(),
             "NoteValue": document.getElementById("txtValue").getAttribute("txttag"), //$("#txtValue").val(),
@@ -1449,6 +1481,8 @@ function setDate1(FieldID,Type) {
             "CurrentStatus": nStatus,
             "CBy": UID
         };
+        console.log("SAVE PAYLOAD (object):", lstMaster);
+        console.log("SAVE PAYLOAD (json):", JSON.stringify(lstMaster, null, 2));
             $.ajax({
                 url: Aurl + "creditdebitnote/save",
                 type: 'POST',
@@ -1656,7 +1690,7 @@ function setDate1(FieldID,Type) {
                     console.log("columns : ", columns);
                     columns.push(actions);
                     columns.push(OtherActions);
-                    
+
                 } else {
                     showErrorSnackbar("No column data found");
                 }
@@ -1665,7 +1699,7 @@ function setDate1(FieldID,Type) {
     }
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {
         nTransMode = 5;
-        var ID = $("#txtID").val();        
+        var ID = $("#txtID").val();
         setTimeout(() => {
             GetData(3, ID);
         }, 500);
