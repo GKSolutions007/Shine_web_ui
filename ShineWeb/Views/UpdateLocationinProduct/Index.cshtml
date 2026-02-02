@@ -101,6 +101,16 @@
             cursor: pointer;
         }
 
+    .branch-container {
+        text-align: left; /* align container to the left */
+    }
+
+        .branch-container .form-label {
+            display: inline-block; /* keep it inline, not centered */
+            width: 220px; /* reduce width of dropdown */
+            margin: 0; /* remove auto margin */
+        }
+
     .form-label {
         position: relative;
         display: block;
@@ -134,6 +144,19 @@
     <h4 id="MainHeading">@ViewData["FormName"]</h4>
     <hr />
     <div class="toastBox"></div>
+    <div class="branch-container">
+        <div class="form-label">
+            <span class="form-label">
+                <select class="form-control FormclrcmbField" id="txtBranchName" @(Model.EnableBranch == "1" ? "disabled" : "")>
+                    <option value="0">Select Branch</option>
+                </select>
+                <label class="labelup" for="txtBranchName">Branch *</label>
+            </span>
+            <label class="labelup" for="txtBranchName">Branch *</label>
+        </div>
+        <div id="dvErrorBranchName" class="clrdiv" style="color:red"></div>
+    </div>
+
     <div id="dvMainTable">
 
         <table class="table table-bordered" id="tblMasterData" width="100%">
@@ -149,6 +172,7 @@
                     <th style="text-align:center;font-size: 12px;width:15%;">Code</th>
                     <th style="text-align:center;font-size: 12px;width:40%;">Name</th>
                     <th style="text-align:center;font-size: 12px;width:25%;">Category</th>
+                    @*<th style="text-align:center;font-size: 12px;width:25%;">Branch</th>*@
                     <th style="text-align:center;font-size: 12px;width:20%;">
                         Location
                         <div class="input-group">
@@ -214,25 +238,25 @@
             success: function (data) {
                 if (nMode == 1) {
                     if (data.length > 0) {
-                        //Table.draw().clear(); Table.draw().clear();
-                        $('#cmbLocation').find("option").remove();
-                        $('#cmbLocation').append($('<option/>', {
-                            value: 0,
-                            text: "-- Select --",
-                        }));
+                        // Clear existing dropdowns
+                        $('#cmbLocation').empty().append($('<option/>', { value: 0, text: "-- Select --" }));
+                        $('#txtBranchName').empty().append($('<option/>', { value: 0, text: "-- Select Branch --" }));
+
                         arrLocation = [];
                         strLocation = '<option value="0">-Select-</option>';
+
                         $.each(data, function (i, items) {
-                            var al = {
-                                "name": items.Name,
-                                "id": items.ID,
+                            if (items.FType == "1") {
+                                // Location
+                                var loc = { "name": items.Name, "id": items.ID };
+                                arrLocation.push(loc);
+                                $('#cmbLocation').append($('<option/>', { value: items.ID, text: items.Name }));
+                                strLocation += '<option value="' + items.ID + '">' + items.Name + '</option>';
                             }
-                            arrLocation.push(al);
-                            $('#cmbLocation').append($('<option/>', {
-                                value: items.ID,
-                                text: items.Name,
-                            }));
-                            strLocation += '<option value="' + items.ID + '">' + items.Name + '</option>';
+                            else if (items.FType == "2") {
+                                // Branch
+                                $('#txtBranchName').append($('<option/>', { value: items.ID, text: items.Name }));
+                            }
                         });
                     }
                     else {
@@ -257,8 +281,9 @@
                             { "data": "Code", "autoWidth": true, className: "dt-body-left" },
                             { "data": "Name", "autoWidth": true, className: "dt-body-left" },
                             { "data": "CategoryID", "autoWidth": true, className: "dt-body-left" },
+                            //{ "data": "BranchID", "autoWidth": true, className: "dt-body-left" },
                             {
-                                className: "dt-body-left",                               
+                                className: "dt-body-left",
                                 "mRender": function (data, type, value, meta) {
                                     var rowIndex = meta.row;
                                     var fId = 'dgvLocation_' + rowIndex;
