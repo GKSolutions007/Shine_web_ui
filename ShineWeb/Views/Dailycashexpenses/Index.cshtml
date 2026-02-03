@@ -160,6 +160,7 @@
 </style>
 <body>
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.EnableBranch, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableBranch" })
     <div class="toastBox"></div>
     <div class="row" style="padding-top:10px;">
         <div class="col-xs-12 col-sm-12 col-md-10 col-lg-10">
@@ -187,7 +188,7 @@
             </span>
             <label class="labelup" for="txtBranchName">Branch *</label>
         </div>
-        <div id="dvErrorBranchName" class="clrdiv" style="color:red"></div>
+        <div id="divErrBranch" class="clrdiv" style="color:red"></div>
     </div>
     <hr />
     <div id="dvMainTable">
@@ -261,6 +262,9 @@
             Table.draw(); // Redraw and re-sort the table
         });
     }
+    if ($("#txtEnableBranch").val() == 1) {
+        $("#txtBranchName").prop("disabled", true);
+    }
     // Call it once on page load
     //bindLiveSortEvents();
     function filterme(searchValue) {
@@ -270,7 +274,7 @@
             var value = parseFloat(data[3]) || 0; // Convert first column to number
             var category = data[2] || ''; // Get the second column value
 
-            //return (searchValue == "" || category.toUpperCase() == searchValue.toUpperCase());//value > 0 && 
+            //return (searchValue == "" || category.toUpperCase() == searchValue.toUpperCase());//value > 0 &&
             return (category.includes(searchValue));
         });
 
@@ -284,6 +288,7 @@
     var Aurl = '@Session["APIurl"]';
     var UID = '@Session["LoginUserID"]';
     var DecVal = '@Session["DecimalValues"]';
+    var DefBranch = '@Session["DefaultBranch"]';
     GetData();
     function GetData() {
         $.ajax({
@@ -295,9 +300,10 @@
             },
             success: function (data) {
                 if (data.length > 0) {
-                    var accdata = eval(data);
+                    var accdata = JSON.parse(data);
                     Table.draw().clear(); Table.draw().clear();
-                    var billjsdata = eval(data);
+                    var billjsdata = accdata.Table;
+                    var branchdata = accdata.Table1;
                     $('#tblMasterFAData').DataTable({
                         pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
                         scrollY: "450px",
@@ -315,17 +321,17 @@
                         columns: [
                             { "data": "FAID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
                             {
-                                className: "dt-body-center",
+                                className: "dt-body-center", width: "5%",
                                 "mRender": function (data, type, value, meta) {
                                     var rowIndex = (meta.row + 1);
                                     var _action = rowIndex;
                                     return _action;
                                 },
                             },
-                            { "data": "AccountName", "autoWidth": true, className: "dt-body-left" },//1
+                            { "data": "AccountName", width: "40%", "autoWidth": true, className: "dt-body-left" },//1
                             {
                                 //
-                                className: "dt-body-right",
+                                className: "dt-body-right",width:"10%",
                                 "mRender": function (data, type, value, meta) {
                                     var rowIndex = (meta.row + 1);
                                     var _action = rowIndex;
@@ -333,7 +339,7 @@
                                 },
                             },
                             {
-                                className: "dt-body-left",
+                                className: "dt-body-left", width: "15%",
                                 "mRender": function (data, type, value, meta) {
                                     var rowIndex = (meta.row + 1);
                                     var _action = rowIndex;
@@ -341,29 +347,32 @@
                                 },
                             },
                             {
-                                className: "dt-body-left",
+                                className: "dt-body-left", width: "30%",
                                 "mRender": function (data, type, value, meta) {
                                     var rowIndex = (meta.row + 1);
                                     var _action = rowIndex;
                                     return '<input type="text" name ="Remarks" class="gdInput" value="" id="txtRemarks' + rowIndex + '"/>';
                                 },
-                            },                            
+                            },
                         ],
 
                     });
-                    Table = $('#tblMasterFAData').DataTable();                   
-                    //$.each(accdata, function (i, items) {
-                    //    var rdn = Math.random();
-                    //    Table.row.add([
-                    //        items.FAID,
-                    //        (i+1),
-                    //        items.AccountName,
-                    //        //'<input type="number" name ="Amount" txttag="0" class="gdInput txtsettag dgvAmount" value="" id="txtAmount' + i + '"/>',
-                    //        '<p contenteditable="true"></p>',
-                    //        '<input type="text" name ="RefNo" class="gdInput" value="" id="txtRefNo' + i +'"/>',
-                    //        '<input type="text" name ="Remarks" class="gdInput" value="" id="txtRemarks' + i +'"/>',
-                    //    ]).draw(false);
-                    //});
+                    Table = $('#tblMasterFAData').DataTable();
+
+                    if ($("#txtEnableBranch").val() == 1) {
+                        $("#txtBranchName").prop("disabled", true);
+                    }
+                    $('#txtBranchName').find("option").remove().append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(branchdata, function (i, Britems) {
+                        $('#txtBranchName').append($('<option/>', {
+                            value: Britems.ID,
+                            text: Britems.Name,
+                        }));
+                    });
+                    $("#txtBranchName").val(DefBranch);
                 }
                 else {
                     showErrorSnackbar("No Records Found");
@@ -469,7 +478,7 @@
         $("#tblMasterFAData tbody tr").each(function () {
             $(this).find("input").each(function (index) {
                 const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");                
+                const fieldID = $(this).attr("id");
                 if (fieldName == "Amount") {
                     TotAmt += parseFloat($(this).attr("txttag"));
                 }
@@ -490,7 +499,7 @@
     function addAccountsinArray() {
         AccArray = [];
         $("#tblMasterFAData tbody tr").each(function () {
-            var allValues = {}, nFAID = 0, Amount = 0, strRefNo = '', strRemark = '';            
+            var allValues = {}, nFAID = 0, Amount = 0, strRefNo = '', strRemark = '';
             rowdata = Table.row($(this)).data();
             nFAID = rowdata.FAID;//[0];
             $(this).find("input").each(function (index) {
@@ -526,12 +535,17 @@
             $("#divErrDate").html("Select Date");
             showErrorSnackbar("Select Date");
         }
+        if ($("#txtBranchName").val() == 0) {
+            IsValid = false;
+            $("#divErrBranch").html("Select Branch");
+            showErrorSnackbar("Select Branch");
+        }
         var value = document.getElementById("lblTotal").getAttribute("lbltag");
         if (parseFloat(value) <= 0) {
             IsValid = false;
             $("#lblTotal").css("color", "red");
             showErrorSnackbar("Enter value in any one account");
-        }        
+        }
         if (IsValid) {
             addAccountsinArray();
             if (cfFocus != 3) {
@@ -548,6 +562,7 @@
             "ID": $("#txtID").val(),
             "DocDate": $("#dtpDate").val(),
             "UserID": UID,
+            "BranchID": $("#txtBranchName").val(),
             "lstCollPayDtl": AccArray
         };
         $.ajax({
@@ -582,5 +597,5 @@
                 }
             }
         });
-    }    
+    }
 </script>

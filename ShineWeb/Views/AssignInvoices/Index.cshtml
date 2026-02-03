@@ -501,10 +501,26 @@
                         </tr>
                     </table>
                 </div>
-                <div class="col-sm-12 col-md-2 col-lg-2">
-
+                <div class="col-sm-12 col-md-3 col-lg-3">
+                    <table width="100%">
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" colspan="2">
+                                <div class="form-label">
+                                    <span class="form-label">
+                                        <select class="form-control FormclrcmbField" id="txtBranchName" @(Model.EnableBranch == "1" ? "disabled" : "")>
+                                            <option value="0">Select Branch</option>
+                                        </select>
+                                        <label class="labelup" for="txtBranchName">Branch *</label>
+                                    </span>
+                                    <label class="labelup" for="txtBranchName">Branch *</label>
+                                </div>
+                                <div id="divErrBranch" class="clrdivs" style="color:red"></div>
+                            </td>
+                        </tr>
+                    </table>
+                   
                 </div>
-                <div class="col-sm-12 col-md-5 col-lg-5">
+                <div class="col-sm-12 col-md-4 col-lg-4">
                 </div>
                 <div class="col-sm-12 col-md-3 col-lg-3">
                     <table width="100%">
@@ -542,9 +558,8 @@
             <hr />
             <div class="col-sm-12 col-md-12 col-lg-12" style="padding-bottom:5px;">
                 <table width="100%">
-                    <tr>
+                    <tr>                       
                         <td style="border:none;width:20%;">
-
                             <span class="form-label">
                                 <select class="form-control FormclrcmbField" id="cmbFilterBeat"><option value="0">Select Beat</option></select>
                                 <label class="labelup"> Beat</label>
@@ -779,7 +794,7 @@
                     $("#dvMain").show();
                     $("#dvDocuments").hide();
                     $("#btnEmail,#btnWhatsapp").show();
-                    $("#MainHeading").text("View Assign Invoices");
+                    $("#MainHeading").text("View Assign Invoices");                    
                 }
             },
             {
@@ -815,6 +830,9 @@
                         $("#dvDocuments").hide();
                         $("#btnEmail,#btnWhatsapp").hide();
                         $("#MainHeading").text("Modify Assign Invoices");
+                        if ($("#txtEnableBranch").val() == 1) {
+                            $("#txtBranchName").prop("disabled", true);
+                        }
                     }
                     else {
                         showErrorSnackbar("Cannot Modify.This document already cancelled");
@@ -853,7 +871,7 @@
                         $("#btnSave").show();
                         //,#btnViewInvoices, #btnAddInvoices,#chkSelectAllInvoice
                         $("#dvMain").show();
-                        $("#dvDocuments").hide();
+                        $("#dvDocuments").hide();                        
                     }
                     else {
                         showErrorSnackbar("This document already cancelled");
@@ -1083,7 +1101,7 @@ if ($("#txtAddID").val() == 0) {
         ClearForm();
         setTimeout(() => {
             GetData(5, 0, $("#cmbFilterBeat").val(), $("#cmbFilterSalesman").val(), $("#txtFilterCustomer").val(), null,
-                $("#dtpDocTo").val());
+                $("#dtpDocTo").val(), $("#txtBranchName").val());
         }, 500);
     })
     $("#btnClose").click(function () {
@@ -1132,22 +1150,24 @@ setTimeout(function () { GetFilterData(); }, 800);
     var arrParty = [];
     var prodids = 0;
     var tpn = "";
-    function GetData(nMode, strID = null, strBeatID = null, strSalesmanID = null,strParty = null, strFromDate = null, strToDate = null, strShowall = null) {
+    function GetData(nMode, strID = null, strBeatID = null, strSalesmanID = null, strParty = null, strFromDate = null,
+        strToDate = null, strFilterBranch = null) {
+        var strShowall = $("#chkShowAll").is(":checked") ? "1" : "0"
         $.ajax({
             url: Aurl + "assigninvoices/getdata",
             type: 'get',
             contentType: 'json',
             data: {
                 Mode: nMode, ID: strID, BeatID: strBeatID, SalesmanID: strSalesmanID, Party: strParty, FromDate: strFromDate,
-                ToDate: strToDate, Showall : strShowall},
+                ToDate: strToDate, Showall: strShowall, FilterBranch: strFilterBranch
+},
             xhrFields: {
                 withCredentials: true
             },
             success: function (data) {
                 if (nMode == 1) {
-                    //cmbSalesman,cmbFilterBeat,cmbFilterSalesman,txtFilterCustomer
-                    $('#cmbSalesman,#cmbFilterBeat,#cmbFilterSalesman').find("option").remove();
-                    $('#cmbSalesman,#cmbFilterBeat,#cmbFilterSalesman').append($('<option/>', {
+                    $('#cmbSalesman,#cmbFilterBeat,#cmbFilterSalesman,#txtBranchName').find("option").remove();
+                    $('#cmbSalesman,#cmbFilterBeat,#cmbFilterSalesman,#txtBranchName').append($('<option/>', {
                         value: 0,
                         text: "-- Select --",
                     }));
@@ -1176,6 +1196,12 @@ setTimeout(function () { GetFilterData(); }, 800);
                         }
                         if (items.FType == 4) {
                             $("#lblDocID").text(items.Name);
+                        }
+                        if (items.FType == 5) {
+                            $('#txtBranchName').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
                         }
                     });
                     SetAutlistforFields();
@@ -1206,10 +1232,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 text: 'Settings',
                                 title: 'Settings',
                                 visible: true,
-                                onClick: (gridInstance, event) => {
-                                    //console.log("gridInstance : ", gridInstance);
-                                    //console.log("event : ", event);
-                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                onClick: (gridInstance, event) => {                                 
                                     modalGenColumnSettings.style.display = "block";
                                     GendralColumnSettings(1, 30, 1, 0);
                                 }
@@ -1219,43 +1242,24 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 text: 'Add New',
                                 title: 'Add New',
                                 visible: $("#txtAddID").val() == 1,
-                                onClick: (gridInstance, event) => {
-                                    //console.log("gridInstance : ", gridInstance);
-                                    //console.log("event : ", event);
-                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
-                                    //dvDocuments,
-                                    //dvDocuments,
-                                    //dvDocuments,
+                                onClick: (gridInstance, event) => {                                    
                                     nTransMode = 1;
                                     $("#dvMain").show();
                                     $("#dvDocuments").hide();
                                     ClearForm();
                                     setTimeout(() => {
                                         GetData(5, 0, $("#cmbFilterBeat").val(), $("#cmbFilterSalesman").val(), $("#txtFilterCustomer").val(), null,
-                                            $("#dtpDocTo").val());
+                                            $("#dtpDocTo").val(), DefBranch);
+                                        $("#txtBranchName").val(DefBranch);
                                     }, 500);
                                 }
                             },
                         ],
                         onCellClick: (rowData, fieldName, cellValue, column) => {
-                            //let message = `Clicked Cell:\n`;
-                            //message += `• Field: ${fieldName}\n`;
-                            //message += `• Value: ${cellValue}\n\n`;
-                            //message += `Row Data:\n`;
-                            //for (const key in rowData) {
-                            //    if (key !== '_gridId') {
-                            //        message += `• ${key}: ${rowData[key]}\n`;
-                            //    }
-                            //}
-                            //alert(message);
+                            
                         },
                         onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                            //// Double-click handler - shows JSON format
-                            //let message = `Double-Clicked Cell:\n`;
-                            //message += `• Field: ${fieldName}\n`;
-                            //message += `• Value: ${cellValue}\n\n`;
-                            //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
-                            //alert(message);
+                           
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(30, 1, 0, colIndex, field, newWidth)
@@ -1306,76 +1310,6 @@ setTimeout(function () { GetFilterData(); }, 800);
                                     return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
                                 }
                             }
-
-
-                 //           {
-                 //               className: "dt-body-center",
-                 //               orderable: false,
-                 //               render: function (data, type, value) {
-                 //                   var EditYN = value.Status == 'Amended' || value.Status == 'Cancelled' || value.Status == 'Close' || value.Status == 'Processed' || value.CollInvCount > 0 || value.DetailStatusCount > 0 ? false : true;
-                 //                   var CanYN = value.Status == 'Amended' || value.Status == 'Cancelled' || value.Status == 'Close' || value.Status == 'Processed' || value.CollInvCount > 0 || value.DetailStatusCount > 0 ? false : true;
-                 //                   var RTNYN = value.Status == 'Amended' || value.Status == 'Cancelled' || value.Status == 'Close' || value.Status == 'Processed' ? false : true;
-                 //                   var status = value.Status;
-                 //                   var edit = '', cancel = '', view = '', variant = '', Print = '', Preview = '', PDF = '';
-                 //                   if ($("#txtViewID").val() == 1) {
-                 //                       var Print = '<a class="dropdown-item clsprint" href="javascript:void(0)">🖨 Print</a>';
-                 //                       var Preview = '<a class="dropdown-item clspreview" href="javascript:void(0)#">🖨 Preview</a>';
-                 //                       var PDF = '<a class="dropdown-item clspdf" href="javascript:void(0)">📕 PDF</a>';
-                 //                   }
-                 //                   if (status !== 'Amended' && status !== 'Cancelled') {
-                 //                       if ($("#txtModifyID").val() != 0 & EditYN)
-                 //                           edit = '<a class="dropdown-item clsEdit" href="javascript:void(0)">✏️ Edit</a>';
-                 //                       if ($("#txtCancelID").val() != 0 && CanYN)
-                 //                           cancel = '<a class="dropdown-item clsCancel" href="javascript:void(0)">❌ Cancel</a>';
-                 //                   }
-
-                 //                   if ($("#txtReturnID").val() != 0 && RTNYN)
-                 //                       variant = '<a class="dropdown-item clsReturn" href="javascript:void(0)">↩ Return</a>';
-                 //                   //<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-share-alt clsReturn" style="font-size:16px" title="Return"></span></a>
-                 //                   return `
-                 //<div class="dropdown">
-                 //    <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown">
-                 //        &#8942;
-                 //    </button>
-                 //    <ul class="dropdown-menu  action-dropdown" style="right:0;left:auto;">
-                 //        ${edit ? `<li>${edit}</li>` : ''}
-                 //        ${cancel ? `<li>${cancel}</li>` : ''}
-                 //        ${variant ? `<li>${variant}</li>` : ''}
-                 //        ${Print ? `<li>${Print}</li>` : ''}
-                 //        ${Preview ? `<li>${Preview}</li>` : ''}
-                 //        ${PDF ? `<li>${PDF}</li>` : ''}
-                 //    </ul>
-                 //</div>`;
-                 //               }
-                 //           }
-                            //{
-                            //    className: "dt-body-center",
-                            //    "mRender": function (data, type, value) {
-                            //        var _action = value.Status == 'Amended' || value.Status == 'Cancelled' || value.Status == 'Close' || value.Status == 'Processed' || value.CollInvCount > 0 || value.DetailStatusCount > 0 ? '' : '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
-                            //        return _action;
-                            //    }, "visible": $("#txtModifyID").val() == 0 ? false : true
-                            //},
-                            //{
-                            //    className: "dt-body-center",
-                            //    "mRender": function (data, type, value) {
-                            //        var _action = value.Status == 'Amended' || value.Status == 'Cancelled' || value.Status == 'Close' || value.Status == 'Processed' || value.CollInvCount > 0 || value.DetailStatusCount > 0 ? '' : '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-remove-circle clsCancel" style="font-size:16px" title="Cancel"></span></a>';
-                            //        return _action;
-                            //    }, "visible": $("#txtCancelID").val() == 0 ? false : true
-                            //},
-                            //{
-                            //    className: "dt-body-center",
-                            //    "mRender": function (data, type, value) {
-                            //        var _action = '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
-                            //        return _action;
-                            //    }, "visible": $("#txtViewID").val() == 0 ? false : true
-                            //},
-                            //{
-                            //    className: "dt-body-center",
-                            //    "mRender": function (data, type, value) {
-                            //        var _action = value.Status == 'Amended' || value.Status == 'Cancelled' || value.Status == 'Close' || value.Status == 'Processed' ? '' : '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-share-alt clsReturn" style="font-size:16px" title="Return"></span></a>';
-                            //        return _action;
-                            //    }, "visible": $("#txtReturnID").val() == 0 ? false : true
-                            //},
                         ],
                         initComplete: function () {
                             // Re-apply search value after table is fully initialized
@@ -1398,7 +1332,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                             $("#cmbSalesman").val(items.SalesmanID),
                             $("#txtRefNo").val(items.RefNo),
                             $("#txtStatus").val(items.Status);
-                            $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration)
+                        $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);
+                        $("#txtBranchName").val(items.BranchID)
                     });
                     $('#btnViewInvoices').hide();
                     var custjsdata = JSON.parse(data[0].lstJsonAssignDetails);
@@ -1562,10 +1497,15 @@ setTimeout(function () { GetFilterData(); }, 800);
             $("#divErrDocTo").html("As on date should not be empty");
             showErrorSnackbar("As on date should not be empty");
         }
+        if ($("#txtBranchName").val() == 0 || $("#txtBranchName").val() == "") {
+            IsValid = false;
+            $("#divErrFilterBranch").html("Select Branch Name");
+            showErrorSnackbar("Select Branch Name");
+        }
         if (IsValid) {
             //cmbSalesman,cmbFilterBeat,cmbFilterSalesman,txtFilterCustomer
             GetData(5, 0, $("#cmbFilterBeat").val(), $("#cmbFilterSalesman").val(), $("#txtFilterCustomer").val(), null,
-                $("#dtpDocTo").val());
+                $("#dtpDocTo").val(), $("#txtBranchName").val());
         }
     });
 
@@ -1590,7 +1530,7 @@ setTimeout(function () { GetFilterData(); }, 800);
             $("#divErrFFrom").html("From date should be lessthan To Date");
         }
         if (IsValid) {
-            GetData(2, 0, 0, 0, "", $("#dtpFFrom").val(),$("#dtpFTo").val(), $("#chkShowAll").is(":checked") ? "1" : "0");
+            GetData(2, 0, 0, 0, "", $("#dtpFFrom").val(),$("#dtpFTo").val());
         }
     }
 
@@ -1665,6 +1605,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                 //CheckedInvoices.push(grouped);
                 $('#tblInvoiceData').empty();
                 $('#btnViewInvoices').show();
+                $('#txtBranchName').prop("disabled", true);
+                
             }
         }
         else {
@@ -1978,6 +1920,12 @@ setTimeout(function () { GetFilterData(); }, 800);
         $("#btnSave,#btnClear,#btnDraft").show();
         $("#MainHeading").text("Assign Invoices");
         $("#btnSave").prop("disabled", false);
+        setTimeout(() => {
+            if ($("#txtEnableBranch").val() == 1) {
+                $("#txtBranchName").prop("disabled", true);
+            }
+            $("#txtBranchName").val(DefBranch);
+        }, 500);
     }
     var CheckedInvoices = [];
     function SaveValidation() {
@@ -1988,6 +1936,11 @@ setTimeout(function () { GetFilterData(); }, 800);
             IsValid = false;
             $("#divErrSalesman").html("Select Salesman");
             showErrorSnackbar("Select Salesman");
+        }
+        if ($("#txtBranchName").val() == 0 || $("#txtBranchName").val() == null) {
+            IsValid = false;
+            $("#divErrBranch").html("Select Branch");
+            showErrorSnackbar("Select Branch");
         }
         if ($("#dtpDate").val() == "") {
             IsValid = false;
@@ -2066,6 +2019,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                 "TransID": 21,
                 "DocID": $("#lblDocID").val(),
                 "SalesmanID": $("#cmbSalesman").val(),
+                "BranchID": $("#txtBranchName").val(),
                 "RefNo": $("#txtRefNo").val(),
                 "Remarks": $("#txtRemarks").val(),
                 "Narration": $("#txtNarration").val(),
@@ -2155,7 +2109,7 @@ setTimeout(function () { GetFilterData(); }, 800);
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {
         $(".clrdivs").html("");
         nTransMode = 5;
-        var ID = $("#txtID").val();        
+        var ID = $("#txtID").val();
         GetData(3, ID);
         $(".FormclrField,.FormclrcmbField").prop("disabled", true);
         $("#btnSave,#btnClear,#btnDocFilter,#btnViewInvoices, #btnAddInvoices,#chkSelectAllInvoice").prop("disabled", true);

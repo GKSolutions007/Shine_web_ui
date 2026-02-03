@@ -648,16 +648,16 @@
                     </div>
                     <div class="col-sm-12 col-md-4 col-lg-4">
                         <table width="100%">
-                            @*<tr class="bgclrfortr" hidden>
+                            <tr class="bgclrfortr">
                                     <td style="border:none;" colspan="2">
                                         <span class="form-label">
-                                            <select class="form-control FormclrcmbField" id="cmbBranch" hidden><option value="0">Select Branch</option></select>
+                                            <select class="form-control FormclrcmbField" id="cmbBranch"><option value="0">Select Branch</option></select>
                                             <label class="labelup"> Branch *</label>
                                         </span>
                                         <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBranch" class="clrdivs"></div>
 
                                     </td>
-                                </tr>*@
+                                </tr>
                             <tr>
                                 <td style="border:none;">
                                     <span class="form-label">
@@ -674,24 +674,7 @@
                                     <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrAmount" class="clrdivs"></div>
                                 </td>
                             </tr>
-                            <tr>
-                                <td style="border:none;">
-                                    <div>
-                                        <label>Balance : </label><label id="lblBalance" style="font-size:14px;font-weight:600;padding-left:10px;">0.00</label>
-                                    </div>
-                                </td>
-                                <td style="border:none;">
-                                    <div>
-                                        <span class="form-label">
-                                            <input class="form-control FormclrField" type="text" id="txtRefNo" placeholder=""
-                                                   onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
-                                                   oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
-                                            <label class="labelup"> Ref No</label>
-                                        </span>
-                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
-                                    </div>
-                                </td>
-                            </tr>
+                            
                             <tr id="trVisa">
                                 <td style="border:none;">
                                     <span class="form-label">
@@ -726,17 +709,35 @@
                                     </div>
                                 </td>
                             </tr>
+                            <tr>
+                                <td style="border:none;">
+                                    <div>
+                                        <label>Balance : </label><label id="lblBalance" style="font-size:14px;font-weight:600;padding-left:10px;">0.00</label>
+                                    </div>
+                                </td>
+                                <td style="border:none;">
+                                    <div>
+                                        <span class="form-label">
+                                            <input class="form-control FormclrField" type="text" id="txtRefNo" placeholder=""
+                                                   onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
+                                                   oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
+                                            <label class="labelup"> Ref No</label>
+                                        </span>
+                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
+                                    </div>
+                                </td>
+                            </tr>
                             @*<tr hidden>
-                                    <td style="border:none;" colspan="2">
-                                        <div>
-                                            <span class="form-label">
-                                                <select class="form-control FormclrcmbField" id="cmbUDN"><option value="0">Select UDN</option></select>
-                                                <label class="labelup">UDN</label>
-                                            </span>
-                                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCode" class="clrdivs"></div>
-                                        </div>
-                                    </td>
-                                </tr>*@
+            <td style="border:none;" colspan="2">
+                <div>
+                    <span class="form-label">
+                        <select class="form-control FormclrcmbField" id="cmbUDN"><option value="0">Select UDN</option></select>
+                        <label class="labelup">UDN</label>
+                    </span>
+                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCode" class="clrdivs"></div>
+                </div>
+            </td>
+        </tr>*@
                         </table>
                     </div>
                 </div>
@@ -1382,7 +1383,7 @@
         paging: false,
         searching: false,
         info: false,
-        ordering: true,
+        ordering: false,
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
@@ -1393,7 +1394,7 @@
         paging: false,
         searching: false,
         info: false,
-        ordering: true,
+        ordering: false,
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
@@ -1724,9 +1725,50 @@ if ($("#txtReurnPricePerm").val() == 0) {
     //        calculateGrid2Value();
     //});
     //GetData(2, DefBranch, $("#dtpDate").val());
-    $("#cmbBranch,#dtpDate").change(function (e) {
-        ("#btnClear").click();
+    $("#dtpDate,#cmbBranch").change(function (e) {
+        //ClearForm();
+        $("#txtCustomerID,#txtSearch,#txtHDClosingBalance").val(""); $("#cmbSalesman,#cmbBeat").val("0");
+        Table.draw().clear();
+        TableGrid1Data.draw().clear(); TableGrid1Data.draw().clear();
+        TableGridtwoData.draw().clear(); TableGridtwoData.draw().clear();
+        if (nDocPrefix == 19) {
+            $("#lblrdoAdv").text("Payable");
+            $("#lblrdoOS").text("Receivable");
+        } else {
+            $("#lblrdoAdv").text("Receivable");
+            $("#lblrdoOS").text("Payable");
+        }
+        
+        updateLabelColumn("lblG1TotalBalance", 0);
+        updateLabelColumn("lblG2TotalDocValue", 0);
+        updateLabelColumn("lblG2TotalOS", 0);
+        updateLabelColumn("lblG2Balance", 0);
+        $("#txtClosingBalance,#txtBalance").val("0.00");
+        $("#txtClosingBalance,#txtBalance").css("color", "");
+        CalculateAdjustvalues();
+        SumG2FooterLabels();
+        var clsbl = 0, val = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
+        var bal = 0;
+        if (nDocPrefix == 19)//collection
+            bal = (clsbl) - parseFloat(val);
+        else
+            bal = (clsbl) + parseFloat(val);
+        console.log("After amount Bal : ", bal);
+        var crdr = bal >= 0 ? "Dr" : "Cr";
+        var clb = parseFloat(Math.abs(bal)).toFixed(DecVal);
+        console.log("Final Bal : ", clb);
+        $("#txtBalance").val(clb.toString() + " " + crdr);
+        //updateInputColumn("txtBalance", Math.abs(bal))
+        $("#txtBalance").css("color", bal > 0 ? "Red" : "Green");
+        var PMID = $("#cmbPaymode").val();
+        if (PMID == 5) {
+            var VisPen = parseFloat(document.getElementById("txtVisaPern").getAttribute("txttag"));
+            var CollAmt = parseFloat(val);
+            var dVisaAmt = CollAmt + ((parseFloat(VisPen) * CollAmt) / 100);
+            updateInputColumn("txtVisaAmt", dVisaAmt);
+        }
     });
+    
     var BatchRID = 0, ProductRID = 0;
 
     function Scrolltoid(id) {
@@ -3627,20 +3669,40 @@ function setDate1(FieldID,Type) {
                         if ($("#cmbSalesman").val() == 0) {
                             $("#cmbSalesman").val(items.SalesmanID);
                         }
-                        var osval = parseFloat(items.OSValue).toFixed(DecVal);
-                        var ostype = items.CreditlimitOS;
-                        var Osbytype = ostype == "Cr" ? osval * -1 : osval;
-                        $("#txtHDClosingBalance").val(Osbytype);
-                        $("#txtBalance").val(osval + " " + ostype);
-                        $("#txtClosingBalance").val(osval + " " + ostype);
-                        $("#txtClosingBalance,#txtBalance").css("color", ostype == "Dr" ? "Red" : "Green");
-
-                        //$("#cmbTaxType").val(items.TaxTypeID),
-                        //$("#cmdPriceType").val(items.PriceTypeID),
+                        TableGrid1Data.draw().clear(); TableGrid1Data.draw().clear();
+                        TableGridtwoData.draw().clear(); TableGridtwoData.draw().clear();
                         PaymodeChangeFieldValidation($("#cmbPaymode").val());
                         GetOSDocuments(1, items.ID, 0);
                         if (pm == 2) {
                             GetData(7, null, items.ID);
+                        }
+
+                        var osval = parseFloat(items.OSValue).toFixed(DecVal);
+                        var ostype = items.CreditlimitOS;
+                        var Osbytype = ostype == "Cr" ? osval * -1 : osval;
+                        $("#txtHDClosingBalance").val(Osbytype);
+                        //$("#txtBalance").val(osval + " " + ostype);
+                        $("#txtClosingBalance").val(osval + " " + ostype);
+                        $("#txtClosingBalance,#txtBalance").css("color", ostype == "Dr" ? "Red" : "Green");
+                        var clsbl = Osbytype, val = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
+                        var bal = 0;
+                        if (nDocPrefix == 19)//collection
+                            bal = (clsbl) - parseFloat(val);
+                        else
+                            bal = (clsbl) + parseFloat(val);
+                        console.log("After amount Bal : ", bal);
+                        var crdr = bal >= 0 ? "Dr" : "Cr";
+                        var clb = parseFloat(Math.abs(bal)).toFixed(DecVal);
+                        console.log("Final Bal : ", clb);
+                        $("#txtBalance").val(clb.toString() + " " + crdr);
+                        //updateInputColumn("txtBalance", Math.abs(bal))
+                        $("#txtBalance").css("color", bal > 0 ? "Red" : "Green");
+                        var PMID = $("#cmbPaymode").val();
+                        if (PMID == 5) {
+                            var VisPen = parseFloat(document.getElementById("txtVisaPern").getAttribute("txttag"));
+                            var CollAmt = parseFloat(val);
+                            var dVisaAmt = CollAmt + ((parseFloat(VisPen) * CollAmt) / 100);
+                            updateInputColumn("txtVisaAmt", dVisaAmt);
                         }
                     });
                     if ($("#cmbPaymode").val() == 1) {//cash
@@ -4066,8 +4128,8 @@ function setDate1(FieldID,Type) {
                         $("#cmbChequeNo ").val(items.ChequeID),
                         $("#dtpChequeDate").val(items.ChequeDate),
                         $("#txtIFSC").val(items.IFSC),
-                        $("cmbBankName").val(items.BankID),
-                        $("#txtBranchName").val(items.Branch);
+                        $("#cmbBankName").val(items.BankID),
+                        $("#cmbBranch").val(items.BranchID);
 
                         updateInputColumn("txtAmount", items.CollAmt);
                         updateInputColumn("txtVisaPern", items.VisaPern);
@@ -5119,11 +5181,11 @@ function setDate1(FieldID,Type) {
                 showErrorSnackbar("Select Party Name from list");
             }
         }
-        //if ($("#cmbBranch").val() == 0) {
-        //    IsValid = false;
-        //    $("#divErrBranch").html("Select Branch");
-        //    showErrorSnackbar("Select Branch");
-        //}
+        if ($("#cmbBranch").val() == 0) {
+            IsValid = false;
+            $("#divErrBranch").html("Select Branch");
+            showErrorSnackbar("Select Branch");
+        }
 
         if ($("#dtpDate").val() == "") {
             IsValid = false;
