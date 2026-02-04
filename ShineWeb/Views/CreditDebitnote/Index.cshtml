@@ -341,7 +341,7 @@
                                             <label>Doc ID :</label>
                                         </td>
                                         <td width="60%">
-                                            <label id="lblDocID" style="font-size:12px">CRDR/2425/1</label>
+                                            <label id="lblDocID" docprefix="" style="font-size:12px">CRDR/2425/1</label>
                                         </td>
                                     </tr>
                                 </table>
@@ -603,6 +603,11 @@
                 $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
                 $("#btnEmail,#btnWhatsapp").hide();
                 $("#btnSave,#btnClose,#btnDraft").show();
+                setTimeout(() => {
+                    var DocDate = $("#dtpDate").val();
+                    var Branch = $("#txtBranchName").val();
+                    GetDocumentID(DocDate, Branch, FID);
+                }, 1000);
                 //showErrorSnackbar("Variant functionality still developing");
             }
         },
@@ -835,6 +840,27 @@
             }
         });
     }
+    $('#dtpDate,#txtBranchName').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;        
+        var Branch = $("#txtBranchName").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+    });
+    
+    $("#txtBranchName").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;        
+        var id = e.target.id;        
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+    });
+    
     var arrPartyData = [], arrAccountData = [], arrBranchData = [], arrALPartyData = [], arrALAccountData = [], arrALBranchData = [], nIndexarrParty = 0, nIndexarrAccount = 0, nIndexarrBranch;
     function GetData(nMode,nID) {
         $.ajax({
@@ -928,7 +954,7 @@
                 if (nMode == 3) {
                     $.each(data, function (i, items) {
                         if (nTransMode != 3)
-                            $("#lblDocID").text(items.DocID);
+                            $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
 
                             $("#txtID").val(items.ID), $("#dtpDate").val(items.DocDate),
                                 $("#txtRefNo").val(items.RefNo), $("#txtBranchName").val(items.BranchID),
@@ -1089,6 +1115,11 @@ function updateInputColumn(inputID, netValue) {
                                     $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
                                     modal.style.display = "block";
                                     ClearForm();
+                                    setTimeout(() => {
+                                        var DocDate = $("#dtpDate").val();
+                                        var Branch = $("#txtBranchName").val();
+                                        GetDocumentID(DocDate, Branch, FID);
+                                    }, 1000);
                                 }
                             },
                         ],
@@ -1413,7 +1444,7 @@ function setDate1(FieldID,Type) {
     $("#btnSave").click(function () {
         $(".clrdiv").html("");
         var IsValid = true, ChkFormation = true;
-        if ($("#txtBranchName ").val() == 0) {
+        if ($("#txtBranchName").val() == 0) {
             IsValid = false;
             $("#divErrBranch").html("Select Branch");
             showErrorSnackbar("Select Branch");
