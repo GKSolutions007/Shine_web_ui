@@ -24,7 +24,7 @@ namespace ShineWeb.Controllers
         public ActionResult Index(string Msg=null)
         {
             //272,273,274,275,276
-            //string plain = "Financial Reports,	Financial Reporting Report,";
+            //string plain = "454,455,456,457,458,459,460";
             //string[] strplain = plain.Split(',');
             //string EncVal = "";
             //for (int i = 0; strplain.Length > i; i++)
