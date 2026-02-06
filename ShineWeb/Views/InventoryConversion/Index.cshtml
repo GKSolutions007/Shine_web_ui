@@ -467,7 +467,7 @@
                         </tr>*@
                     <tr>
                         <td style="border:none;">
-                            <label style="font-size:14px">Doc ID : </label> <label id="lblDocID" style="font-size:14px">IA/2425/1</label>
+                            <label style="font-size:14px">Doc ID : </label> <label id="lblDocID" docprefix="" style="font-size:14px">IA/2425/1</label>
                         </td>
                         <td style="border:none;">
                             <div>
@@ -1708,6 +1708,28 @@ function setDate1(FieldID,Type) {
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempBatch = [];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
     var prodids = 0;
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+    });
+
     function GetData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "inventoryconvertion/get",
@@ -1938,7 +1960,7 @@ function setDate1(FieldID,Type) {
                     $("#txtID").val(items.ID);
                     $("#dtpDate").val(items.Date),
                         $("#cmbBranch").val(items.BranchID);
-                        $("#lblDocID").text(items.DocID);
+                    $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     $("#txtRefNo").val(items.RefNo),
                     $("#txtRemarks").val(items.Remarks),
                     $("#txtNarration").val(items.Narration),
