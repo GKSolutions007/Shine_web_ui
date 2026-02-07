@@ -697,7 +697,7 @@
                         <table width="100%">
                             <tr>
                                 <td style="border:none;">
-                                    <label style="font-size:14px">Doc ID : </label><label id="lblDocID" style="font-size:14px">INV/2425/001</label>
+                                    <label style="font-size:14px">Doc ID : </label><label id="lblDocID" docprefix="" style="font-size:14px">INV/2425/001</label>
                                 </td>
                                 <td style="border:none;">
                                     <div>
@@ -3523,6 +3523,28 @@ function setDate1(FieldID,Type) {
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0 ,DefBankAcc = 0;
     var prodids = 0, strReasons = "";
 
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, nDocPrefix, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, nDocPrefix, prefix, isedit, id);
+    });
+
     function GetData(nMode, strName = null, strID = null, dtpDt = null) {
         $.ajax({
             url: Aurl + "collectionpayment/get",
@@ -3568,7 +3590,7 @@ function setDate1(FieldID,Type) {
                             }));
                         }
                         if (items.FType == 4) {
-                            $("#lblDocID").text(items.Name);
+                            $("#lblDocID").text(items.Name).attr("docprefix", items.DocPrefix);
                         }
                         if (items.FType == 5) {
                             $('#cmbPaymode').append($('<option/>', {
@@ -4689,6 +4711,11 @@ function setDate1(FieldID,Type) {
                                     $("#dvDocuments").hide();
                                     ClearForm();
                                     //Addprodgridline();
+                                    setTimeout(() => {
+                                        var DocDate = $("#dtpDate").val();
+                                        var Branch = $("#cmbBranch").val();
+                                        GetDocumentID(DocDate, Branch, nDocPrefix);
+                                    }, 1000);
                                 }
                             },
                         ],

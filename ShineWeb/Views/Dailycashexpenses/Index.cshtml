@@ -290,6 +290,28 @@
     var DecVal = '@Session["DecimalValues"]';
     var DefBranch = '@Session["DefaultBranch"]';
     GetData();
+
+    $('#dtpDate,#txtBranchName').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#txtBranchName").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+    });
+
+    $("#txtBranchName").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+    });
+
     function GetData() {
         $.ajax({
             url: Aurl + "dailycashexpenses/get",
@@ -301,9 +323,11 @@
             success: function (data) {
                 if (data.length > 0) {
                     var accdata = JSON.parse(data);
+                    console.log('var data :', accdata);
                     Table.draw().clear(); Table.draw().clear();
                     var billjsdata = accdata.Table;
                     var branchdata = accdata.Table1;
+                    console.log('var branchdata :', branchdata);
                     $('#tblMasterFAData').DataTable({
                         pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
                         scrollY: "450px",
@@ -564,7 +588,8 @@
             "UserID": UID,
             "BranchID": $("#txtBranchName").val(),
             "lstCollPayDtl": AccArray
-        };
+        }
+        console.log("Save Payload:",lstMaster)
         $.ajax({
             url: Aurl + "dailycashexpenses/save",
             type: 'POST',

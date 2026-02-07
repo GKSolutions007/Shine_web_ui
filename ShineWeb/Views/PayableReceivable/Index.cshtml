@@ -304,7 +304,7 @@
                                             <label>Doc ID :</label>
                                         </td>
                                         <td width="60%">
-                                            <label id="lblDocID" style="font-size:12px">PVRV/2425/1</label>
+                                            <label id="lblDocID" docprefix="" style="font-size:12px">PVRV/2425/1</label>
                                         </td>
                                     </tr>
                                 </table>
@@ -656,6 +656,11 @@
                 $("#btnSave,#btnClose,#btnDraft").show();
                 $("#btnEmail,#btnWhatsapp").hide();
                 //showErrorSnackbar("Variant functionality still developing");
+                setTimeout(() => {
+                    var DocDate = $("#dtpDate").val();
+                    var Branch = $("#txtBranchName").val();
+                    GetDocumentID(DocDate, Branch, FID);
+                }, 1000);
             }
         },
         {
@@ -886,6 +891,29 @@
             }
         });
     }
+
+    $('#dtpDate,#txtBranchName').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#txtBranchName").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+    });
+
+    $("#txtBranchName").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+    });
+
+
     var arrPartyData = [], arrAccountData = [], arrBranchData = [], arrALPartyData = [], arrALAccountData = [], arrALBranchData = [], arrTax = [], nIndexarrParty = 0, nIndexarrAccount = 0, nIndexarrTax = 0, nIndexarrBranch = 0;
     function GetData(nMode,nID) {
         $.ajax({
@@ -991,7 +1019,7 @@
                 if (nMode == 3) {
                     $.each(data, function (i, items) {
                         if (nTransMode != 3)
-                            $("#lblDocID").text(items.DocID);
+                            $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
 
                         $("#txtID").val(items.ID), $("#dtpDate").val(items.DocDate),
                             $("#txtRefNo").val(items.RefNo), $("#txtBranchName").val(items.BranchID), $("#txtPartyName").val(items.PartyID), $("#txtAccountName").val(items.FAID),
@@ -1129,6 +1157,11 @@ $("#chkShowAll").prop("checked", Showall == '1');
                                     $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
                                     modal.style.display = "block";
                                     ClearForm();
+                                    setTimeout(() => {
+                                        var DocDate = $("#dtpDate").val();
+                                        var Branch = $("#txtBranchName").val();
+                                        GetDocumentID(DocDate, Branch, FID);
+                                    }, 1000);
                                 }
                             },
                         ],
