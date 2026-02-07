@@ -47,6 +47,7 @@ namespace ShineWeb.Controllers
             Session["LoginUserID"] = dtRes.Rows[0][0].ToString();
             Session["LoginUser"] = dtRes.Rows[0][1].ToString();
             Session["RoleID"] = dtRes.Rows[0]["RoleID"].ToString();
+            Session["UserImgData"] = dtRes.Rows[0]["ImgData"].ToString();
             Session["NavBarVisible"] = "UserPermission";
             //DataTable dtParent = bl.BL_ExecuteParamSP("uspMenuPermission", 1, null);
             //DataTable dtPermission = bl.BL_ExecuteParamSP("uspMenuPermission", 2, Convert.ToInt32(Session["RoleID"]), Convert.ToInt32(Session["LoginUserID"]));//Convert.ToInt32(Session["LoginUserID"])

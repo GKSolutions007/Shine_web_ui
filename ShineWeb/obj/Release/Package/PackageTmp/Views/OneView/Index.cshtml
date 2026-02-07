@@ -21,6 +21,7 @@
 <script src="~/Scripts/datatable.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/Scripts/redirectform.js"></script>
 <style>
     /* ============ KEYFRAME ANIMATIONS ============ */
     @@keyframes fadeIn {
@@ -223,9 +224,9 @@
         transform: scale(1.01);
     }
 
-    tbody tr:nth-child(even) {
+/*    tbody tr:nth-child(even) {
         background-color: #fafafa;
-    }
+    }*/
 </style>
 <style>
     .star-rating {
@@ -592,6 +593,7 @@
             <table class="table" id="tblChequeInfo">
                 <thead>
                     <tr class="trclrforcolheader">
+                        <th style="font-size:0px">DocPrefix</th>
                         <th>Doc ID</th>
                         <th>Date</th>
                         <th>Number</th>
@@ -601,7 +603,7 @@
             </table>
         </div>
 
-
+        
     </div>
     <!-- Outstanding + Top Products -->
     <div class="container animate-fade-in stagger-1">
@@ -639,6 +641,7 @@
             <table id="tblOutstanding">
                 <thead>
                     <tr class="trclrforcolheader">
+                        <th style="font-size:0px">DocPrefix</th>
                         <th style="font-size:12px">Doc ID</th>
                         <th style="font-size:12px">Date</th>
                         <th style="font-size:12px">Net ₹</th>
@@ -653,14 +656,14 @@
     </div>
 
     <!-- Ledger Section -->
-    <div class="box ledger scrollable animate-slide-up stagger-1">
+    <div class="box ledger scrollable animate-slide-up stagger-1">       
         <table id="tblLedger">
             <thead>
                 <tr class="trclrforcolheader">
                     <th>Transaction Name</th>
                     <th>Doc ID</th>
                     <th>Doc Date</th>
-                    <th>Account Name</th>                    
+                    <th>Account Name</th>
                     <th>Credit</th>
                     <th>Debit</th>
                     <th>Balance</th>
@@ -730,6 +733,7 @@
         scrollY: "200px",
         scrollX: true,
         scrollCollapse: true,
+        columndef: [{ "targets": [0], "visible": false, searchable: false }],
         dom: '<"topBarContainer d-flex justify-between align-center" <"toolbarChequeInfo">f>rtip'
     });
     document.querySelector('div.toolbarChequeInfo').innerHTML = `
@@ -774,7 +778,7 @@
         scrollX: true,
         scrollCollapse: true,
         dom: '<"topBarContainer d-flex justify-between align-center" <"toolbarOS">f>rtip',
-        columndef: [{ "targets":[6],"class":"text-right"}]
+        columndef: [{ "targets": [6], "class": "text-right" }, { "targets": [0], "visible": false, searchable: false }]
     });
     document.querySelector('div.toolbarOS').innerHTML = `
 <label style="color:black; font-weight: 500; font-size: 14px;"><i class="fas fa-file-invoice-dollar section-icon"></i>Outstandings</label>`;
@@ -1026,6 +1030,7 @@
                         sorting: true,
                         info: false,
                         columns: [
+                            { "data": "DocPrefix", "autoWidth": true,"visible":false, className: "dt-body-left" },
                             { "data": "Doc ID", "autoWidth": true, className: "dt-body-left" },
                             { "data": "Doc Date", "autoWidth": true, className: "dt-body-left" },
                             { "data": "Net Amount", "autoWidth": true, className: "dt-body-right" },
@@ -1049,6 +1054,7 @@
 
 
                     var PartyLedger = JSON.parse(items.LedgetDetails);
+                    console.log(PartyLedger);
                     $('#tblLedger').DataTable({
                         scrollY: "300px",
                         scrollX: true,
@@ -1136,6 +1142,7 @@
                         sorting: false,
                         info: false,
                         columns: [
+                            { "data": "DocPrefix", "autoWidth": true, "visible": false, className: "dt-body-left" },
                             { "data": "Doc ID", "autoWidth": true, className: "dt-body-left" },
                             { "data": "Cheque Date", "autoWidth": true, className: "dt-body-left" },
                             { "data": "Cheque/DD Number", "autoWidth": true, className: "dt-body-right" },
@@ -1151,6 +1158,31 @@
             }
         });
     }
+    //ChequeInfoTable = $('#tblChequeInfo').DataTable();
+    $('#tblOutstanding tbody').on('dblclick', 'td', function () {
+        rowdata = OutstandingTable.row($(this).parents('tr')).data();        
+        var dTransID = rowdata.DocPrefix;
+        var DocID = rowdata["Doc ID"];
+        if (dTransID > 0) {
+            OpenTransactionDocument(dTransID, DocID);
+        }
+    });
+    $('#tblChequeInfo tbody').on('dblclick', 'td', function () {
+        rowdata = ChequeInfoTable.row($(this).parents('tr')).data();        
+        var dTransID = rowdata.DocPrefix;
+        var DocID = rowdata["Doc ID"];
+        if (dTransID > 0) {
+            OpenTransactionDocument(dTransID, DocID);
+        }
+    });
+    $('#tblLedger tbody').on('dblclick', 'td', function () {
+        rowdata = LedgerTable.row($(this).parents('tr')).data();
+        var dTransID = rowdata.DocPrefix;
+        var DocID = rowdata["Doc ID"];
+        if (dTransID > 0) {
+            OpenTransactionDocument(dTransID, DocID);
+        }
+    });
     if ($("#txtID").val() > 0 && $("#txtTransType").val() > 0) {
         var TypeID = $("#txtTransType").val();
         var PartyID = $("#txtID").val();
