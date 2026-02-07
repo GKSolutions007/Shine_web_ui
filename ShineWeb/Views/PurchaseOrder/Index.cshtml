@@ -612,7 +612,7 @@
                             <label style="font-size:14px">Doc ID : </label>
                         </td>
                         <td style="border:none;">
-                            <label id="lblDocID" style="font-size:14px">PO/2425/001</label>
+                            <label id="lblDocID" docprefix="" style="font-size:14px">PO/2425/001</label>
                         </td>
                     </tr>
                     <tr hidden>
@@ -1072,6 +1072,11 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
+                    setTimeout(() => {
+                        var DocDate = $("#dtpDate").val();
+                        var Branch = $("#cmbBranch").val();
+                        GetDocumentID(DocDate, Branch, 3);
+                    }, 1000);
                 }
             },
             {
@@ -1484,6 +1489,28 @@ setTimeout(function () { GetFilterData(); }, 800);
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
     var prodids = 0;
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 3, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 3, prefix, isedit, id);
+    });
+
     function GetData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "purchaseorder/get",
@@ -1858,6 +1885,11 @@ setTimeout(function () { GetFilterData(); }, 800);
                                         $("#dvDocuments").hide();
                                         ClearForm();
                                         GetData(2, $("#cmbUOMType").val());
+                                        setTimeout(() => {
+                                            var DocDate = $("#dtpDate").val();
+                                            var Branch = $("#cmbBranch").val();
+                                            GetDocumentID(DocDate, Branch, 3);
+                                        }, 1000);
                                     }
                                 },
                             ],
@@ -2280,7 +2312,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                     $("#txtVendorID").val(items.VendorID);
                     $("#dtpDate").val(items.Date),$("#cmbBranch").val(items.BranchID);
                     if (nTransMode != 3) {
-                        $("#lblDocID").text(items.DocID);
+                        $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     }
                     $("#txtRefNo").val(items.RefNo),
 

@@ -550,7 +550,7 @@
                         </tr>*@
                             <tr>
                                 <td style="border:none;">
-                                    <label style="font-size:14px">Doc ID : </label><label id="lblDocID" style="font-size:14px">AI/2425/001</label>
+                                    <label style="font-size:14px">Doc ID : </label><label id="lblDocID" docprefix="" style="font-size:14px">AI/2425/001</label>
                                 </td>
                                 <td style="border:none;">
                                     <div>
@@ -849,6 +849,11 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
+                    setTimeout(() => {
+                        var DocDate = $("#dtpDate").val();
+                        var Branch = $("#cmbBranch").val();
+                        GetDocumentID(DocDate, Branch,2);
+                    }, 1000);
                 }
             },
             {
@@ -1195,6 +1200,29 @@ setTimeout(function () { GetFilterData(); }, 800);
     var TempProd = [];
     var prodids = 0;
     var tpn = "";
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 2, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 2, prefix, isedit, id);
+    });
+
+
     function GetData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "automaticindent/get",
@@ -1583,6 +1611,11 @@ setTimeout(function () { GetFilterData(); }, 800);
                                     $("#dvMain").show();
                                     $("#dvDocuments").hide();
                                     ClearForm();
+                                    setTimeout(() => {
+                                        var DocDate = $("#dtpDate").val();
+                                        var Branch = $("#cmbBranch").val();
+                                        GetDocumentID(DocDate, Branch,2);
+                                    }, 1000);
                                 }
                             },
                         ],
@@ -1784,7 +1817,7 @@ setTimeout(function () { GetFilterData(); }, 800);
 
                     $("#txtVendorID").val(items.VendorID),$("#dtpDate").val(items.Date),$("#cmbBranch").val(items.BranchID);
                     if (nTransMode != 3) {
-                        $("#lblDocID").text(items.DocID);
+                        $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     }
                     $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), $("#txtStatus").val(items.Status);
                     $("#chkGeneratePO").prop("checked", items.TransportID == "1");

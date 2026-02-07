@@ -1233,7 +1233,7 @@
                         <tr>
                             <td></td>
                             <td style="border:none;">
-                                <label style="font-size:14px">Doc ID : </label>&ensp;<label id="lblDocID" style="font-size:14px">INV/2425/001</label>
+                                <label style="font-size:14px">Doc ID : </label>&ensp;<label id="lblDocID" docprefix="" style="font-size:14px">INV/2425/001</label>
                             </td>
                             <td style="border:none;">
                                 <span class="form-label">
@@ -2167,6 +2167,11 @@
                     //setTimeout(() => {
                     Addprodgridline();
                     //}, 500);
+                    setTimeout(() => {
+                        var DocDate = $("#dtpDate").val();
+                        var Branch = $("#cmbBranch").val();
+                        GetDocumentID(DocDate, Branch, 15);
+                    }, 1000);
                 }
             },
             {
@@ -5026,6 +5031,28 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 15, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 15, prefix, isedit, id);
+    });
+
     function GetData(nMode, strName = null, strID = null, dtpDt = null,dConvFact = 1,nRIDx = -1) {
         $.ajax({
             url: Aurl + "invoice/get",
@@ -5878,7 +5905,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         }
                     }
                     if (nTransMode != 3) {
-                        $("#lblDocID").text(items.DocId);
+                        $("#lblDocID").text(items.DocId).attr("docprefix", items.DocPrefix);
                     }
                     $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), $("#txtStatus").val(items.Status),
                         $("#cmbBeat").val(items.BeatID), $("#cmbSalesman").val(items.SalesmanID);
@@ -6249,6 +6276,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     $("#dvDocuments").hide();
                                     ClearForm();
                                     Addprodgridline();
+                                    setTimeout(() => {
+                                        var DocDate = $("#dtpDate").val();
+                                        var Branch = $("#cmbBranch").val();
+                                        GetDocumentID(DocDate, Branch, 15);
+                                    }, 1000);
                                 }
                             },
                         ],

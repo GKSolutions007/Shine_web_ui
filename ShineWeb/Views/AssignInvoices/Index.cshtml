@@ -526,7 +526,7 @@
                     <table width="100%">
                         <tr>
                             <td style="border:none;">
-                                <label style="font-size:14px">Doc ID : </label> <label id="lblDocID" style="font-size:14px">AI/2425/001</label>
+                                <label style="font-size:14px">Doc ID : </label> <label id="lblDocID" docprefix="" style="font-size:14px">AI/2425/001</label>
                             </td>
                             <td style="border:none;">
                                 <span class="form-label">
@@ -1150,6 +1150,29 @@ setTimeout(function () { GetFilterData(); }, 800);
     var arrParty = [];
     var prodids = 0;
     var tpn = "";
+
+    $('#dtpDate,#txtBranchName').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#txtBranchName").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 21, prefix, isedit, id);
+    });
+
+    $("#txtBranchName").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 21, prefix, isedit, id);
+    });
+
+
     function GetData(nMode, strID = null, strBeatID = null, strSalesmanID = null, strParty = null, strFromDate = null,
         strToDate = null, strFilterBranch = null) {
         var strShowall = $("#chkShowAll").is(":checked") ? "1" : "0"
@@ -1252,6 +1275,11 @@ setTimeout(function () { GetFilterData(); }, 800);
                                             $("#dtpDocTo").val(), DefBranch);
                                         $("#txtBranchName").val(DefBranch);
                                     }, 500);
+                                    setTimeout(() => {
+                                        var DocDate = $("#dtpDate").val();
+                                        var Branch = $("#txtBranchName").val();
+                                        GetDocumentID(DocDate, Branch, 21);
+                                    }, 1000);
                                 }
                             },
                         ],
@@ -1328,7 +1356,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                     $.each(data, function (i, items) {
                         $("#txtID").val(items.ID),
                             $("#dtpDate").val(items.Date),
-                            $("#lblDocID").text(items.DocID),
+                            $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix),
                             $("#cmbSalesman").val(items.SalesmanID),
                             $("#txtRefNo").val(items.RefNo),
                             $("#txtStatus").val(items.Status);
