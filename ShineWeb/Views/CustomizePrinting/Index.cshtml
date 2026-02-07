@@ -1582,8 +1582,8 @@
                         <tbody>
                             <tr>
                                 <td><b>Multi-Select Controls</b></td>
-                                <td>Hold <code>Alt</code> + Click on controls</td>
-                            </tr>                            
+                                <td>Hold <code>Ctrl</code> + Click on controls</td>
+                            </tr>
                             <tr>
                                 <td><b>Edit Text</b></td>
                                 <td>Double Click control OR press <code>F2</code></td>
@@ -1593,8 +1593,12 @@
                                 <td>Select & Drag OR use <code>Arrow Keys</code></td>
                             </tr>
                             <tr>
+                                <td><b>Fast Move Control(s)</b></td>                                
+                                <td>Hold <code>Alt</code> + Arrow Keys</td>
+                            </tr>
+                            <tr>
                                 <td><b>Resize Control</b></td>
-                                <td>Hold <code>Ctrl</code> + <code>Arrow Keys</code></td>
+                                <td>Hold <code>Shift</code> + <code>Arrow Keys</code></td>
                             </tr>
                             <tr>
                                 <td><b>Delete Control(s)</b></td>
@@ -1608,7 +1612,7 @@
                                 <td><b>Select All</b></td>
                                 <td>Hold <code>Ctrl</code> + <code>A</code></td>
                             </tr>
-                             <tr>
+                            <tr>
                                 <td><b>Context Menu</b></td>
                                 <td>Right Click on control</td>
                             </tr>
@@ -1934,8 +1938,9 @@ const paperType = document.getElementById('paperType');
     });
     
     // Handle Ctrl+A to select all
-    document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'a' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    document.addEventListener('keydown', function (e) {
+        //ctrlKey
+        if ((e.shiftKey || e.metaKey) && e.key === 'a' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
             e.preventDefault();
             
             clearAllSelections();
@@ -1955,7 +1960,8 @@ const paperType = document.getElementById('paperType');
                              document.activeElement.contentEditable === 'true';
         
         // Resize selected controls with Ctrl + Arrow keys
-        if ((e.ctrlKey || e.metaKey) && selectedElements.size > 0 && !isInEditMode) {
+        //ctrlKey
+        if ((e.shiftKey || e.metaKey) && selectedElements.size > 0 && !isInEditMode) {
             const resizeStep = 1; // pixels to resize per keypress
             
             if (e.key === 'ArrowUp') {
@@ -2367,7 +2373,7 @@ const paperType = document.getElementById('paperType');
         el.addEventListener('mousedown', e => {
             //console.log('mousedown', e);
             // Skip normal dragging if Ctrl/Cmd is held (for group selection box)
-            if (e.ctrlKey || e.metaKey) {
+            if (e.altKey || e.metaKey) {//ctrlKey
                 return; // Let the paper's mousedown handler take over for selection box
             }
             
@@ -2480,7 +2486,7 @@ const paperType = document.getElementById('paperType');
         //createRotateHandle(el);
     }
     function handleSelection(el, e) {
-        if (e.altKey) { // multi-select toggle
+        if (e.ctrlKey) { // multi-select toggle-altKey
             if (selectedElements.has(el)) {
                 selectedElements.delete(el); el.classList.remove('selected');
             }//el.style.display = "none";
@@ -2760,7 +2766,7 @@ const paperType = document.getElementById('paperType');
         else if ((e.key === 'd' || e.key === 'D') && e.ctrlKey) {
             e.preventDefault(); duplicateSelected();
         }
-        else if (!e.ctrlKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        else if (!e.shiftKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {//shiftKey
             // Check if we're in edit mode (contentEditable or input/textarea focused)
             const isInEditMode = document.activeElement.tagName === 'INPUT' || 
                                  document.activeElement.tagName === 'TEXTAREA' || 
@@ -3642,10 +3648,12 @@ const paperType = document.getElementById('paperType');
     function PCPrintDocument(ID, strTransID, nConfigID, printorpreview = 0) {
         $.ajax({
             //url: '@Url.Action("PDFGenerate", "CustomizePrinting")',
-            url: Aurl + "invoice/PDFGenerate",
+            //url: Aurl + "invoice/PDFGenerate",
+            url: Aurl + "transactionprint/generateprint",
             type: 'GET',
             datatype: 'json',
-            data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID },
+            //data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID },
+            data: { TransID: strTransID, ConfigID: nConfigID, DocValue: ID, Copies: 1 },
             xhrFields: {
                 withCredentials: true
             },
