@@ -254,7 +254,7 @@
             <div class="col-sm-12 col-md-12 col-lg-12">
                 <table width="100%">
                     <tr>
-                        <td style="border:none;" width="15%">
+                        <td style="border:none;" width="13%">
                             <span class="form-label">
                                 <select class="form-control FormclrcmbField" id="cmbBeatName">
                                     <option value="0">Select</option>
@@ -263,7 +263,7 @@
                             </span>
                             <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBeat" class="clrdivs"></div>
                         </td>
-                        <td style="border:none;" width="15%">
+                        <td style="border:none;" width="13%">
                             <span class="form-label">
                                 <select class="form-control FormclrcmbField" id="cmbSalesManName">
                                     <option value="0">Select</option>
@@ -280,7 +280,7 @@
                             </span>
                             <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrCustomer" class="clrdivs"></div>
                         </td>
-                        <td style="border:none;" width="15%">
+                        <td style="border:none;" width="14%">
                             <span class="form-label">
                                 <select class="form-control FormclrcmbField" id="cmbPaymode">
                                     <option value="0">Select</option>
@@ -296,9 +296,12 @@
                             </span>
                             <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrChequeDate" class="clrdivs"></div>
                         </td>
-                        <td style="border:none;padding-left:7px" width="10%">
+                        <td style="border:none;padding-left:7px" width="15%">
                             <input type="checkbox" id="chkAllowDate" />
                             <label for="chkAllowDate">Allow Date</label>
+                            &ensp;
+                            <input type="checkbox" id="chkShowAll" />
+                            <label for="chkShowAll">Show All</label>
                         </td>
                         <td style="border:none;" width="10%">
                             <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-filter" style="color: white"></span>&#x2009;Filter</button>
@@ -326,6 +329,7 @@
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ID</th>
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">EncID</th>
                             <th style="text-align:center;font-size: 12px;width:3%;" class="trclrforcolheader"><input id="chkSelectAll" type="checkbox" /></th>
+                            <th style="text-align:center;font-size: 12px;width:3%;" class="trclrforcolheader">Action</th>
                             <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Date</th>
                             <th style="text-align:center;font-size: 12px;width:12%;" class="trclrforcolheader">Beat</th>
@@ -341,7 +345,7 @@
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Ref/Cheque No</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Remarks</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Narration</th>
-                            <th style="text-align:center;font-size: 12px;width:3%;" class="trclrforcolheader">Action</th>
+
                         </tr>
                     </thead>
                 </table>
@@ -636,7 +640,10 @@
         if (IsValid) {
             //$('#cmbBeatName,#cmbSalesManName,#cmbPaymode')
             var strBeat = $('#cmbBeatName').val(), strSalesman = $('#cmbSalesManName').val(), strPaymode = $('#cmbPaymode').val(),
-                strCustomer = $("#txtCustomerID").val(), strChqDate = $("#dtpChequeDate").val(), strAllowDate = $("#chkAllowDate").is(":checked") ? 1 : 0;
+                strCustomer = $("#txtCustomerID").val(), strChqDate = $("#dtpChequeDate").val(),
+                strAllowDate = $("#chkAllowDate").is(":checked") ? 1 : 0;
+            strShowAll = $("#chkShowAll").is(":checked") ? 1 : 0;
+            
             $.ajax({
                 url: Aurl + "webcollection/filterdata",
                 type: 'get',
@@ -644,7 +651,7 @@
                 data: {
                     Mode: nMode, ID: strBeat, SalesmanID: strSalesman,
                     CustomerID: strCustomer, PayModeID: strPaymode,
-                    ChequeDate: strChqDate, AllowDate: strAllowDate
+                    ChequeDate: strChqDate, AllowDate: strAllowDate, ShowAll: strShowAll
                 },
                 xhrFields: {
                     withCredentials: true
@@ -678,8 +685,18 @@
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value, meta) {
                                         var rowIndex = meta.row;
-                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID
-                                        var _action = '<input type="checkbox" id="' + checkboxId + '"  name="CustomerCheck" style="" />';
+                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID                                        
+                                        var _action = value.StatusID == "1" ? '<input type="checkbox" id="' + checkboxId + '"  name="CustomerCheck" style="" />': '';
+                                        return _action;
+                                    },
+                                },
+                                {
+                                    className: "dt-body-center",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var checkboxId = 'dgvCustCode_' + rowIndex;//value.CustomerID
+                                        var _action = '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>&ensp;' +
+                                            (($("#txtAdd").val() == "1" && value.StatusID == "1") ? '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-edit clsEdit" style="font-size:16px" title="Edit"></span></a>' : '');
                                         return _action;
                                     },
                                 },
@@ -691,7 +708,13 @@
                                         return _action;
                                     },
                                 },
-                                { "data": "Date", "autoWidth": true, className: "dt-body-left" },
+                                //{ "data": "Date", "autoWidth": true, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-left",
+                                    mRender: function (data, type, value) {                                      
+                                        return '<label title="' + value.Status + '">' + value.Date + '</label>';
+                                    }
+                                },
                                 { "data": "BeatName", "autoWidth": true, className: "dt-body-left" },
                                 { "data": "SalesManName", "autoWidth": true, className: "dt-body-left" },
                                 { "data": "CustomerName", "autoWidth": true, className: "dt-body-left" },
@@ -728,16 +751,7 @@
                                 },
                                 //{ "data": "Remarks", "autoWidth": true, className: "dt-body-left" },
                                 //{ "data": "Narration", "autoWidth": true, className: "dt-body-left" },
-                                {
-                                    className: "dt-body-center",
-                                    "mRender": function (data, type, value, meta) {
-                                        var rowIndex = meta.row;
-                                        var checkboxId = 'dgvCustCode_' + rowIndex;//value.CustomerID
-                                        var _action = '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>&ensp;' +
-                                            (($("#txtAdd").val() == "1") ? '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-edit clsEdit" style="font-size:16px" title="Edit"></span></a>' : '');
-                                        return _action;
-                                    },
-                                },
+                                
                             ],
                         });
                         CollectionTable = $('#tblCollectionData').DataTable();
@@ -786,16 +800,16 @@
     });
 
     function ClearForm() {
-        $(".FormclrField").val("");
-        $(".FormclrcmbField").val(0);
-        setTodayDate();
+        //$(".FormclrField").val("");
+        //$(".FormclrcmbField").val(0);
+        //setTodayDate();
         $(".clrdivs").html("");
         $(".lblPMValuecount").text("0.00 / 0");
         CollectionTable.draw().clear();
         CollectionTable.draw().clear();
         GetFilterData(2);
         GetFilterData(3);
-        GetData(1);
+        //GetData(1);
     }
     function SaveValidation() {
         var IsValid = true;

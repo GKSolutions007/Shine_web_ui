@@ -1274,9 +1274,9 @@ class GKBSDynamicGrid {
         popup.innerHTML += `
     <div class="dg-filter-group">
     <div class="dg-filter-group">
-            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}">Sort A to Z</div>
-            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}">Sort Z to A</div>
-            <hr/>
+            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}" hidden>Sort A to Z</div>
+            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}" hidden>Sort Z to A</div>
+            <hr hidden/>
             <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}">📏 Auto Fit This Column</div>
             <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}">📏 Auto Fit All Columns</div>
         </div>
@@ -2426,7 +2426,13 @@ class GKBSDynamicGrid {
             const uniqueValuesCount = this.getUniqueValues(field).length;
 
             // Get all checked values (excluding the "Select All" checkbox)
+            // Only include checkboxes that are currently visible (not hidden by search)
             const selectedValues = Array.from(checkboxList.querySelectorAll('input[type="checkbox"]:not(.dg-select-all-checkbox):checked'))
+                .filter(input => {
+                    // Check if the parent label is visible (not hidden by search)
+                    const parentLabel = input.closest('label');
+                    return parentLabel && parentLabel.style.display !== 'none';
+                })
                 .map(input => String(input.value)); // Ensure values are strings
             const isFilterActive = selectedValues.length > 0 && selectedValues.length !== uniqueValuesCount;
             // If all items are selected, delete the filter to avoid unnecessary filtering
@@ -2482,16 +2488,6 @@ class GKBSDynamicGrid {
                 }
             });
         });
-        // Listen for Checkbox List Changes (Apply Filter Logic)
-        popup.querySelector('.dg-filter-apply').addEventListener('click', () => {
-            const selectedValues = Array.from(popup.querySelectorAll('.dg-filter-checkbox-list input:checked'))
-                .map(input => input.value);
-
-            this.state.colFilters[field] = selectedValues;
-            this.processData();
-            this.render();
-            this.closeAllPopups();
-        });
 
         // Listen for Clear Filter
         popup.querySelector('.dg-filter-clear').addEventListener('click', () => {
@@ -2504,14 +2500,24 @@ class GKBSDynamicGrid {
         });
 
         // Listen for Text Filter Input (Optional: Live filtering the checkboxes)
-        popup.querySelector('.dg-text-filter-input').addEventListener('input', (e) => {
-            // This input is usually used to live filter the list of checkboxes shown below it.
-            const filterText = e.target.value.toLowerCase();
-            popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
-                const value = label.querySelector('input').value.toLowerCase();
-                label.style.display = value.includes(filterText) ? 'block' : 'none';
+        // Get all inputs with class 'dg-text-filter-input' (there are two)
+        const textFilterInputs = popup.querySelectorAll('.dg-text-filter-input');
+
+        // The second input is for searching/filtering the checkbox list
+        if (textFilterInputs.length > 1) {
+            textFilterInputs[1].addEventListener('input', (e) => {
+                // This input is used to live filter the list of checkboxes shown below it.
+                const filterText = e.target.value.toLowerCase();
+                popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
+                    // Always keep the "Select All" checkbox visible
+                    if (label.classList.contains('dg-select-all-label')) {
+                        return; // Skip filtering the Select All checkbox
+                    }
+                    const value = label.querySelector('input').value.toLowerCase();
+                    label.style.display = value.includes(filterText) ? 'block' : 'none';
+                });
             });
-        });
+        }
     }
 
     // Update handl23eSort to accept an explicit direction
