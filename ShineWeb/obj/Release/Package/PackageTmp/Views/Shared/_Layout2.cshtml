@@ -1078,18 +1078,81 @@
                                     <i title="Expand Menus" class="fa-solid fa-bars"></i>
                                 </div>
                             </td>
-                            <td style="width:28%">
+                            <td style="width:30%">
                                 <a href="~/Home" style="color:lightgreen;font-size:large"><img src="~/Images/G_large_Transparent.png" style="width:45px;height:35px" />@*<b> Shine Web</b>*@</a>
                                 <label id="acompname" style="font-size:16px;font-weight:800">@CompName</label>
                             </td>
 
-                            <td>
+                            <!-- Favourite Menus in Header -->
+                            <td id="tdFavouiteMenus" style="width:60%; padding-left: 10px;">
+                                <div style="display: flex; flex-wrap: nowrap; gap: 5px; align-items: center; overflow-x: auto;">
+                                    @{
+                                                    System.Data.DataRow[] drFav = dtParent.Select("MenuName = 'Favourite1'", "MenuName");
+                                                    int FavMenuID = 0;
+                                                    if(drFav.Length > 0)
+                                                    {
+                                                        FavMenuID = Convert.ToInt32(drFav[0]["MenuId"]);
+                                                    }
+                                                    // Filter favorites
+                                                    System.Data.DataRow[] drFavorites = dtPermission.Select("MenuParentId = " + FavMenuID + " and Favourites = 1 and IsMenu = 1", "MenuName");
+                                                    if (drFavorites.Length > 0)
+                                                    {
+                                                        for (int f = 0; f < drFavorites.Length && f<3; f++)
+                                                        {
+                                                            string favMenuName = drFavorites[f]["MenuName"].ToString();
+                                                            string favController = drFavorites[f]["LocationName"].ToString();
+                                                            string favEncDispName = drFavorites[f]["EncMenuName"].ToString();
+                                                            string favEncFID = drFavorites[f]["EncFormID"].ToString();
+                                                            string favEncTypeID = "jJOtHsRVwYECOhoiBc69dA==";
+                                                            string favEncTranID = "jJOtHsRVwYECOhoiBc69dA==";
+                                                            string favIsMenu = drFavorites[f]["IsMenu"].ToString();
+
+                                                            if (favIsMenu == "1")
+                                                            {
+                                                                // Generate URL for the menu
+                                                                string favUrl = Url.Action("Index", favController, new {
+                                                                    name = favEncDispName,
+                                                                    strFormID = favEncFID,
+                                                                    TypeID = favEncTypeID,
+                                                                    TranID = favEncTranID
+                                                                });
+
+                                                    <a href="@favUrl" target="_blank"
+                                                       class="btn btn-sm" 
+                                                       style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                                              color: white; 
+                                                              border: none; 
+                                                              border-radius: 4px; 
+                                                              padding: 4px 10px; 
+                                                              font-size: 11px; 
+                                                              font-weight: 600; 
+                                                              text-decoration: none; 
+                                                              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                                                transition: all 0.3s ease;
+                                                white-space: nowrap;
+                                                              flex-shrink: 0;"
+                                                       onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)';"
+                                                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';"
+                                                       title="@favMenuName">
+                                                        <i class="fa-solid fa-arrow-up-right-from-square" style="margin-right: 4px; font-size: 10px;"></i>
+                                                         @favMenuName
+                                                    </a>
+                                            }
+                                        }
+                                        }
+                                    }
+                                </div>
+                            </td>
+
+                            <td style="width:8%">
                                 <marquee style="color:red;font-size:12px;">@User</marquee>
                             </td>
                         </tr>
                     </table>
 
                 </div>
+
+
                 <div class="sideallmenus" style="padding-bottom: 75px;">
                     @for (int iRow = 0; iRow < dtParent.Rows.Count; iRow++)
                     {

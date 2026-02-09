@@ -410,195 +410,194 @@
             },
             async : false,
             success: function (data) {
-                if (data.length > 0) {
-                    SingleMasterData = data;
-                    //Table.draw().clear(); Table.draw().clear();
-                    arrData = [];
-                    $.each(data, function (i, items) {
-                        var al = {
-                            "label": items.Name,
-                            "active": items.Active,
-                            "id": items.ID,
-                        }
-                        arrData.push(al);                        
-                    });
-                    
-                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
-                    grid = new GKBSDynamicGrid('#my-grid', columns, SingleMasterData, {
-                        enablePagination: true,
-                        pageSize: ItemsperPage,
-                        enableSearch: true,
-                        stickyToWindow: true,
-                        enableExport: false,
-                        enablePrint: false,
-                        enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
-                        enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
-                        enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
-                        enableSorting: true,
-                        
-                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
-                        rowActionsMenu: menuActions,       // Pass the Delete/Print actions
-                        //onCellChange: handleCellUpdate,
-                        customCellRenderer: (el, col, rowData) => {
-                            if (col.field === 'Active') {
-                                const val = rowData[col.field];
-                                console.log("Active : ", val);
-                                if (val === 'True') {
-                                    el.innerHTML = `<div class="dg-status-badge dg-status-active">
-                                        <span class="dg-status-circle"></span> Active
-                                    </div>`;
-                                } else if (val === 'False') {
-                                    el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
-                                        <span class="dg-status-circle"></span> In-Active
-                                    </div>`;
-                                }
-                            }
-                        },
-                        customButtons: [
-                            {
-                                icon: '⚙️',
-                                text: 'Settings',
-                                title: 'Settings',
-                                visible: true,
-                                onClick: (gridInstance, event) => {
-                                    //console.log("gridInstance : ", gridInstance);
-                                    //console.log("event : ", event);
-                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
-                                    modalGenColumnSettings.style.display = "block";
-                                    GendralColumnSettings(1, 1, 1, 0);
-                                }
-                            },
-                            {
-                                icon: '➕',
-                                text: 'Add New',
-                                title: 'Add New',
-                                visible: $("#txtAddID").val() == 1,
-                                onClick: (gridInstance, event) => {
-                                    //console.log("gridInstance : ", gridInstance);
-                                    //console.log("event : ", event);
-                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
-                                    nMode = 1;
-                                    $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
-                                    $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
-                                    modal.style.display = "block";
-                                    ClearForm();
-                                }
-                            },
-                        ],
-                        onCellClick: (rowData, fieldName, cellValue, column) => {
-                            //let message = `Clicked Cell:\n`;
-                            //message += `• Field: ${fieldName}\n`;
-                            //message += `• Value: ${cellValue}\n\n`;
-                            //message += `Row Data:\n`;
-                            //for (const key in rowData) {
-                            //    if (key !== '_gridId') {
-                            //        message += `• ${key}: ${rowData[key]}\n`;
-                            //    }
-                            //}
-                            //alert(message);
-                        },
-                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                            //// Double-click handler - shows JSON format
-                            //let message = `Double-Clicked Cell:\n`;
-                            //message += `• Field: ${fieldName}\n`;
-                            //message += `• Value: ${cellValue}\n\n`;
-                            //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
-                            //alert(message);
-                        },
-                        onColumnResize: (colIndex, field, header, newWidth) => {
-                            UpdateColumnWidth(1, 1, 0, colIndex, field, newWidth)
-                        },
-                    });
-
-                    var searchValue = '';
-                    if ($.fn.DataTable.isDataTable('#tblMasterData')) {
-                        searchValue = $('#tblMasterData').DataTable().search(); // get current search term
-                    }
-                    $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                        scrollY: "450px",
-                        scrollX: true,
-                        scrollCollapse: true,
-                        paging: true,
-                        destroy: true,
-                        data: data,
-                        fixedColumns: false,
-                        searching: true,
-                        ordering: true,
-                        sorting: false,
-                        columns: [
-                            { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },
-                            // {
-                            //     className: "dt-body-center",
-                            //     "mRender": function (data, type, value) {
-                            //         var _action = value.Active == "True" ? "Yes" : "No";// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
-                            //         return _action;
-                            //     }
-                            // },
-{
-                                className: "dt-body-center",
-                                "mRender": function (data, type, value) {
-                                    var isActive = value.Active == "True";
-                                    var statusClass = isActive ? "active" : "inactive";
-                                    var statusText = isActive ? "Active" : "Inactive";
-                                    var _action = '<div class="status-badge ' + statusClass + '">' +
-                                                  '<span class="status-circle ' + statusClass + '"></span>' +
-                                                  statusText +
-                                                  '</div>';
-                                    return _action;
-                                }
-                            },
-                            {
-                                className: "dt-body-center",
-                                "mRender": function (data, type, value) {
-                                    var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
-                                    return _action;
-                                }
-                            },
-                            {
-                                className: "dt-body-center",
-                                "mRender": function (data, type, value) {
-                                    var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
-                                    return _action;
-                                }, "visible": $("#txtModifyID").val() == 0 ? false : true
-                            },
-                            {
-                                className: "dt-body-center",
-                                "mRender": function (data, type, value) {
-                                    var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
-                                    return _action;
-                                }, "visible": $("#txtViewID").val() == 0 ? false : true
-                            },
-                        ],
-                        initComplete: function () {
-                            // Re-apply search value after table is fully initialized
-                            this.api().search(searchValue).draw();
-                        }
-                    });
-                    Table = $('#tblMasterData').DataTable();
-                    $("#txtName").autocomplete({
-                        minLength: 0,
-                        source: arrData,
-                        select: function (event, ui) {
-                            $("#txtName").val(ui.item.label);
-                            //$("#txtRemarks").val(ui.item.id);
-                            return false;
-                        },
-                    }).autocomplete("instance")._renderItem = function (ul, item) {
-                        return $("<li class='each'>")
-                            .append("<div class='acItem'><span class='name'>" +
-                                item.label + "</span></div>")
-                            .appendTo(ul);
-                    };
-
-                    //var txtName = $('#txtName');
-                    //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
-                    //autocomplete.data('typeahead').source = null;
-                    //autocomplete.data('typeahead').source = arrData;
-                }
-                else {
+                if (data.length == 0) {
                     showErrorSnackbar("No Records Found");
                 }
+                SingleMasterData = data;
+                //Table.draw().clear(); Table.draw().clear();
+                arrData = [];
+                $.each(data, function (i, items) {
+                    var al = {
+                        "label": items.Name,
+                        "active": items.Active,
+                        "id": items.ID,
+                    }
+                    arrData.push(al);
+                });
+
+                var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
+                grid = new GKBSDynamicGrid('#my-grid', columns, SingleMasterData, {
+                    enablePagination: true,
+                    pageSize: ItemsperPage,
+                    enableSearch: true,
+                    stickyToWindow: true,
+                    enableExport: false,
+                    enablePrint: false,
+                    enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                    enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                    enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                    enableSorting: true,
+
+                    searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
+                    rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                    //onCellChange: handleCellUpdate,
+                    customCellRenderer: (el, col, rowData) => {
+                        if (col.field === 'Active') {
+                            const val = rowData[col.field];
+                            console.log("Active : ", val);
+                            if (val === 'True') {
+                                el.innerHTML = `<div class="dg-status-badge dg-status-active">
+                                        <span class="dg-status-circle"></span> Active
+                                    </div>`;
+                            } else if (val === 'False') {
+                                el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+                                        <span class="dg-status-circle"></span> In-Active
+                                    </div>`;
+                            }
+                        }
+                    },
+                    customButtons: [
+                        {
+                            icon: '⚙️',
+                            text: 'Settings',
+                            title: 'Settings',
+                            visible: true,
+                            onClick: (gridInstance, event) => {
+                                //console.log("gridInstance : ", gridInstance);
+                                //console.log("event : ", event);
+                                //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                modalGenColumnSettings.style.display = "block";
+                                GendralColumnSettings(1, 1, 1, 0);
+                            }
+                        },
+                        {
+                            icon: '➕',
+                            text: 'Add New',
+                            title: 'Add New',
+                            visible: $("#txtAddID").val() == 1,
+                            onClick: (gridInstance, event) => {
+                                //console.log("gridInstance : ", gridInstance);
+                                //console.log("event : ", event);
+                                //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                nMode = 1;
+                                $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
+                                $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
+                                modal.style.display = "block";
+                                ClearForm();
+                            }
+                        },
+                    ],
+                    onCellClick: (rowData, fieldName, cellValue, column) => {
+                        //let message = `Clicked Cell:\n`;
+                        //message += `• Field: ${fieldName}\n`;
+                        //message += `• Value: ${cellValue}\n\n`;
+                        //message += `Row Data:\n`;
+                        //for (const key in rowData) {
+                        //    if (key !== '_gridId') {
+                        //        message += `• ${key}: ${rowData[key]}\n`;
+                        //    }
+                        //}
+                        //alert(message);
+                    },
+                    onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                        //// Double-click handler - shows JSON format
+                        //let message = `Double-Clicked Cell:\n`;
+                        //message += `• Field: ${fieldName}\n`;
+                        //message += `• Value: ${cellValue}\n\n`;
+                        //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
+                        //alert(message);
+                    },
+                    onColumnResize: (colIndex, field, header, newWidth) => {
+                        UpdateColumnWidth(1, 1, 0, colIndex, field, newWidth)
+                    },
+                });
+
+                var searchValue = '';
+                if ($.fn.DataTable.isDataTable('#tblMasterData')) {
+                    searchValue = $('#tblMasterData').DataTable().search(); // get current search term
+                }
+                $('#tblMasterData').DataTable({
+                    pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                    scrollY: "450px",
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: true,
+                    destroy: true,
+                    data: data,
+                    fixedColumns: false,
+                    searching: true,
+                    ordering: true,
+                    sorting: false,
+                    columns: [
+                        { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                        { "data": "Name", "autoWidth": true, className: "dt-body-left" },
+                        // {
+                        //     className: "dt-body-center",
+                        //     "mRender": function (data, type, value) {
+                        //         var _action = value.Active == "True" ? "Yes" : "No";// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                        //         return _action;
+                        //     }
+                        // },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var isActive = value.Active == "True";
+                                var statusClass = isActive ? "active" : "inactive";
+                                var statusText = isActive ? "Active" : "Inactive";
+                                var _action = '<div class="status-badge ' + statusClass + '">' +
+                                    '<span class="status-circle ' + statusClass + '"></span>' +
+                                    statusText +
+                                    '</div>';
+                                return _action;
+                            }
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
+                                return _action;
+                            }
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                return _action;
+                            }, "visible": $("#txtModifyID").val() == 0 ? false : true
+                        },
+                        {
+                            className: "dt-body-center",
+                            "mRender": function (data, type, value) {
+                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
+                                return _action;
+                            }, "visible": $("#txtViewID").val() == 0 ? false : true
+                        },
+                    ],
+                    initComplete: function () {
+                        // Re-apply search value after table is fully initialized
+                        this.api().search(searchValue).draw();
+                    }
+                });
+                Table = $('#tblMasterData').DataTable();
+                $("#txtName").autocomplete({
+                    minLength: 0,
+                    source: arrData,
+                    select: function (event, ui) {
+                        $("#txtName").val(ui.item.label);
+                        //$("#txtRemarks").val(ui.item.id);
+                        return false;
+                    },
+                }).autocomplete("instance")._renderItem = function (ul, item) {
+                    return $("<li class='each'>")
+                        .append("<div class='acItem'><span class='name'>" +
+                            item.label + "</span></div>")
+                        .appendTo(ul);
+                };
+
+                //var txtName = $('#txtName');
+                //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
+                //autocomplete.data('typeahead').source = null;
+                //autocomplete.data('typeahead').source = arrData;
             }
             , error: function (data) {
                 if (data.status == "401") {

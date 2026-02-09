@@ -660,10 +660,13 @@
                                 </tr>
                             <tr>
                                 <td style="border:none;">
-                                    <span class="form-label">
-                                        <select class="form-control FormclrcmbField" id="cmbPaymode"><option value="0">Select Paymode</option></select>
-                                        <label class="labelup"> Payment Mode*</label>
-                                    </span>
+                                    <div class="input-group">
+                                        <span class="form-label">
+                                            <select class="form-control FormclrcmbField" id="cmbPaymode"><option value="0">Select Paymode</option></select>
+                                            <label class="labelup"> Payment Mode*</label>
+                                        </span>
+                                        <span id="PaymodeInfo" class="input-group-addon"><span class="glyphicon glyphicon-info-sign" style="background-color:white;"></span></span>
+                                    </div>
                                     <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPaymode" class="clrdivs"></div>
                                 </td>
                                 <td style="border:none;">
@@ -1128,7 +1131,7 @@
                 <!-- Modal footer -->
                 <div class="modal-footer" style="background-color:skyblue">
                     <div style="padding-top:0px" align="right">
-
+                        
                         <button type="button" class="btn btn-danger" id="btnPaymentClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
                         <button type="button" class="btn btn-success" id="btnPaymentAccept"><span class="glyphicon glyphicon-saved"> Accept</span></button>
                         <button type="button" class="btn btn-warning" id="btnPaymentClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
@@ -1413,6 +1416,20 @@
         $("#dvGrid1").show();
         $("#dvGrid2").hide();
     });
+    
+    $("#PaymodeInfo").click(function () {
+        var PMID = $("#cmbPaymode").val();
+        if (PMID > 0) {
+            if (PMID > 1) {
+                PaymodeConfig();
+                modalPayment.style.display = "block";
+            } else {
+                showErrorSnackbar("No Payment Info for Cash")
+            }
+        } else {
+            showErrorSnackbar("Select Payment Mode")
+        }
+    });
     //$("#VendInfo").hide();
     $("#VendInfo").click(function () {
         if ($("#txtCustomerID").val() != "") {
@@ -1521,6 +1538,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     function PaymodeConfig() {
         $("#trBTMode,#trNEFT,#trChqNo,#trChqDate").hide();
         $("#cmbBankName,#txtBranchName,#txtIFSC").prop("disabled", true);
+        $("#btnPaymentAccept,#btnPaymentClear").prop("disabled", false);        
         var PMID = $("#cmbPaymode").val();
         if (nDocPrefix == 19) {//COLLECTION
             if (PMID == "2" || PMID == "3") // CHEQUE & DD
@@ -1541,6 +1559,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
             else {
                 $("#trNEFT,#trChqDate").show();
             }
+        }
+        if (nTransMode == "5" || nTransMode == "4") {
+            $("#cmbBankName,#txtBranchName,#txtIFSC,#btnPaymentAccept,#btnPaymentClear").prop("disabled", true);
         }
     }
     $("#chkPartyorDocNo").click(function (e) {
@@ -4132,11 +4153,11 @@ function setDate1(FieldID,Type) {
                 TableGrid1Data.draw().clear(); TableGrid1Data.draw().clear();
                 TableGridtwoData.draw().clear(); TableGridtwoData.draw().clear();
                 $.each(data, function (i, items) {
-
+                    
                     $("#txtID").val(items.ID),
                         $("#dtpDate").val(items.DocDate),
                         $("#cmbBranch").val(items.BranchID),
-                        $("#lblDocID").val(items.DocID).attr("docprefix", items.DocPrefix),
+                        
                         $("#txtCustomerID").val(items.CustomerID),
                         $("#cmbBeat").val(items.BeatID),
                         $("#cmbSalesman").val(items.SalesmanID),
@@ -4144,15 +4165,21 @@ function setDate1(FieldID,Type) {
                         $("#cmbPaymode").val(items.PaymentModeID),
                         $("#txtStatus").val(items.Status),
                         $("#txtRemarks").val(items.Remarks),
-                        $("#txtNarration").val(items.Narration),
-                        $("#txtNEFT").val(items.NEFTNo),
-                        $("#cmbFromAccount").val(items.BankAccID),
-                        $("#cmbChequeNo ").val(items.ChequeID),
+                        $("#txtNarration").val(items.Narration);
+                        if (items.PaymentModeID == 4 || items.PaymentModeID == 5) {
+                            $("#txtNEFT").val(items.NEFTNo);
+                        }
+                        else {
+                            $("#txtNEFT").val(items.ChequeNo);
+                        }
+                        $("#cmbFromAccount").val(items.BankAccID),                        
+                        $("#cmbChequeNo").val(items.ChequeID),
                         $("#dtpChequeDate").val(items.ChequeDate),
                         $("#txtIFSC").val(items.IFSC),
                         $("#cmbBankName").val(items.BankID),
+                        $("#txtBranchName").val(items.Branch),                        
                         $("#cmbBranch").val(items.BranchID);
-
+                    
                         updateInputColumn("txtAmount", items.CollAmt);
                         updateInputColumn("txtVisaPern", items.VisaPern);
                         updateInputColumn("txtVisaAmt", items.VisaAmt);
@@ -4166,7 +4193,7 @@ function setDate1(FieldID,Type) {
                     $("#txtCustomerID").val(items.CustomerID);
 
                     $("#dtpDate").val(items.DocDate), $("#cmbBranch").val(items.BranchID);
-
+                    $("#lblDocID").text(items.DocId).attr("docprefix", items.DocPrefix);
                     $.each(items.lstvPartyDtl, function (i, itemsParty) {
                         $("#txtSearch").val(itemsParty.Name),
                             $("#lblName").text(itemsParty.Code),
