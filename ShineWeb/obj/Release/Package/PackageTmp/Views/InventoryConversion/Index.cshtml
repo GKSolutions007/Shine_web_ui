@@ -314,6 +314,7 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.EnableBranch, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableBranch" })
 
     <input hidden id="txtStatus" /><input hidden class="FormclrField" id="txtDraftID" />
     <h4 id="MainHeading">@ViewData["FormName"]</h4>
@@ -365,7 +366,7 @@
                     </td>
                 </tr>
             </table>
-             <div id="my-grid" style="height: 600px; width: 100%;"></div>
+            <div id="my-grid" style="height: 600px; width: 100%;"></div>
 
         </div>
         @*<button id="btnLoadDraft" class="btn btn-primary"><span class="glyphicon glyphicon-download-alt	" style="color: white"></span>&#x2009;Load Draft Data</button>*@
@@ -375,11 +376,11 @@
             <table class="table table-bordered" id="tblMasterData" width="100%">
                 <thead>
                     @*<tr id="trAdd">
-                    <th></th>
-                    <th align="right" colspan="10">
-                        <button id="btnAdd" class="btn btn-info" onclick="openTabs(event, 'ProductDetails')"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
-                    </th>
-                </tr>*@
+                            <th></th>
+                            <th align="right" colspan="10">
+                                <button id="btnAdd" class="btn btn-info" onclick="openTabs(event, 'ProductDetails')"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                            </th>
+                        </tr>*@
                     <tr class="trclrforcolheader">
                         <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
                         <th style="text-align:center;font-size: 12px;width:0%;">StatusID</th>
@@ -466,7 +467,7 @@
                         </tr>*@
                     <tr>
                         <td style="border:none;">
-                            <label style="font-size:14px">Doc ID : </label> <label id="lblDocID" style="font-size:14px">IA/2425/1</label>
+                            <label style="font-size:14px">Doc ID : </label> <label id="lblDocID" docprefix="" style="font-size:14px">IA/2425/1</label>
                         </td>
                         <td style="border:none;">
                             <div>
@@ -627,8 +628,8 @@
                     <td style="border:none;" width="5%">
                         <div>
                             <span class="form-label">
-                                <input id="txtNoofCopies" class="form-control" value="1" 
-                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,'#divErrPrintProfile')" oninput="sanitizeNumericOnly(this, '#divErrPrintProfile')"/>
+                                <input id="txtNoofCopies" class="form-control" value="1"
+                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,'#divErrPrintProfile')" oninput="sanitizeNumericOnly(this, '#divErrPrintProfile')" />
                                 <label class="labelup">Copies</label>
                             </span>
                             <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
@@ -886,6 +887,9 @@
                 $("#dvDocuments").hide();
                 $("#btnEmail,#btnWhatsapp").show();
                 $("#MainHeading").text("View " + $("#txtFormName").val());
+                if ($("#txtEnableBranch").val() == 1) {
+                    $("#cmbBranch").prop("disabled", true);
+                }
             }
         },
         //{
@@ -1173,6 +1177,13 @@
     setDate("dtpFTo", 0);
     var grid, InventoryConversion;
     GetColumnSettingsData(2, 21, 1);
+
+    var enableBranch = '@(Model.EnableBranch ?? "0")';
+    console.log("EnableBranch:", enableBranch);
+
+    if ($("#txtEnableBranch").val() == 1) {
+        $("#cmbBranch").prop("disabled", true);
+    }
     setTimeout(function () {
         GetFilterData();
         //GetData(2, qtyonly);
@@ -1697,6 +1708,28 @@ function setDate1(FieldID,Type) {
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempBatch = [];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
     var prodids = 0;
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 22, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 22, prefix, isedit, id);
+    });
+
     function GetData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "inventoryconvertion/get",
@@ -1927,7 +1960,7 @@ function setDate1(FieldID,Type) {
                     $("#txtID").val(items.ID);
                     $("#dtpDate").val(items.Date),
                         $("#cmbBranch").val(items.BranchID);
-                        $("#lblDocID").text(items.DocID);
+                    $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     $("#txtRefNo").val(items.RefNo),
                     $("#txtRemarks").val(items.Remarks),
                     $("#txtNarration").val(items.Narration),
@@ -2135,6 +2168,11 @@ function setDate1(FieldID,Type) {
                                         $("#dvDocuments").hide();
                                         ClearForm();
                                         //ProductTable.column(4).visible(true);
+                                        setTimeout(() => {
+                                            var DocDate = $("#dtpDate").val();
+                                            var Branch = $("#cmbBranch").val();
+                                            GetDocumentID(DocDate, Branch, 22);
+                                        }, 1000);
                                     }
                                 },
                             ],
@@ -2436,6 +2474,9 @@ function setDate1(FieldID,Type) {
         $("#MainHeading").text($("#txtFormName").val());
         $('#cmbUOM').prop("disabled", true);
         $("#txtHProds").focus();
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
 
     }
     function displayResult(item)
@@ -2604,8 +2645,8 @@ function setDate1(FieldID,Type) {
     });
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//$("#txtQAViewDocID").val()
         var ID = $("#txtID").val();
-        $(".clrdivs").html("");       
-        nTransMode = 5;       
+        $(".clrdivs").html("");
+        nTransMode = 5;
         GetProductViewData(8, ID);
         ProductTable.column(4).visible(false);
         $(".FormclrField,.FormclrcmbField").prop("disabled", true);

@@ -959,6 +959,7 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.EnableReturnPrice, new { @autocomplete = "off", @class = "form-control", @id = "txtReurnPricePerm" })
     @Html.HiddenFor(model => model.EnableSave, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableSaveButton" })
+    @Html.HiddenFor(model => model.EnableBranch, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableBranch" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransType" })
     @Html.HiddenFor(model => model.EnablePriceEditInTransaction, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtPriceEditInTransaction" })
@@ -1232,7 +1233,7 @@
                         <tr>
                             <td></td>
                             <td style="border:none;">
-                                <label style="font-size:14px">Doc ID : </label>&ensp;<label id="lblDocID" style="font-size:14px">INV/2425/001</label>
+                                <label style="font-size:14px">Doc ID : </label>&ensp;<label id="lblDocID" docprefix="" style="font-size:14px">INV/2425/001</label>
                             </td>
                             <td style="border:none;">
                                 <span class="form-label">
@@ -1586,8 +1587,8 @@
                             <div>
                                 <span class="form-label">
                                     <input id="txtNoofCopies" class="form-control" value="1" type="number"
-                                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#divErrPrintProfile')"
-                                                           oninput="sanitizeNumericOnly(this, '#divErrPrintProfile')"/>
+                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#divErrPrintProfile')"
+                                           oninput="sanitizeNumericOnly(this, '#divErrPrintProfile')" />
                                     <label class="labelup">Copies</label>
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
@@ -2056,6 +2057,9 @@
                     $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
                     $("#MainHeading").text("View Invoice_" + Sts);
                     GetPrintProfile(4);
+                    if ($("#txtEnableBranch").val() == 1) {
+                        $("#cmbBranch").prop("disabled", true);
+                    }
                 }
             },
             {
@@ -2115,6 +2119,9 @@
                         if ($("#txtEnableSaveButton").val() == 0) {
                             $("#btnSave").hide();
                         }
+                        if ($("#txtEnableBranch").val() == 1) {
+                            $("#cmbBranch").prop("disabled", true);
+                        }
                         //setTimeout(() => {
                         Addprodgridline();
                         //}, 500);
@@ -2151,12 +2158,20 @@
                     $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
                     $("#btnSave,#btnClear,#btnDraft").show();
                     $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
+                    if ($("#txtEnableBranch").val() == 1) {
+                        $("#cmbBranch").prop("disabled", true);
+                    }
                     if ($("#txtEnableSaveButton").val() == 0) {
                         $("#btnSave").hide();
                     }
                     //setTimeout(() => {
                     Addprodgridline();
                     //}, 500);
+                    setTimeout(() => {
+                        var DocDate = $("#dtpDate").val();
+                        var Branch = $("#cmbBranch").val();
+                        GetDocumentID(DocDate, Branch, 15);
+                    }, 1000);
                 }
             },
             {
@@ -2201,6 +2216,9 @@
                             $("#dvDocuments").hide();
                             $("#btnSave").prop("disabled", false);
                             $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
+                            if ($("#txtEnableBranch").val() == 1) {
+                                $("#cmbBranch").prop("disabled", true);
+                            }
                         }
                         else {
                             var conf = confirm("Do you want to Remove/Cancel data?");
@@ -2340,6 +2358,13 @@ var isEnable = InvoicePriceEdit == 0 ? "disabled" : "";
  var BatchMode = 0; // 0 - New product, 1 - Edit Product
     var nTransMode = 1, nIsDraft = 0;
     var grid;
+
+           var enableBranch = '@(Model.EnableBranch ?? "0")';
+    console.log("EnableBranch:", enableBranch);
+
+    if ($("#txtEnableBranch").val() == 1) {
+        $("#cmbBranch").prop("disabled", true);
+    }
     GetColumnSettingsData(2, 33, 1);
 
     var ProductTable = $('#tblProductData').DataTable({
@@ -2902,7 +2927,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     //if (fieldName == "ProdDiscPern") {
                     //    if (existGrossAmt < 0) {
                     //        updateInputColumn(fieldID, 0);
-                    //    }   
+                    //    }
                     //}
                     if (fieldName == "ProdDiscAmt") {
                         //if (existGrossAmt < 0) {
@@ -2919,14 +2944,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     //if (fieldName == "TradeDiscPern") {
                     //    if (existGrossAmt < 0) {
                     //        updateInputColumn(fieldID, 0);
-                    //    } 
+                    //    }
                     //}
                     if (fieldName == "TradeDiscAmt") {
                         //if (existGrossAmt < 0) {
                         //    updateInputColumn(fieldID, 0);
                         //    TotTradeDisc += 0;
                         //} else {
-                           
+
                         //}
                         const fullValue = document.getElementById(fieldID).getAttribute('txttag');
                         Value = fullValue != "" ? fullValue : 0;
@@ -2936,7 +2961,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     //if (fieldName == "AddnlDiscPern") {
                     //    if (existGrossAmt < 0) {
                     //        updateInputColumn(fieldID, 0);
-                    //    } 
+                    //    }
                     //}
                     if (fieldName == "AddnlDiscAmt") {
                         //if (existGrossAmt < 0) {
@@ -3742,7 +3767,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if (trdamt <= 0) {
             updateInput($r, "input[name='AddnlDiscPern']", 0);
         }
-       
+
         var dGross = (existGoodsAmt - (trdamt + addnlamt + ProdDiscAmt));
         updateLbl($r, "label[name='Gross']", dGross);
 
@@ -3753,7 +3778,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateLbl($r, "label[name='NetAmt']", neta);
 
         var UOMField = $(rowdata[18]);
-        var seluomid = UOMField[0].id;        
+        var seluomid = UOMField[0].id;
         var CFValue = $("#" + seluomid + " option:selected").attr('name');
 
         var PerQty = dGross / Qty;
@@ -3787,7 +3812,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
         var ProdDiscAmt = 0;
 
-        var ProdDiscPern = ((val / existGoodsAmt) * 100); 
+        var ProdDiscPern = ((val / existGoodsAmt) * 100);
         if (ProdDiscPern > 100) {
             updateInputColumn(id, 0);
             updateInput($r, "input[name='ProdDiscPern']", 0);
@@ -3797,7 +3822,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             updateInput($r, "input[name='ProdDiscPern']", ProdDiscPern);
         }
         ProdDiscAmt = (existGoodsAmt * ProdDiscPern) / 100;
-        
+
 
         var price = (existGoodsAmt - ProdDiscAmt);
         var trdamt = ((existTradeDiscPern * price) / 100);
@@ -3851,7 +3876,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var taxpern = parseFloat(rowdata[2]);
         var TInvoicePrice = parseFloat(rowdata[28]);
         let existProdDiscPern = parseFloat(getTagEl($r, "input[name='ProdDiscPern']"));
-        let existProdDiscAmt = parseFloat(getTagEl($r, "input[name='ProdDiscAmt']"));        
+        let existProdDiscAmt = parseFloat(getTagEl($r, "input[name='ProdDiscAmt']"));
         let existAddnlDiscPern = parseFloat(getTagEl($r, "input[name='AddnlDiscPern']"));
         let existAddnlDiscAmt = getTagEl($r, "input[name='AddnlDiscAmt']");
         let existGoodsAmt = getTagEl($r, "label[name='Goods']");
@@ -3866,7 +3891,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInput($r, "input[name='TradeDiscAmt']", trdamt);
         if (trdamt <= 0) {
             updateInputColumn(id, 0);
-        }       
+        }
         $("#txtTradeDiscPern,#txtTradeDiscAmt").prop("disabled", trdamt > 0);
         var dGross = (existGoodsAmt - (trdamt + existAddnlDiscAmt + existProdDiscAmt));
         updateLbl($r, "label[name='Gross']", dGross);
@@ -4101,7 +4126,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             //        dPTNet = (parseFloat(dPTNet) + parseFloat(net));
             //    }
             //}
-            var ExclPrice = 0, InclPrice = 0, Qty = 0, ProdDisc = 0, dProdDiscAmt = 0, CFValue = 1;            
+            var ExclPrice = 0, InclPrice = 0, Qty = 0, ProdDisc = 0, dProdDiscAmt = 0, CFValue = 1;
             $("#tblProductData tbody tr").each(function () {
                 const $r = $(this);
                 var rowdata = ProductTable.row($(this)).data();
@@ -4110,7 +4135,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var TaxPern = parseFloat(rowdata[2]);
                 var TP = (TaxPern / 100) + 1;
                 var TInvoicePrice = parseFloat(rowdata[28]);
-                
+
                 if (nCurrentRowIndex == RowIndex) {//ProdID == GridProdID
                     //console.log("1 calc prd");
                     $(this).find("select").each(function (index) {
@@ -4126,7 +4151,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     let existAddnlDiscPern = getTagEl($r, "input[name='AddnlDiscPern']");
                     let existProdDiscAmt = getTagEl($r, "input[name='ProdDiscAmt']");
                     let existAddnlDiscAmt = getTagEl($r, "input[name='TradeDiscAmt']");
-                    let existTradeDiscAmt = getTagEl($r, "input[name='AddnlDiscAmt']");                    
+                    let existTradeDiscAmt = getTagEl($r, "input[name='AddnlDiscAmt']");
                     let existGrossAmt = getTagEl($r, "label[name='Gross']");
 
                     ExclPrice = getTagEl($r, "input[name='Excl']");
@@ -4137,7 +4162,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     $(this).find("input").each(function (index) {
                         //console.log("2 calc prd");
                         const fieldName = $(this).attr("name");
-                        const fieldID = $(this).attr("id");                        
+                        const fieldID = $(this).attr("id");
                         if (fieldName == "ProdDiscAmt") {
                             //ProdDisc = parseFloat($(this).attr("txttag"));
                             if (CurrentFieldname == "ProdDiscAmt") {
@@ -4182,7 +4207,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                             updateInputColumn(fieldID, 0);
                                             Proddiscamt = 0;
                                         }
-                                       
+
                                     } else {
                                         updateInputColumn(fieldID, 0);
                                         Proddiscamt = 0;
@@ -4237,7 +4262,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         updateInputColumn(fieldID, 0);
                                         Proddiscamt = 0;
                                     }
-                                    
+
                                 }
                             }
                             if (fieldName == "TradeDiscPern") {
@@ -4282,7 +4307,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         } else {
                                             updateInputColumn(fieldID, 0);
                                             Proddiscamt = 0;
-                                        }                                        
+                                        }
                                     } else {
                                         updateInputColumn(fieldID, 0);
                                         Tradediscamt = 0;
@@ -4301,7 +4326,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         } else {
                                             updateInputColumn(fieldID, 0);
                                             Proddiscamt = 0;
-                                        }                                            
+                                        }
                                     } else {
                                         updateInputColumn(fieldID, 0);
                                         Tradediscamt = 0;
@@ -4323,8 +4348,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         } else {
                                             updateInputColumn(fieldID, 0);
                                             Proddiscamt = 0;
-                                        }   
-                                        
+                                        }
+
                                     }
                                     else {
                                         updateInputColumn(fieldID, 0);
@@ -4355,8 +4380,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         } else {
                                             updateInputColumn(fieldID, 0);
                                             Proddiscamt = 0;
-                                        }   
-                                       
+                                        }
+
                                     } else {
                                         updateInputColumn(fieldID, 0);
                                         Addnldiscamt = 0;
@@ -4373,7 +4398,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     } else {
                                         updateInputColumn(fieldID, 0);
                                         Addnldiscamt = 0;
-                                    }                                    
+                                    }
                                     $("#txtAddnlDiscPern,#txtAddnlDiscAmt").prop("disabled", Addnldiscamt > 0);
                                 }
                             }
@@ -5006,6 +5031,28 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 15, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 15, prefix, isedit, id);
+    });
+
     function GetData(nMode, strName = null, strID = null, dtpDt = null,dConvFact = 1,nRIDx = -1) {
         $.ajax({
             url: Aurl + "invoice/get",
@@ -5858,7 +5905,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         }
                     }
                     if (nTransMode != 3) {
-                        $("#lblDocID").text(items.DocId);
+                        $("#lblDocID").text(items.DocId).attr("docprefix", items.DocPrefix);
                     }
                     $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), $("#txtStatus").val(items.Status),
                         $("#cmbBeat").val(items.BeatID), $("#cmbSalesman").val(items.SalesmanID);
@@ -6229,6 +6276,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     $("#dvDocuments").hide();
                                     ClearForm();
                                     Addprodgridline();
+                                    setTimeout(() => {
+                                        var DocDate = $("#dtpDate").val();
+                                        var Branch = $("#cmbBranch").val();
+                                        GetDocumentID(DocDate, Branch, 15);
+                                    }, 1000);
                                 }
                             },
                         ],
@@ -6787,6 +6839,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if (!$("#rdoMainTableData").is(":checked")) {
             $("#dvMain").hide();
             $("#dvDocuments").show();
+        }
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
         }
     }
     function displayResult(item) {

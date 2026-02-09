@@ -550,7 +550,7 @@
                         </tr>*@
                             <tr>
                                 <td style="border:none;">
-                                    <label style="font-size:14px">Doc ID : </label><label id="lblDocID" style="font-size:14px">AI/2425/001</label>
+                                    <label style="font-size:14px">Doc ID : </label><label id="lblDocID" docprefix="" style="font-size:14px">AI/2425/001</label>
                                 </td>
                                 <td style="border:none;">
                                     <div>
@@ -849,6 +849,11 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
+                    setTimeout(() => {
+                        var DocDate = $("#dtpDate").val();
+                        var Branch = $("#cmbBranch").val();
+                        GetDocumentID(DocDate, Branch,2);
+                    }, 1000);
                 }
             },
             {
@@ -1069,6 +1074,12 @@ if ($("#txtAddID").val() == 0) {
         $("#btnEmail,#btnWhatsapp").hide();
         $("#MainHeading").text("Create Automatic Indent");
     }
+
+           var enableBranch = '@(Model.EnableBranch ?? "0")';
+    console.log("EnableBranch:", enableBranch);
+    if ($("#txtEnableBranch").val() == 1) {
+        $("#cmbBranch").prop("disabled", true);
+    }
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//$("#txtQAViewDocID").val()
         var ID = $("#txtID").val();
         GetProductViewData(5, ID);
@@ -1189,6 +1200,29 @@ setTimeout(function () { GetFilterData(); }, 800);
     var TempProd = [];
     var prodids = 0;
     var tpn = "";
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 2, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 2, prefix, isedit, id);
+    });
+
+
     function GetData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "automaticindent/get",
@@ -1517,7 +1551,7 @@ setTimeout(function () { GetFilterData(); }, 800);
             var rdo1 = $("#rdoMainTableData").is(":checked") ? "1" : "2";
             var strBranch = $("#cmbFilterBranch").val(), strParty = $("#txtFilterParty").val(), dFrom = $("#dtpFFrom").val(),
                 dTo = $("#dtpFTo").val(), chkshow = $("#chkShowAll").is(":checked") ? "1" : "0";
-           
+
             $.ajax({
                 url: Aurl + "automaticindent/getfilterdata",
                 type: 'get',
@@ -1528,8 +1562,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                 },
                 async :false,
                 success: function (data) {
-                    AutomaticIndent = data;        
-                    
+                    AutomaticIndent = data;
+
                     var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, AutomaticIndent, {
                         enablePagination: true,
                         pageSize: ItemsperPage,
@@ -1545,7 +1579,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
-                            
+
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(23, 1, 0, colIndex, field, newWidth)
@@ -1577,6 +1611,11 @@ setTimeout(function () { GetFilterData(); }, 800);
                                     $("#dvMain").show();
                                     $("#dvDocuments").hide();
                                     ClearForm();
+                                    setTimeout(() => {
+                                        var DocDate = $("#dtpDate").val();
+                                        var Branch = $("#cmbBranch").val();
+                                        GetDocumentID(DocDate, Branch,2);
+                                    }, 1000);
                                 }
                             },
                         ],
@@ -1628,7 +1667,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 render: function () {
                                     return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
                                 }
-                            }                           
+                            }
                         ],
                         initComplete: function () {
                             // Re-apply search value after table is fully initialized
@@ -1778,7 +1817,7 @@ setTimeout(function () { GetFilterData(); }, 800);
 
                     $("#txtVendorID").val(items.VendorID),$("#dtpDate").val(items.Date),$("#cmbBranch").val(items.BranchID);
                     if (nTransMode != 3) {
-                        $("#lblDocID").text(items.DocID);
+                        $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     }
                     $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), $("#txtStatus").val(items.Status);
                     $("#chkGeneratePO").prop("checked", items.TransportID == "1");
@@ -2006,8 +2045,8 @@ setTimeout(function () { GetFilterData(); }, 800);
         GetColumnSettingsData(2, 23, 1);
         setTimeout(() => {
             GetFilterData();
-        }, 200); 
-    });    
+        }, 200);
+    });
 
     $('#tblProductDataAI tbody').on('click', '.clsABSBranchInfo', function (e) {
         rowdata = ProductTable.row($(this).parents('tr')).data();
@@ -2228,6 +2267,9 @@ setTimeout(function () { GetFilterData(); }, 800);
             $("#cmbBranch").prop("disabled", true);
         }
         $("#txtSearch").focus();
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
     }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');

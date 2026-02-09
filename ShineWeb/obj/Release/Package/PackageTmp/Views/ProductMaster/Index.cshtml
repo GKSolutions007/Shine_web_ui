@@ -390,30 +390,7 @@
                                 <button class="tablinks" onclick="openTabs(event, 'InventoryDetails')"><span class="glyphicon glyphicon-barcode"></span> Inventory</button>
                                 <button class="tablinks" onclick="openTabs(event, 'OtherDetails')"><span class="glyphicon glyphicon-info-sign"></span> Other Details</button>
                                 <button class="tablinks" id="btnTransPrices" onclick="openTabs(event, 'TransactionPrice')"><span class="glyphicon glyphicon-transfer"></span> Transaction Price</button>
-                                @*<table>
-                                    <tr>
-                                        <td>
-                                            <span class="form-label">
-                                                <select class="form-control">
-                                                    <option value="1">Base - PCS</option>
-                                                    <option value="1">Purchase - PCS</option>
-                                                    <option value="1">Sales - PCS</option>
-                                                </select>
-                                                <label class="labelup">UOM</label>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div>
-                                                <span class="form-label">
-                                                    <input tabindex="8" txtTag="0" class="form-control FormclrField txtsettag" type="number" id="txtPrice" placeholder=""
-                                                           min="0" oninput="javascript: if (this.value < this.min) { this.value = 0 } ">
-                                                    <label class="labelup">Price</label>
-                                                </span>
-                                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnProdDisc" class="clrdivs"></div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    </table>*@
+                                <button class="tablinks" onclick="openTabs(event, 'LocationMapping')"><span class="glyphicon glyphicon-map-marker"></span> Location Mapping</button>
                             </div>
                             <br />
                             <div id="ProductDetails" class="tabcontent">
@@ -1167,6 +1144,25 @@
                                     <div class="col-sm-12 col-md-4 col-lg-4"></div>
                                 </div>
                             </div>
+                            <div id="LocationMapping" class="tabcontent">
+                                <div class="col-sm-12 col-md-12 col-lg-12" style="padding-bottom:10px;">
+                                    <div class="col-sm-12 col-md-2 col-lg-2"></div>
+                                    <div class="col-sm-12 col-md-8 col-lg-8">
+
+                                        <table class="table table-bordered" cellspacing="5" id="tblLocationMapping" style="width: 100%">
+                                            <thead>                                                
+                                                <tr>
+                                                    <th style="background-color: antiquewhite;color:black;font-size: 15px;width:0%;">ID</th>
+                                                    <th style="background-color: antiquewhite;color:black;font-size: 15px;width:10%;">#</th>
+                                                    <th style="background-color: antiquewhite;color:black;font-size: 15px;width:45%;">Branch </th>
+                                                    <th style="background-color: antiquewhite;color:black;font-size: 15px;width:45%;">Location</th>
+                                                </tr>
+                                            </thead>
+                                        </table>
+
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <span class="form-label">
@@ -1327,6 +1323,17 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
     //    scrollCollapse: true,
     //    "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [7,8,9,10], "class": "text-center" }],
     //});
+    var TableLocationMapping = $('#tblLocationMapping').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "150px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
+    });
     var modaliframe = document.getElementById("myModalfgiframe");
     var spaniframe = document.getElementsByClassName("closefgiframe")[0];
     spaniframe.onclick = function () {
@@ -1570,7 +1577,8 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
     GetData(3);
     GetData(5);
     var arrManuf = [], arrBrand = [], arrCategory = [], arrVendor = [], arrLoc = [],
-        arrALManuf = [], arrALBrand = [], arrALCategory = [], arrALVendor = [], arrALLoc = [];
+        arrALManuf = [], arrALBrand = [], arrALCategory = [], arrALVendor = [],
+        arrALLoc = [], arrBranch = [], strLocationOptions = "";
     var nIndexarrManuf = 0, nIndexarrBrand = 0, nIndexarrCategory = 0, nIndexarrLoc = 0;
     var arrCodeData = [], arrNameData = [], arrALCodeData = [], arrALNameData = [], arrTax = [];
     function GetData(nMode, strName = null, IsVariant = false) {
@@ -1648,6 +1656,7 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                     }
                 }
                 else if (nMode == 4) {
+                    TableLocationMapping.draw().clear();
                     $.each(data, function (i, items) {
                         $("#txtID").val(items.ID);
                         if (!IsVariant) {
@@ -1739,6 +1748,22 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                         //ApplySalesonPercValue(SalePerc, "txtSPricePerc", MRP, exclpp);
                         //ApplyECPonPercValue(ECPPerc, "txtECPricePerc", MRP, exclpp);
                         //ApplySPLonPercValue(SPLPerc, "txtSPLPricePerc", MRP, exclpp);
+                        $.each(arrBranch, function (j, branch) {
+                            var ncount = TableLocationMapping.rows().count();
+                            var nbrid = branch.BranchID;
+                            var locData = items.lstProdLocMapping.filter(a => a.BranchID == nbrid);
+                            var locid = 0;
+                            if (locData.length > 0) {
+                                locid = locData[0].LocationID;
+                            }
+                            TableLocationMapping.row.add([
+                                branch.BranchID,
+                                '<p>' + (j + 1) + '</p>',
+                                branch.BranchName,
+                                '<select class="form-control" id="cmbLoc'+j+'"> '+strLocationOptions+'</select>',
+                            ]).draw(false);
+                            $("#cmbLoc" + j).val(locid);
+                        });
                     });
                 }
                 else if (nMode == 5) {
@@ -1747,7 +1772,8 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                         value: 0,
                         text: "-- Select --",
                     }));
-                    arrManuf = [], arrBrand = [], arrCategory = [], arrVendor = [], arrLoc = [], arrTax = [];
+                    arrManuf = [], arrBrand = [], arrCategory = [], arrVendor = [], arrLoc = [], arrTax = [], arrBranch = [],
+                        strLocationOptions = '<option value="0">-- select --</option>';
                     nIndexarrManuf = 0, nIndexarrBrand = 0, nIndexarrCategory = 0, nIndexarrVendor = 0, nIndexarrLoc = 0;
                     $.each(data, function (i, items) {
                         if (items.FType == 1) {
@@ -1789,6 +1815,7 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                             arrALLoc.push(al);
                             arrLoc[nIndexarrLoc] = items.Name;
                             nIndexarrLoc++;
+                            strLocationOptions += '<option value="' + items.ID + '">' + items.Name + '</option>';
                         }
                         if (items.FType == 4) {
                             $('#cmbBaseUOM,#cmbPurchaseUOM,#cmbSalesUOM,#cmbReportingUOM,#cmbBarUOM').append($('<option/>', {
@@ -1819,6 +1846,13 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                                 value: items.ID,
                                 text: items.Name,
                             }));
+                        }
+                        if (items.FType == 10) {
+                            var al = {                                
+                                "BranchID": items.ID,
+                                "BranchName": items.Name,
+                            }
+                            arrBranch.push(al);                            
                         }
                     });
                     SetAutlistforFields();
@@ -2792,6 +2826,16 @@ function updateInputColumn(inputID, netValue) {
             $("#chkTrackInv").prop("checked", true);
             $("#chkTrackInv").prop("disabled", true);
         }
+        TableLocationMapping.draw().clear();
+        $.each(arrBranch, function (j, branch) {
+            var ncount = TableLocationMapping.rows().count();
+            TableLocationMapping.row.add([
+                branch.BranchID,
+                '<p>' + (j + 1) + '</p>',
+                branch.BranchName,
+                '<select class="form-control"> ' + strLocationOptions + '</select>',
+            ]).draw(false);
+        });
     }
     if ($("#txtTransType").val() == "2") {
         if ($("#txtID").val() > 0) {
@@ -2990,6 +3034,7 @@ function updateInputColumn(inputID, netValue) {
         }
 
         if (IsValid) {
+            AddBranchLocation();
             if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
         }
         else {
@@ -2997,6 +3042,23 @@ function updateInputColumn(inputID, netValue) {
            // $("#lblSaveError").html(Errors);
         }
     });
+    var objItemLocDetails = [];
+    function AddBranchLocation() {
+        objItemLocDetails = [];
+        $('#tblLocationMapping tbody tr').each(function (i, items) {
+            rowdata = TableLocationMapping.row($(this)).data();
+            var nBranchID = rowdata[0];
+            var nLocationID = 0;
+            $(this).find("select").each(function (index) {
+                nLocationID = $(this).val();               
+            });
+            var singleList = {
+                'BranchID': nBranchID,
+                'LocationID': nLocationID
+            };
+            objItemLocDetails.push(singleList);
+        });
+    }
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
@@ -3057,6 +3119,7 @@ function updateInputColumn(inputID, netValue) {
             "InvoicePrice": document.getElementById("txtInvoicePrice").getAttribute("txttag"),
             "SalesReturnPrice": document.getElementById("txtSaleRtnPrice").getAttribute("txttag"),
             "CBy": UID,
+            lstProdLocMapping: objItemLocDetails
         };
             $.ajax({
                 url: Aurl + "productmaster/save",
