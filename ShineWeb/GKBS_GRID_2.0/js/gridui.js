@@ -1502,9 +1502,9 @@ class GKBSDynamicGrid {
         popup.innerHTML += `
     <div class="dg-filter-group">
     <div class="dg-filter-group">
-            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}">Sort A to Z</div>
-            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}">Sort Z to A</div>
-            <hr/>
+            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}" hidden>Sort A to Z</div>
+            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}" hidden>Sort Z to A</div>
+            <hr hidden/>
             <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}">📏 Auto Fit This Column</div>
             <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}">📏 Auto Fit All Columns</div>
         </div>

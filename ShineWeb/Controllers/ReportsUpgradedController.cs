@@ -12,7 +12,7 @@ namespace ShineWeb.Controllers
     {
         // GET: ReportsUpgraded
         clsBusinessLayer objBL = new clsBusinessLayer();
-        public ActionResult Index(string Name, string strFormID, string strGpro = null)
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID)
         {
             if (Session["LoginUserID"] == null)
             {
@@ -23,13 +23,16 @@ namespace ShineWeb.Controllers
 
                 Name = !string.IsNullOrEmpty(Name) ? clsEncryptDecrypt.Decrypt(Name) : "";
                 string decFormID = !string.IsNullOrEmpty(strFormID) ? clsEncryptDecrypt.Decrypt(strFormID) : "";
-                string decProc = !string.IsNullOrEmpty(strGpro) ? clsEncryptDecrypt.Decrypt(strGpro) : "";
+                TypeID = clsEncryptDecrypt.Decrypt(TypeID);
+                TranID = clsEncryptDecrypt.Decrypt(TranID);
+                
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 dam.FormID = decFormID;
-                dam.View = decProc;
+                dam.ID = TranID;
+                dam.TransType = TypeID;
                 return View(dam);
             }
         }

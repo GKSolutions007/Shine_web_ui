@@ -653,7 +653,8 @@
     <div>
         @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
         @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
-        @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtProcName" })
+        @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+        @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransType" })
         <h4 hidden id="MainHeading">@ViewData["FormName"]</h4>
         <div class="toastBox"></div>
         <textarea hidden id="txtcomplogo"></textarea>
@@ -993,6 +994,9 @@
         });
         return ul;
     }
+    var DirectReportID = 80;
+    var DirectReportName = "Cheque In Hand";
+    var nTypeID = 1;
         var grid;
     var Detailsgrid;
     var columnsettings = [], detailcolumnsettings = [],arrParamHiddenColumns = [];
@@ -1421,7 +1425,8 @@ function setDate(FieldID,Type) {
     }
     var arrParams = [], ParamIndex = 1;
 
-    $('#btnPopupGenerate,#btnGenerate').click(function (e) {
+    //$('#btnPopupGenerate,#btnGenerate').click(function (e) {
+    $('#btnPopupGenerate,#btnGenerate').on("click",function (e) {
         if (CheckMandatory()) {
             arrParams = [], ParamIndex = 1;
             $('#tblFilterData tr td').each(function (i, items) {
@@ -1452,7 +1457,7 @@ function setDate(FieldID,Type) {
         $("#DetailGrid").html("");
         var listParams = {
             "ReportID": FID,
-            "ProcedureName": arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
+            "ProcedureName": arrReportDeatils[0].ProcedureName,
             "lstvFilters": arrParams
         };
         var Excelfilter = [];
@@ -3215,5 +3220,53 @@ function setDate(FieldID,Type) {
         //    $(this).removeClass('is-invalid');
         //}
     });
+    if ($("#txtFormID").val() > 0 && $("#txtTransType").val() == 1) {    
+        var DirectReportID = $("#txtFormID").val();
+        var DirectReportName = $("#txtFormName").val();
+        FID = DirectReportID;
+        GetData(0);
+        GetData(1);
+        //ColumnDetails(2, FID, 1);
+        GetColumnSettingsData(2, FID, 1);
+        $("#MainHeading,#RepMainHeading").html(DirectReportName);
+        $("#txtFormName").val(DirectReportName);
+        if (FID != 0) {
+            $("#btnFilters,#btnGenerate,#btnExport,#dvAssign").show();                        
+        }
+        
+        setTimeout(() => {            
+            if (CheckMandatory()) {
+                arrParams = [], ParamIndex = 1;
+                $('#tblFilterData tr td').each(function (i, items) {
+                    if (i % 2 == 1) {
+                        console.log("Field Type : ", items.firstChild);
+                        var input = items.firstChild.id;
+                        var inputtype = items.firstChild.type;
+                        var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
+                        if (s == null) {
+                            //alert("No Value");
+                        }
+                        else {
+                            //alert("Values " + s);
+                            var strpv = "Param" + ParamIndex;
+                            var PV = {
+                                "Param1": s
+                            }
+                            arrParams.push(PV);
+                            ParamIndex++;
+                        }
+                    }
+                });
+                GenerateData();
+            }
 
+            $(".sidenav,#sidenavfooter").css("width", "0%");
+            $(".main,.footerAction").css("width", "98%");
+            $(".main").css("margin-left", "0");
+            $("#sidenavfooter").hide();
+            $("#sidedivexpand").show();
+            $("#sidedivcollapsed").hide();  
+            
+        }, 1500);
+    }
 </script>
