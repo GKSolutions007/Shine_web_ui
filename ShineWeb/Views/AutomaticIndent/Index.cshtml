@@ -1048,7 +1048,8 @@
     });
         var UID = '@Session["LoginUserID"]';
     var Aurl = '@Session["APIurl"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
     var DecVal = '@Session["DecimalValues"]';
     var nTransMode = 1, nIsDraft = 0;
     var PrintTransID = 7, PrintConfigID = 0;
@@ -1214,6 +1215,7 @@ setTimeout(function () { GetFilterData(); }, 800);
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -1272,7 +1274,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                         }
                     });
                     SetAutlistforFields(tpn);
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 else if (nMode == 2) {
                     ProductTable.draw().clear(); ProductTable.draw().clear();
@@ -1795,6 +1798,38 @@ setTimeout(function () { GetFilterData(); }, 800);
         calculateProdGrid();
     });
 
+        function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#cmbBranch').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
+
     function GetProductViewData(nMode, strName = null) {
         $.ajax({
             url: Aurl + "automaticindent/get",
@@ -2259,7 +2294,8 @@ setTimeout(function () { GetFilterData(); }, 800);
             $("#dvMain").hide();
             $("#dvDocuments").show();
         }
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         $("#txtNoofCopies").val("1");
         setTimeout(function () { GetFilterData(); }, 800);
         $("#MainHeading").text("Automatic Indent");

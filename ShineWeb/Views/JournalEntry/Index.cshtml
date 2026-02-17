@@ -816,7 +816,10 @@
         $("#trAdd").hide();
         $("#btnAdd").hide();
     }
-            var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
+
+    var RID = '@Session["RoleID"]';
 
     if ($("#txtEnableBranch").val() == 1) {
         $("#txtBranchName").prop("disabled", true);
@@ -895,6 +898,7 @@
     });
 
     $("#txtBranchName").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -949,21 +953,22 @@
                         if (items.FType == 4) {
                             $("#lblDocID").text(items.Name);
                         }
-                        if (items.FType == 5) {
-                            var al = {
-                                "label": items.Name,
-                            }
-                            arrALBranchData.push(al);
-                            arrBranchData[nIndexarrBranch] = items.Name;
-                            nIndexarrBranch++;
-                            $('#txtBranchName').append($('<option/>', {
-                                value: items.ID,
-                                text: items.Name,
-                            }));
-                        }
+                        //if (items.FType == 5) {
+                        //    var al = {
+                        //        "label": items.Name,
+                        //    }
+                        //    arrALBranchData.push(al);
+                        //    arrBranchData[nIndexarrBranch] = items.Name;
+                        //    nIndexarrBranch++;
+                        //    $('#txtBranchName').append($('<option/>', {
+                        //        value: items.ID,
+                        //        text: items.Name,
+                        //    }));
+                        //}
                     });
                     SetAutlistforFields();
-                    $("#txtBranchName").val(DefBranch);
+                    //$("#txtBranchName").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 if (nMode == 2) {
                     Table.draw().clear();
@@ -993,7 +998,7 @@
                     TableJVData.draw().clear(); TableJVData.draw().clear();
                     $.each(data, function (i, items) {
                         if (nTransMode != 3)
-                            $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);                      
+                            $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                         $("#txtID").val(items.ID), $("#dtpDate").val(items.DocDate),
                             $("#txtRefNo").val(items.RefNo), $("#txtNarration").val(items.Narration), $("#cmbUDN").val(items.UDFId),
                             $("#txtStatus").val(items.Status);
@@ -1027,6 +1032,38 @@
             }
         });
     }
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#txtBranchName').empty();
+                $('#txtBranchName').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#txtBranchName').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#txtBranchName').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
     function SetTagZero() {
         var inputs = $(".txtsettag");
         for (var i = 0; i < inputs.length; i++) {
@@ -1624,7 +1661,8 @@ function setDate1(FieldID,Type) {
         SetTagZero();
         setTimeout(function () { GetFilterData(); }, 800);
         $("#txtPartyName").focus();
-        $("#txtBranchName").val(DefBranch);
+        //$("#txtBranchName").val(DefBranch);
+        LoadBranchByRoles();
         if (nTransMode != 1)
             modal.style.display = "none";
         $("#btnPreview,#btnPDF").prop("disabled", true);

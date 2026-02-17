@@ -1052,8 +1052,10 @@
 
     var UID = '@Session["LoginUserID"]';
     var Aurl = '@Session["APIurl"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
     var DecVal = '@Session["DecimalValues"]';
+    var RID = '@Session["RoleID"]';
     var nTransMode = 1, nIsDraft = 0;
     var PrintTransID = 10, PrintConfigID = 0;
 if ($("#txtAddID").val() == 0) {
@@ -1164,6 +1166,7 @@ setTimeout(function () { GetFilterData(); }, 800);
     });
 
     $("#txtBranchName").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -1255,7 +1258,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 text: 'Settings',
                                 title: 'Settings',
                                 visible: true,
-                                onClick: (gridInstance, event) => {                                 
+                                onClick: (gridInstance, event) => {
                                     modalGenColumnSettings.style.display = "block";
                                     GendralColumnSettings(1, 30, 1, 0);
                                 }
@@ -1265,15 +1268,16 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 text: 'Add New',
                                 title: 'Add New',
                                 visible: $("#txtAddID").val() == 1,
-                                onClick: (gridInstance, event) => {                                    
+                                onClick: (gridInstance, event) => {
                                     nTransMode = 1;
                                     $("#dvMain").show();
                                     $("#dvDocuments").hide();
                                     ClearForm();
                                     setTimeout(() => {
                                         GetData(5, 0, $("#cmbFilterBeat").val(), $("#cmbFilterSalesman").val(), $("#txtFilterCustomer").val(), null,
-                                            $("#dtpDocTo").val(), DefBranch);
-                                        $("#txtBranchName").val(DefBranch);
+                                            $("#dtpDocTo").val());
+                                        //$("#txtBranchName").val(DefBranch);
+                                        LoadBranchByRoles();
                                     }, 500);
                                     setTimeout(() => {
                                         var DocDate = $("#dtpDate").val();
@@ -1284,10 +1288,10 @@ setTimeout(function () { GetFilterData(); }, 800);
                             },
                         ],
                         onCellClick: (rowData, fieldName, cellValue, column) => {
-                            
+
                         },
                         onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                           
+
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(30, 1, 0, colIndex, field, newWidth)
@@ -1537,6 +1541,38 @@ setTimeout(function () { GetFilterData(); }, 800);
         }
     });
 
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#txtBranchName').empty();
+                $('#txtBranchName').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#txtBranchName').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#txtBranchName').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
+
     $('#btnFilter').click(function (e) {
         GetFilterData(1);
     });
@@ -1634,7 +1670,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                 $('#tblInvoiceData').empty();
                 $('#btnViewInvoices').show();
                 $('#txtBranchName').prop("disabled", true);
-                
+
             }
         }
         else {
@@ -1952,7 +1988,8 @@ setTimeout(function () { GetFilterData(); }, 800);
             if ($("#txtEnableBranch").val() == 1) {
                 $("#txtBranchName").prop("disabled", true);
             }
-            $("#txtBranchName").val(DefBranch);
+            //$("#txtBranchName").val(DefBranch);
+            LoadBranchByRoles();
         }, 500);
     }
     var CheckedInvoices = [];
