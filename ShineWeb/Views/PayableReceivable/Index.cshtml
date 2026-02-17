@@ -849,6 +849,7 @@
     var grid, CreditNoteDebitNote;
     GetColumnSettingsData(2, 17, 1);
     var UID = '@Session["LoginUserID"]';
+    var RID = '@Session["RoleID"]';
     var nMode = 1;
     var FID = $("#txtFormID").val();
     var PrintTransID = FID == 6 ? 14 : 15, PrintConfigID = 0;
@@ -905,6 +906,7 @@
     });
 
     $("#txtBranchName").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -972,21 +974,22 @@
                                 text: items.Name,
                             }));
                         }
-                        if (items.FType == 6) {
-                            var al = {
-                                "label": items.Name,
-                            }
-                            arrALBranchData.push(al);
-                            arrBranchData[nIndexarrBranch] = items.Name;
-                            nIndexarrBranch++;
-                            $('#txtBranchName').append($('<option/>', {
-                                value: items.ID,
-                                text: items.Name,
-                            }));
-                        }
+                        //if (items.FType == 6) {
+                        //    var al = {
+                        //        "label": items.Name,
+                        //    }
+                        //    arrALBranchData.push(al);
+                        //    arrBranchData[nIndexarrBranch] = items.Name;
+                        //    nIndexarrBranch++;
+                        //    $('#txtBranchName').append($('<option/>', {
+                        //        value: items.ID,
+                        //        text: items.Name,
+                        //    }));
+                        //}
                     });
                     SetAutlistforFields();
-                    $("#txtBranchName").val(DefBranch);
+                    //$("#txtBranchName").val(DefBranch);
+                    LoadBranchByRoles()
                 }
                 if (nMode == 2) {
                     Table.draw().clear();
@@ -1047,11 +1050,44 @@
             }
         });
     }
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#txtBranchName').empty();
+                $('#txtBranchName').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#txtBranchName').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#txtBranchName').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
     $('#btnFilter').click(function (e) {
         GetFilterData(1);
     });
     var Showall = '@Session["Showallstatus"]';
-        var DefBranch = '@Session["DefaultBranch"]';
+        @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles()
 $("#chkShowAll").prop("checked", Showall == '1');
     function GetFilterData(ClickType = 0) {//arrVendorName,divErrFTo,divErrFFrom,divErrFParty
         var IsValid = true;
@@ -1601,7 +1637,8 @@ function updateInputColumn(inputID, netValue) {
         setDate("dtpDate", 0);
         SetFilterDate();
         SetTagZero();
-        $("#txtBranchName").val(DefBranch);
+        //$("#txtBranchName").val(DefBranch);
+        LoadBranchByRoles()
         setTimeout(function () { GetFilterData(); }, 800);
         if (nTransMode != 1)
             modal.style.display = "none";

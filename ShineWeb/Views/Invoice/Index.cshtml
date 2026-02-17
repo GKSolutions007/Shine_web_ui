@@ -2345,7 +2345,8 @@
  var RoleID = '@Session["RoleID"]';
  var Aurl = '@Session["APIurl"]';
  var DecVal = '@Session["DecimalValues"]';
- var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
  var ConfigRoundtype = '@Session["RoundoffType"]';
  var ConfigRoundvalue = '@Session["RoundoffValue"]';
  var VisaPern = '@Session["VisaPern"]';
@@ -2896,6 +2897,39 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#cmbBranch').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
+
     function calculateProdGrid() {
         $(".lblPT").text(0.00);
         var dPTQty = 0, dPTFreeQty = 0, dPTDmgQty = 0, dPTGoods = 0, dPTGross = 0, dPTTax = 0, dPTNet = 0, TotProdDisc = 0, TotTradeDisc = 0, TotAddnlDisc = 0, Value = 0;
@@ -5045,6 +5079,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -5216,7 +5251,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             }));
                         }
                     });
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                     $("#cmbPriceType").val(2);
                     LoadPaymentModeData();
                     SetAutlistforFields();//
@@ -6788,27 +6824,27 @@ if ($("#txtReurnPricePerm").val() == 0) {
         SetFilterDate();
         GetFilterData();
         stopAutoDraftSave();
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         if (DefCustCode != "") {
             setTimeout(function () {
                 GetData(3, DefCustCode);
             }, 500);
         }
         else {
-            if (DefBranch != "") {
-                setTimeout(function () {
-                    //GetFilterData();
-                    //GetData(2, DefBranch, $("#dtpDate").val());
-                    GetProductList();
-                }, 500);
-            }
-            else {
+            //if (DefBranch != "") {
+            //    setTimeout(function () {
+            //        //GetFilterData();
+            //        //GetData(2, DefBranch, $("#dtpDate").val());
+            //        GetProductList();
+            //    }, 500);
+            //}
+            //else {}
                 setTimeout(function () {
                     //GetFilterData();
                     //GetData(2, 0, $("#dtpDate").val());
                     GetProductList();
                 }, 500);
-            }
         }
 
         nIsDraft = 0;

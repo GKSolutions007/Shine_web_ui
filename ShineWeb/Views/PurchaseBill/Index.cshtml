@@ -2003,7 +2003,8 @@
     var UID = '@Session["LoginUserID"]';
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
      var ConfigRoundtype = '@Session["RoundoffType"]';
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
     var VisaPern = '@Session["VisaPern"]';
@@ -2031,6 +2032,7 @@
         GetProductList()
     }, 1200);
     GetData(1);
+
     var modalSchema = document.getElementById("myModalSchema");
     var spanSchema = document.getElementsByClassName("closeSchema")[0];
     spanSchema.onclick = function () {
@@ -2857,6 +2859,39 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn("txtBatchQtyTotal", dQtyTotValue); updateInputColumn("txtBatchDmgQtyTotal", dDmgQtyTotValue);
         updateInputColumn("txtBatchQty", dTotQty); updateInputColumn("txtBatchFreeQty", dFreeTotQty); updateInputColumn("txtBatchDmgQty", dDmgTotQty);
     }
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#cmbBranch').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
+
     function BatchAcceptValidation() {
         var IsValid = true;
         var TrkBat = $("#txtTrackBatch").val();
@@ -4921,6 +4956,7 @@ function setDate1(FieldID,Type) {
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -4985,8 +5021,8 @@ function setDate1(FieldID,Type) {
                     //}
                 }
                 else if (nMode == 1) {
-                    $('#cmbPaymode,#cmbCreditTerm,#cmbBranch,#cmbUDN,#cmbFilterBranch,#cmbLocation').find("option").remove();
-                    $('#cmbPaymode,#cmbCreditTerm,#cmbBranch,#cmbUDN,#cmbFilterBranch,#cmbLocation').append($('<option/>', {
+                    $('#cmbPaymode,#cmbCreditTerm,#cmbUDN,#cmbFilterBranch,#cmbLocation').find("option").remove();
+                    $('#cmbPaymode,#cmbCreditTerm,#cmbUDN,#cmbFilterBranch,#cmbLocation').append($('<option/>', {
                         value: 0,
                         text: "-- Select --",
                     }));
@@ -5022,7 +5058,7 @@ function setDate1(FieldID,Type) {
                             strCreditTerm += '<option value="' + items.ID + '">' + items.Name + '</option>';
                         }
                         if (items.FType == 2) {
-                            $('#cmbBranch,#cmbFilterBranch').append($('<option/>', {
+                            $('#cmbFilterBranch').append($('<option/>', {
                                 value: items.ID,
                                 text: items.Name,
                             }));
@@ -5087,7 +5123,8 @@ function setDate1(FieldID,Type) {
                         }
                     });
                     SetAutlistforFields();
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                     LoadPaymentModeData();
                 }
                 else if (nMode == 3) {
@@ -5536,7 +5573,7 @@ function setDate1(FieldID,Type) {
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
                         },
-                        
+
                         customButtons: [
                             {
                                 icon: '⚙️',
@@ -5581,7 +5618,7 @@ function setDate1(FieldID,Type) {
                             }
                         },
                         onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                           
+
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(25, 1, 0, colIndex, field, newWidth)
@@ -6015,7 +6052,8 @@ function setDate1(FieldID,Type) {
         SetTagZero();
         setDate("dtpDate", 0);
         SetFilterDate();
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         setTimeout(function () {
             GetFilterData();
             //GetData(2, DefBranch, $("#dtpDate").val());

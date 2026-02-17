@@ -987,6 +987,7 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
+                    LoadBranchByRoles();
                 }
             },
             {
@@ -1037,6 +1038,7 @@
                         if ($("#txtEnableBranch").val() == 1) {
                             $("#cmbBranch").prop("disabled", true);
                         }
+                        LoadBranchByRoles();
                     }
                     else {
                         showErrorSnackbar("Cannot Modify.This document already cancelled");
@@ -1075,6 +1077,7 @@
                     setTimeout(() => {
                         var DocDate = $("#dtpDate").val();
                         var Branch = $("#cmbBranch").val();
+                        LoadBranchByRoles();
                         GetDocumentID(DocDate, Branch, 3);
                     }, 1000);
                 }
@@ -1129,6 +1132,7 @@
                             if ($("#txtEnableBranch").val() == 1) {
                                 $("#cmbBranch").prop("disabled", true);
                             }
+                            LoadBranchByRoles();
                         }
                         else {
                             var conf = confirm("Do you want to remove draft data?");
@@ -1503,6 +1507,7 @@ setTimeout(function () { GetFilterData(); }, 800);
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -1561,7 +1566,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                         }
                     });
                     SetAutlistforFields();
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 else if (nMode == 2) {
                     arrProdCode = [], arrProdName = [], TempAL = [];
@@ -1793,7 +1799,8 @@ setTimeout(function () { GetFilterData(); }, 800);
         GetFilterData(1);
     });
     var Showall = '@Session["Showallstatus"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
       $("#chkShowAll").prop("checked", Showall == '1');
     function GetFilterData(ClickType = 0) {//arrVendorName,divErrFTo,divErrFFrom,divErrFParty
         var IsValid = true;
@@ -2291,6 +2298,39 @@ setTimeout(function () { GetFilterData(); }, 800);
         var value = e.target.value;
         calculateProdGrid();
     });
+
+        function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#cmbBranch').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
+
     function GetProductViewData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "purchaseorder/get",
@@ -2930,7 +2970,8 @@ setTimeout(function () { GetFilterData(); }, 800);
         SetTagZero();
         setDate("dtpDate", 0);
         SetFilterDate();
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         setTimeout(function () { GetFilterData(); }, 800);
         $("#MainHeading").text($("#txtFormName").val());
         $("#txtSearch").focus();

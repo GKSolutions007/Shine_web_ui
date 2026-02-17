@@ -773,13 +773,15 @@
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
     }
     var Aurl = '@Session["APIurl"]';
+    var RID = '@Session["RoleID"]';
     if ($("#txtAddID").val() == 0) {
         $("#trAdd").hide();
         $("#btnAdd").hide();
     }
        var enableBranch = '@(Model.EnableBranch ?? "0")';
     console.log("EnableBranch:", enableBranch);
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    //LoadBranchByRoles();
     //if ($("#txtModifyID").val() == 0) {
     //    Table.column(9).visible(false);
     //}
@@ -795,7 +797,7 @@
     if ($("#txtEnableBranch").val() == 1) {
         $("#txtBranchName").prop("disabled", true);
     }
-    
+
     if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
         //$("#dvMainTable").hide();
     }
@@ -845,22 +847,23 @@
     });
     $("#dtpDate").change(function (e) {
         var DocDate = e.target.value;
-        var id = e.target.id;        
+        var id = e.target.id;
         var Branch = $("#txtBranchName").val();
         var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
         var isedit = nTransMode == 2;
         GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
     });
-    
+
     $("#txtBranchName").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
-        var Branch = e.target.value;        
-        var id = e.target.id;        
+        var Branch = e.target.value;
+        var id = e.target.id;
         var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
         var isedit = nTransMode == 2;
         GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
     });
-    
+
     var arrPartyData = [], arrAccountData = [], arrBranchData = [], arrALPartyData = [], arrALAccountData = [], arrALBranchData = [], nIndexarrParty = 0, nIndexarrAccount = 0, nIndexarrBranch;
     function GetData(nMode,nID) {
         $.ajax({
@@ -909,21 +912,22 @@
                         if (items.FType == 4) {
                             $("#lblDocID").text(items.Name);
                         }
-                        if (items.FType == 5) {
-                            var al = {
-                                "label": items.Name,
-                            }
-                            arrALBranchData.push(al);
-                            arrBranchData[nIndexarrBranch] = items.Name;
-                            nIndexarrBranch++;
-                            $('#txtBranchName').append($('<option/>', {
-                                value: items.ID,
-                                text: items.Name,
-                            }));
-                        }
+                        //if (items.FType == 5) {
+                        //    var al = {
+                        //        "label": items.Name,
+                        //    }
+                        //    arrALBranchData.push(al);
+                        //    arrBranchData[nIndexarrBranch] = items.Name;
+                        //    nIndexarrBranch++;
+                        //    $('#txtBranchName').append($('<option/>', {
+                        //        value: items.ID,
+                        //        text: items.Name,
+                        //    }));
+                        //}
                     });
                     SetAutlistforFields();
-                    $("#txtBranchName").val(DefBranch);
+                    //$("#txtBranchName").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 if (nMode == 2) {
                     Table.draw().clear();
@@ -967,7 +971,7 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#txtBranchName").prop("disabled", true);
                     }
-                }
+                } txtBranchName
             }, error: function (data) {
                 if (data.status == "401") {
                     var msg = data.responseJSON.Message;
@@ -976,6 +980,38 @@
             }
         });
     }
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#txtBranchName').empty();
+                $('#txtBranchName').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#txtBranchName').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#txtBranchName').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
         var DecVal = '@Session["DecimalValues"]';
 function updateInputColumn(inputID, netValue) {
     //const label = document.getElementById(`dgvProdGross${rowId}`);
@@ -1433,7 +1469,8 @@ function setDate1(FieldID,Type) {
         setDate("dtpDate", 0);
         SetFilterDate();
         SetTagZero();
-        $("#txtBranchName").val(DefBranch);
+        //$("#txtBranchName").val(DefBranch);
+        LoadBranchByRoles();
         //setTimeout(function () { GetFilterData(); }, 800);
         if (nTransMode != 1)
             modal.style.display = "none";

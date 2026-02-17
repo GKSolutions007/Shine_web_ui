@@ -2025,7 +2025,8 @@
     var RoleID = '@Session["RoleID"]';
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
     var ConfigRoundtype = '@Session["RoundoffType"]';
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
     var ApplyReturnPrice = '@Session["EnableReturnPrice"]';// 1 - apply
@@ -2398,6 +2399,37 @@ if ($("#txtAddID").val() == 0) {
             } else {
                 $diffLabel.css("color", "black");
                 updateLabelColumn($diffLabel.attr("id"), 0);
+            }
+        });
+    }
+
+        function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RoleID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#cmbBranch').val(defaultBranch).trigger("change");
+                }
             }
         });
     }
@@ -3652,9 +3684,9 @@ if ($("#txtAddID").val() == 0) {
                                 console.log("TradeDiscPern calc prd");
                                 if (CurrentFieldname == "TradeDiscAmt") {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var price = (dPTGoods - dProdDiscAmt);                                    
+                                    var price = (dPTGoods - dProdDiscAmt);
                                     var damt = ((val / price) * 100);//dPTGoods
-                                    
+
                                     //updateInputColumn(fieldID, damt);
                                     //Tradediscamt = damt;
                                     if (damt <= 100) {
@@ -3674,9 +3706,9 @@ if ($("#txtAddID").val() == 0) {
                                 }
                             }
                             if (fieldName == "TradeDiscAmt") {
-                                console.log("TradeDiscAmt calc prd");                                
+                                console.log("TradeDiscAmt calc prd");
                                 if (CurrentFieldname == "TradeDiscAmt") {
-                                    var val = $(this).attr("txttag") != "" ? parseFloat($(this).attr("txttag")) : 0;                                    
+                                    var val = $(this).attr("txttag") != "" ? parseFloat($(this).attr("txttag")) : 0;
                                     //updateInputColumn(fieldID, val);
                                     //Tradediscamt = val;
                                     var price = (dPTGoods - dProdDiscAmt);
@@ -4611,6 +4643,7 @@ if ($("#txtAddID").val() == 0) {
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -4742,7 +4775,8 @@ if ($("#txtAddID").val() == 0) {
                         }
                     });
                     SetAutlistforFields();
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 else if (nMode == 3) {
                     $.each(data, function (i, items) {
@@ -5603,7 +5637,7 @@ if ($("#txtAddID").val() == 0) {
                             };
                         });
                     });
-                    
+
                     ProductRID = ProductTable.rows().count() + 1;
                     calculateProdGrid();
                     setupArrowKeyNavigation1();
@@ -5680,7 +5714,7 @@ if ($("#txtAddID").val() == 0) {
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
-                           
+
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(29, 1, 0, colIndex, field, newWidth)
@@ -5787,7 +5821,7 @@ if ($("#txtAddID").val() == 0) {
                                     render: function () {
                                         return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
                                     }
-                                }                                
+                                }
                             ],
                             initComplete: function () {
                                 // Re-apply search value after table is fully initialized
@@ -5882,7 +5916,7 @@ if ($("#txtAddID").val() == 0) {
         return actions;
     }
 
-    $("#rdoMainTableData,#rdoDraftTableData").click(function () {        
+    $("#rdoMainTableData,#rdoDraftTableData").click(function () {
         //GetFilterData(1);
         LoadPermissions();
         GetColumnSettingsData(2, 29, 1);
@@ -6098,7 +6132,8 @@ if ($("#txtAddID").val() == 0) {
         setDate("dtpDate", 0);
         SetFilterDate();
         GetFilterData();
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         setTimeout(function () {
             var pt = ApplyReturnPrice == "1" ? 6 : 2;
             $("#cmbPriceType").val(pt);

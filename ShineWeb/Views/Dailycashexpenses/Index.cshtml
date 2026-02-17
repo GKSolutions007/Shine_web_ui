@@ -288,7 +288,9 @@
     var Aurl = '@Session["APIurl"]';
     var UID = '@Session["LoginUserID"]';
     var DecVal = '@Session["DecimalValues"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
+    var RID = '@Session["RoleID"]';
     GetData();
 
     $('#dtpDate,#txtBranchName').on('focus', function () {
@@ -304,12 +306,13 @@
     });
 
     $("#txtBranchName").change(function (e) {
-        var DocDate = $("#dtpDate").val();
-        var Branch = e.target.value;
-        var id = e.target.id;
-        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
-        var isedit = nTransMode == 2;
-        GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
+        //if (typeof GetDocumentID !== "function") return;
+        //var DocDate = $("#dtpDate").val();
+        //var Branch = e.target.value;
+        //var id = e.target.id;
+        //var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        //var isedit = nTransMode == 2;
+        //GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
     });
 
     function GetData() {
@@ -396,7 +399,8 @@
                             text: Britems.Name,
                         }));
                     });
-                    $("#txtBranchName").val(DefBranch);
+                    //$("#txtBranchName").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 else {
                     showErrorSnackbar("No Records Found");
@@ -510,6 +514,39 @@
         });
         updateLabelColumn("lblTotal", TotAmt)
     });
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#txtBranchName').empty();
+                $('#txtBranchName').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#txtBranchName').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#txtBranchName').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
+
     $('#btnClear').click(function (e) {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
