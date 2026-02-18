@@ -1369,7 +1369,7 @@
     $("#txtDocID").prop("disabled", true);
     //dvDocuments,
     $("#dvMain").hide();
-    $(".FormBtField").prop("disabled", true);    
+    $(".FormBtField").prop("disabled", true);
     var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
         "bFilter": true,
         "bSearchable": true,
@@ -1416,7 +1416,7 @@
         $("#dvGrid1").show();
         $("#dvGrid2").hide();
     });
-    
+
     $("#PaymodeInfo").click(function () {
         var PMID = $("#cmbPaymode").val();
         if (PMID > 0) {
@@ -1462,8 +1462,10 @@
     var nDocPrefix = $("#txtFormID").val();
     var UID = '@Session["LoginUserID"]';
     var Aurl = '@Session["APIurl"]';
+    var RID = '@Session["RoleID"]';
     var DecVal = '@Session["DecimalValues"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
     var ConfigRoundtype = '@Session["RoundoffType"]';
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
     var ConfigWriteoffAmt = '@Session["WriteoffAmt"]';
@@ -1538,7 +1540,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     function PaymodeConfig() {
         $("#trBTMode,#trNEFT,#trChqNo,#trChqDate").hide();
         $("#cmbBankName,#txtBranchName,#txtIFSC").prop("disabled", true);
-        $("#btnPaymentAccept,#btnPaymentClear").prop("disabled", false);        
+        $("#btnPaymentAccept,#btnPaymentClear").prop("disabled", false);
         var PMID = $("#cmbPaymode").val();
         if (nDocPrefix == 19) {//COLLECTION
             if (PMID == "2" || PMID == "3") // CHEQUE & DD
@@ -1620,7 +1622,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     function CloseForm() {
         if ($("#txtTransType").val() == 3 || $("#txtTransType").val() == 2) {
             this.close();
-        } else {            
+        } else {
             $("#dvMain").hide();
             $("#dvDocuments").show();
             $("#MainHeading").text($("#txtFormName").val());
@@ -1632,6 +1634,38 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#cmbBranch').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
     function SetTagZero() {
         var inputs = $(".txtsettag");
         for (var i = 0; i < inputs.length; i++) {
@@ -1759,7 +1793,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             $("#lblrdoAdv").text("Receivable");
             $("#lblrdoOS").text("Payable");
         }
-        
+
         updateLabelColumn("lblG1TotalBalance", 0);
         updateLabelColumn("lblG2TotalDocValue", 0);
         updateLabelColumn("lblG2TotalOS", 0);
@@ -1789,7 +1823,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             updateInputColumn("txtVisaAmt", dVisaAmt);
         }
     });
-    
+
     var BatchRID = 0, ProductRID = 0;
 
     function Scrolltoid(id) {
@@ -2248,7 +2282,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 $(this).find("input").each(function (index) {
                     const fieldName = $(this).attr("name");
                     const fieldID = $(this).attr("id");
-                    if (fieldName == "AdjCollAmtFooter" && currentadjcollamtid != fieldID) {                        
+                    if (fieldName == "AdjCollAmtFooter" && currentadjcollamtid != fieldID) {
                         totaladjamtwoucurrent += parseFloat($(this).attr("txttag"));
                     }
                 });
@@ -2261,7 +2295,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     else OCNeg += Math.abs(val);
                 }
             });
-            
+
             var rowtotaladjvalues = (dCollAmt + dG1AdjAmt - OCPos) - (totaladjamtwoucurrent);//G2DiscValue + OCNeg + Writeoff + //(AdjAmtPM <= 0 ? Math.abs(AdjAmtPM) : 0)
             var balancewithdiscminus = (Balance - (DiscAmt + (AdjAmtPM <= 0 ? Math.abs(AdjAmtPM) : 0) + Writeoff));//(AdjAmtPM <= 0 ? Math.abs(AdjAmtPM) : 0)
             if (rowtotaladjvalues <= balancewithdiscminus) {//Balance
@@ -2623,7 +2657,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         // -----------------------------------------
         // PROCESS ONLY CURRENT ROW
         // -----------------------------------------
-       
+
 
         const G1AdjAmt = getTag("#lblG1AdjAmt", "lbltag");
         const orgCollAmt = getTag("#txtAmount", "txttag");
@@ -2926,7 +2960,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             let val = parseFloat($(this).attr('txttag'));
             if (!isNaN(val)) {
                 if (val > 0) OCPos += val;
-                else OCNeg += Math.abs(val);                
+                else OCNeg += Math.abs(val);
             }
         });
         G2DiscValue = parseFloat(G2DiscValue) + OCNeg;
@@ -3558,6 +3592,7 @@ function setDate1(FieldID,Type) {
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -3598,12 +3633,12 @@ function setDate1(FieldID,Type) {
                             arrVendorName[nIndexarrVendor] = items.Name;
                             nIndexarrVendor++;
                         }
-                        if (items.FType == 2) {
-                            $('#cmbBranch,#cmbFilterBranch').append($('<option/>', {
-                                value: items.ID,
-                                text: items.Name,
-                            }));
-                        }
+                        //if (items.FType == 2) {
+                        //    $('#cmbBranch,#cmbFilterBranch').append($('<option/>', {
+                        //        value: items.ID,
+                        //        text: items.Name,
+                        //    }));
+                        //}
                         if (items.FType == 3) {
                             $('#cmbUDN').append($('<option/>', {
                                 value: items.ID,
@@ -3685,7 +3720,8 @@ function setDate1(FieldID,Type) {
                         }
                     });
                     SetAutlistforFields();
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
 
                 }
                 else if (nMode == 2) {
@@ -3770,7 +3806,7 @@ function setDate1(FieldID,Type) {
                         arrVendorName[nIndexarrVendor] = items.Name;
                         nIndexarrVendor++;
                     });
-                    
+
                     $("#txtSearch").autocomplete({
                         minLength: 0, autoFocus: true,
                         source: arrVendor,
@@ -4153,11 +4189,11 @@ function setDate1(FieldID,Type) {
                 TableGrid1Data.draw().clear(); TableGrid1Data.draw().clear();
                 TableGridtwoData.draw().clear(); TableGridtwoData.draw().clear();
                 $.each(data, function (i, items) {
-                    
+
                     $("#txtID").val(items.ID),
                         $("#dtpDate").val(items.DocDate),
                         $("#cmbBranch").val(items.BranchID),
-                        
+
                         $("#txtCustomerID").val(items.CustomerID),
                         $("#cmbBeat").val(items.BeatID),
                         $("#cmbSalesman").val(items.SalesmanID),
@@ -4172,14 +4208,14 @@ function setDate1(FieldID,Type) {
                         else {
                             $("#txtNEFT").val(items.ChequeNo);
                         }
-                        $("#cmbFromAccount").val(items.BankAccID),                        
+                        $("#cmbFromAccount").val(items.BankAccID),
                         $("#cmbChequeNo").val(items.ChequeID),
                         $("#dtpChequeDate").val(items.ChequeDate),
                         $("#txtIFSC").val(items.IFSC),
                         $("#cmbBankName").val(items.BankID),
-                        $("#txtBranchName").val(items.Branch),                        
+                        $("#txtBranchName").val(items.Branch),
                         $("#cmbBranch").val(items.BranchID);
-                    
+
                         updateInputColumn("txtAmount", items.CollAmt);
                         updateInputColumn("txtVisaPern", items.VisaPern);
                         updateInputColumn("txtVisaAmt", items.VisaAmt);
@@ -4188,7 +4224,7 @@ function setDate1(FieldID,Type) {
                     } else {
                         $("#trVisa").hide();
                     }
-                    $("#txtID").val(items.ID);                    
+                    $("#txtID").val(items.ID);
                     $("#cmbCreditTerm").val(items.PaymentTermID),$("#cmbPaymode").val(items.PaymentModeID),
                     $("#txtCustomerID").val(items.CustomerID);
 
@@ -4412,7 +4448,7 @@ function setDate1(FieldID,Type) {
             },
             async :false,
             success: function (data) {
-                $("#loadingDiv").remove();                
+                $("#loadingDiv").remove();
                 if (data[0].Header.length > 0) {
                     TableGrid1Data.draw().clear(); TableGrid1Data.draw().clear();
                     TableGridtwoData.draw().clear(); TableGridtwoData.draw().clear();
@@ -4448,17 +4484,17 @@ function setDate1(FieldID,Type) {
                             $("#trVisa").show();
                         } else {
                             $("#trVisa").hide();
-                        }                        
+                        }
                         var lPMID = $("#cmbPaymode").val();
                         PaymodeChangeFieldValidation(lPMID);
-                        
-                        if (lPMID != 1) {                            
+
+                        if (lPMID != 1) {
                             $("#txtNEFT").val(lPMID == 4 ? items.NEFTNo : items.ChequeNo);
                             $("#cmbFromAccount").val(items.BankAccID);
                             $("#dtpChequeDate").val(items.ChequeDate);
                             $("#txtIFSC").val(items.IFSC);
                             $("#cmbBankName").val(items.BankID);
-                            $("#txtBranchName").val(items.Branch);                           
+                            $("#txtBranchName").val(items.Branch);
                         }
                     });
                     $.each(PartyData, function (i, itemsParty) {
@@ -4483,7 +4519,7 @@ function setDate1(FieldID,Type) {
                         $("#txtClosingBalance").val(osval + " " + ostype);
                         $("#txtClosingBalance,#txtBalance").css("color", ostype == "Dr" ? "Red" : "Green");
 
-                       
+
                     });
                     $.each(InvoiceData, function (i, Docsitems) {
                         var G1So = 1, G2So = 1, G1Bal = 0, G2Bal = 0, G2DocValue = 0;
@@ -4542,7 +4578,7 @@ function setDate1(FieldID,Type) {
                         var G2dataSet = g2data.map(function (Docsitems, nRowIndex) {
                             G2Bal += parseFloat(Docsitems.Balance);
                             G2DocValue += parseFloat(Docsitems.NetAmt);
-                            
+
                             var ReasonoptionsHtml = strReasons.replace(
                                 new RegExp('value="' + Docsitems.ReasonID + '"', 'g'),
                                 'value="' + Docsitems.ReasonID + '" selected'
@@ -4632,7 +4668,7 @@ function setDate1(FieldID,Type) {
                             calculateGrid1Value();
                             //calculateGrid2Value();
                         }, 300);
-                        
+
                         SumG2FooterLabels();
                     });
                 }
@@ -4642,7 +4678,7 @@ function setDate1(FieldID,Type) {
                         window.close();
                     }, 3000)
                 }
-               
+
             }, error: function (data) {
                 $("#loadingDiv").remove();
             }
@@ -4705,7 +4741,7 @@ function setDate1(FieldID,Type) {
                         searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
-                        customCellRenderer: (el, col, rowData) => {                            
+                        customCellRenderer: (el, col, rowData) => {
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(27, 1, 0, colIndex, field, newWidth)
@@ -4903,8 +4939,8 @@ function setDate1(FieldID,Type) {
         var nDocPrefix = rowdata[1];//[0];
         InvoiceCollectionModalPopup(ID, nDocPrefix)
     });
-   
-    
+
+
     $('#tblMasterData tbody').on('click', '.clsView', function (e) {
         $(".clrdivs").html("");
         rowdata = Table.row($(this).parents('tr')).data();
@@ -5028,7 +5064,7 @@ function setDate1(FieldID,Type) {
     });
     $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
     function ClearForm() {
-       
+
         ProductRID = 0;
         $(".FormclrField").val("");
         $(".FormclrcmbField").val(0);
@@ -5049,7 +5085,8 @@ function setDate1(FieldID,Type) {
         setDate("dtpDate", 0);
         $("#txtNoofCopies").val("1");
         SetFilterDate();
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         $("#cmbFromAccount").val(DefBankAcc);
         setTimeout(function () {
             GetFilterData();
@@ -5476,7 +5513,7 @@ function setDate1(FieldID,Type) {
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         //alert("Validation success");
-        
+
         AddDocstoSave();
         var listTrans = {
             "IsDraft": nIsDraft,
@@ -5543,7 +5580,7 @@ function setDate1(FieldID,Type) {
                                 EmailDocument(items.ID, PrintTransID, PrintConfigID);
                             }
                         }
-                        if ($("#txtTransType").val() == 3) {                            
+                        if ($("#txtTransType").val() == 3) {
                             setTimeout(() => {
                                 window.close();
                             }, 3000);
@@ -5653,16 +5690,16 @@ function setDate1(FieldID,Type) {
         $("#MainHeading").text("View " + $("#txtFormName").val());
     }
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {
-        nTransMode = 1;        
-        var ID = $("#txtID").val();        
+        nTransMode = 1;
+        var ID = $("#txtID").val();
         $("#txtWebCollID").val(ID);
         $("#txtID").val("");
         $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Document Loading... Please wait</div></div>');
-        setTimeout(() => { 
+        setTimeout(() => {
             LoadWebcollectionData(ID);
         }, 1500);
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-        $("#btnSave,#btnClose").prop("disabled", false);        
+        $("#btnSave,#btnClose").prop("disabled", false);
         $("#cmbPaymode,#txtAmount,#txtSearch,#cmbBeat,#cmbSalesman").prop("disabled", true);
         $("#btnSave,#btnClose").show();
         $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();

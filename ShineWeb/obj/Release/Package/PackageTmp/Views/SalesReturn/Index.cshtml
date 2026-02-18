@@ -1323,7 +1323,14 @@
         <div class="footerAction modal-footer">
             <table width="100%">
                 <tr>
-                    <td width="50%" align="right">
+                    <td width="25%" align="left">
+                        <div id="balanceContainer" align="left" style="color: black">
+                            Balance ₹ :
+                            <a href="#" id="lblRoundBalanceFooter"
+                               style="font-size:16px;font-weight:600;">0.00</a>
+                        </div>
+                    </td>
+                    <td width="25%" align="right">
                         <div align="right" style="color: black">
                             Net ₹ : <label lbltag="0" id="lblRoundNetFooter" style="font-size:16px;font-weight:600;" class="lblPT lblsettag">0.00</label>
                         </div>
@@ -1669,6 +1676,7 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
+                    $("#balanceContainer").show();
                 }
             },
             {
@@ -1726,6 +1734,7 @@
                         if ($("#txtEnableSaveButton").val() == 0) {
                             $("#btnSave").hide();
                         }
+                        $("#balanceContainer").show();
                         Addprodgridline();
                     }
                     else {
@@ -1746,9 +1755,9 @@
                     $("#txtID").val(ID);
                     nTransMode = 3;
                     GetData(1);
-                    //setTimeout(() => {
+                    setTimeout(() => {
                     GetProductViewData(7, ID);
-                    //}, 300);
+                    }, 300);
                     $("#dvMain").show();
                     $("#dvDocuments").hide();
                     $("#btnEmail,#btnWhatsapp").hide();
@@ -1765,6 +1774,7 @@
                     if ($("#txtEnableSaveButton").val() == 0) {
                         $("#btnSave").hide();
                     }
+                    $("#balanceContainer").hide();
                     //setTimeout(() => {
                     Addprodgridline();
                     //}, 800);
@@ -1818,6 +1828,7 @@
                             $("#dvDocuments").hide();
                             $("#btnEmail,#btnWhatsapp").hide();
                             $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
+                            $("#balanceContainer").show();
                             if ($("#txtEnableBranch").val() == 1) {
                                 $("#cmbBranch").prop("disabled", true);
                             }
@@ -2025,7 +2036,8 @@
     var RoleID = '@Session["RoleID"]';
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
     var ConfigRoundtype = '@Session["RoundoffType"]';
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
     var ApplyReturnPrice = '@Session["EnableReturnPrice"]';// 1 - apply
@@ -2398,6 +2410,37 @@ if ($("#txtAddID").val() == 0) {
             } else {
                 $diffLabel.css("color", "black");
                 updateLabelColumn($diffLabel.attr("id"), 0);
+            }
+        });
+    }
+
+        function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RoleID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0 && nTransMode == 1) {
+                    $('#cmbBranch').val(defaultBranch);//.trigger("change");
+                }
             }
         });
     }
@@ -3652,9 +3695,9 @@ if ($("#txtAddID").val() == 0) {
                                 console.log("TradeDiscPern calc prd");
                                 if (CurrentFieldname == "TradeDiscAmt") {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var price = (dPTGoods - dProdDiscAmt);                                    
+                                    var price = (dPTGoods - dProdDiscAmt);
                                     var damt = ((val / price) * 100);//dPTGoods
-                                    
+
                                     //updateInputColumn(fieldID, damt);
                                     //Tradediscamt = damt;
                                     if (damt <= 100) {
@@ -3674,9 +3717,9 @@ if ($("#txtAddID").val() == 0) {
                                 }
                             }
                             if (fieldName == "TradeDiscAmt") {
-                                console.log("TradeDiscAmt calc prd");                                
+                                console.log("TradeDiscAmt calc prd");
                                 if (CurrentFieldname == "TradeDiscAmt") {
-                                    var val = $(this).attr("txttag") != "" ? parseFloat($(this).attr("txttag")) : 0;                                    
+                                    var val = $(this).attr("txttag") != "" ? parseFloat($(this).attr("txttag")) : 0;
                                     //updateInputColumn(fieldID, val);
                                     //Tradediscamt = val;
                                     var price = (dPTGoods - dProdDiscAmt);
@@ -4091,7 +4134,8 @@ if ($("#txtAddID").val() == 0) {
         });
     }
     //$("#btnNewProd").hide();
-    $("#btnNewProd").click(function () {
+    //$("#btnNewProd").click(function () {
+    $(document).on("click", "#btnNewProd", function (e) {
         Addprodgridline();
     });
     var SelRowIndex = -1;
@@ -4611,6 +4655,7 @@ if ($("#txtAddID").val() == 0) {
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -4742,7 +4787,8 @@ if ($("#txtAddID").val() == 0) {
                         }
                     });
                     SetAutlistforFields();
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 else if (nMode == 3) {
                     $.each(data, function (i, items) {
@@ -5452,6 +5498,7 @@ if ($("#txtAddID").val() == 0) {
                     updateInputColumn("txtTCS", items.TCSTaxAmt); updateInputColumn("txtTDS", items.TDSAmount); updateInputColumn("txtWriteoff", items.WriteOffAmt);
                     $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
                     updateInputColumn("txtDiffExcl", items.DiffValueGross); updateInputColumn("txtDiffIncl", items.DiffValueNet);
+                    $("#lblRoundBalanceFooter").text(items.Balance);
                     $.each(items.lstPartyInfo, function (i, itemsParty) {
                         $("#txtSearch").val(itemsParty.Name), $("#lblName").text(itemsParty.Code), $("#cmbRating").text(itemsParty.Ratings),
                             $("#lblMob1").text(itemsParty.Mob1), $("#lblGSTIN").text(itemsParty.GSTIN), $("#txtBAdd1").val(itemsParty.Billadd1),
@@ -5603,7 +5650,7 @@ if ($("#txtAddID").val() == 0) {
                             };
                         });
                     });
-                    
+
                     ProductRID = ProductTable.rows().count() + 1;
                     calculateProdGrid();
                     setupArrowKeyNavigation1();
@@ -5680,7 +5727,7 @@ if ($("#txtAddID").val() == 0) {
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
-                           
+
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(29, 1, 0, colIndex, field, newWidth)
@@ -5720,6 +5767,7 @@ if ($("#txtAddID").val() == 0) {
                                     nTransMode = 1;
                                     $("#dvMain").show();
                                     $("#dvDocuments").hide();
+                                    $("#balanceContainer").hide();
                                     ClearForm();
                                     //  ProductRID++;
                                     //Addprodgridline();
@@ -5787,7 +5835,7 @@ if ($("#txtAddID").val() == 0) {
                                     render: function () {
                                         return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
                                     }
-                                }                                
+                                }
                             ],
                             initComplete: function () {
                                 // Re-apply search value after table is fully initialized
@@ -5882,7 +5930,7 @@ if ($("#txtAddID").val() == 0) {
         return actions;
     }
 
-    $("#rdoMainTableData,#rdoDraftTableData").click(function () {        
+    $("#rdoMainTableData,#rdoDraftTableData").click(function () {
         //GetFilterData(1);
         LoadPermissions();
         GetColumnSettingsData(2, 29, 1);
@@ -6074,6 +6122,11 @@ if ($("#txtAddID").val() == 0) {
         //ClearForm();
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
+    $("#lblRoundBalanceFooter").on("click", function (e) {
+        e.preventDefault(); // stops the "#" navigation
+        var ID = $("#txtID").val();
+        InvoiceCollectionModalPopup(ID, 16);
+    });
     function ClearForm() {
         ProductRID = 0;
         HiddenRowIndex = 0;
@@ -6087,6 +6140,7 @@ if ($("#txtAddID").val() == 0) {
         $("#lblName,#lblProdCodeAS,#cmbRating,#lblMob1,#lblGSTIN").text("");
         $("#txtNoofCopies").val("1");
         $("#btnEmail,#btnWhatsapp").hide();
+        $("#balanceContainer").hide();
         //Table.draw().clear();
         TableBatch.draw().clear();
         ProductTable.draw().clear();
@@ -6098,7 +6152,8 @@ if ($("#txtAddID").val() == 0) {
         setDate("dtpDate", 0);
         SetFilterDate();
         GetFilterData();
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         setTimeout(function () {
             var pt = ApplyReturnPrice == "1" ? 6 : 2;
             $("#cmbPriceType").val(pt);
@@ -6644,7 +6699,7 @@ if ($("#txtAddID").val() == 0) {
                     updateLabelColumn("lblRoundNetFooter", parseFloat(items.NetAmt));
                     updateInputColumn("txtTCS", items.TCSTaxAmt); updateInputColumn("txtTDS", items.TDSAmount); updateInputColumn("txtWriteoff", items.WriteOffAmt);
                     $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
-
+                    $("#lblRoundBalanceFooter").text("0.00");
                     $.each(items.lstPartyInfo, function (i, itemsParty) {
                         $("#txtSearch").val(itemsParty.Name), $("#lblName").text(itemsParty.Code), $("#cmbRating").text(itemsParty.Ratings),
                             $("#lblMob1").text(itemsParty.Mob1), $("#lblGSTIN").text(itemsParty.GSTIN), $("#txtBAdd1").val(itemsParty.Billadd1),

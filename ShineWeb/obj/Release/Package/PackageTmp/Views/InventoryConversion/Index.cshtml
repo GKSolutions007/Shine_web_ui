@@ -1167,7 +1167,8 @@
     var UID = '@Session["LoginUserID"]';
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    LoadBranchByRoles();
     var BatchMode = 0;
     var nTransMode = 1, nIsDraft = 0;
     var PrintTransID = 21, PrintConfigID = 0;
@@ -1441,6 +1442,40 @@ function updateInputColumn(inputID, netValue) {
             updateInputColumn(id, val);
         CalculateBatchGrid();
     });
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#cmbBranch').val(defaultBranch).trigger("change");
+                }
+            }
+        });
+    }
+
+
+
     function CalculateBatchGrid() {
         let result = [];
         var dTotQty = 0, dFreeTotQty = 0, dDmgTotQty = 0, dPPrice = 0, dQty = 0, dFreeQty = 0, dDmgQty = 0, dQtyTotValue = 0, dDmgQtyTotValue = 0;
@@ -1722,6 +1757,7 @@ function setDate1(FieldID,Type) {
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -1772,7 +1808,8 @@ function setDate1(FieldID,Type) {
                             }));
                         }
                     });
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 else if (nMode == 2) {
                     arrProdCode = [], arrProdName = [], arrProdCodeName = [],TempAL = [];
@@ -2450,7 +2487,8 @@ function setDate1(FieldID,Type) {
         ProductTable.clear().draw();
         ProductTable.clear().draw();
         var qtyonly = 0;
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         GetData(1);
         setDate("dtpDate", 0);
         SetFilterDate();

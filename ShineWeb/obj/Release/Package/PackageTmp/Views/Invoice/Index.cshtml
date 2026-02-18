@@ -1644,8 +1644,16 @@
         <div class="footerAction modal-footer">
             <table width="100%">
                 <tr>
-                    <td width="50%" align="right" style="padding-right:20px">
+                    <td width="25%" align="left" style="padding-right:20px">
                         <button id="btnVerify" hidden>Verify</button>
+                        <div id="balanceContainer" align="left" style="color: black">
+                            Balance ₹ :
+                            <a href="#" id="lblRoundBalanceFooter"
+                               style="font-size:16px;font-weight:600;"
+                               >0.00</a>
+                        </div>                        
+                    </td>
+                    <td width="25%" align="right">
                         <div align="right" style="color: black">
                             Net ₹ : <label lbltag="0" id="lblRoundNetFooter" style="font-size:16px;font-weight:600;" class="lblPT lblsettag">0.00</label>
                         </div>
@@ -2060,6 +2068,7 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
+                    $("#balanceContainer").show();
                 }
             },
             {
@@ -2122,6 +2131,7 @@
                         if ($("#txtEnableBranch").val() == 1) {
                             $("#cmbBranch").prop("disabled", true);
                         }
+                        $("#balanceContainer").show();
                         //setTimeout(() => {
                         Addprodgridline();
                         //}, 500);
@@ -2146,9 +2156,9 @@
                     nTransMode = 3;
                     GetData(1, RoleID);
                     //GetProductViewData(7, ID);
-                    //setTimeout(() => {
+                    setTimeout(() => {
                     GetProductViewData(7, ID);
-                    //}, 300);
+                    }, 300);
                     $("#dvMain").show();
                     $("#dvDocuments").hide();
                     $("#MainHeading").text("Variant Invoice");
@@ -2158,6 +2168,7 @@
                     $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
                     $("#btnSave,#btnClear,#btnDraft").show();
                     $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
+                    $("#balanceContainer").hide()
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
@@ -2216,6 +2227,7 @@
                             $("#dvDocuments").hide();
                             $("#btnSave").prop("disabled", false);
                             $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
+                            $("#balanceContainer").show();
                             if ($("#txtEnableBranch").val() == 1) {
                                 $("#cmbBranch").prop("disabled", true);
                             }
@@ -2345,7 +2357,7 @@
  var RoleID = '@Session["RoleID"]';
  var Aurl = '@Session["APIurl"]';
  var DecVal = '@Session["DecimalValues"]';
- var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
  var ConfigRoundtype = '@Session["RoundoffType"]';
  var ConfigRoundvalue = '@Session["RoundoffValue"]';
  var VisaPern = '@Session["VisaPern"]';
@@ -2896,6 +2908,39 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                //console.log("Data returned from API:", data);
+                $('#cmbBranch').empty();
+                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    //console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0 && nTransMode == 1) {
+                    $('#cmbBranch').val(defaultBranch);//.trigger("change");
+                }
+            }
+        });
+    }
+
+
     function calculateProdGrid() {
         $(".lblPT").text(0.00);
         var dPTQty = 0, dPTFreeQty = 0, dPTDmgQty = 0, dPTGoods = 0, dPTGross = 0, dPTTax = 0, dPTNet = 0, TotProdDisc = 0, TotTradeDisc = 0, TotAddnlDisc = 0, Value = 0;
@@ -4702,7 +4747,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
     });
 
     //$("#btnNewProd").hide();
-    $("#btnNewProd").click(function () {
+    $(document).on("click", "#btnNewProd", function (e) {
+    //$("#btnNewProd").click(function () {
         Addprodgridline();
     });
     var SelRowIndex = -1;
@@ -5045,6 +5091,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     });
 
     $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
         var Branch = e.target.value;
         var id = e.target.id;
@@ -5088,8 +5135,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     //}
                 }
                 else if (nMode == 1) {
-                    $('#cmbPaymode,#cmbCreditTerm,#cmbBranch,#cmbUDN,#cmbFilterBranch,#cmbBeat,#cmbSalesman,#cmbPriceType,#cmbVehicleNo').find("option").remove();
-                    $('#cmbPaymode,#cmbCreditTerm,#cmbBranch,#cmbUDN,#cmbFilterBranch,#cmbBeat,#cmbSalesman,#cmbPriceType,#cmbVehicleNo').append($('<option/>', {
+                    $('#cmbPaymode,#cmbCreditTerm,#cmbUDN,#cmbFilterBranch,#cmbBeat,#cmbSalesman,#cmbPriceType,#cmbVehicleNo').find("option").remove();
+                    $('#cmbPaymode,#cmbCreditTerm,#cmbUDN,#cmbFilterBranch,#cmbBeat,#cmbSalesman,#cmbPriceType,#cmbVehicleNo').append($('<option/>', {
                         value: 0,
                         text: "-- Select --",
                     }));
@@ -5114,7 +5161,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             nIndexarrVendor++;
                         }
                         if (items.FType == 2) {
-                            $('#cmbBranch,#cmbFilterBranch').append($('<option/>', {
+                            $('#cmbFilterBranch').append($('<option/>', {
                                 value: items.ID,
                                 text: items.Name,
                             }));
@@ -5216,7 +5263,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             }));
                         }
                     });
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                     $("#cmbPriceType").val(2);
                     LoadPaymentModeData();
                     SetAutlistforFields();//
@@ -5918,8 +5966,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     updateInputColumn("txtTCS", items.TCSTaxAmt); updateInputColumn("txtTDS", items.TDSAmount); updateInputColumn("txtWriteoff", items.WriteOffAmt);
                     updateInputColumn("txtDiffExcl", items.DiffValueGross); updateInputColumn("txtDiffIncl", items.DiffValueNet);
                     $("#txtDiffExcl").css("color", items.DiffValueGross >= 0 ? "green" : "red");
-                    $("#txtDiffIncl").css("color", items.DiffValueNet >= 0 ? "green" : "red");
-                    $("#cmbVehicleNo").val(items.VehicleNo), $("#txtDistance").val(items.Distance),
+                    $("#txtDiffIncl").css("color", items.DiffValueNet >= 0 ? "green" : "red"); 
+                    $("#cmbVehicleNo").val(items.VehicleNo), $("#txtDistance").val(items.Distance), $("#lblRoundBalanceFooter").text(items.Balance);
 
                         $("#txtTransportID").val(items.TransactionID), $("#txtTransportName").val(items.TransactionName);
                     selectDropdownByText('cmbTransportType', items.TransportType);
@@ -6274,6 +6322,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     nTransMode = 1;
                                     $("#dvMain").show();
                                     $("#dvDocuments").hide();
+                                    $("#balanceContainer").hide()
                                     ClearForm();
                                     Addprodgridline();
                                     setTimeout(() => {
@@ -6565,7 +6614,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         rowdata = Table.row($(this).parents('tr')).data();
         var selrow = Table.row($(this).parents('tr')).index();
         var ID = rowdata.ID;//[0];
-        InvoiceCollectionModalPopup(ID,15)
+        InvoiceCollectionModalPopup(ID, 15);
     });
     $('#tblMasterData tbody').on('dblclick', 'td', function (e) {//'#tblMasterData tbody'
         rowdata = Table.row($(this).parents('tr')).data();
@@ -6760,6 +6809,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
         //ClearForm();
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
+    $("#lblRoundBalanceFooter").on("click", function (e) {
+        e.preventDefault(); // stops the "#" navigation
+        var ID = $("#txtID").val();
+        InvoiceCollectionModalPopup(ID, 15);
+    });
     function ClearForm() {
         ProductRID = 0;
         $(".FormclrField").val("");
@@ -6774,6 +6828,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#lblName,#lblProdCodeAS").text(""), $("#cmbRating").text(""), $("#lblMob1").text(""), $("#lblGSTIN").text("");
         $("#txtNoofCopies").val("1");
         $("input").css("border-color", "");
+        $("#balanceContainer").hide();
         //Table.draw().clear();
         TableBatch.draw().clear();
         ProductTable.draw().clear();
@@ -6788,27 +6843,27 @@ if ($("#txtReurnPricePerm").val() == 0) {
         SetFilterDate();
         GetFilterData();
         stopAutoDraftSave();
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         if (DefCustCode != "") {
             setTimeout(function () {
                 GetData(3, DefCustCode);
             }, 500);
         }
         else {
-            if (DefBranch != "") {
-                setTimeout(function () {
-                    //GetFilterData();
-                    //GetData(2, DefBranch, $("#dtpDate").val());
-                    GetProductList();
-                }, 500);
-            }
-            else {
+            //if (DefBranch != "") {
+            //    setTimeout(function () {
+            //        //GetFilterData();
+            //        //GetData(2, DefBranch, $("#dtpDate").val());
+            //        GetProductList();
+            //    }, 500);
+            //}
+            //else {}
                 setTimeout(function () {
                     //GetFilterData();
                     //GetData(2, 0, $("#dtpDate").val());
                     GetProductList();
                 }, 500);
-            }
         }
 
         nIsDraft = 0;
