@@ -985,7 +985,11 @@
         });
         return ul;
     }
-        var grid;
+    var currentLevel = 1;
+    var drillHistory = [];
+    var breadcrumbList = []; // New: Breadcrumb state
+    var TempReportID = 0;
+    var grid;
     var Detailsgrid;
     var columnsettings = [], detailcolumnsettings = [],arrParamHiddenColumns = [];
     //ColumnDetails(2, FID, 1);
@@ -1006,6 +1010,27 @@
                     console.log("columns : ", columnsettings);
                     if (nTableID == 1) {
                         columnsettings = (data);
+                        var actioncol =
+                        {
+                            "field": "Action",
+                            "header": "Action",
+                            "type": "action",
+                            "width": 101,
+                            "align": "center",
+                            "visible": true,
+                            "EnableColumnMenu": false,
+                            "ShowinColumnOption": false,
+                            "Total": false,
+                            "TotalYN": "0",
+                            "EnableSum": false,
+                            "EnableAvg": false,
+                            "precision": "2",
+                            "ClickPopup": false,
+                            "Printwidth": 15,
+                            "PrintYN": false,
+                            "PrintColumnName": "Action"
+                        };
+                        columnsettings.push(actioncol);
                         console.log("Header Columns : ", columnsettings);
                         if (columnsettings.length) {
                             arrParamHiddenColumns = columnsettings.filter(hd => hd.ShowinColumnOption == false);
@@ -1358,10 +1383,6 @@ function setDate(FieldID,Type) {
                                 }
                                 arrData.push(al);
                             });
-                            //var txtName = $('#' + id + '');
-                            //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
-                            //autocomplete.data('typeahead').source = null;
-                            //autocomplete.data('typeahead').source = arrData;
                             console.log("arrData ", arrData);
                             $('#' + id + '').autocomplete({
                                 minLength: 0,
@@ -1526,7 +1547,41 @@ function setDate(FieldID,Type) {
             CompanyName: CompanyName,
             ReportName: Reporthd,
             fitersdata: filterdata,
-            singleIconAction: [],
+            // Drill Down & Back Action Buttons
+            singleIconAction: [
+                {
+                    icon: '<i class="fa fa-arrow-left" aria-hidden="true" style="color: #dc3545; font-size: 14px;"></i>',
+                    title: 'Back',
+                    visible: (row) => {
+                        var isVisible = false;
+                        if (FID == 15 && drillHistory.length > 0) {
+                            isVisible = true;
+                        }
+                        return isVisible;
+                    },  // Only show if deeper than level 1
+                    handler: (rowData, gridInstance) => {
+                        GetColumnSettingsData(2, FID, 1);
+                        setTimeout(() => {
+                            handleBack();
+                        }, 1000)                        
+                    }
+                },
+                {
+                    icon: '<i class="fa fa-arrow-right" aria-hidden="true" style="color: #007bff; font-size: 14px;"></i>',
+                    title: 'Drill Down',
+                    visible: (row) => {
+                        var isVisible = false;
+                        if (FID == 15) {
+                            //isVisible = row.AccType == 'Group';
+                            isVisible = TempReportID == 2 ? false : true;
+                        }
+                        return isVisible;
+                    }, // Only show if not terminal level
+                    handler: (rowData, gridInstance) => {
+                        handleDrillDown(rowData);
+                    }
+                }
+            ],
             rowActionsMenu: [],
             //onCellChange: handleCellUpdate,
             customButtons: [
@@ -1574,6 +1629,9 @@ function setDate(FieldID,Type) {
                 },
             ],
             onCellClick: (rowData, fieldName, cellValue, column) => {
+                if (FID == 15) {
+                    //handleDrillDown(rowData);
+                }
                 if (Frames == 2) {
                     arrParams = []
                     //var rowData = args.rowData;
@@ -1673,6 +1731,235 @@ function setDate(FieldID,Type) {
                 UpdateColumnWidth(FID, 1, 2, colIndex, field, newWidth);
             },
         });
+    }
+    function handleDrillDown(rowData) {
+        var nextLevel = currentLevel + 1;
+        drillHistory.push({
+            level: currentLevel, nAccGroupID: rowData.AccGroupID,
+            strAccGroupName: rowData.AccGroupName, strAccType: rowData.AccType,
+            nSelAccGroupID: rowData.SelAccGroupID, strSelAccGroupName: rowData.SelAccGroupName
+        });
+
+        const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val();
+        const FilterAccGrpName = $('#tblFilterData input[name="FAAccountGroups"]').val();
+        const FilterFromDate = $('#tblFilterData input[name="MF"]').val();
+        const FilterToDate = $('#tblFilterData input[name="CD"]').val();
+        console.log(BranchID, FilterAccGrpName, FilterFromDate, FilterToDate);
+        console.log("rowData ", rowData);
+        var typeofAccount = rowData.AccType;
+        arrParams = [];
+        var delaytoexecute = 0;
+        var PV = {
+            "Param1": BranchID
+        }
+        arrParams.push(PV);
+        PV = {
+            "Param1": rowData.AccGroupName
+        }
+        arrParams.push(PV);
+        PV = {
+            "Param1": FilterFromDate
+        }
+        arrParams.push(PV);
+        PV = {
+            "Param1": FilterToDate
+        }
+        arrParams.push(PV);
+        $("#Grid").html("");
+        if (typeofAccount == "Group") {
+            TempReportID = 0;
+            var listParams = {
+                "ReportID": FID,
+                "ProcedureName": arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
+                "lstvFilters": arrParams
+            };
+        }
+        else {
+            TempReportID = 2;
+            GetColumnSettingsData(2, TempReportID, 1);
+            delaytoexecute = 1000;
+            PV = {
+                "Param1": 0
+            }
+            arrParams.push(PV);
+            PV = {
+                "Param1": 0
+            }
+            arrParams.push(PV);
+            var listParams = {
+                "ReportID": 2,
+                "ProcedureName": "uspFinRepLedgerReport",// $("#txtProcName").val(),
+                "lstvFilters": arrParams
+            };
+        }
+        var Excelfilter = [];
+        var Col2Data = "";
+        $('#tblFilterData tr td').each(function (i, items) {
+            var insert = false;
+            if (i % 2 == 0) {
+                var lbl = items.firstChild.id;
+                Col1Data = $("#" + lbl).text();
+                //console.log("Col 1", Col2Data);
+                insert = false;
+            }
+            else if (i % 2 == 1) {
+                var input = items.firstChild.id;
+                var inputtype = items.firstChild.type;
+                var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                insert = true;
+            }
+            if (insert) {
+                var lst = {
+                    FilterName: Col1Data,
+                    Value: Col2Data
+                };
+                Excelfilter.push(lst);
+            }
+        });
+        let sb = document.getElementById("RepLoadersnackbar");
+        sb.classList.add("show");
+        setTimeout(() => {
+            $.ajax({
+                url: Aurl + "financialreportgenerate/get",
+                type: 'post',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(listParams),
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    sb.classList.remove("show");
+                    if (data.length == 0) {
+                        showErrorSnackbar("No data found");
+                    }
+                    if (IsDynamicReport == 1) {//FID == 14
+                        bindDataTableforDynamicReport(eval(data), Excelfilter);
+                    }
+                    else {
+                        bindDataTable(eval(data), Excelfilter);
+                    }
+                }
+            });
+        }, delaytoexecute);
+    }
+    function handleBack() {
+        TempReportID = 0;
+        if (drillHistory.length > 0) {
+            console.log("drillHistory", drillHistory);
+            var prevState = drillHistory.pop();
+
+            // Update Breadcrumb
+            breadcrumbList.pop();
+            renderBreadcrumb();
+
+            loadPreviousLevelData(prevState);
+        }
+        else {
+            showInfoSnackbar("Reached least level");
+        }
+    }
+    function loadPreviousLevelData(filterValue) {
+        const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val();
+        const FilterAccGrpName = $('#tblFilterData input[name="FAAccountGroups"]').val();
+        const FilterFromDate = $('#tblFilterData input[name="MF"]').val();
+        const FilterToDate = $('#tblFilterData input[name="CD"]').val();
+        arrParams = [];
+        var delaytoexecute = 0;
+        var PV = {
+            "Param1": BranchID
+        }
+        arrParams.push(PV);
+        PV = {
+            "Param1": filterValue.strSelAccGroupName
+        }
+        arrParams.push(PV);
+        PV = {
+            "Param1": FilterFromDate
+        }
+        arrParams.push(PV);
+        PV = {
+            "Param1": FilterToDate
+        }
+        arrParams.push(PV);
+        var listParams = {
+            "ReportID": FID,
+            "ProcedureName": arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
+            "lstvFilters": arrParams
+        };
+        var Excelfilter = [];
+        var Col2Data = "";
+        $('#tblFilterData tr td').each(function (i, items) {
+            var insert = false;
+            if (i % 2 == 0) {
+                var lbl = items.firstChild.id;
+                Col1Data = $("#" + lbl).text();
+                //console.log("Col 1", Col2Data);
+                insert = false;
+            }
+            else if (i % 2 == 1) {
+                var input = items.firstChild.id;
+                var inputtype = items.firstChild.type;
+                var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                insert = true;
+            }
+            if (insert) {
+                var lst = {
+                    FilterName: Col1Data,
+                    Value: Col2Data
+                };
+                Excelfilter.push(lst);
+            }
+        });
+        let sb = document.getElementById("RepLoadersnackbar");
+        sb.classList.add("show");
+        $.ajax({
+            url: Aurl + "financialreportgenerate/get",
+            type: 'post',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(listParams),
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                sb.classList.remove("show");
+                if (data.length == 0) {
+                    showErrorSnackbar("No data found");
+                }
+                if (IsDynamicReport == 1) {//FID == 14
+                    bindDataTableforDynamicReport(eval(data), Excelfilter);
+                }
+                else {
+                    bindDataTable(eval(data), Excelfilter);
+                }
+            }, error: function (data) {
+                console.log("error ", data);
+            }
+
+        });
+    }
+    // Backspace Navigation
+    document.addEventListener('keydown', function (event) {
+        if (event.key === "Backspace") {           
+            var target = event.target;
+            var isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+            if (!isInput) {
+                event.preventDefault();
+                GetColumnSettingsData(2, FID, 1);
+                setTimeout(() => {
+                    handleBack();
+                }, 1300)
+            }
+        }
+    });
+    function renderBreadcrumb() {
+        var html = '';
+        if (breadcrumbList.length > 0) {
+            html = breadcrumbList.join(' <span style="color: #999;">&rarr;</span> ');
+        }
+        //$("#breadcrumb-container").html(html);
     }
     function bindDetailDataTable(data, filterdata) {
         if (data.length === 0) {
