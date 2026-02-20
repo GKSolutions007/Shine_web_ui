@@ -408,8 +408,36 @@
         .remove-image-btn:active {
             transform: translateY(0);
         }
+    .download-image-btn {
+        background: var(--danger-gradient);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(235, 51, 73, 0.3);
+    }
+
+        .download-image-btn:hover {
+            box-shadow: 0 6px 20px rgba(235, 51, 73, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .download-image-btn:active {
+            transform: translateY(0);
+        }
 </style>
 <body>
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.Cancel, new { @autocomplete = "off", @class = "form-control", @id = "txtCancelID" })
     @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     <br />
@@ -423,7 +451,7 @@
                     <span class="card-header-icon">👤</span>
                     User Profile
                 </div>
-                
+
                 <input id="txtCompanyID" hidden />
 
                 <div class="row">
@@ -445,6 +473,11 @@
                                         <span class="glyphicon glyphicon-trash"></span> Remove
                                     </button>
                                 </div>
+                                <div style="margin-top: 10px;">
+                                    <button type="button" class="download-image-btn" id="downloadImageBtn">
+                                        <span class="glyphicon glyphicon-download"></span> Download
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <br />
@@ -459,14 +492,14 @@
                             <label class="labelup" for="txtName">User Name *</label>
                         </div>
                         <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnName" class="clrdivs"></div>
-                        
+
                         <div class="form-label">
                             <input tabindex="8" class="form-control FormclrField" type="number" id="txtPh1" placeholder="" maxlength="10"
                                    oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
                             <label class="labelup" for="txtPh1">Mobile No</label>
                         </div>
                         <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnPh1" class="clrdivs"></div>
-                        
+
                         <div class="form-label">
                             <input tabindex="7" class="form-control FormclrField" type="email" id="txtEMail" placeholder="">
                             <label class="labelup" for="txtEMail">E-Mail ID *</label>
@@ -483,7 +516,7 @@
                             </button>
                         </div>
                     </div>
-                    <div  class="col-sm-12 col-md-4"></div> 
+                    <div class="col-sm-12 col-md-4"></div>
                 </div>
             </div>
         </div>
@@ -512,6 +545,20 @@
     $("#txtCode").prop("disabled", true);
     GetData(4, UID);
     var arrData = [];
+    if ($("#txtAddID").val() == 0) {
+        $("#userPhotoInput").prop("disabled", true);
+    }
+    if ($("#txtCancelID").val() == 0) {
+        $("#removeImageBtn").hide();
+    }
+    if ($("#txtModifyID").val() == 0) {
+        $("#downloadImageBtn").hide();
+    }
+    if ($("#txtViewID").val() == 0) {
+        $("#imagePreviewContainer").hide();
+    }
+    //$("#userPhotoInput").prop("disabled", true);
+    //$("#imagePreviewContainer").hide();
     function GetData(nMode,nID) {
         $.ajax({
             url: Aurl + "signup/get",
@@ -668,6 +715,7 @@
         var imagePreview = document.getElementById('imagePreview');
         var imagePreviewContainer = document.getElementById('imagePreviewContainer');
         var removeImageBtn = document.getElementById('removeImageBtn');
+        var downloadImageBtn = document.getElementById('downloadImageBtn');
 
         if (!uploadArea || !userPhotoInput) {
             console.error('Upload elements not found');
@@ -745,6 +793,20 @@
                 // For now, just reset the src.
             });
         }
+        if (downloadImageBtn) {
+            downloadImageBtn.addEventListener('click', function () {
+                // Create a temporary <a> element
+                const link = document.createElement('a');
+                link.href = imagePreview.src;   // use the current image source
+                link.download = 'user-photo.png'; // filename for the download
+
+                // Trigger the download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+
     }
 
     // Function to handle image selection
