@@ -807,6 +807,47 @@
         margin: 0px 0 10px !important;
         border-bottom: 1px solid #eee !important;
     }
+
+
+    /* Stock Tooltip */
+    .stock-tooltip {
+        display: none;
+        position: absolute;
+        background: #fff;
+        border: 1px solid #ccc;
+        padding: 10px;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border-radius: 6px;
+        font-size: 11px;
+        min-width: 300px;
+        top: -5px;
+        left: 100%;
+        margin-left: 15px;
+    }
+
+        .stock-tooltip table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stock-tooltip th, .stock-tooltip td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 8px;
+            text-align: left;
+        }
+
+        .stock-tooltip th {
+            background-color: #f8f9fa;
+            font-weight: 800;
+            font-size: 9px;
+            color: #5e6c84;
+        }
+
+            .stock-tooltip td:last-child, .stock-tooltip th:last-child {
+                text-align: right;
+            }
 </style>
 <body>
     <div class="toastBox"></div>
@@ -949,7 +990,7 @@ var Aurl = '@Session["APIurl"]';
 var DefBranch = '@Session["DefaultBranch"]';
     var DecVal = '@Session["DecimalValues"]';
             var strCompanyCode = '@Session["CompanyCode"]';
-            
+            var customerChequeDetails = [];
             // Global variables for pagination and sorting
             var currentTableData = [];
             var currentBuckets = [];
@@ -1354,7 +1395,7 @@ var DefBranch = '@Session["DefaultBranch"]';
                         var total = columnTotals[key];
                         th.addClass('text-right');
                         
-                        if (key === "Net Amt" || key === "Balance" || key === "SR Balance" || key === "Net Balance") {
+                        if (key === "Net Amt" || key === "Balance" || key === "Payable" || key === "Net Balance") {
                             // Main amount columns - bold formatting
                             th.html('<strong style="color:white">' + total.toFixed(2) + '</strong>');
                         } else {
@@ -1405,7 +1446,7 @@ var DefBranch = '@Session["DefaultBranch"]';
                         } else if (key === "Balance") {
                             // SR OS Amount column
                             td.addClass('text-right').text(parseFloat(value).toFixed(2));
-                        } else if (key === "SR Balance" || key === "Net Balance") {
+                        } else if (key === "Payable" || key === "Net Balance") {
                             // SR OS Amount column
                             td.addClass('text-right').text(parseFloat(value).toFixed(2));
                         }
@@ -1467,16 +1508,17 @@ var DefBranch = '@Session["DefaultBranch"]';
                             },
                             success: function (data) {
                                 var customerInvoiceDetails = JSON.parse(data).Table || [];
-
+                                customerChequeDetails = JSON.parse(data).Table1 || [];
                                 // Create expandable detail row (spanning all columns)
                                 var expandRow = $('<tr class="expandable-row" data-parent-id="' + id + '"></tr>');
                                 var expandCell = $('<td></td>').attr('colspan', columnKeys.length);
                                 var expandContent = $('<div class="expandable-content"></div>');
 
                                 var customerName = rowData[columnKeys[1]];
-                                var detailTitle = $('<h5 style="margin-bottom: 15px; color: var(--dark-color); font-weight: 600;"><i class="fas fa-receipt"></i> Invoice Details - <span style="color: var(--primary-color);">' + customerName + '</span></h5>');
+                                var detailTitle = $('<h5 style="margin-bottom: 15px; color: var(--dark-color); font-weight: 600;display:inline"><i class="fas fa-user"></i> <span style="color: var(--primary-color);">' + customerName + '</span></h5>&ensp;<label style="cursor: pointer; margin-left: 5px; color: red;font-weight:700" id="spChequeCount"></label><div id="cashBalTooltip"></div>');
                                 expandContent.append(detailTitle);
-
+                                //spChequeCount
+                                
                                 if (customerInvoiceDetails.length > 0) {
                                     var setchildwidth = columnKeys.length == 7 ? "80%" : columnKeys.length == 8 ? "70%" : columnKeys.length == 9 ? "60%" : "50%";
                                     var detailTableHtml = '<div class="detail-table-scrollable" style="width:500px"><table class="detail-table">';
@@ -1522,7 +1564,7 @@ var DefBranch = '@Session["DefaultBranch"]';
 
                                 expandCell.append(expandContent);
                                 expandRow.append(expandCell);
-
+                                
                                 // Insert AFTER the main row (not append to tbody)
                                 tr.after(expandRow);
 
@@ -1530,6 +1572,12 @@ var DefBranch = '@Session["DefaultBranch"]';
                                 requestAnimationFrame(function() {
                                     expandRow.addClass('visible');
                                 });
+                                if (customerChequeDetails.length > 0) {                                    
+                                    $("#spChequeCount").text("(" + customerChequeDetails.length + ")");
+                                    $("#spChequeCount").addClass("cashbal-info-icon");
+                                    $("#cashBalTooltip").addClass("stock-tooltip");
+                                    //<div id="" class="stock-tooltip"></div>
+                                }
                             },
                             error: function() {
                                 showErrorSnackbar("Failed to load details");
@@ -1544,7 +1592,18 @@ var DefBranch = '@Session["DefaultBranch"]';
 
             // Optional: Load data on page load with default periods
             // loadData();
-
+            //$('.cashbal-info-icon').on("click", function () {
+            $(document).on("click", ".cashbal-info-icon", function () {
+                var tooltipContent = '<table class="table"><thead><tr><th>Doc ID</th><th>Doc Date</th><th>Value</th></tr></thead><tbody>';
+                $.each(customerChequeDetails, function (index, item) {
+                    var rowColor = 'Black';// item.CrDr === 'Cr' ? 'green' : (item.OSType === 'Dr' ? 'red' : '');
+                    tooltipContent += '<tr style="color: ' + rowColor + ';"><td>' + item["Doc ID"] + '</td><td>' + item["Cheque Date"] + '</td><td align="right">' + formatIndianCurrency(item.Value) + '</td></tr>';
+                });
+                tooltipContent += '</tbody></table>';
+                //$('#cashBalTooltip').html(tooltipContent).show();
+                InfoDialogMsg(tooltipContent, "Cheque Details");
+            });            
         });
+        
     </script>
 </body>
