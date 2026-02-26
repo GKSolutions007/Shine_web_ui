@@ -39,7 +39,7 @@
     }
 
     .container-fluid {
-        padding: 20px;
+        padding: 10px 5px;
     }
 
     .page-header {
@@ -188,7 +188,7 @@
     .results-card {
         background: white;
         border-radius: 15px;
-        padding: 25px;
+        padding: 10px;
         box-shadow: var(--shadow-lg);
         margin-top: 20px;
     }
@@ -572,7 +572,7 @@
 
     .action-buttons {
         display: flex;
-        gap: 10px;
+        gap: 3px;
         flex-wrap: wrap;
         justify-content: center;
         margin-top: 20px;
@@ -848,6 +848,10 @@
             .stock-tooltip td:last-child, .stock-tooltip th:last-child {
                 text-align: right;
             }
+    .col-md-2, .col-sm-12, .col-md-1, .col-md-3{
+        padding-right:1px;
+        padding-left:10px;
+    }
 </style>
 <body>
     <div class="toastBox"></div>
@@ -873,7 +877,6 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Salesman Name -->
                     <div class="col-md-2 col-sm-12">
                         <div class="form-group-modern">
@@ -887,7 +890,32 @@
                             </div>
                         </div>
                     </div>
-
+                    <!-- Customer Type -->
+                    <div class="col-md-2 col-sm-12">
+                        <div class="form-group-modern">
+                            <label>
+                                <i class="fas fa-user-tag"></i>
+                                Customer Type
+                            </label>
+                            <div class="input-with-icon">
+                                <select class="form-control-modern" id="cmbCustomerType">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Customer Type -->
+                    <div class="col-md-2 col-sm-12">
+                        <div class="form-group-modern">
+                            <label>
+                                <i class="fas fa-star"></i>
+                                Rating
+                            </label>
+                            <div class="input-with-icon">
+                                <select class="form-control-modern" id="cmbRatings">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Customer Name -->
                     <div class="col-md-3 col-sm-12">
                         <div class="form-group-modern">
@@ -902,6 +930,9 @@
                         </div>
                     </div>
 
+                </div>
+                <div class="row">
+
                     <!-- Period -->
                     <div class="col-md-2 col-sm-12">
                         <div class="form-group-modern">
@@ -915,9 +946,18 @@
                             <small style="color: #7f8c8d; font-size: 11px; margin-top: 4px; display: block;">Enter comma values for aging</small>
                         </div>
                     </div>
-
+                    <!-- Period -->
+                    <div class="col-md-2 col-sm-12">
+                        <div class="action-buttons">                            
+                            <div class="input-with-icon"><label for="chkNetAmtColumn">
+    <input type="checkbox" id="chkNetAmtColumn">
+    With Net Amt
+</label>
+                            </div>                            
+                        </div>
+                    </div>
                     <!-- Action Buttons -->
-                    <div class="col-md-3 col-sm-12">
+                    <div class="col-md-2 col-sm-12">
                         <div class="action-buttons">
                             <button type="button" class="btn-modern btn-primary-modern" id="btnSearch">
                                 <i class="fas fa-search"></i>
@@ -1020,9 +1060,12 @@ var DefBranch = '@Session["DefaultBranch"]';
                         var Beats = MainData.Table;
                         var Salesmans = MainData.Table1;
                         var Customers = MainData.Table2;
+                        var CustomerTypes = MainData.Table3;
+                        var Ratings = MainData.Table4;
                         arrParty = [];
-                        $('#cmbBeatName,#cmbSalesmanName').find("option").remove();
-                        $('#cmbBeatName,#cmbSalesmanName').append($('<option/>', {
+                        //cmbCustomerType,cmbRatings
+                        $('#cmbBeatName,#cmbSalesmanName,#cmbCustomerType,#cmbRatings').find("option").remove();
+                        $('#cmbBeatName,#cmbSalesmanName,#cmbCustomerType,#cmbRatings').append($('<option/>', {
                             value: 0,
                             text: "-- Select --",
                         }));
@@ -1038,7 +1081,18 @@ var DefBranch = '@Session["DefaultBranch"]';
                                 text: items.Name,
                             }));
                         });
-
+                        $.each(CustomerTypes, function (i, items) {
+                            $('#cmbCustomerType').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        });
+                        $.each(Ratings, function (i, items) {
+                            $('#cmbRatings').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        });
                         $.each(Customers, function (i, items) {
                             var Prod = {
                                 "label": items.Name,
@@ -1242,7 +1296,7 @@ var DefBranch = '@Session["DefaultBranch"]';
             // Load data function
             function loadData() {
                 var strBeatID = $('#cmbBeatName').val(), strSalesmanID = $('#cmbSalesmanName').val(), strParty = $('#txtCustomerName').val(),
-                    strPeriod = $('#txtPeriod').val();
+                    strPeriod = $('#txtPeriod').val(), strCustomerType = $('#cmbCustomerType').val(), strRatings = $('#cmbRatings').val();
 
                 // Validation: Period is mandatory
                 if (!strPeriod || strPeriod.trim() === "") {
@@ -1261,8 +1315,10 @@ var DefBranch = '@Session["DefaultBranch"]';
                     url: Aurl + "customeros/generatedata",
                     type: 'get',
                     contentType: 'json',
+                    //,
                     data: {
-                        Mode: 2, BeatID: strBeatID, SalesmanID: strSalesmanID, Party: strParty, Period: strPeriod
+                        Mode: 2, BeatID: strBeatID, SalesmanID: strSalesmanID, Party: strParty, Period: strPeriod,
+                        CustomerType: strCustomerType, Rating: strRatings
                     },
                     xhrFields: {
                         withCredentials: true
@@ -1310,7 +1366,14 @@ var DefBranch = '@Session["DefaultBranch"]';
                 // Get column names from first row
                 var columnKeys = Object.keys(gridData[0]);
                 var customerIDKey = columnKeys[0]; // First column is ID (hidden)
-
+                var chkwithNetamt = $("#chkNetAmtColumn").is(":checked");
+                if (!chkwithNetamt) {
+                    let index = columnKeys.indexOf("Net Amt");
+                    if (index !== -1) {
+                        columnKeys.splice(index, 1);
+                    }
+                }
+                console.log("columnKeys ", columnKeys);
                 // Build table header with sortable headers
                 var thead = $('<thead></thead>');
                 var headerRow = $('<tr></tr>');
@@ -1501,7 +1564,8 @@ var DefBranch = '@Session["DefaultBranch"]';
                             type: 'get',
                             contentType: 'json',
                             data: {
-                                 Mode: 3, BeatID: id, SalesmanID: "", Party: "", Period: ""
+                                Mode: 3, BeatID: id, SalesmanID: "0", Party: "", Period: "",
+                                CustomerType: "0", Rating: "0"
                             },
                             xhrFields: {
                                 withCredentials: true
