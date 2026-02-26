@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="~/Content/jquery-ui.css">
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
 <link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="~/Scripts/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.11.1.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
@@ -634,6 +634,38 @@
         .export-btn-secondary:hover {
             background: #d0d0d0;
         }
+
+        .breadcrumb-modern {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.breadcrumb-item:hover {
+    color: #0d6efd;
+    transform: translateY(-2px);
+}
+
+.breadcrumb-separator {
+    color: #999;
+    font-size: 14px;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+@@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-5px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
 </style>
 <body>
     <div id="RepLoadersnackbar" class="RepLoadersnackbar">
@@ -658,6 +690,7 @@
         <textarea hidden id="txtcomplogo"></textarea>
         <div class="container">
             <div class="right-section">
+                <h5 id="BredCrumbData" class="breadcrumb-modern"></h5>
                 <div id="Grid" style="width: 100%;"></div>
                 <div id="DetailGrid" style="width: 100%;"></div>
             </div>
@@ -1010,29 +1043,29 @@
                     console.log("columns : ", columnsettings);
                     if (nTableID == 1) {
                         columnsettings = (data);
-                        if (FID == 15 || FID == 19 || FID == 18) {
-                            var actioncol =
-                            {
-                                "field": "Action",
-                                "header": "Action",
-                                "type": "action",
-                                "width": 101,
-                                "align": "center",
-                                "visible": true,
-                                "EnableColumnMenu": false,
-                                "ShowinColumnOption": false,
-                                "Total": false,
-                                "TotalYN": "0",
-                                "EnableSum": false,
-                                "EnableAvg": false,
-                                "precision": "2",
-                                "ClickPopup": false,
-                                "Printwidth": 15,
-                                "PrintYN": false,
-                                "PrintColumnName": "Action"
-                            };
-                            columnsettings.push(actioncol);
-                        }
+                        //if (FID == 15 || FID == 19 || FID == 18 || FID == 20) {
+                        //    var actioncol =
+                        //    {
+                        //        "field": "Action",
+                        //        "header": "Action",
+                        //        "type": "action",
+                        //        "width": 101,
+                        //        "align": "center",
+                        //        "visible": true,
+                        //        "EnableColumnMenu": false,
+                        //        "ShowinColumnOption": false,
+                        //        "Total": false,
+                        //        "TotalYN": "0",
+                        //        "EnableSum": false,
+                        //        "EnableAvg": false,
+                        //        "precision": "2",
+                        //        "ClickPopup": false,
+                        //        "Printwidth": 15,
+                        //        "PrintYN": false,
+                        //        "PrintColumnName": "Action"
+                        //    };
+                        //    columnsettings.push(actioncol);
+                        //}
                         console.log("Header Columns : ", columnsettings);
                         if (columnsettings.length) {
                             arrParamHiddenColumns = columnsettings.filter(hd => hd.ShowinColumnOption == false);
@@ -1444,11 +1477,12 @@ function setDate(FieldID,Type) {
             if (FID == 15 || FID == 19) {
 
                 const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val() ||
-                    $('#tblFilterData select[name="BranchNameAL"] option:selected').val();;
+                    $('#tblFilterData select[name="BranchNameAL"] option:selected').val();
                 const FilterAccGrpName = $('#tblFilterData input[name="FAAccountGroups"]').val();
                 const FilterFromDate = $('#tblFilterData input[name="MF"]').val();
                 const FilterToDate = $('#tblFilterData input[name="CD"]').val();
-                const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val();
+                const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val() ||
+                    $('#tblFilterData select[name="BalanceSheet"] option:selected').val();
 
                 var PV = {
                     "Param1": FID
@@ -1461,7 +1495,8 @@ function setDate(FieldID,Type) {
                 PV = {
                     "Param1": FilterAccGrpName
                 }
-                arrParams.push(PV);
+                if (FID != 20)
+                    arrParams.push(PV);
                 PV = {
                     "Param1": FilterFromDate
                 }
@@ -1470,7 +1505,7 @@ function setDate(FieldID,Type) {
                     "Param1": FilterToDate
                 }
                 arrParams.push(PV);
-                if (FID == 19) {
+                if (FID == 19 || FID == 20) {
                     var PV = {
                         "Param1": TypeID
                     }
@@ -1537,7 +1572,10 @@ function setDate(FieldID,Type) {
                 }
             });
             let sb = document.getElementById("RepLoadersnackbar");
-            sb.classList.add("show");
+        sb.classList.add("show");
+        var Reporthd = $("#MainHeading").text();
+        $("#BredCrumbData").html(Reporthd);
+        $("#BredCrumbData").hide();
             $.ajax({
                 url: Aurl + "financialreportgenerate/get",
                 type: 'post',
@@ -1593,6 +1631,9 @@ function setDate(FieldID,Type) {
             CompanyName: CompanyName,
             ReportName: Reporthd,
             fitersdata: filterdata,
+            selectFromFirstRow: true,
+            initialFocusCriteria: {               
+            },
             // Drill Down & Back Action Buttons
             singleIconAction: [
                 {
@@ -1600,7 +1641,7 @@ function setDate(FieldID,Type) {
                     title: 'Back',
                     visible: (row) => {
                         var isVisible = false;
-                        if ((FID == 15 || FID == 19 || FID == 18) && drillHistory.length > 0) {
+                        if ((FID == 15 || FID == 19 || FID == 18 || FID == 20) && drillHistory.length > 0) {
                             isVisible = true;
                         }
                         if (isVisible && row.AccGroupID == 0 || row.DocID == "") {
@@ -1620,7 +1661,7 @@ function setDate(FieldID,Type) {
                     title: 'Drill Down',
                     visible: (row) => {
                         var isVisible = false;
-                        if (FID == 15 || FID == 19 || FID == 18) {
+                        if (FID == 15 || FID == 19 || FID == 18 || FID == 20) {
                             //isVisible = row.AccType == 'Group';
                             isVisible = TempReportID == 2 ? false : true;
                         }
@@ -1679,81 +1720,42 @@ function setDate(FieldID,Type) {
                         showPrintOptionsModal(gridInstance);
                     }
                 },
+                {
+                    icon: "🔙",
+                    text: 'Previous',
+                    title: 'Previous Level',
+                    visible: (FID == 15 || FID == 19 || FID == 18 || FID == 20) && drillHistory.length > 0,
+                    onClick: (gridInstance, event) => {
+                        GetColumnSettingsData(2, FID, 1);
+                        setTimeout(() => {
+                            handleBack();
+                        }, 1000)        
+                    }
+                }
             ],
-            onCellClick: (rowData, fieldName, cellValue, column) => {
-                if (FID == 15 || FID == 19) {
-                    //handleDrillDown(rowData);
-                }
-                if (Frames == 2) {
-                    arrParams = []
-                    //var rowData = args.rowData;
-                    //Hidden column set to parameters
-                    for (var i = 0; i < arrParamHiddenColumns.length; i++) {
-                        var values = arrParamHiddenColumns[i].field;
-                        var PV = {
-                            "Param1": rowData[values]
-                        }
-                        arrParams.push(PV);
-                    }
-                    if (nSendFilterstoDetail == 1) {
-                        //Filters set to parameters
-                        $('#tblFilterData tr td').each(function (i, items) {
-                            if (i % 2 == 1) {
-                                var input = items.firstChild.id;
-                                var inputtype = items.firstChild.type;
-                                var s = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : $("#" + input).val();
-                                if (s == null) {
-                                    //alert("No Value");
-                                }
-                                else {
-                                    //alert("Values " + s);
-                                    var strpv = "Param" + ParamIndex;
-                                    var PV = {
-                                        "Param1": s
-                                    }
-                                    arrParams.push(PV);
-                                    ParamIndex++;
-                                }
-                            }
-                        });
-                    }
-
-                    console.log("Params ", arrParams);
-                    var DetailProc = arrReportDeatils[0].ProcedureName
-                    $("#DetailGrid").html("");
-                    var listParams = {
-                        "ReportID": FID,
-                        "ProcedureName": DetailProc,
-                        "lstvFilters": arrParams
-                    };
-                    $.ajax({
-                        url: Aurl + "reportgenerate/get",
-                        type: 'post',
-                        contentType: 'application/json; charset=utf-8',
-                        data: JSON.stringify(listParams),
-                        xhrFields: {
-                            withCredentials: true
-                        },
-                        async: false,
-                        success: function (data) {
-                            if (data.length > 0) {
-                                bindDetailDataTable(eval(data), eval(listParams));
-                            }
-                            else {
-                                showErrorSnackbar("No data found");
-                            }
-                        }
-                    });
-                }
+            onCellClick: (rowData, fieldName, cellValue, column) => {                
+                
             },
             customCellRenderer: (el, col, rowData) => {
-                //if (col.field === 'Account Name') {
-                //    const val = rowData[col.field];
-                //    console.log("Active : ", val);
-                //    if (val === 'Total') {
-                //        el.innerHTML = `<div class="dg-status-badge dg-status-active"><span class="dg-status-circle"></span> Total</div>`;
-                //    }
-                //}
+                if (FID == 20) {
+                    if (col.field === 'AccGroupName') {
+                        const val = rowData[col.field];
+                        if (val === 'Loss for The Period') {
+                            el.innerHTML = `<div class="dg-status-badge dg-status-inactive" style="font-size:12px;font-weight:600"><span class="dg-status-circle"></span> Loss for The Period</div>`;
+                        } else if (val === 'Profit for The Period') {
+                            el.innerHTML = `<div class="dg-status-badge dg-status-active" style="font-size:12px;font-weight:600"><span class="dg-status-circle"></span> Profit for The Period</div>`;
+                        }
+                    }
+                    if (col.field === 'Debit' || col.field === 'Credit') {
+                        const val = rowData[col.field];
+                        const accgrpname = rowData['AccGroupName'];
+                        if (accgrpname === 'Loss for The Period') {
+                            el.innerHTML = `<div class="dg-status-badge dg-status-inactive" style="font-size:12px;font-weight:600"><span class="dg-status-circle"></span> ` + formatIndianCurrency(val) +`</div>`;
+                        } else if (accgrpname === 'Profit for The Period') {
+                            el.innerHTML = `<div class="dg-status-badge dg-status-active" style="font-size:12px;font-weight:600"><span class="dg-status-circle"></span> ` + formatIndianCurrency(val) +`</div>`;
+                        }
+                    }
+                }
             },
             rowStyler: (rowData) => {
                 if (rowData['Account Name'] === 'Total') {
@@ -1769,10 +1771,12 @@ function setDate(FieldID,Type) {
                 if (rowData['AccGroupName'] == 'Total') {
                     return 'row-total';
                 }
-                else if (rowData['AccGroupName'] == 'Trading Account' || rowData['AccGroupName'] == 'Profit & Loss Account') {
+                else if (rowData['AccGroupName'] == 'Trading Account' || rowData['AccGroupName'] == 'Profit & Loss Account'
+                    || rowData['AccGroupName'] == 'Asset') {
                     return 'row-openbalance';
                 }
-                else if (rowData['AccGroupName'] == "Gross Loss" || rowData['AccGroupName'] == 'Gross Profite') {
+                else if (rowData['AccGroupName'] == "Gross Loss" || rowData['AccGroupName'] == 'Gross Profite'
+                    || rowData['AccGroupName'] == 'Liablities') {
                     return 'row-closebalance';
                 }
                 else if (rowData['AccGroupName'] == "Net Loss" || rowData['AccGroupName'] == 'Net Profite') {
@@ -1783,11 +1787,15 @@ function setDate(FieldID,Type) {
                 return null; // No special styling
             },
             onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-
                 var dTransID = rowData.DocPrefix;
                 var DocID = rowData.DocID;
-                if (DocID != "" && dTransID > 0)
+                if (DocID != "" && dTransID > 0) {
                     QuickAccessDocument(dTransID, DocID);
+                } else {
+                    var rowtype = rowData.AccType;
+                    if (rowtype == "Group" || rowtype == "Account")
+                        handleDrillDown(rowData);
+                }
                 //navigator.clipboard.writeText(cellValue);
                 //showSuccessSnackbar("Value Copied.");
             },
@@ -1795,22 +1803,99 @@ function setDate(FieldID,Type) {
                 //alert(`Column Resized via Callback:\nIndex: ${colIndex}\nName: ${header}\nNew Width: ${newWidth}`);
                 UpdateColumnWidth(FID, 1, 2, colIndex, field, newWidth);
             },
+            onEnter: (rowData, gridInstance) => {
+                console.log("Enter Row Data : ", rowData);
+                var dTransID = rowData.DocPrefix;
+                var DocID = rowData.DocID;
+                if (DocID != "" && dTransID > 0) {
+                    QuickAccessDocument(dTransID, DocID);
+                } else {
+                    var rowtype = rowData.AccType;
+                    if (rowtype == "Group" || rowtype == "Account")
+                        handleDrillDown(rowData);
+                }
+            },
         });
+    }
+    function renderBreadcrumb_old() {
+        var html = $("#MainHeading").text();
+        console.log("drillHistory", drillHistory);
+        if (drillHistory.length > 0) {
+            html += " &rarr; ";
+            for (var i = 0; i < drillHistory.length; i++) {
+                html += drillHistory[i].strAccGroupName + ((i != (drillHistory.length - 1)) ? " -> " : "");//.join(' <span style="color: #999;">&rarr;</span> ');
+            }
+        }
+        $("#BredCrumbData").html(html);
+    }
+    function renderForwardBreadcrumb(AccGrpName) {
+        $("#BredCrumbData").show();
+        const container = $("#BredCrumbData");
+        const mainHeading = $("#MainHeading").text();
+
+        //container.empty();
+        container.append(`
+    <span class="breadcrumb-separator">
+        &rarr;
+    </span>
+`);
+
+        container.append(`
+    <span class="breadcrumb-item">
+        ${AccGrpName}
+    </span>
+`);
+    }
+    function renderBreadcrumb() {
+
+        const container = $("#BredCrumbData");
+        const mainHeading = $("#MainHeading").text();
+
+        container.empty();
+
+        // Home / Main
+        container.append(`
+        <span class="breadcrumb-item" data-index="-1">
+             ${mainHeading}
+        </span>
+    `);
+
+        if (!drillHistory.length) {
+            $("#BredCrumbData").hide();
+            return;
+        }
+        drillHistory.forEach((item, index) => {
+
+            container.append(`
+            <span class="breadcrumb-separator">
+                &rarr;
+            </span>
+        `);
+
+            container.append(`
+            <span class="breadcrumb-item" data-index="${index}">
+                ${item.strAccGroupName}
+            </span>
+        `);
+        });
+
     }
     function handleDrillDown(rowData) {
         var nextLevel = currentLevel + 1;
+        var accgrpName = rowData.AccGroupName;
         drillHistory.push({
             level: currentLevel, nAccGroupID: rowData.AccGroupID,
             strAccGroupName: rowData.AccGroupName, strAccType: rowData.AccType,
             nSelAccGroupID: rowData.SelAccGroupID, strSelAccGroupName: rowData.SelAccGroupName
         });
-
+        
         const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val() || 
             $('#tblFilterData select[name="BranchNameAL"] option:selected').val();
         const FilterAccGrpName = $('#tblFilterData input[name="FAAccountGroups"]').val();
         const FilterFromDate = $('#tblFilterData input[name="MF"]').val();
         const FilterToDate = $('#tblFilterData input[name="CD"]').val();
-        const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val();
+        const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val() ||
+            $('#tblFilterData select[name="BalanceSheet"] option:selected').val();
         console.log(BranchID, FilterAccGrpName, FilterFromDate, FilterToDate);
         console.log("rowData ", rowData);
         var typeofAccount = rowData.AccType;
@@ -1819,7 +1904,7 @@ function setDate(FieldID,Type) {
         
         $("#Grid").html("");
         if (typeofAccount == "Group") {
-            if (FID == 15 || FID == 19 || FID == 18) {
+            if (FID == 15 || FID == 19 || FID == 18 || FID == 20) {
                 var PV = {
                     "Param1": FID
                 }
@@ -1841,7 +1926,7 @@ function setDate(FieldID,Type) {
                 "Param1": FilterToDate
             }
             arrParams.push(PV);
-            if (FID == 19 || FID == 18) {
+            if (FID == 19 || FID == 18 || FID == 20) {
                 var PV = {
                     "Param1": TypeID
                 }
@@ -1850,8 +1935,8 @@ function setDate(FieldID,Type) {
 
             TempReportID = 0;
             var listParams = {
-                "ReportID": FID == "18" ? "15" : FID,
-                "ProcedureName": FID == "18" ? "uspFinRepGroupLedger" : arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
+                "ReportID": FID == "18" || FID == "20" ? "15" : FID,
+                "ProcedureName": FID == "18" || FID == "20" ? "uspFinRepGroupLedger" : arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
                 "lstvFilters": arrParams
             };
         }
@@ -1916,6 +2001,7 @@ function setDate(FieldID,Type) {
         });
         let sb = document.getElementById("RepLoadersnackbar");
         sb.classList.add("show");
+        renderForwardBreadcrumb(accgrpName);
         setTimeout(() => {
             $.ajax({
                 url: Aurl + "financialreportgenerate/get",
@@ -1965,10 +2051,11 @@ function setDate(FieldID,Type) {
         const FilterAccGrpName = $('#tblFilterData input[name="FAAccountGroups"]').val();
         const FilterFromDate = $('#tblFilterData input[name="MF"]').val();
         const FilterToDate = $('#tblFilterData input[name="CD"]').val();
-        const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val();
+        const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val() ||
+            $('#tblFilterData select[name="BalanceSheet"] option:selected').val();
         arrParams = [];
         var delaytoexecute = 0;
-        if (FID == 15 || FID == 19 || FID == 18) {
+        if (FID == 15 || FID == 19 || FID == 18 || FID == 20) {
             var PV = {
                 "Param1": FID
             }
@@ -1990,14 +2077,14 @@ function setDate(FieldID,Type) {
             "Param1": FilterToDate
         }
         arrParams.push(PV);
-        if (FID == 19 || FID == 18) {
+        if (FID == 19 || FID == 18 || FID == 20) {
             var PV = {
                 "Param1": TypeID
             }
             arrParams.push(PV);
         }
         var listParams = {};
-        if (FID != 18) {
+        if (FID != 18 && FID != 20) {
             listParams = {
                 "ReportID": FID,
                 "ProcedureName": arrReportDeatils[0].ProcedureName ,// $("#txtProcName").val(),
@@ -2024,7 +2111,7 @@ function setDate(FieldID,Type) {
                 arrParams.push(PV);
             }
             listParams = {
-                "ReportID": drillHistory.length == 0 ? "18" : "15",
+                "ReportID": drillHistory.length == 0 ? FID : "15",//"18"
                 "ProcedureName": drillHistory.length == 0 ? arrReportDeatils[0].ProcedureName : "uspFinRepGroupLedger",// $("#txtProcName").val(),
                 "lstvFilters": arrParams
             };
@@ -2097,13 +2184,7 @@ function setDate(FieldID,Type) {
             }
         }
     });
-    function renderBreadcrumb() {
-        var html = '';
-        if (breadcrumbList.length > 0) {
-            html = breadcrumbList.join(' <span style="color: #999;">&rarr;</span> ');
-        }
-        //$("#breadcrumb-container").html(html);
-    }
+
     function bindDetailDataTable(data, filterdata) {
         if (data.length === 0) {
             return; // No data to display
@@ -3670,5 +3751,7 @@ function setDate(FieldID,Type) {
         //    $(this).removeClass('is-invalid');
         //}
     });
-
+    function formatIndianCurrency(num) {
+        return '₹ ' + parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 </script>

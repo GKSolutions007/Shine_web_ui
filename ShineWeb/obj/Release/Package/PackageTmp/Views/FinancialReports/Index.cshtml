@@ -1010,27 +1010,29 @@
                     console.log("columns : ", columnsettings);
                     if (nTableID == 1) {
                         columnsettings = (data);
-                        var actioncol =
-                        {
-                            "field": "Action",
-                            "header": "Action",
-                            "type": "action",
-                            "width": 101,
-                            "align": "center",
-                            "visible": true,
-                            "EnableColumnMenu": false,
-                            "ShowinColumnOption": false,
-                            "Total": false,
-                            "TotalYN": "0",
-                            "EnableSum": false,
-                            "EnableAvg": false,
-                            "precision": "2",
-                            "ClickPopup": false,
-                            "Printwidth": 15,
-                            "PrintYN": false,
-                            "PrintColumnName": "Action"
-                        };
-                        columnsettings.push(actioncol);
+                        if (FID == 15 || FID == 19 || FID == 18) {
+                            var actioncol =
+                            {
+                                "field": "Action",
+                                "header": "Action",
+                                "type": "action",
+                                "width": 101,
+                                "align": "center",
+                                "visible": true,
+                                "EnableColumnMenu": false,
+                                "ShowinColumnOption": false,
+                                "Total": false,
+                                "TotalYN": "0",
+                                "EnableSum": false,
+                                "EnableAvg": false,
+                                "precision": "2",
+                                "ClickPopup": false,
+                                "Printwidth": 15,
+                                "PrintYN": false,
+                                "PrintColumnName": "Action"
+                            };
+                            columnsettings.push(actioncol);
+                        }
                         console.log("Header Columns : ", columnsettings);
                         if (columnsettings.length) {
                             arrParamHiddenColumns = columnsettings.filter(hd => hd.ShowinColumnOption == false);
@@ -1436,31 +1438,72 @@ function setDate(FieldID,Type) {
 
     $('#btnPopupGenerate,#btnGenerate').click(function (e) {
         if (CheckMandatory()) {
+            GetColumnSettingsData(2, FID, 1);
+            currentLevel = 1, drillHistory = [], breadcrumbList = [];
             arrParams = [], ParamIndex = 1;
-            $('#tblFilterData tr td').each(function (i, items) {
-                if (i % 2 == 1) {
-                    console.log("Field Type : ", items.firstChild);
-                    var input = items.firstChild.id;
-                    var inputtype = items.firstChild.type;
-                    var s = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : $("#" + input).val();
-                    if (s == null) {
-                        //alert("No Value");
-                    }
-                    else {
-                        //alert("Values " + s);
-                        var strpv = "Param" + ParamIndex;
-                        var PV = {
-                            "Param1": s
-                        }
-                        arrParams.push(PV);
-                        ParamIndex++;
-                    }
+            if (FID == 15 || FID == 19) {
+
+                const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val() ||
+                    $('#tblFilterData select[name="BranchNameAL"] option:selected').val();;
+                const FilterAccGrpName = $('#tblFilterData input[name="FAAccountGroups"]').val();
+                const FilterFromDate = $('#tblFilterData input[name="MF"]').val();
+                const FilterToDate = $('#tblFilterData input[name="CD"]').val();
+                const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val();
+
+                var PV = {
+                    "Param1": FID
                 }
-            });
+                arrParams.push(PV);
+                var PV = {
+                    "Param1": BranchID
+                }
+                arrParams.push(PV);
+                PV = {
+                    "Param1": FilterAccGrpName
+                }
+                arrParams.push(PV);
+                PV = {
+                    "Param1": FilterFromDate
+                }
+                arrParams.push(PV);
+                PV = {
+                    "Param1": FilterToDate
+                }
+                arrParams.push(PV);
+                if (FID == 19) {
+                    var PV = {
+                        "Param1": TypeID
+                    }
+                    arrParams.push(PV);
+                }
+            }
+            else {
+                $('#tblFilterData tr td').each(function (i, items) {
+                    if (i % 2 == 1) {
+                        console.log("Field Type : ", items.firstChild);
+                        var input = items.firstChild.id;
+                        var inputtype = items.firstChild.type;
+                        var s = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : $("#" + input).val();
+                        if (s == null) {
+                            //alert("No Value");
+                        }
+                        else {
+                            //alert("Values " + s);
+                            var strpv = "Param" + ParamIndex;
+                            var PV = {
+                                "Param1": s
+                            }
+                            arrParams.push(PV);
+                            ParamIndex++;
+                        }
+                    }
+                });
+            }
             GenerateData();
         }
     });
     function GenerateData() {
+        TempReportID = 0;
             $("#Grid").html("");
             $("#DetailGrid").html("");
             var listParams = {
@@ -1516,6 +1559,9 @@ function setDate(FieldID,Type) {
                     else {
                         showErrorSnackbar("No data found");
                     }
+                }, error: function (data) {
+                    sb.classList.remove("show");
+                    console.log("error ", data);
                 }
             });
 
@@ -1554,8 +1600,11 @@ function setDate(FieldID,Type) {
                     title: 'Back',
                     visible: (row) => {
                         var isVisible = false;
-                        if (FID == 15 && drillHistory.length > 0) {
+                        if ((FID == 15 || FID == 19 || FID == 18) && drillHistory.length > 0) {
                             isVisible = true;
+                        }
+                        if (isVisible && row.AccGroupID == 0 || row.DocID == "") {
+                            isVisible = false;
                         }
                         return isVisible;
                     },  // Only show if deeper than level 1
@@ -1571,9 +1620,12 @@ function setDate(FieldID,Type) {
                     title: 'Drill Down',
                     visible: (row) => {
                         var isVisible = false;
-                        if (FID == 15) {
+                        if (FID == 15 || FID == 19 || FID == 18) {
                             //isVisible = row.AccType == 'Group';
                             isVisible = TempReportID == 2 ? false : true;
+                        }
+                        if (isVisible && row.AccGroupID == 0) {
+                            isVisible = false;
                         }
                         return isVisible;
                     }, // Only show if not terminal level
@@ -1629,7 +1681,7 @@ function setDate(FieldID,Type) {
                 },
             ],
             onCellClick: (rowData, fieldName, cellValue, column) => {
-                if (FID == 15) {
+                if (FID == 15 || FID == 19) {
                     //handleDrillDown(rowData);
                 }
                 if (Frames == 2) {
@@ -1713,6 +1765,19 @@ function setDate(FieldID,Type) {
                 else if (rowData['Account Name'] === 'Closing Balance') {
                     return 'row-closebalance';
                 }
+
+                if (rowData['AccGroupName'] == 'Total') {
+                    return 'row-total';
+                }
+                else if (rowData['AccGroupName'] == 'Trading Account' || rowData['AccGroupName'] == 'Profit & Loss Account') {
+                    return 'row-openbalance';
+                }
+                else if (rowData['AccGroupName'] == "Gross Loss" || rowData['AccGroupName'] == 'Gross Profite') {
+                    return 'row-closebalance';
+                }
+                else if (rowData['AccGroupName'] == "Net Loss" || rowData['AccGroupName'] == 'Net Profite') {
+                    return 'row-closebalance';
+                }
                 // You can add more conditions here
                 // Example: if (rowData['Status'] === 'Cancelled') return 'row-cancelled';
                 return null; // No special styling
@@ -1740,41 +1805,73 @@ function setDate(FieldID,Type) {
             nSelAccGroupID: rowData.SelAccGroupID, strSelAccGroupName: rowData.SelAccGroupName
         });
 
-        const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val();
+        const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val() || 
+            $('#tblFilterData select[name="BranchNameAL"] option:selected').val();
         const FilterAccGrpName = $('#tblFilterData input[name="FAAccountGroups"]').val();
         const FilterFromDate = $('#tblFilterData input[name="MF"]').val();
         const FilterToDate = $('#tblFilterData input[name="CD"]').val();
+        const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val();
         console.log(BranchID, FilterAccGrpName, FilterFromDate, FilterToDate);
         console.log("rowData ", rowData);
         var typeofAccount = rowData.AccType;
         arrParams = [];
         var delaytoexecute = 0;
-        var PV = {
-            "Param1": BranchID
-        }
-        arrParams.push(PV);
-        PV = {
-            "Param1": rowData.AccGroupName
-        }
-        arrParams.push(PV);
-        PV = {
-            "Param1": FilterFromDate
-        }
-        arrParams.push(PV);
-        PV = {
-            "Param1": FilterToDate
-        }
-        arrParams.push(PV);
+        
         $("#Grid").html("");
         if (typeofAccount == "Group") {
+            if (FID == 15 || FID == 19 || FID == 18) {
+                var PV = {
+                    "Param1": FID
+                }
+                arrParams.push(PV);
+            }
+            var PV = {
+                "Param1": BranchID
+            }
+            arrParams.push(PV);
+            PV = {
+                "Param1": rowData.AccGroupName
+            }
+            arrParams.push(PV);
+            PV = {
+                "Param1": FilterFromDate
+            }
+            arrParams.push(PV);
+            PV = {
+                "Param1": FilterToDate
+            }
+            arrParams.push(PV);
+            if (FID == 19 || FID == 18) {
+                var PV = {
+                    "Param1": TypeID
+                }
+                arrParams.push(PV);
+            }
+
             TempReportID = 0;
             var listParams = {
-                "ReportID": FID,
-                "ProcedureName": arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
+                "ReportID": FID == "18" ? "15" : FID,
+                "ProcedureName": FID == "18" ? "uspFinRepGroupLedger" : arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
                 "lstvFilters": arrParams
             };
         }
         else {
+            var PV = {
+                "Param1": BranchID
+            }
+            arrParams.push(PV);
+            PV = {
+                "Param1": rowData.AccGroupName
+            }
+            arrParams.push(PV);
+            PV = {
+                "Param1": FilterFromDate
+            }
+            arrParams.push(PV);
+            PV = {
+                "Param1": FilterToDate
+            }
+            arrParams.push(PV);
             TempReportID = 2;
             GetColumnSettingsData(2, TempReportID, 1);
             delaytoexecute = 1000;
@@ -1839,6 +1936,9 @@ function setDate(FieldID,Type) {
                     else {
                         bindDataTable(eval(data), Excelfilter);
                     }
+                }, error: function (data) {
+                    sb.classList.remove("show");
+                    console.log("error ", data);
                 }
             });
         }, delaytoexecute);
@@ -1860,12 +1960,20 @@ function setDate(FieldID,Type) {
         }
     }
     function loadPreviousLevelData(filterValue) {
-        const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val();
+        const BranchID = $('#tblFilterData select[name="BranchName"] option:selected').val() ||
+            $('#tblFilterData select[name="BranchNameAL"] option:selected').val();;
         const FilterAccGrpName = $('#tblFilterData input[name="FAAccountGroups"]').val();
         const FilterFromDate = $('#tblFilterData input[name="MF"]').val();
         const FilterToDate = $('#tblFilterData input[name="CD"]').val();
+        const TypeID = $('#tblFilterData select[name="TrailBalance"] option:selected').val();
         arrParams = [];
         var delaytoexecute = 0;
+        if (FID == 15 || FID == 19 || FID == 18) {
+            var PV = {
+                "Param1": FID
+            }
+            arrParams.push(PV);
+        }
         var PV = {
             "Param1": BranchID
         }
@@ -1882,11 +1990,45 @@ function setDate(FieldID,Type) {
             "Param1": FilterToDate
         }
         arrParams.push(PV);
-        var listParams = {
-            "ReportID": FID,
-            "ProcedureName": arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
-            "lstvFilters": arrParams
-        };
+        if (FID == 19 || FID == 18) {
+            var PV = {
+                "Param1": TypeID
+            }
+            arrParams.push(PV);
+        }
+        var listParams = {};
+        if (FID != 18) {
+            listParams = {
+                "ReportID": FID,
+                "ProcedureName": arrReportDeatils[0].ProcedureName ,// $("#txtProcName").val(),
+                "lstvFilters": arrParams
+            };
+        } else {
+            if (drillHistory.length == 0) {
+                arrParams = [];
+                var PV = {
+                    "Param1": BranchID
+                }
+                arrParams.push(PV);
+                PV = {
+                    "Param1": FilterFromDate
+                }
+                arrParams.push(PV);
+                PV = {
+                    "Param1": FilterToDate
+                }
+                arrParams.push(PV);
+                var PV = {
+                    "Param1": TypeID
+                }
+                arrParams.push(PV);
+            }
+            listParams = {
+                "ReportID": drillHistory.length == 0 ? "18" : "15",
+                "ProcedureName": drillHistory.length == 0 ? arrReportDeatils[0].ProcedureName : "uspFinRepGroupLedger",// $("#txtProcName").val(),
+                "lstvFilters": arrParams
+            };
+        }
         var Excelfilter = [];
         var Col2Data = "";
         $('#tblFilterData tr td').each(function (i, items) {
@@ -1934,6 +2076,7 @@ function setDate(FieldID,Type) {
                     bindDataTable(eval(data), Excelfilter);
                 }
             }, error: function (data) {
+                sb.classList.remove("show");
                 console.log("error ", data);
             }
 
