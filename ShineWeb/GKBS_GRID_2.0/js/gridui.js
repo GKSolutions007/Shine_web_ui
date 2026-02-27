@@ -3636,7 +3636,7 @@ class GKBSDynamicGrid {
                             const displayData = { ...rowData };
                             delete displayData._gridId;
 
-                            alert(`Row Data:\n\n${JSON.stringify(displayData, null, 2)}`);
+                            //alert(`Row Data:\n\n${JSON.stringify(displayData, null, 2)}`);
                         }
                     }
                 }
