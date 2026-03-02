@@ -43,6 +43,7 @@ namespace ShineWeb.Controllers
                 string editprice = dtPermission.Select("MenuID = 320", null).Length > 0 ? "1" : "0";
                 string DrftMod = dtPermission.Select("MenuID = 384", null).Length > 0 ? "1" : "0";
                 string DrftCan = dtPermission.Select("MenuID = 385", null).Length > 0 ? "1" : "0";
+                string EnbPaid = dtPermission.Select("MenuID = 481", null).Length > 0 ? "1" : "0";
 
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormID = "12";
@@ -60,6 +61,7 @@ namespace ShineWeb.Controllers
                 dam.EnablePriceEditInTransaction = editprice;
                 dam.DraftModify = DrftMod;
                 dam.DraftCancel = DrftCan;
+                dam.EnablePaid = EnbPaid;
                 return View(dam);
             }
         }
