@@ -137,7 +137,7 @@
         .modalBatch-content {
             background-color: #ffffff;
             margin: 3% auto; /* 15% from the top and centered */
-            padding: 10px;
+            padding: 1px;
             border: 1px solid #888;
             width: 80%; /* Could be more or less, depending on screen size */
             height: 70%;
@@ -150,7 +150,7 @@
         .modalBatch-content {
             background-color: #ffffff;
             margin: 10% auto; /* 15% from the top and centered */
-            padding: 25px;
+            padding: 5px;
             border: 1px solid #888;
             width: 95%; /* Could be more or less, depending on screen size */
             height: 80%;
@@ -172,8 +172,7 @@
             text-decoration: none;
             cursor: pointer;
         }
-
-    .modalProdInfo {
+        .modalProdInfo {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
         z-index: 1000; /* Sit on top */
@@ -1322,10 +1321,15 @@
                             <table class="table" width="100%">
                                 <tr>
                                     <td width="8%">
+                                        <button id="openproduct1" class="btn btn-primary">
+                                            <span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Edit Product
+                                        </button>
+                                    </td>
+                                    <td width="7%">
                                         <button id="btnBatchAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
                                     </td>
 
-                                    <td width="8%">
+                                    <td width="7%">
                                         <input type="checkbox" id="chkInclusive" />&ensp;<label for="chkInclusive">Inclusive</label>
                                     </td>
                                     <td width="12">
@@ -1340,19 +1344,19 @@
                                             <input id="txtGridAddnlDisc" hidden />
                                         </span>
                                     </td>
-                                    <td width="8%">
+                                    <td width="7%">
                                         <span class="form-label">
                                             <input txttag="0" class="form-control FormBtField txtsettag" type="number" step="any" id="txtBatchQty" placeholder="" disabled>
                                             <label class="labelup">Qty</label>
                                         </span>
                                     </td>
-                                    <td width="8%">
+                                    <td width="7%">
                                         <span class="form-label">
                                             <input txttag="0" class="form-control FormBtField txtsettag" type="number" step="any" id="txtBatchFreeQty" placeholder="" disabled>
                                             <label class="labelup">Free Qty</label>
                                         </span>
                                     </td>
-                                    <td width="8%">
+                                    <td width="7%">
                                         <span class="form-label">
                                             <input txttag="0" class="form-control FormBtField txtsettag" type="number" step="any" id="txtBatchDmgQty" placeholder="" disabled>
                                             <label class="labelup">Dmg Qty</label>
@@ -1370,13 +1374,13 @@
                                             <label class="labelup">Dmg Value </label>
                                         </span>
                                     </td>
-                                    <td width="12%">
+                                    <td width="11%">
                                         <span class="form-label">
                                             <input class="form-control FormBtField" type="text" id="txtBatchUOMName" placeholder="" disabled>
                                             <label class="labelup">Selected UOM</label>
                                         </span>
                                     </td>
-                                    <td width="10%">
+                                    <td width="8%">
                                         <span class="form-label">
                                             <input class="form-control FormBtField" type="text" id="txtBatchConversion" placeholder="" disabled>
                                             <label class="labelup">Conv Rate</label>
@@ -2024,6 +2028,7 @@
     var isEnable = PurchaseBillPriceEdit == 0 ? "disabled" : "";
     var PrintTransID = 2, PrintConfigID = 0;
     var BatchMode = 0; // 0 - New product, 1 - Edit Product
+    var BatchFromProductMaster = 0;
     var nTransMode = 1, nIsDraft = 0;
     var grid, PurchaseBill;
     GetColumnSettingsData(2, 25, 1);
@@ -2376,118 +2381,125 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         }
         if (IsValid) {
-            LoadProductBatches();
+            LoadProductBatches(true);
         }
     });
+    
+    function ReInitializeBatchfromProdMaster() {
+        TableBatch.draw().clear(); TableBatch.draw().clear();
+        mind = document.getElementById("dtpDate").getAttribute("max");
+        var isChk = $("#chkInclusive").is(":checked");
+        var TaxPern = parseFloat((TempProd.GSTPern / 100) + 1);
+        updateLabelColumn("lblSaleson", parseFloat(TempProd.SaleonpPern));
+        updateLabelColumn("lblECPon", parseFloat(TempProd.ECPonpPern));
+        updateLabelColumn("lblSPLon", parseFloat(TempProd.SPLonpPern));
+        var salpern = parseFloat(TempProd.SaleonpPern) > 0 ? "forestgreen" : "red";
+        var ecppern = parseFloat(TempProd.ECPonpPern) > 0 ? "forestgreen" : "red";
+        var splpern = parseFloat(TempProd.SPLonpPern) > 0 ? "forestgreen" : "red";
+        $("#lblSaleson").css("color", salpern);
+        $("#lblECPon").css("color", ecppern);
+        $("#lblSPLon").css("color", splpern);
+        if (isChk) {
+            PurchasePrice = (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
+            SalesPrice = (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
+            ECP = (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
+            SPLPrice = (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
+            MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
+            ReturnPrice = (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
+        } else {
+            PurchasePrice = (parseFloat(TempProd.PurchasePrice)) * parseFloat(ConvFact);
+            SalesPrice = (parseFloat(TempProd.SalesPrice)) * parseFloat(ConvFact);
+            ECP = (parseFloat(TempProd.ECP)) * parseFloat(ConvFact);
+            SPLPrice = (parseFloat(TempProd.SPLPrice)) * parseFloat(ConvFact);
+            MRP = (parseFloat(TempProd.MRP));// * parseFloat(ConvFact);
+            ReturnPrice = (parseFloat(TempProd.ReturnPrice));// * parseFloat(ConvFact);
+        }
 
-    function LoadProductBatches() {
+        //TempProd.DateFormat == "1" ? "date" : "month"
+        TableBatch.row.add([
+            0,
+            '<input type="text" id="txtBTBatchNo' + BatchRID + '" class="gdInput"txtsettag name="BatchNo"/>',
+            '<input type="date" id="txtBTPKD' + BatchRID + '" max="' + mind + '" class="gdInput"txtsettag name="PKDDate"/><br/><input type="date" id="txtBTExp' + BatchRID + '" min="' + mind + '" class="gdInput"txtsettag name="ExpiryDate"/>',
+            '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput clsBQty txtsettag"txtsettag name="Qty" id="txtBTQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput txtsettag"txtsettag name="FreeQty" id="txtBTFreeQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput txtsettag"txtsettag name="DmgQty" id="txtBTDmgQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<input ' + isEnable + ' txttag =' + PurchasePrice + ' title="' + PurchasePrice + '" value ="' + parseFloat(PurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBPrice txtsettag" name="PurchasePrice" id="txtBTPPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<input ' + isEnable + ' txttag =' + SalesPrice + ' title="' + SalesPrice + '" value ="' + parseFloat(SalesPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="SalesPrice" id="txtBTSPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<input ' + isEnable + ' txttag =' + ECP + ' title="' + ECP + '" value="' + parseFloat(ECP).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="ECP" id="txtBTECP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<input ' + isEnable + ' txttag =' + SPLPrice + ' title="' + SPLPrice + '" value ="' + parseFloat(SPLPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="SPLPrice" id="txtBTSPLPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<input ' + isEnable + ' txttag =' + MRP + ' title="' + MRP + '" value ="' + parseFloat(MRP).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsMRPPrice txtsettag" name="MRP" id="txtBTMRP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<input ' + isEnable + ' txttag =' + ReturnPrice + ' title="' + ReturnPrice + '" value ="' + parseFloat(ReturnPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="ReturnPrice" id="txtBTRtnPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+            '<span class="glyphicon glyphicon-trash clsbatchtrash"></span>'
+        ]).draw(false);
+        BatchRID++;
+        $("#txtBatchTaxName").val(TempProd.TaxName);
+        $("#txtBatchTaxPern").val(TempProd.GSTPern);
+        $("#txtBatchTaxID").val(TempProd.PurchaseTaxID);
+        $("#txtBatchProdDisc").val(TempProd.ProductDiscPerc);
+        $("#txtTrackBatch").val(TempProd.TrackBatch);
+        $("#txtTrackPKD").val(TempProd.TrackPDK);
+        var uomn = $('#cmbUOM option:selected').text();
+        $("#txtBatchUOMName").val(uomn);
+        $("#txtBatchConversion").val(ConvFact);
+        var tbat = TempProd.TrackBatch == "True" ? true : false;
+        var tpkd = TempProd.TrackPDK == "True" ? true : false;
+        TableBatch.column(1).visible(tbat);
+        TableBatch.column(2).visible(tpkd);
+    }
+    function LoadProductBatches(openbatchpopup) {
         if ($('#txtHProdID').val() != "") {
-            modal.style.display = "block";
-            mind = document.getElementById("dtpDate").getAttribute("max");
-            var isChk = $("#chkInclusive").is(":checked");
-            var TaxPern = parseFloat((TempProd.GSTPern / 100) + 1);
-            updateLabelColumn("lblSaleson", parseFloat(TempProd.SaleonpPern));
-            updateLabelColumn("lblECPon", parseFloat(TempProd.ECPonpPern));
-            updateLabelColumn("lblSPLon", parseFloat(TempProd.SPLonpPern));
-            var salpern = parseFloat(TempProd.SaleonpPern) > 0 ? "forestgreen" : "red";
-            var ecppern = parseFloat(TempProd.ECPonpPern) > 0 ? "forestgreen" : "red";
-            var splpern = parseFloat(TempProd.SPLonpPern) > 0 ? "forestgreen" : "red";
-            $("#lblSaleson").css("color", salpern);
-            $("#lblECPon").css("color", ecppern);
-            $("#lblSPLon").css("color", splpern);
-            var PurchasePrice = 0, SalesPrice = 0, ECP = 0, SPLPrice = 0, MRP = 0, ReturnPrice = 0;
-
-            if (BatchMode == 0)// New Product
-            {
-                if (isChk) {
-                    PurchasePrice = (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
-                    SalesPrice = (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
-                    ECP = (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
-                    SPLPrice = (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
-                    MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
-                    ReturnPrice = (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
-                } else {
-                    PurchasePrice = (parseFloat(TempProd.PurchasePrice)) * parseFloat(ConvFact);
-                    SalesPrice = (parseFloat(TempProd.SalesPrice)) * parseFloat(ConvFact);
-                    ECP = (parseFloat(TempProd.ECP)) * parseFloat(ConvFact);
-                    SPLPrice = (parseFloat(TempProd.SPLPrice)) * parseFloat(ConvFact);
-                    MRP = (parseFloat(TempProd.MRP));// * parseFloat(ConvFact);
-                    ReturnPrice = (parseFloat(TempProd.ReturnPrice));// * parseFloat(ConvFact);
-                }
-
-                //TempProd.DateFormat == "1" ? "date" : "month"
-                TableBatch.row.add([
-                    0,
-                    '<input type="text" id="txtBTBatchNo' + BatchRID + '" class="gdInput"txtsettag name="BatchNo"/>',
-                    '<input type="date" id="txtBTPKD' + BatchRID + '" max="' + mind + '" class="gdInput"txtsettag name="PKDDate"/><br/><input type="date" id="txtBTExp' + BatchRID + '" min="' + mind + '" class="gdInput"txtsettag name="ExpiryDate"/>',
-                    '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput clsBQty txtsettag"txtsettag name="Qty" id="txtBTQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput txtsettag"txtsettag name="FreeQty" id="txtBTFreeQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput txtsettag"txtsettag name="DmgQty" id="txtBTDmgQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + isEnable + ' txttag =' + PurchasePrice + ' title="' + PurchasePrice + '" value ="' + parseFloat(PurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBPrice txtsettag" name="PurchasePrice" id="txtBTPPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + isEnable + ' txttag =' + SalesPrice + ' title="' + SalesPrice + '" value ="' + parseFloat(SalesPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="SalesPrice" id="txtBTSPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + isEnable + ' txttag =' + ECP + ' title="' + ECP + '" value="' + parseFloat(ECP).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="ECP" id="txtBTECP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + isEnable + ' txttag =' + SPLPrice + ' title="' + SPLPrice + '" value ="' + parseFloat(SPLPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="SPLPrice" id="txtBTSPLPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + isEnable + ' txttag =' + MRP + ' title="' + MRP + '" value ="' + parseFloat(MRP).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsMRPPrice txtsettag" name="MRP" id="txtBTMRP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + isEnable + ' txttag =' + ReturnPrice + ' title="' + ReturnPrice + '" value ="' + parseFloat(ReturnPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="ReturnPrice" id="txtBTRtnPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                    '<span class="glyphicon glyphicon-trash clsbatchtrash"></span>'
-                ]).draw(false);
-                BatchRID++;
-                $("#txtBatchTaxName").val(TempProd.TaxName);
-                $("#txtBatchTaxPern").val(TempProd.GSTPern);
-                $("#txtBatchTaxID").val(TempProd.PurchaseTaxID);
-                $("#txtBatchProdDisc").val(TempProd.ProductDiscPerc);
-                $("#txtTrackBatch").val(TempProd.TrackBatch);
-                $("#txtTrackPKD").val(TempProd.TrackPDK);
-                var uomn = $('#cmbUOM option:selected').text();
-                $("#txtBatchUOMName").val(uomn);
-                $("#txtBatchConversion").val(ConvFact);
-                var tbat = TempProd.TrackBatch == "True" ? true : false;
-                var tpkd = TempProd.TrackPDK == "True" ? true : false;
-                TableBatch.column(1).visible(tbat);
-                TableBatch.column(2).visible(tpkd);
-                //TableBatch.column(3).visible(tpkd);
+            if (openbatchpopup) {
+                modal.style.display = "block";
             }
-            else {
-                TableBatch.draw().clear(); TableBatch.draw().clear();
-                var PID = $('#txtHProdID').val();
-                //var Filterdata = BatchAcceptArray.filter(arr => arr.ProdID.includes(PID));
-                var Filterdata = BatchAcceptArray.filter(a => a.ProdID == PID);
-                if (Filterdata.length > 0) {
-                    for (var i = 0; i < Filterdata.length; i++) {
-                        var chk = Filterdata[i].CheckInclusive;
-                        $("#chkInclusive").prop("checked", chk == 1 ? true : false);
-                        if (chk == 1) {
-                            PurchasePrice = (parseFloat(Filterdata[i].PurchasePrice) * TaxPern);// * parseFloat(ConvFact);
-                            SalesPrice = (parseFloat(Filterdata[i].SalesPrice) * TaxPern);// * parseFloat(ConvFact);
-                            ECP = (parseFloat(Filterdata[i].ECP) * TaxPern);// * parseFloat(ConvFact);
-                            SPLPrice = (parseFloat(Filterdata[i].SPLPrice) * TaxPern);// * parseFloat(ConvFact);
-                            MRP = (parseFloat(Filterdata[i].MRP));// * TaxPern * parseFloat(ConvFact);
-                            ReturnPrice = (parseFloat(Filterdata[i].ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
-                        } else {
-                            PurchasePrice = (parseFloat(Filterdata[i].PurchasePrice));// * parseFloat(ConvFact);
-                            SalesPrice = (parseFloat(Filterdata[i].SalesPrice));// * parseFloat(ConvFact);
-                            ECP = (parseFloat(Filterdata[i].ECP));// * parseFloat(ConvFact);
-                            SPLPrice = (parseFloat(Filterdata[i].SPLPrice));// * parseFloat(ConvFact);
-                            MRP = (parseFloat(Filterdata[i].MRP));// * parseFloat(ConvFact);
-                            ReturnPrice = (parseFloat(Filterdata[i].ReturnPrice));// * parseFloat(ConvFact);
-                        }
-                        TableBatch.row.add([
-                            Filterdata[i].InventoryID,
-                            '<input type="text" class="gdInput"txtsettag name="BatchNo" value="' + Filterdata[i].BatchNo + '"/>',
-                            '<input type="date" max="' + mind + '" class="gdInput"txtsettag name="PKDDate" value="' + Filterdata[i].PKDDate + '"/><br/><input type="date" min="' + mind + '" class="gdInput"txtsettag name="ExpiryDate" value="' + Filterdata[i].ExpiryDate + '"/>',
-                            '<input txttag =' + Filterdata[i].Qty + ' title="' + Filterdata[i].Qty + '" value ="' + parseFloat(Filterdata[i].Qty).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBQty txtsettag"txtsettag name="Qty" id="txtBTQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input txttag =' + Filterdata[i].FreeQty + ' title="' + Filterdata[i].FreeQty + '" value ="' + parseFloat(Filterdata[i].FreeQty).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="FreeQty" id="txtBTFreeQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input txttag =' + Filterdata[i].DmgQty + ' title="' + Filterdata[i].DmgQty + '" value ="' + parseFloat(Filterdata[i].DmgQty).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="DmgQty" id="txtBTDmgQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input ' + isEnable + ' txttag =' + PurchasePrice + ' title="' + PurchasePrice + '" value ="' + parseFloat(PurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBPrice txtsettag"txtsettag name="PurchasePrice" id="txtBTPPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input ' + isEnable + ' txttag =' + SalesPrice + ' title="' + SalesPrice + '" value ="' + parseFloat(SalesPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="SalesPrice" id="txtBTSPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input ' + isEnable + ' txttag =' + ECP + ' title="' + ECP + '" value ="' + parseFloat(ECP).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="ECP" id="txtBTECP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input ' + isEnable + ' txttag =' + SPLPrice + ' title="' + SPLPrice + '" value ="' + parseFloat(SPLPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="SPLPrice" id="txtBTSPLPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input ' + isEnable + ' txttag =' + MRP + ' title="' + MRP + '" value ="' + parseFloat(MRP).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="MRP" id="txtBTMRP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input ' + isEnable + ' txttag =' + ReturnPrice + ' title="' + ReturnPrice + '" value ="' + parseFloat(ReturnPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="ReturnPrice" id="txtBTRtnPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<span class="glyphicon glyphicon-trash clsbatchtrash"></span>'
-                        ]).draw(false);
-                        BatchRID++;
+                mind = document.getElementById("dtpDate").getAttribute("max");
+                var isChk = $("#chkInclusive").is(":checked");
+                var TaxPern = parseFloat((TempProd.GSTPern / 100) + 1);
+                updateLabelColumn("lblSaleson", parseFloat(TempProd.SaleonpPern));
+                updateLabelColumn("lblECPon", parseFloat(TempProd.ECPonpPern));
+                updateLabelColumn("lblSPLon", parseFloat(TempProd.SPLonpPern));
+                var salpern = parseFloat(TempProd.SaleonpPern) > 0 ? "forestgreen" : "red";
+                var ecppern = parseFloat(TempProd.ECPonpPern) > 0 ? "forestgreen" : "red";
+                var splpern = parseFloat(TempProd.SPLonpPern) > 0 ? "forestgreen" : "red";
+                $("#lblSaleson").css("color", salpern);
+                $("#lblECPon").css("color", ecppern);
+                $("#lblSPLon").css("color", splpern);
+                var PurchasePrice = 0, SalesPrice = 0, ECP = 0, SPLPrice = 0, MRP = 0, ReturnPrice = 0;
+
+                if (BatchMode == 0)// New Product
+                {
+                    if (isChk) {
+                        PurchasePrice = (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
+                        SalesPrice = (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
+                        ECP = (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
+                        SPLPrice = (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
+                        MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
+                        ReturnPrice = (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
+                    } else {
+                        PurchasePrice = (parseFloat(TempProd.PurchasePrice)) * parseFloat(ConvFact);
+                        SalesPrice = (parseFloat(TempProd.SalesPrice)) * parseFloat(ConvFact);
+                        ECP = (parseFloat(TempProd.ECP)) * parseFloat(ConvFact);
+                        SPLPrice = (parseFloat(TempProd.SPLPrice)) * parseFloat(ConvFact);
+                        MRP = (parseFloat(TempProd.MRP));// * parseFloat(ConvFact);
+                        ReturnPrice = (parseFloat(TempProd.ReturnPrice));// * parseFloat(ConvFact);
                     }
+
+                    //TempProd.DateFormat == "1" ? "date" : "month"
+                    TableBatch.row.add([
+                        0,
+                        '<input type="text" id="txtBTBatchNo' + BatchRID + '" class="gdInput"txtsettag name="BatchNo"/>',
+                        '<input type="date" id="txtBTPKD' + BatchRID + '" max="' + mind + '" class="gdInput"txtsettag name="PKDDate"/><br/><input type="date" id="txtBTExp' + BatchRID + '" min="' + mind + '" class="gdInput"txtsettag name="ExpiryDate"/>',
+                        '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput clsBQty txtsettag"txtsettag name="Qty" id="txtBTQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput txtsettag"txtsettag name="FreeQty" id="txtBTFreeQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input txttag ="0" title="0" value ="0" type="number" step="any" class="gdInput txtsettag"txtsettag name="DmgQty" id="txtBTDmgQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input ' + isEnable + ' txttag =' + PurchasePrice + ' title="' + PurchasePrice + '" value ="' + parseFloat(PurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBPrice txtsettag" name="PurchasePrice" id="txtBTPPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input ' + isEnable + ' txttag =' + SalesPrice + ' title="' + SalesPrice + '" value ="' + parseFloat(SalesPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="SalesPrice" id="txtBTSPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input ' + isEnable + ' txttag =' + ECP + ' title="' + ECP + '" value="' + parseFloat(ECP).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="ECP" id="txtBTECP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input ' + isEnable + ' txttag =' + SPLPrice + ' title="' + SPLPrice + '" value ="' + parseFloat(SPLPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="SPLPrice" id="txtBTSPLPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input ' + isEnable + ' txttag =' + MRP + ' title="' + MRP + '" value ="' + parseFloat(MRP).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsMRPPrice txtsettag" name="MRP" id="txtBTMRP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input ' + isEnable + ' txttag =' + ReturnPrice + ' title="' + ReturnPrice + '" value ="' + parseFloat(ReturnPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag" name="ReturnPrice" id="txtBTRtnPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<span class="glyphicon glyphicon-trash clsbatchtrash"></span>'
+                    ]).draw(false);
+                    BatchRID++;
                     $("#txtBatchTaxName").val(TempProd.TaxName);
                     $("#txtBatchTaxPern").val(TempProd.GSTPern);
                     $("#txtBatchTaxID").val(TempProd.PurchaseTaxID);
@@ -2496,14 +2508,71 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     $("#txtTrackPKD").val(TempProd.TrackPDK);
                     var uomn = $('#cmbUOM option:selected').text();
                     $("#txtBatchUOMName").val(uomn);
+                    $("#txtBatchConversion").val(ConvFact);
                     var tbat = TempProd.TrackBatch == "True" ? true : false;
                     var tpkd = TempProd.TrackPDK == "True" ? true : false;
                     TableBatch.column(1).visible(tbat);
                     TableBatch.column(2).visible(tpkd);
                     //TableBatch.column(3).visible(tpkd);
                 }
-                CalculateBatchGrid();
-            }
+                else {
+                    TableBatch.draw().clear(); TableBatch.draw().clear();
+                    var PID = $('#txtHProdID').val();
+                    //var Filterdata = BatchAcceptArray.filter(arr => arr.ProdID.includes(PID));
+                    var Filterdata = BatchAcceptArray.filter(a => a.ProdID == PID);
+                    if (Filterdata.length > 0) {
+                        for (var i = 0; i < Filterdata.length; i++) {
+                            var chk = Filterdata[i].CheckInclusive;
+                            $("#chkInclusive").prop("checked", chk == 1 ? true : false);
+                            if (chk == 1) {
+                                PurchasePrice = (parseFloat(Filterdata[i].PurchasePrice) * TaxPern);// * parseFloat(ConvFact);
+                                SalesPrice = (parseFloat(Filterdata[i].SalesPrice) * TaxPern);// * parseFloat(ConvFact);
+                                ECP = (parseFloat(Filterdata[i].ECP) * TaxPern);// * parseFloat(ConvFact);
+                                SPLPrice = (parseFloat(Filterdata[i].SPLPrice) * TaxPern);// * parseFloat(ConvFact);
+                                MRP = (parseFloat(Filterdata[i].MRP));// * TaxPern * parseFloat(ConvFact);
+                                ReturnPrice = (parseFloat(Filterdata[i].ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
+                            } else {
+                                PurchasePrice = (parseFloat(Filterdata[i].PurchasePrice));// * parseFloat(ConvFact);
+                                SalesPrice = (parseFloat(Filterdata[i].SalesPrice));// * parseFloat(ConvFact);
+                                ECP = (parseFloat(Filterdata[i].ECP));// * parseFloat(ConvFact);
+                                SPLPrice = (parseFloat(Filterdata[i].SPLPrice));// * parseFloat(ConvFact);
+                                MRP = (parseFloat(Filterdata[i].MRP));// * parseFloat(ConvFact);
+                                ReturnPrice = (parseFloat(Filterdata[i].ReturnPrice));// * parseFloat(ConvFact);
+                            }
+                            TableBatch.row.add([
+                                Filterdata[i].InventoryID,
+                                '<input type="text" class="gdInput"txtsettag name="BatchNo" value="' + Filterdata[i].BatchNo + '"/>',
+                                '<input type="date" max="' + mind + '" class="gdInput"txtsettag name="PKDDate" value="' + Filterdata[i].PKDDate + '"/><br/><input type="date" min="' + mind + '" class="gdInput"txtsettag name="ExpiryDate" value="' + Filterdata[i].ExpiryDate + '"/>',
+                                '<input txttag =' + Filterdata[i].Qty + ' title="' + Filterdata[i].Qty + '" value ="' + parseFloat(Filterdata[i].Qty).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBQty txtsettag"txtsettag name="Qty" id="txtBTQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input txttag =' + Filterdata[i].FreeQty + ' title="' + Filterdata[i].FreeQty + '" value ="' + parseFloat(Filterdata[i].FreeQty).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="FreeQty" id="txtBTFreeQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input txttag =' + Filterdata[i].DmgQty + ' title="' + Filterdata[i].DmgQty + '" value ="' + parseFloat(Filterdata[i].DmgQty).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="DmgQty" id="txtBTDmgQty' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input ' + isEnable + ' txttag =' + PurchasePrice + ' title="' + PurchasePrice + '" value ="' + parseFloat(PurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBPrice txtsettag"txtsettag name="PurchasePrice" id="txtBTPPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input ' + isEnable + ' txttag =' + SalesPrice + ' title="' + SalesPrice + '" value ="' + parseFloat(SalesPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="SalesPrice" id="txtBTSPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input ' + isEnable + ' txttag =' + ECP + ' title="' + ECP + '" value ="' + parseFloat(ECP).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="ECP" id="txtBTECP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input ' + isEnable + ' txttag =' + SPLPrice + ' title="' + SPLPrice + '" value ="' + parseFloat(SPLPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="SPLPrice" id="txtBTSPLPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input ' + isEnable + ' txttag =' + MRP + ' title="' + MRP + '" value ="' + parseFloat(MRP).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="MRP" id="txtBTMRP' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input ' + isEnable + ' txttag =' + ReturnPrice + ' title="' + ReturnPrice + '" value ="' + parseFloat(ReturnPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput txtsettag"txtsettag name="ReturnPrice" id="txtBTRtnPrice' + BatchRID + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<span class="glyphicon glyphicon-trash clsbatchtrash"></span>'
+                            ]).draw(false);
+                            BatchRID++;
+                        }
+                        $("#txtBatchTaxName").val(TempProd.TaxName);
+                        $("#txtBatchTaxPern").val(TempProd.GSTPern);
+                        $("#txtBatchTaxID").val(TempProd.PurchaseTaxID);
+                        $("#txtBatchProdDisc").val(TempProd.ProductDiscPerc);
+                        $("#txtTrackBatch").val(TempProd.TrackBatch);
+                        $("#txtTrackPKD").val(TempProd.TrackPDK);
+                        var uomn = $('#cmbUOM option:selected').text();
+                        $("#txtBatchUOMName").val(uomn);
+                        var tbat = TempProd.TrackBatch == "True" ? true : false;
+                        var tpkd = TempProd.TrackPDK == "True" ? true : false;
+                        TableBatch.column(1).visible(tbat);
+                        TableBatch.column(2).visible(tpkd);
+                        //TableBatch.column(3).visible(tpkd);
+                    }
+                    CalculateBatchGrid();
+                }
+            
         }
         else {
             showErrorSnackbar("Select valid product");
@@ -4758,7 +4827,7 @@ var Url = '@Session["url"].ToString()';
             }
         //
         setTimeout(function () {
-            LoadProductBatches();
+            LoadProductBatches(true);
         }, 750);
         //ProductTable.row($(this).parents('tr')).remove().draw();
         //calculateProdGrid();
@@ -5193,7 +5262,12 @@ function setDate1(FieldID,Type) {
                         sel += "</select>";
                         TempProd = items;
                         $('#cmbUOM').val(TempProd.PurchaseUomID);//BaseUomID
-                        ConvFact = TempProd.PurchaseCR;
+                        ConvFact = TempProd.PurchaseCR;          
+                        if (BatchFromProductMaster == 1) {
+                            setTimeout(() => {
+                                ReInitializeBatchfromProdMaster()
+                            }, 500);
+                        }
                         //var pname = items.Code + '<br/><input name = "ProName" class="gdInput txtclsProdName" id="dgvProdName' + ProductRID + '" value="' + items.Name + '" title="' + items.Name + '"txtsettag/>';
                         //var hsn = '<input type="number" step="any" class="gdInput" name="HSN" value="' + items.HSNCode + '"txtsettag/>';
                         //ProductTable.cell(nCurrentRowIndex, 0).data(items.ID).draw();
@@ -6108,7 +6182,7 @@ function setDate1(FieldID,Type) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
     }
         var Url = '@Session["url"].ToString()';
-$("#openproduct").click(function (e) {
+    $("#openproduct,#openproduct1").click(function (e) {
     var nProd = $("#txtHProdID").val() != "" ? $("#txtHProdID").val() : 0;
     vw = window.innerWidth;
     vh = window.innerHeight;
