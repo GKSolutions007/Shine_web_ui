@@ -651,7 +651,7 @@ class GKBSDynamicGrid {
             }
 
             // Only calculate for 'number' types
-            if (col.type === 'number' || col.Total === true) {
+            if (col.type === 'number' || col.Total === true || col.EnableCount || col.EnableUnique) {
                 const values = dataToCalculate
                     .map(row => parseFloat(row[col.field]))
                     .filter(val => !isNaN(val)); // Filter out bad data
@@ -661,11 +661,17 @@ class GKBSDynamicGrid {
                     const sum = values.reduce((a, b) => a + b, 0);
                     // 2. Calculate Average
                     const avg = sum / values.length;
-
+                    // 3. Unique Records
+                    var UniqueCounts = 0;
+                    if (col.EnableUnique) {
+                        UniqueCounts = [...new Set(Object.values(values))];
+                    }
                     // Format numbers (e.g., 12,300.50)
                     const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
                     cell.innerHTML = `                    
+                    `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${values.length}</div> ` : ``) + ` 
+                    `+ (col.EnableUnique ? ` <div><span class="dg-stat-label">Unique:</span>${UniqueCounts.length}</div> ` : ``) + ` 
                         `+ (col.EnableSum ? ` <div><span class="dg-stat-label">Sum:</span>${fmt(sum)}</div> ` : ``) + `
                         `+ (col.EnableAvg ? ` <div><span class="dg-stat-label">Avg:</span>${fmt(avg)}</div> ` : ``) + `
                     `;

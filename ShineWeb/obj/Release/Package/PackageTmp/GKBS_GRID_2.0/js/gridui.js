@@ -665,7 +665,7 @@ class GKBSDynamicGrid {
                     // Format numbers (e.g., 12,300.50)
                     const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-                    cell.innerHTML = `
+                    cell.innerHTML = `                    
                         `+ (col.EnableSum ? ` <div><span class="dg-stat-label">Sum:</span>${fmt(sum)}</div> ` : ``) + `
                         `+ (col.EnableAvg ? ` <div><span class="dg-stat-label">Avg:</span>${fmt(avg)}</div> ` : ``) + `
                     `;
