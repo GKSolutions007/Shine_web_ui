@@ -660,6 +660,8 @@
                                     <th style="width:12%">Total</th>
                                     <th style="width:12%">Sum</th>
                                     <th style="width:12%">Average</th>
+                                    <th style="width:12%">Count</th>
+                                    <th style="width:12%">Unique</th>
                                     <th style="width:12%">Column Menu</th>
                                     <th style="width:12%">Show Column Option</th>
                                     <th style="width:12%">Print</th>
@@ -669,7 +671,7 @@
                             </thead>
                             <tfoot>
                                 <tr>
-                                    <th colspan="17"></th>
+                                    <th colspan="19"></th>
                                     <th class="text-end">Total Print Width :</th>
                                     <th class="text-end">
                                         <label id="lblPrintWidth"></label>
@@ -1141,6 +1143,35 @@
 
                                 var ischk = value.EnableAvg == '1' ? 'checked' : '';
                                 field = '<input type="checkbox"  name ="EnableAvg" ' + ischk + ' id="EnableAvg' + rowIndex + '" ' + isDisable + '/>';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableCount == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableCount == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableCount' class='form-control' id='EnableCount" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableCount == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableCount" ' + ischk + ' id="EnableCount' + rowIndex + '" ' + isDisable + '/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableUnique == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableUnique == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableUnique' class='form-control' id='EnableUnique" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableUnique == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableUnique" ' + ischk + ' id="EnableUnique' + rowIndex + '" ' + isDisable + '/>';
 
                                 return field;
                             }
@@ -1771,7 +1802,9 @@ function setDate(FieldID,Type) {
                 "ClickPopup": false,
                 PrintColumnName: columns[i],
                 PrintYN: true,
-                Printwidth: 20
+                Printwidth: 20,
+                "EnableCount": false,
+                "EnableUnique": false
             }
             columnsettings.push(coldata)
         }
@@ -1974,7 +2007,8 @@ function setDate(FieldID,Type) {
                 var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
                     aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
                     aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
-                    aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
+                    aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg, aEnableCount = rowdata.EnableCount,
+                    aEnableUnique = rowdata.EnableUnique
                     aShowinColumnOption = rowdata.ShowinColumnOption;
                 $(this).find("input").each(function (index) {
                     const fieldName = $(this).attr("name");
@@ -2009,6 +2043,12 @@ function setDate(FieldID,Type) {
                     }
                     if (fieldName == "EnableAvg") {
                         aEnableAvg = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableCount") {
+                        aEnableCount = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableUnique") {
+                        aEnableUnique = this.checked ? "1" : "0";
                     }
                     if (fieldName == "ShowinColumnOption") {
                         aShowinColumnOption = this.checked ? "1" : "0";
@@ -2045,7 +2085,9 @@ function setDate(FieldID,Type) {
                     "ShowinColumnOption": aShowinColumnOption,
                     "PrintYN": aPrintYN,
                     "PrintColumnName": aPrintColumnName,
-                    "Printwidth": aPrintwidth
+                    "Printwidth": aPrintwidth,
+                    "EnableCount": aEnableCount,
+                    "EnableUnique": aEnableUnique
                 };
                 ColumnSettingData.push(coldata);
             });
@@ -2097,7 +2139,9 @@ function setDate(FieldID,Type) {
                                             "ClickPopup": false,
                                             PrintColumnName: columns[i],
                                             PrintYN: true,
-                                            Printwidth: 20
+                                            Printwidth: 20,
+                                            "EnableCount": true,
+                                            "EnableUnique": true
                                         }
                                         columnsettings.push(coldata)
                                     }
@@ -3236,4 +3280,60 @@ function setDate(FieldID,Type) {
 
         }, 1500);
     }
+
+    ///////////////////////////////////////////////////
+    //Total CheckBox Validations
+    function validateSelections(rowIndex, event) {
+        const totalBox = $("#cmbTotal" + rowIndex);
+        const sumBox = $("#EnableSum" + rowIndex);
+        const avgBox = $("#EnableAvg" + rowIndex);
+        const countBox = $("#EnableCount" + rowIndex);
+        const uniqueBox = $("#EnableUnique" + rowIndex);
+
+        const clickedName = $(event.target).attr("name");
+        const clickedState = $(event.target).prop("checked");
+
+        // Case 1: User unchecked Total → force Sum & Avg off
+        if (clickedName === "Total" && !clickedState) {
+            sumBox.prop("checked", false);
+            avgBox.prop("checked", false);
+        }
+
+        // Refresh states
+        let sum = sumBox.prop("checked");
+        let avg = avgBox.prop("checked");
+        let count = countBox.prop("checked");
+        let unique = uniqueBox.prop("checked");
+
+        // Case 2: Only 2 selections allowed among Sum/Avg/Count/Unique
+        let selected = [sum, avg, count, unique].filter(x => x).length;
+        if (selected > 2) {
+            $(event.target).prop("checked", false); // undo last action
+            showErrorSnackbar("Only 2 selections allowed among Sum, Avg, Count, Unique.");
+            return; // stop here — don’t apply dependency logic
+        }
+
+        // Case 3: If user clicked Sum or Avg while Total is unchecked → check both
+        if (clickedName === "EnableSum" && clickedState && !totalBox.prop("checked")) {
+            totalBox.prop("checked", true);
+            sumBox.prop("checked", true);
+        }
+        if (clickedName === "EnableAvg" && clickedState && !totalBox.prop("checked")) {
+            totalBox.prop("checked", true);
+            avgBox.prop("checked", true);
+        }
+    }
+
+
+    // Attach listeners
+    $(document).on(
+        "change",
+        "input[name='Total'], input[name='EnableSum'], input[name='EnableAvg'], input[name='EnableCount'], input[name='EnableUnique']",
+        function (event) {
+            var rowIndex = $(this).attr("id").match(/\d+/)[0];
+            validateSelections(rowIndex, event);
+        }
+    );
+
+
 </script>
