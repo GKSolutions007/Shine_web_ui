@@ -664,17 +664,26 @@ class GKBSDynamicGrid {
                     // 3. Unique Records
                     var UniqueCounts = 0;
                     if (col.EnableUnique) {
-                        UniqueCounts = [...new Set(Object.values(values))];
+                        UniqueCounts = new Set(dataToCalculate.map(item => item[col.field])).size;
+                        console.log("have no : " + col.field, Object.values(values));
                     }
                     // Format numbers (e.g., 12,300.50)
                     const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
                     cell.innerHTML = `                    
-                    `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${values.length}</div> ` : ``) + ` 
-                    `+ (col.EnableUnique ? ` <div><span class="dg-stat-label">Unique:</span>${UniqueCounts.length}</div> ` : ``) + ` 
+                    `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${dataToCalculate.length}</div> ` : ``) + ` 
+                    `+ (col.EnableUnique ? ` <div><span class="dg-stat-label">Unique:</span>${UniqueCounts}</div> ` : ``) + ` 
                         `+ (col.EnableSum ? ` <div><span class="dg-stat-label">Sum:</span>${fmt(sum)}</div> ` : ``) + `
                         `+ (col.EnableAvg ? ` <div><span class="dg-stat-label">Avg:</span>${fmt(avg)}</div> ` : ``) + `
                     `;
+                }
+                else {
+                    // 
+                    const uniqueCount = new Set(dataToCalculate.map(item => item[col.field])).size;
+                    console.log(col.field, dataToCalculate.map(item => item[col.field]));
+                    cell.innerHTML = `                    
+                    `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${dataToCalculate.length}</div> ` : ``) + ` 
+                    `+ (col.EnableUnique ? ` <div><span class="dg-stat-label">Unique:</span>${uniqueCount}</div> ` : ``) + ``;
                 }
             } else {
                 // Optional: Show Count for text columns
