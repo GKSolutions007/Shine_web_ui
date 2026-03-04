@@ -822,13 +822,22 @@
                 <table class="table">
                     <tr class="bgclrfortr">
                         <td style="border:none;" align="right">
+                            <label>Tax Amount :</label>
+                            <a href="javascript:void(0);" id="toggleTax"> [+] </a>
+                        </td>
+                        <td style="border:none;" align="right">
+                            <label id="lblTaxAmount">0.00</label>
+                        </td>
+                    </tr>
+                    <tr class="bgclrfortr taxDetails" style ="display:none;">
+                        <td style="border:none;" align="right">
                             <label>CGST Amount : </label>
                         </td>
                         <td style="border:none;" align="right">
                             <label lbltag="0" id="lblCGST" class="lblsettag">0.00</label>
                         </td>
                     </tr>
-                    <tr class="bgclrfortr">
+                    <tr class="bgclrfortr taxDetails" style="display:none;">
                         <td style="border:none;" align="right">
                             <label>SGST Amount : </label>
                         </td>
@@ -2242,6 +2251,7 @@ setTimeout(function () { GetFilterData(); }, 800);
         updateLabelColumn("lblPTQty", dPTQty);
         //setTagValue("lblPTQty", "", dPTQty, 2);
         //setTagValue("lblCGST", "", (dPTTax / 2), 2); setTagValue("lblSGST", "", (dPTTax / 2), 2); setTagValue("lblIGST", "", dPTNet, 2);
+        updateLabelColumn("lblTaxAmount", dPTTax); 
         updateLabelColumn("lblCGST", (dPTTax / 2)); updateLabelColumn("lblSGST", (dPTTax / 2)); updateLabelColumn("lblIGST", dPTTax);
         //setTagValue("lblPTGross", "", dPTGross, 2); setTagValue("lblPTTax", "", dPTTax, 2); setTagValue("lblPTNet", "", dPTNet, 2);
         updateLabelColumn("lblPTGross",  dPTGross); updateLabelColumn("lblPTTax", dPTTax); updateLabelColumn("lblPTNet", dPTNet);
@@ -2331,6 +2341,18 @@ setTimeout(function () { GetFilterData(); }, 800);
         });
     }
 
+    document.getElementById("toggleTax").addEventListener("click", function () {
+        var rows = document.querySelectorAll(".taxDetails");
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].style.display === "none") {
+                rows[i].style.display = "table-row";
+                this.innerText = " [-] ";
+            } else {
+                rows[i].style.display = "none";
+                this.innerText = " [+] ";
+            }
+        }
+    });
 
     function GetProductViewData(nMode, strName = null, strID = null) {
         $.ajax({
@@ -2980,6 +3002,10 @@ setTimeout(function () { GetFilterData(); }, 800);
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
+        $("#tblProductData tbody tr").find("label[name='TaxAmt']").attr("lbltag", 0).text("0.00");
+
+        // Recalculate totals (CGST, SGST, Tax Amount, etc.)
+        calculateProdGrid();
     }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
