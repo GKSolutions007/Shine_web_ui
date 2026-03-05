@@ -1001,13 +1001,22 @@
                 <table class="table">
                     <tr class="bgclrfortr">
                         <td style="border:none;" align="right">
+                            <label>Tax Amount :</label>
+                            <a href="javascript:void(0);" id="toggleTax"> [+] </a>
+                        </td>
+                        <td style="border:none;" align="right">
+                            <label id="lblTaxAmount">0.00</label>
+                        </td>
+                    </tr>
+                    <tr class="bgclrfortr taxDetails" style ="display:none;">
+                        <td style="border:none;" align="right">
                             <label>CGST Amount : </label>
                         </td>
                         <td style="border:none;" align="right">
                             <label lbltag="0" id="lblCGST" class="lblPT lblsettag">0.00</label>
                         </td>
                     </tr>
-                    <tr class="bgclrfortr">
+                    <tr class="bgclrfortr taxDetails" style ="display:none;">
                         <td style="border:none;" align="right">
                             <label>SGST Amount : </label>
                         </td>
@@ -1986,6 +1995,7 @@ if ($("#txtVariantID").val() == 0) {
         //$("#txtProdDiscAmt").val(TotProdDisc.toFixed(DecVal));$("#txtTradeDiscAmt").val(TotTradeDisc.toFixed(DecVal)); $("#txtAddnlDiscAmt").val(TotAddnlDisc.toFixed(DecVal));
         updateLabelColumn("lblPTGoods", dPTGoods); updateLabelColumn("lblPTGross", dPTGross); updateLabelColumn("lblPTTax", dPTTax); updateLabelColumn("lblPTNet", dPTNet);
         //$("#lblPTGoods").text(dPTGoods.toFixed(DecVal));$("#lblPTGross").text(dPTGross.toFixed(DecVal)); $("#lblPTTax").text(dPTTax.toFixed(DecVal)); $("#lblPTNet").text(dPTNet.toFixed(DecVal));
+        updateLabelColumn("lblTaxAmount", dPTTax);
         updateLabelColumn("lblCGST", (dPTTax / 2)); updateLabelColumn("lblSGST", (dPTTax / 2));
         //$("#lblCGST").text((dPTTax / 2).toFixed(DecVal)); $("#lblSGST").text((dPTTax / 2).toFixed(DecVal));
         var grss = (dPTGoods - TotProdDisc);
@@ -2032,6 +2042,20 @@ if ($("#txtVariantID").val() == 0) {
         CalculateTradediscpern(value);
         txtValuechanged = true;
     });
+
+    document.getElementById("toggleTax").addEventListener("click", function () {
+        var rows = document.querySelectorAll(".taxDetails");
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].style.display === "none") {
+                rows[i].style.display = "table-row";
+                this.innerText = " [-] ";
+            } else {
+                rows[i].style.display = "none";
+                this.innerText = " [+] ";
+            }
+        }
+    });
+
     function CalculateTradediscpern(value) {
         var dPTGross = 0, dPTGoods = 0, dPTTax = 0, dPTNet = 0, Proddiscamt = 0, Tradediscamt = 0, Addnldiscamt = 0;
         $("#tblProductData tbody tr").each(function () {
@@ -4196,6 +4220,10 @@ function setDate1(FieldID,Type) {
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
+        $("#tblProductData tbody tr").find("label[name='TaxAmt']").attr("lbltag", 0).text("0.00");
+
+        // Recalculate totals (CGST, SGST, Tax Amount, etc.)
+        calculateProdGrid();
     }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
