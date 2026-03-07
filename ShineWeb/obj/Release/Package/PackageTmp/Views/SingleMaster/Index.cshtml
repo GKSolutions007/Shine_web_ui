@@ -222,21 +222,7 @@
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
     <div id="dvMainTable">
-        <div id="my-grid" style="height: 600px; width: 100%;"></div>
-        <div hidden>
-            <table class="table table-bordered" id="tblMasterData" width="100%">
-                <thead>
-                    <tr class="trclrforcolheader">
-                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                        <th style="text-align:center;font-size: 12px;width:80%;">Name</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">Active</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">User</th>
-                        <th style="align-content:center !important;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
-                        <th style="align-content: center !important; font-size: 12px; width: 5%; " title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
+        <div id="my-grid" style="height: 600px; width: 100%;"></div>        
     </div>
     <!--<div class="modalBatch" id="myModalfg">
         <div class="modal-dialog" style="width:auto;">
@@ -277,7 +263,7 @@
                     <div style="padding-top:0px" align="right">
                         <button tabindex="4" type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
                         <button tabindex="3" type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
-                        <button tabindex="5" type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                        <button tabindex="5" type="button" class="btn btn-warning" id="btnClose"><b>X&ensp;</b>Close</button>
                     </div>
                 </div>
             </div>
@@ -292,7 +278,7 @@
                     <h5 class="modal-title fw-bold" id="lblPopupheading">
                         Add @ViewData["FormName"]
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" id="modelcloseX"></button>
                 </div>
 
                 <!-- Modal Body -->
@@ -325,15 +311,15 @@
                 <!-- Modal Footer -->
                 <div class="modal-footer" style="background-color:skyblue">
                     <button tabindex="4" type="button" class="btn btn-danger" id="btnClear">
-                        Clear
+                        <span class="glyphicon glyphicon-refresh"> Clear</span>
                     </button>
 
                     <button tabindex="3" type="button" class="btn btn-success" id="btnSave">
-                        Save
+                        <span class="glyphicon glyphicon-saved"> Save</span>
                     </button>
 
                     <button tabindex="5" type="button" class="btn btn-warning" id="btnClose">
-                        Close
+                        <b>X&ensp;</b>Close
                     </button>
                 </div>
 
@@ -423,29 +409,9 @@
     };
 </script>
 <script type="text/javascript">
-    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-        "bFilter": true,
-        "bSearchable": true,
-        "bInfo": true,
-        "bPaginate": true,
-        "ordering": true,
-        scrollY: "400px",
-        scrollX: true,
-        scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [2,3,4], "class": "text-center" }],
-    });
-
+    
     var Aurl = '@Session["APIurl"]';
-    if ($("#txtAddID").val() == 0) {
-        $("#trAdd").hide();
-        $("#btnAdd").hide();
-    }
-    if ($("#txtModifyID").val() == 0) {
-        //Table.column(3).visible(false);
-    }
-    if ($("#txtViewID").val() == 0) {
-        //Table.column(4).visible(false);
-    }
+
     if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
         $("#dvMainTable").hide();
     }
@@ -567,74 +533,6 @@
                         UpdateColumnWidth(1, 1, 0, colIndex, field, newWidth)
                     },
                 });
-
-                var searchValue = '';
-                if ($.fn.DataTable.isDataTable('#tblMasterData')) {
-                    searchValue = $('#tblMasterData').DataTable().search(); // get current search term
-                }
-                $('#tblMasterData').DataTable({
-                    pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                    scrollY: "450px",
-                    scrollX: true,
-                    scrollCollapse: true,
-                    paging: true,
-                    destroy: true,
-                    data: data,
-                    fixedColumns: false,
-                    searching: true,
-                    ordering: true,
-                    sorting: false,
-                    columns: [
-                        { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                        { "data": "Name", "autoWidth": true, className: "dt-body-left" },
-                        // {
-                        //     className: "dt-body-center",
-                        //     "mRender": function (data, type, value) {
-                        //         var _action = value.Active == "True" ? "Yes" : "No";// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
-                        //         return _action;
-                        //     }
-                        // },
-                        {
-                            className: "dt-body-center",
-                            "mRender": function (data, type, value) {
-                                var isActive = value.Active == "True";
-                                var statusClass = isActive ? "active" : "inactive";
-                                var statusText = isActive ? "Active" : "Inactive";
-                                var _action = '<div class="status-badge ' + statusClass + '">' +
-                                    '<span class="status-circle ' + statusClass + '"></span>' +
-                                    statusText +
-                                    '</div>';
-                                return _action;
-                            }
-                        },
-                        {
-                            className: "dt-body-center",
-                            "mRender": function (data, type, value) {
-                                var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
-                                return _action;
-                            }
-                        },
-                        {
-                            className: "dt-body-center",
-                            "mRender": function (data, type, value) {
-                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
-                                return _action;
-                            }, "visible": $("#txtModifyID").val() == 0 ? false : true
-                        },
-                        {
-                            className: "dt-body-center",
-                            "mRender": function (data, type, value) {
-                                var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
-                                return _action;
-                            }, "visible": $("#txtViewID").val() == 0 ? false : true
-                        },
-                    ],
-                    initComplete: function () {
-                        // Re-apply search value after table is fully initialized
-                        this.api().search(searchValue).draw();
-                    }
-                });
-                Table = $('#tblMasterData').DataTable();
                 $("#txtName").autocomplete({
                     minLength: 0,
                     source: arrData,
@@ -649,11 +547,6 @@
                             item.label + "</span></div>")
                         .appendTo(ul);
                 };
-
-                //var txtName = $('#txtName');
-                //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
-                //autocomplete.data('typeahead').source = null;
-                //autocomplete.data('typeahead').source = arrData;
             }
             , error: function (data) {
                 if (data.status == "401") {
@@ -694,7 +587,7 @@
     //span.onclick = function () {
     //    modal.hide();
     //}
-    $('#btnClose').click(function (e) {
+    $('#btnClose,#modelcloseX').click(function (e) {
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
@@ -820,44 +713,5 @@
                 modal.hide();
             }
         }
-    }
-    $('#tblMasterData tbody').on('click', '.clsView', function () {
-        rowdata = Table.row($(this).parents('tr')).data();
-        var ID = rowdata.ID;//[0];
-        var Name = rowdata.Name;//[1];
-        var Active = rowdata.Active;//[2];
-        nMode = 3;
-        //if (Table.cell(this).index().columnVisible == 3)
-        {
-
-            $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
-            //showSuccessSnackbar("View " + $("#MainHeading").text())
-            $("#txtID").val(ID);
-            $("#txtName").val(Name);
-            $("#chkActive").prop("checked", Active == "True");
-            $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", true);
-            $(".clrdiv").html("");
-             modal.show();
-        }
-    });
-
-    $('#tblMasterData tbody').on('click', '.clsEdit', function () {
-        rowdata = Table.row($(this).parents('tr')).data();
-        var ID = rowdata.ID;//[0];
-        var Name = rowdata.Name;//[1];
-        var Active = rowdata.Active;//[2];
-        //if (Table.cell(this).index().columnVisible == 2)
-        {
-            nMode = 2;
-            $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
-            $("#txtID").val(ID);
-            $("#txtName").val(Name);
-            $("#chkActive").prop("checked", Active == "True");
-            $("#chkActive,#btnSave,#txtName").prop("disabled", false);
-            $("#btnClear").prop("disabled", true);
-            $(".clrdiv").html("");
-             modal.show();
-        }
-    });
-
+    }    
 </script>
