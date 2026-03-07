@@ -706,7 +706,7 @@
     <!--<div class="modal-footer" style="background-color:skyblue">
                     <div style="padding-top:0px" align="right">
                         <button type="button" class="btn btn-success" id="btnSubmitmodalReportColumnSettings"><span class="glyphicon glyphicon-floppy-disk"> Accept</span></button>
-                        <button type="button" class="btn btn-warning" id="btnClosemodalReportColumnSettings"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                        <button type="button" class="btn btn-warning" id="btnClosemodalReportColumnSettings"><b>X&ensp;</b>Close</button>
                     </div>
                 </div>
             </div>
@@ -1848,7 +1848,7 @@ function setDate(FieldID,Type) {
                     QuickAccessDocument(dTransID, DocID);
                 } else {
                     var rowtype = rowData.AccType;
-                    if (rowtype == "Group" || rowtype == "Account")
+                    if (rowtype == "Group" || rowtype == "Account" || rowtype == "Report")
                         handleDrillDown(rowData);
                 }
                 //navigator.clipboard.writeText(cellValue);
@@ -1866,7 +1866,7 @@ function setDate(FieldID,Type) {
                     QuickAccessDocument(dTransID, DocID);
                 } else {
                     var rowtype = rowData.AccType;
-                    if (rowtype == "Group" || rowtype == "Account")
+                    if (rowtype == "Group" || rowtype == "Account" || rowtype == "Report")
                         handleDrillDown(rowData);
                 }
             },
@@ -1995,6 +1995,31 @@ function setDate(FieldID,Type) {
                 "lstvFilters": arrParams
             };
         }
+        else if (typeofAccount == "Report") {
+            var PV = {
+                "Param1": FID
+            }
+            arrParams.push(PV);            
+            PV = {
+                "Param1": FilterFromDate
+            }
+            arrParams.push(PV);
+            PV = {
+                "Param1": FilterToDate
+            }
+            arrParams.push(PV);
+            if (FID == 19 || FID == 18 || FID == 20) {
+                var PV = {
+                    "Param1": TypeID
+                }
+                arrParams.push(PV);
+            }
+            var listParams = {
+                "ReportID": "18",//FID == "18" || FID == "20" ? "15" : FID,
+                "ProcedureName":"uspFinRepProfitLossstage1",// FID == "18" || FID == "20" ? "uspFinRepGroupLedger" : arrReportDeatils[0].ProcedureName,// $("#txtProcName").val(),
+                "lstvFilters": arrParams
+            };
+        }
         else {
             var PV = {
                 "Param1": BranchID
@@ -2110,7 +2135,7 @@ function setDate(FieldID,Type) {
             $('#tblFilterData select[name="BalanceSheet"] option:selected').val();
         arrParams = [];
         var delaytoexecute = 0;
-        if (FID == 15 || FID == 19 || FID == 18 || FID == 20) {
+        if (FID == 15 || FID == 19 || FID == 18 || (drillHistory.length != 1 && FID == 20)) {
             var PV = {
                 "Param1": FID
             }
@@ -2120,10 +2145,14 @@ function setDate(FieldID,Type) {
             "Param1": BranchID
         }
         arrParams.push(PV);
-        PV = {
-            "Param1": filterValue.strSelAccGroupName
+        if (drillHistory.length == 1 && FID == 20) {
+
+        } else {
+            PV = {
+                "Param1": filterValue.strSelAccGroupName
+            }
+            arrParams.push(PV);
         }
-        arrParams.push(PV);
         PV = {
             "Param1": FilterFromDate
         }
@@ -2164,10 +2193,10 @@ function setDate(FieldID,Type) {
                     "Param1": TypeID
                 }
                 arrParams.push(PV);
-            }
+            }            
             listParams = {
-                "ReportID": drillHistory.length == 0 ? FID : "15",//"18"
-                "ProcedureName": drillHistory.length == 0 ? arrReportDeatils[0].ProcedureName : "uspFinRepGroupLedger",// $("#txtProcName").val(),
+                "ReportID": drillHistory.length == 0 ? FID : drillHistory.length == 1 && FID == 20 ? "18" :"15",//"18"
+                "ProcedureName": drillHistory.length == 0 ? arrReportDeatils[0].ProcedureName : drillHistory.length == 1 && FID == 20 ? "uspFinRepProfitLossstage1" : "uspFinRepGroupLedger",// $("#txtProcName").val(),
                 "lstvFilters": arrParams
             };
         }
