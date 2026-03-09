@@ -10,16 +10,39 @@
     <link rel="SHORTCUT ICON" href="~/images/G_large_Transparent.png" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,100,300,500" rel="stylesheet">
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
-    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    @*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
+    <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
     <link href="~/Content/font-awesome.min.css" rel="stylesheet" />
     <link href="~/Content/Snackbar.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="~/Content/jquery-ui.css">
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="~/Scripts/Validation.js"></script>
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-base/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-grids/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-buttons/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-popups/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-richtexteditor/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-navigations/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-dropdowns/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-lists/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-inputs/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-calendars/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-notifications/styles/bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-splitbuttons/styles/bootstrap5.css" rel="stylesheet">
+    <script src="https://cdn.syncfusion.com/ej2/31.2.2/dist/ej2.min.js" type="text/javascript"></script>
+    <script src="https://cdn.syncfusion.com/ej2/syncfusion-helper.js" type="text/javascript"></script>
     @*<link href="~/Content/Site.css" rel="stylesheet" />
         <link href="~/Content/navbar.css" rel="stylesheet" />*@
     <style>
+        .btn {
+            padding: 7px 10px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: white !important;
+        }
+
         .loader,
         .loader:after {
             border-radius: 50%;
@@ -398,6 +421,7 @@
             border-radius: 4px;
             font-weight: bold;
         }
+
         .ui-dialog {
             z-index: 5001;
         }
@@ -530,12 +554,51 @@
         </div>
     </div>
     <script>
-     var ItemsperPage = '@Session["ItemsperPage"]';
+        var RID = '@Session["RoleID"]';
+        var ItemsperPage =  parseInt('@Session["ItemsperPage"]', 10) < 0 ? 'All' :parseInt('@Session["ItemsperPage"]', 10)  || 10;
+        var SendAutoMail = 0;
+        var RetainDate = parseInt('@Session["RetainDate"]');
+        var PreviousItemsCount = 0, PreviousNetAmt = 0;
+        var autoDraftInterval = null;
+        var autosavetimeinterval = (parseInt('@Session["DraftAutoSaveTimeInterval"]') * (60 * 1000));//
+        function DraftAutosavetrigger() {
+            var currentItemCount = ProductTable.rows().count();
+            var currentNetAmt = document.getElementById("lblRoundNet").getAttribute("lbltag");
+            if ((currentItemCount != PreviousItemsCount) || (currentNetAmt != PreviousNetAmt)) {
+                if (nTransMode == 1 || nTransMode == 2) {
+                    PreviousItemsCount = ProductTable.rows().count();
+                    PreviousNetAmt = document.getElementById("lblRoundNet").getAttribute("lbltag");
+                    //$("#btnDraft").click();
+                    nIsDraft = 1;
+                    SaveData(1);
+                }
+            }
+        }
+        function startAutoDraftSave() {
+            if (autoDraftInterval) return; // prevent multiple intervals
+            autoDraftInterval = setInterval(function () {
+                DraftAutosavetrigger();
+            }, autosavetimeinterval);
+        }
+        function stopAutoDraftSave() {
+            clearInterval(autoDraftInterval);
+            autoDraftInterval = null;
+        }
+        function formatIndianCurrency(num) {
+            return '₹ ' + parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
     </script>
     <div style="padding-left: 15px; padding-top: 40px;padding-bottom: 30px;" class="main">
+        <div id="actionPopup" class="action-popup">
+            <div class="popup-header">
+                <span>Actions</span>
+                <span class="close-popup">×</span>
+            </div>
+            <ul></ul>
+        </div>
         @RenderBody()
     </div>
-    <script src="~/Scripts/bootstrap.min.js"></script>
+    @*<script src="~/Scripts/bootstrap.min.js"></script>*@
     @* @Scripts.Render("~/bundles/jquery")
         @Scripts.Render("~/bundles/bootstrap")*@
 </body>
@@ -572,7 +635,7 @@
         //$('#myModal').modal('toggle');
         $("#myInput").focus();
     }
-   
+
     //const searchInput = document.getElementById('myInput');
     //const optionsList = document.getElementById('myDropdown');
 
@@ -755,7 +818,7 @@
                 }
             });
         }
-    });   
+    });
     var Aurl = '@Session["APIurl"]';
 
     GetColorData(1, '@Session["ThemeID"]');
@@ -1181,7 +1244,7 @@ function CloseConfirmDialogMsg(message) {
     // 👇 Function to apply keydown listener to all input elements in the table
     function setupArrowKeyNavigation() {
         if ($('#tblProductData').length) {
-            const allInputs = document.querySelectorAll('#tblProductData tbody input');            
+            const allInputs = document.querySelectorAll('#tblProductData tbody input');
             allInputs.forEach((input, index) => {
                 input.onkeydown = function (e) {
                     const currentRow = input.closest('tr');
@@ -1300,4 +1363,1175 @@ function CloseConfirmDialogMsg(message) {
             });
         $(".clsclrNo").focus();
     };
+    function OpenOneView(ID, PartyType) {
+    var Url = '@Session["url"].ToString()';
+    var EnablePurchaseOneView = '@Session["PurchaseOneView"]';
+    var EnableSalesOneView = '@Session["SalesOneView"]';
+    vw = window.innerWidth - 100;
+    vh = window.innerHeight - 50;
+
+    const left = window.screenX + (window.innerWidth - vw) / 2;
+    const top = window.screenY + (window.innerHeight - vh) / 2;
+    //Session["PurchaseOneView"],Session["SalesOneView"]
+    var OpenOneView = false;
+    if (PartyType == 1)//customer
+    {
+        OpenOneView = EnableSalesOneView == "1";
+    } else if (PartyType == 2)//vendor
+    {
+        OpenOneView = EnablePurchaseOneView == "1";
+    }
+    if (OpenOneView) {
+        var SCDUrl = Url + "OneView?name=sH%2BTEIdelWKGNxqaVlmc0mDpErf3b%2B6xXTQX8LLAeLU%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + ID + "&PartyType=" + PartyType;
+        window.open(SCDUrl, "_blank", "width=" + vw + ",height=" + vh + ",top=" + top + ",left=" + left + ",scrollbars=yes,resizable=yes");
+    }
+}
+function GetBranchwiseABSQty(nProdID) {
+    $.ajax({
+        url: Aurl + "automaticindent/getbranchqty",
+        type: 'get',
+        contentType: 'json',
+        data: { ProdID: nProdID },
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function (data) {
+            var Branches = "", ProdName = "", ProdCode = "", totabs = 0, totFreeabs = 0, totDmgabs = 0;
+            $.each(data, function (i, items) {
+                ProdName = items.Name; ProdCode = items.Code;
+                Branches += '<tr><td align="left">' + items.Branch + '</td><td align="right">' + items.ABSQty + '</td><td align="right">' + items.ABSFreeQty + '</td><td align="right">' + items.ABSDmgQty + '</td></tr>';
+                totabs += parseFloat(items.ABSQty);
+                totFreeabs += parseFloat(items.ABSFreeQty);
+                totDmgabs += parseFloat(items.ABSDmgQty);
+            });
+            var branchinfo = '<table class="table table-bordered" style="text-align:center;font-size:12px"><tr><td colspan="4" align="left">' + ProdName + '</td></tr><tr><td><b>Branch Name</b></td><td><b>Qty</b></td><td><b>Free</b></td><td><b>Dmg</b></td></tr>';
+            branchinfo += Branches;
+            branchinfo += '<tr><td></td><td align="right" style="font-size:14px;"><b>' + parseFloat(totabs).toFixed(DecVal) + '</b></td><td align="right" style="font-size:14px;"><b>' + parseFloat(totFreeabs).toFixed(DecVal) + '</b></td><td align="right" style="font-size:14px;"><b>' + parseFloat(totDmgabs).toFixed(DecVal) + '</b></td></tr></table>';
+            setTimeout(() => {
+                InfoDialogMsg(branchinfo, "Branch wise Qty");
+            }, 500)
+        }
+    });
+}
+var albgc = "";
+function GetColorData(nMode, strName = null) {
+    $.ajax({
+        url: Aurl + "colorsettings/get",
+        type: 'get',
+        contentType: 'json',
+        data: { Mode: nMode, Name: strName },
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function (data) {
+            if (nMode == 1) {
+                $.each(data, function (i, items) {
+                    $(".navbar-fixed-top,.sidenav,.dropdown-container,.dvmainmenuheader").css("background-color", items.MenuHeader);
+                    $("#acompname").css("color", items.CompanyNameColor);
+                    console.log("dvmainmenuheader ", items.MenuHeader)
+                    $(".btn-info").css("background-color", items.AddButton);
+
+                    $(".btn-primary").css("background-color", items.DraftButton);
+                    $(".btn-success").css("background-color", items.SaveButton);
+
+                    $(".btn-danger").css("background-color", items.ClearButton);
+
+                    $(".btn-warning").css("background-color", items.CloseButton).css("color", "white");
+
+                    $(".clrforpdf").css("background-color", items.PDFButton);
+                    $(".clrforpreview").css("background-color", items.PreviewButton);
+                    $(".clrforpdf").css("color", "white");
+                    $(".clrforpreview").css("color", "white");
+                    $(".modal-header").css("background-color", items.PopupHeader);
+
+                    $(".modal-footer").css("background-color", items.PopupFooter);
+
+                    $(".clsclrYes,.clsYes").css("background-color", items.ConfirmPopupYes);
+
+                    $(".clsclrNo,.clsNo").css("background-color", items.ConfirmPopupNo);
+
+                    $("ul a").css("color", items.SubMenuColor);
+                    $(".dropdown-btn,#algot").css("color", items.MenuColor);
+                    $(".trclrforcolheader").css("background-color", items.GridHeaderBackGround);
+                    $(".trclrforcolheader,.dg-btn").css("color", items.GridHeaderTextColor);
+                    $(".modal-title").css("color", items.PopupHeaderText);
+                    //$(".ui-menu-item-wrapper.ui-state-active").attr("style", "background-color: " + items.AutocompleteBG + " !important");
+                    document.documentElement.style.setProperty('--header-bg', items.GridHeaderBackGround);
+                    document.documentElement.style.setProperty('--header-text', items.GridHeaderTextColor);
+                    document.documentElement.style.setProperty('--primary-color', items.GridHeaderBackGround);
+
+                    document.documentElement.style.setProperty('--dynamic-bg', items.AutocompleteBG);
+                    document.documentElement.style.setProperty('--submenuborderleft', items.MenuHeader);
+                    //$(".acItem .name").css("color", items.AutocompleteLine1);
+                    document.documentElement.style.setProperty('--acitemname', items.AutocompleteLine1);
+                    //$(".acItem .desc").css("color", items.AutocompleteLine2);
+                    document.documentElement.style.setProperty('--acitemdesc', items.AutocompleteLine2);
+                    document.documentElement.style.setProperty('--CompanyNameColor', items.CompanyNameColor);
+                });
+            }
+        }
+    });
+}
+function animateCounter(id, start, end, duration) {
+    if (end !== "" && end !== null) {
+        const obj = document.getElementById(id);
+        const range = end - start;
+        let current = start;
+        const fps = 60; // smooth animation: 60 frames per second
+        const totalSteps = duration / (1000 / fps);
+        const increment = range / totalSteps;
+        let stepCount = 0;
+
+        const timer = setInterval(() => {
+            stepCount++;
+            current += increment;
+            if ((range > 0 && current >= end) || (range < 0 && current <= end) || stepCount >= totalSteps) {
+                current = end; // Ensure it ends exactly
+                clearInterval(timer);
+            }
+            obj.textContent = current.toFixed(2); // change decimal places as needed
+        }, 1000 / fps);
+    }
+}
+
+function disableNumberFieldControls() {
+    document.querySelectorAll('table input[type="number"]').forEach(function (input) {
+        // Block arrow key increment
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+            }
+        });
+
+        // Block scroll wheel increment
+        input.addEventListener('wheel', function (e) {
+            e.preventDefault();
+        });
+    });
+}
+// Run on page load
+document.addEventListener('DOMContentLoaded', function () {
+    disableNumberFieldControls();
+});
+// If using jQuery DataTables or dynamic tables, also hook into redraw:
+$(document).on('draw.dt', function () {
+    disableNumberFieldControls();
+});
+
+$('#cmbPrintProfile').change(function (e) {
+    var selval = e.target.value;
+    var $selected = $(this).find('option:selected');
+    SendAutoMail = 0;
+    if ($selected) {
+        SendAutoMail = $selected.data('automail');
+    }
+    if (selval > 0) {
+        PrintConfigID = $('#cmbPrintProfile').val();
+    } else {
+        $('#cmbPrintProfile').val(PrintConfigID);
+    }
+});
+
+    $("#btnPrint,#btniframePrint").click(function (e) {
+    //modalPayment.style.display = "block";
+    var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+    var sts = $("#txtStatus").val();
+    if (PrintConfigID > 0) {
+        if (id > 0) {
+            if (sts != 2 && sts != 4) {
+                if (allowprint == 1) {
+                    PrintDocument(id, PrintTransID, PrintConfigID);
+                } else if (allowprint == 3 || allowprint == 4) {
+                    PrintConfirmDialogMsg(id, PrintTransID, PrintConfigID, "Do you want to print ?");
+                }
+                else {
+                    showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
+                }
+            }
+            else {
+                if (allowprint != 2) {
+                    //modalPrintAppPassword.style.display = "block";
+                    modalPrintAppPassword.show();
+                    $("#txtCommonPrintPrevieworPDF").val(1);//1 - Preview , 2 - PDF
+                    $("#txtCommonPrintTransID").val(id);
+                    $("#txtCommonPrintTranTypeID").val(PrintTransID);
+                    $("#txtCommonPrintConfigID").val(PrintConfigID);
+                }
+                else {
+                    showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
+                }
+            }
+            //PrintDocument(id, 4);
+        }
+    }
+    else {
+        showErrorSnackbar("Select Print profile");
+    }
+});
+$("#btnPreview").click(function (e) {
+    //modalPayment.style.display = "block";
+    var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+    var sts = $("#txtStatus").val();
+    if (PrintConfigID > 0) {
+        if (id > 0) {
+            if (sts != 2 && sts != 4) {
+
+                PrintDocument(id, PrintTransID, PrintConfigID, 1);
+            }
+            else {
+                if (allowprint != 2) {
+                    //modalPrintAppPassword.style.display = "block";
+                    modalPrintAppPassword.show();
+                    $("#txtCommonPrintPrevieworPDF").val(1);//1 - Preview , 2 - PDF
+                    $("#txtCommonPrintTransID").val(id);
+                    $("#txtCommonPrintTranTypeID").val(PrintTransID);
+                    $("#txtCommonPrintConfigID").val(PrintConfigID);
+                }
+                else {
+                    showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
+                }
+            }
+            //PrintDocument(id, 4);
+        }
+    }
+    else {
+        showErrorSnackbar("Select Print profile");
+    }
+});
+$("#btnPDF,#btniframePDF").click(function (e) {
+    //modalPayment.style.display = "block";
+    var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+    var sts = $("#txtStatus").val();
+    //showSuccessSnackbar("sts : " + sts+ " allowprint : " + allowprint);
+    if (PrintConfigID > 0) {
+        if (id > 0) {
+            //PDFDocument(id, 4, 1);
+            if (sts != 2 && sts!= 4) {// || sts == 3 || sts == 5
+                if (allowprint != 2) {
+                    PDFDocument(id, PrintTransID, PrintConfigID);
+                }
+                else {
+                    showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
+                }
+            }
+            else {
+                if (allowprint != 2) {
+                    modalPrintAppPassword.style.display = "block";
+                    modalPrintAppPassword.show();
+                    $("#txtCommonPrintPrevieworPDF").val(2);//1 - Preview , 2 - PDF
+                    $("#txtCommonPrintTransID").val(id);
+                    $("#txtCommonPrintTranTypeID").val(PrintTransID);
+                    $("#txtCommonPrintConfigID").val(PrintConfigID);
+                }
+                else {
+                    showErrorSnackbar("Unable to print. Print Document is disabled in Application config.");
+                }
+            }
+        }
+    }
+    else {
+        showErrorSnackbar("Select Print profile");
+    }
+});
+function PrintDocument(ID, strTransID, nConfigID, printorpreview = 0) {
+    if (nConfigID > 0) {
+        let sb = document.getElementById("RepLoadersnackbar");
+        sb.classList.add("show");
+        var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
+    $.ajax({
+        //url: '@Url.Action("PDFGenerate", "Invoice")',
+        url: Aurl + "invoice/PDFGenerate",
+        type: 'GET',
+        datatype: 'json',
+        data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID, Copies: strcopy },
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function (data) {
+            sb.classList.remove("show");
+            if (data.length > 0) {
+                var pdfpathDownload = 'Invoice/ExportData?Fname=' + data;
+                var pdfpathPreview = 'Invoice/PreviewData?Fname=' + data;
+
+                var tempurl = Aurl.replace("/api/", "/");
+                if (printorpreview == 0) {
+                    printEmbedDocument(tempurl + "PDF/" + data);//myurl
+                } else {
+
+                    previewiframe(tempurl + "PDF/" + data);//myurl
+                }
+            } else {
+                showErrorSnackbar('PDF File not generate. Try Again');
+            }
+        }, error: function (data) {
+            sb.classList.remove("show");
+            if (data.status == "401") {
+                var msg = data.responseJSON.Message;
+                //showErrorSnackbar(msg + " Logout and Login again.");
+            }
+        }
+    });
+    }
+    else {
+        showErrorSnackbar("Select Print profile");
+    }
+}
+function PDFDocument(ID, strTransID, nConfigID) {
+    if (nConfigID > 0) {
+        let sb = document.getElementById("RepLoadersnackbar");
+        sb.classList.add("show");
+        $.ajax({
+            //url: '@Url.Action("PDFGenerate", "Invoice")',
+            url: Aurl + "invoice/PDFGenerate",
+            type: 'GET',
+            datatype: 'json',
+            data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                sb.classList.remove("show");
+                if (data.length > 0) {
+                    //location.href = 'Invoice/ExportData?Fname=' + data;
+                    location.href = Aurl + 'Invoice/downloadprint?Fname=' + data;
+                } else {
+                    showErrorSnackbar('PDF File not generate. Try Again');
+                }
+            }, error: function (data) {
+                sb.classList.remove("show");
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    else {
+        showErrorSnackbar("Select Print profile");
+    }
+}
+$("#btnEmail,#btniframeEmail").click(function (e) {
+    //modalPayment.style.display = "block";
+    var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+    var sts = $("#txtStatus").val();
+    if (PrintConfigID > 0) {
+        if (id > 0) {
+            if (sts != 2 && sts != 4) {
+                EmailDocument(id, PrintTransID, PrintConfigID);
+            }
+        }
+    }
+    else {
+        showErrorSnackbar("Select Print profile");
+    }
+});
+
+function EmailDocument(ID, strTransID, nConfigID) {
+    if (nConfigID > 0) {
+        let sb = document.getElementById("RepLoadersnackbar");
+        sb.classList.add("show");
+        var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
+        $.ajax({
+            url: Aurl + "invoice/MailGenerate",
+            type: 'GET',
+            datatype: 'json',
+            data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID, Copies: strcopy },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                sb.classList.remove("show");
+                if (data.length > 0) {
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                        }
+                        else if (items.MsgID == 1) {
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                } else {
+                    showErrorSnackbar('Mail Not Send. Try Again');
+                }
+            }, error: function (data) {
+                sb.classList.remove("show");
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    else {
+        showErrorSnackbar("Select Print profile");
+    }
+}
+$("#btnWhatsapp,#btniframeWhatsapp").click(function (e) {
+    //modalPayment.style.display = "block";
+    var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+    var sts = $("#txtStatus").val();
+    if (id > 0) {
+        if (sts != 2 && sts != 4) {
+            WhatsappDocument(id, PrintTransID, PrintConfigID);
+        }
+    }
+});
+function WhatsappDocument(ID, strTransID, nConfigID) {
+
+        let sb = document.getElementById("RepLoadersnackbar");
+        sb.classList.add("show");
+        var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
+        $.ajax({
+            url: Aurl + "invoice/WhatsappGenerate",
+            type: 'GET',
+            datatype: 'json',
+            data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID, Copies: strcopy, APIURL: Aurl },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                sb.classList.remove("show");
+                if (data.length > 0) {
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            //showSuccessSnackbar(items.Message);
+                            var phone = items.RowID
+                            var message = items.Message;
+                            var url = "https://api.whatsapp.com/send?phone=" + phone + "&text=" + encodeURIComponent(message);
+                            console.log("url : ", url);
+                            window.open(url, "_blank");
+                        }
+                        else if (items.MsgID == 1) {
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                } else {
+                    showErrorSnackbar('Message Not Send. Try Again');
+                }
+            }, error: function (data) {
+                sb.classList.remove("show");
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+}
+var myurl = '@Session["url"]';
+function printEmbedDocument(testlink) {
+    var ismoborwin = '@Session["DeviceOS"]';//"Windows","macOS","Android","iOS","Linux"
+    // Fetch the remote file
+    console.log("testlink", testlink);
+    if (['Windows', 'macOS'].includes(ismoborwin)) {
+        fetch(testlink)
+            .then(response => response.blob())
+            .then(pdfBlob => {
+                const pdfURL = URL.createObjectURL(pdfBlob);
+                console.log("pdfURL", pdfURL);
+                let ifr = document.createElement("iframe");
+                ifr.style.position = 'absolute';
+                ifr.style.width = "0px";
+                ifr.style.height = "0px";
+                ifr.style.border = "none";
+                ifr.src = pdfURL;// testlink;
+                ifr.onload = function () {
+                    ifr.contentWindow.focus();
+                    ifr.contentWindow.print();
+                    //setTimeout(() => document.body.removeChild(ifr), 1000);
+                }
+                document.body.appendChild(ifr);
+                //URL.revokeObjectURL(pdfURL);
+
+            }).catch(err => { console.log("Failed to load PDF:", err); console.error("Failed to load PDF:", err) });
+    }
+    else {
+        window.open(testlink, '_blank');
+    }
+    //OLD
+    //let ifr = document.createElement("iframe");
+    //ifr.style.position = 'absolute';
+    //ifr.style.width = "0px";
+    //ifr.style.height = "0px";
+    //ifr.style.border = "none";
+    //ifr.src = testlink;// testlink;
+    //ifr.onload = function () {
+    //    ifr.contentWindow.focus();
+    //    ifr.contentWindow.print();
+    //    //setTimeout(() => document.body.removeChild(ifr), 1000);
+    //}
+    //document.body.appendChild(ifr);
+}
+
+function previewiframe(link) {
+    console.log(link);
+    const options = "#toolbar=0&navpanes=0&scrollbar=0&zoom=80";
+    document.getElementById("iframepreview").src = link + options;
+    //modaliframePreview.style.display = "block";
+    modalFilterModal.show();
+}
+$('#tblMasterData tbody').on('click', '.clsCancel', function (e) {
+    $("#txtNarration,#txtRemarks").prop("disabled", false);
+});
+//$("#btnCommonDocFilter").click(function () {
+//    modalFilterModal.style.display = "block";
+//});
+setDate("dtpCommonDocFilterFrom", 2);
+setDate("dtpCommonDocFilterTo", 0);
+$("#btnCommonDocumentFilter").click(function () {
+    $("#DocumetFiltersGrid").html("");
+    var IsValid = true;
+    $(".clrdivs").html("");
+
+    if ($("#dtpCommonDocFilterFrom").val() == "") {
+        IsValid = false;
+        $("#divErrCommonDocFilterFrom").html("From date should not be empty");
+    }
+    if ($("#dtpCommonDocFilterTo").val() == "") {
+        IsValid = false;
+        $("#divErrCommonDocFilterFTo").html("To date should not be empty");
+    }
+    if ($("#dtpCommonDocFilterFrom").val() > $("#dtpCommonDocFilterTo").val()) {
+        IsValid = false;
+        $("#divErrCommonDocFilterFrom").html("From date should be lessthan To Date");
+    }
+    if (IsValid) {
+        //var FilterData = [];
+        var FilterData = {
+            "TransID": $("#txtcommonfilterapplytransid").val(),
+            "FromDate": $("#dtpCommonDocFilterFrom").val(),
+            "ToDate": $("#dtpCommonDocFilterTo").val(),
+            "DocRange": $("#txtCommonDocFilterRange").val(),
+            "Party": $("#txtCommonDocFilterPartyName").val(),
+            "FilterType": $("#dtpCommonDocFilterType").val(),
+            //dtpCommonDocFilterType
+        }
+        //FilterData.push(lst)
+        $.ajax({
+            url: Aurl + "commonfilter/commonfilterdata",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(FilterData),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (eval(data).length > 0) {
+                    CustomFilterbindDataTable(eval(data))
+                } else {
+                    showErrorSnackbar("No records found")
+                }
+            }
+        });
+    }
+});
+var customfiltercolumnsettings = [];
+var commonfiltergrid;
+ColumnDetails(2, 1003, 1);
+
+ej.grids.Grid.Inject(ej.grids.Page, ej.grids.ExcelExport, ej.grids.Toolbar, ej.grids.Aggregate, ej.grids.Group, ej.grids.Sort, ej.grids.Filter, ej.grids.ColumnMenu, ej.grids.ColumnChooser);
+function CustomFilterbindDataTable(data) {
+    if (data.length === 0) {
+        return; // No data to display
+    }
+
+    commonfiltergrid = new ej.grids.Grid({
+        dataSource: data,
+        allowPaging: false,
+        //pageSettings: { pageSize: 25 },
+        allowSorting: true,
+        allowFiltering: true,
+        allowResizing: true,
+        filterSettings: { type: 'Excel' },
+        toolbar: ['Search'],//, { tooltipText: 'Customize Columns', id: 'CommonFiltercustomizeBtn', prefixIcon: 'e-icons e-settings' }
+        allowExcelExport: true,
+        height: 250,
+        enableColumnVirtualization: true,
+        allowReordering: true,
+        showColumnChooser: true, // ✅ Must be true
+        showColumnMenu: true,
+        rowSelected: onRowSelected,
+        columns: customfiltercolumnsettings,
+        toolbarClick: function (args) {
+            if (args.item.id === 'CommonFiltercustomizeBtn') {
+                SelectTableID = 1;
+                modalReportColumnsetting.style.display = "block";
+                //modalReportColumnsetting.show();
+                ColumnSettings(1, 1003, SelectTableID);
+            }
+        },
+        resizeStop: function (args) {
+            const field = args.column.field;
+            const fieldIndex = args.column.index;
+            const newWidth = args.column.width;
+            //showErrorSnackbar("Column resized: " + field + " → New width: " + newWidth);
+            // You can store or use the new width as needed
+        },
+        columnVisibilityChanged: function (args) {
+            console.log("Column visibility changed:");
+            console.log("Field:", args.column.field);
+            console.log("Now Visible:", args.visible);
+        },
+    });
+
+    commonfiltergrid.appendTo('#DocumetFiltersGrid');
+
+    function onRowSelected(args) {
+        var rowData = args.data;
+        //showErrorSnackbar("Doc ID " + rowData["Doc ID"])//.
+        //console.log("Selected Row Data:", rowData);
+        //$("#DocumentGrid").html("");
+        //$("#ProductInfo").show();
+        //GetProductDocuments(rowData["ID"]);
+        //$("#lblProductName").text(rowData["Name"]);
+    }
+    function getCheckedRows() {
+        // Get grid instance
+        var gridObj = document.getElementById('DocumetFiltersGrid').ej2_instances[0];
+        console.log("gridObj:", gridObj);
+        // Filter rows where checkbox is true
+        var checkedRows = gridObj.getCurrentViewRecords().filter(function (row) {
+            return row.Chk === true;
+        });
+
+        console.log("Checked Rows:", checkedRows);
+        return checkedRows;
+    }
+
+}
+$("#btnAcceptDocFilterModal").click(function () {
+    if (commonfiltergrid) {
+        var selectedRows = commonfiltergrid.getSelectedRecords();
+        if (selectedRows.length > 0) {
+            var commfieldid = $("#txtcommonfilterapplyfieldid").val();
+            //console.log(selectedRows);
+            var selectedDocs = "";
+            for (var i = 0; i < selectedRows.length; i++) {
+                selectedDocs += selectedRows[i].DocValue + (((selectedRows.length - 1) == i) ? "" : ",");
+            }
+            $("#" + commfieldid).val(selectedDocs);
+            //modalFilterModal.style.display = "none";
+            modalFilterModal.hide();
+            $("#txtcommonfilterapplyfieldid,#txtcommonfilterapplytransid").val("");
+        } else {
+            showErrorSnackbar("Select atleast one document");
+        }
+    } else {
+        showErrorSnackbar("No Documents Found");
+    }
+});
+
+function ColumnDetails(nMode, nReportID, nTableID) {
+    customfiltercolumnsettings = [];
+    $.ajax({
+        url: Aurl + "reportcolumnsettings/getRepColumnSettings",
+        type: 'get',
+        contentType: 'json',
+        data: { Mode: nMode, ReportID: nReportID, TableID: nTableID },
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function (data) {
+            var jsData = eval(data);
+            console.log(jsData);
+            if (nTableID == 1) {
+                var chkfield = { field: 'Chk', headerText: '#', width: "5", textAlign: 'left', type: "checkbox", showInColumnChooser: false };
+                //jsData.push(chkfield);
+                //customfiltercolumnsettings = jsData;//.push(jsData);
+                var tempcols = []
+                tempcols.push(chkfield);
+                $.each(jsData, function (i, items) {
+                    tempcols.push(items);
+                });
+                customfiltercolumnsettings = tempcols;
+            }
+        }
+    });
+}
+$(document).on("click", ".action-btn", function (e) {
+    e.stopPropagation();
+
+    let table = $('#tblMasterData').DataTable();
+    let row = table.row($(this).closest('tr')).data();
+
+    // Build action list
+    let actions = getActionsByRole(userRole, row);
+    let menuHtml = actions.map(a => `<li><a class="${a.cls}">${a.label}</a></li>`).join("");
+
+    $("#actionPopup ul").html(menuHtml);
+
+    let popup = $("#actionPopup");
+    popup.removeClass("show");
+
+    let offset = $(this).offset();
+    let popupH = popup.outerHeight();
+    let popupW = popup.outerWidth();
+    let winH = $(window).height();
+    let scrollTop = $(window).scrollTop();
+
+    // Default DOWN position
+    let top = offset.top + 20;
+
+    // Flip UP if overflow
+    if (top + popupH > winH + scrollTop)
+        top = (offset.top - popupH - 15) + 20;
+
+    let left = ((offset.left - popupW) - 30) + 20;
+
+    // Apply position BEFORE animation
+    popup.css({ top: top, left: left }).show();
+
+    // Trigger animation
+    setTimeout(() => popup.addClass("show"), 10);
+});
+$(document).on("click", function () {
+    let popup = $("#actionPopup");
+    popup.removeClass("show");
+    setTimeout(() => popup.hide(), 150);
+});
+$(".close-popup").on("click", function () {
+    $("#actionPopup").removeClass("show");
+    setTimeout(() => $("#actionPopup").hide(), 150);
+});
+let popup = document.getElementById("actionPopup");
+let header = popup.querySelector(".popup-header");
+let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+header.onmousedown = dragMouseDown;
+function dragMouseDown(e) {
+    e.preventDefault();
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    document.onmouseup = closeDragElement;
+    document.onmousemove = elementDrag;
+}
+function elementDrag(e) {
+    e.preventDefault();
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+
+    popup.style.top = (popup.offsetTop - pos2) + "px";
+    popup.style.left = (popup.offsetLeft - pos1) + "px";
+}
+function closeDragElement() {
+    document.onmouseup = null;
+    document.onmousemove = null;
+}
+$(document).on("click", ".action-btn", function (e) {
+    e.stopPropagation();
+
+    let table = $('#tblMasterData').DataTable();
+    let row = table.row($(this).closest('tr')).data();
+
+    // SAVE ROW DATA FOR LATER
+    window.__SelectedRowData = row;
+
+    // Build popup items…
+    let actions = getActionsByRole(userRole, row);
+    let menuHtml = actions.map(a => `<li><a class="${a.cls}">${a.label}</a></li>`).join("");
+
+    $("#actionPopup ul").html(menuHtml);
+
+    //showPopupAtButton(this); // (your existing position code)
+});
+@*window.addEventListener("beforeunload", function (e) {
+   // e.preventDefault();
+    var Url = '@Session["url"].ToString()';
+    e.returnValue = ""; // required for Chrome / Edge
+    var logout = this.confirm("Do you want to logout?")
+    if (logout) {
+        this.window.load
+        window.location.href = Url + 'Login/Logoff';
+    } else{
+
+    }
+});*@
+
+// Add icons to module names based on their text
+$(document).ready(function() {
+    addModuleIcons();
+});
+
+function addModuleIcons() {
+    // Icon mapping for common modules
+    const moduleIcons = {
+        'sales': 'fas fa-shopping-cart',
+        'purchase': 'fas fa-shopping-bag',
+        'inventory': 'fas fa-warehouse',
+        'accounts': 'fas fa-calculator',
+        'reports': 'fas fa-chart-bar',
+        'analytics report': 'fas fa-chart-line',
+        'master': 'fas fa-database',
+        'tools': 'fas fa-tools',
+        'favourite': 'fa-regular fa-star',
+        'financial reports': 'fa-solid fa-briefcase',
+    };
+
+    // Find all dropdown buttons and menu items
+    $('.dropdown-btn, ul li a').each(function() {
+        const $element = $(this);
+        let text = $element.text().trim().toLowerCase();
+
+        // Check if icon already exists
+        if ($element.find('i.fas, i.fa').length > 0) {
+            return; // Skip if icon already present
+        }
+
+        // Find matching icon
+        let iconClass = null;
+        for (let key in moduleIcons) {
+            if (text == key) {//text.includes(key)
+                iconClass = moduleIcons[key];
+                break;
+            }
+        }
+
+        // Add icon if found
+        if (iconClass) {
+            $element.prepend('<i class="' + iconClass + '" style="margin-right: 8px; font-size: 13px;"></i>');
+        }
+    });
+}
+    function GendralColumnSettings(nMode, nReportID, nTableID, nFormorReport) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nReportID, TableID: nTableID, FormorReport: nFormorReport },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                var jsData = JSON.parse(data);
+                $('#tblGenColumnSettings').DataTable({
+                    scrollY: "300px",
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: false,
+                    destroy: true,
+                    data: jsData,
+                    fixedColumns: false,
+                    searching: false,
+                    ordering: false,
+                    sorting: false,
+                    columns: [
+
+                        //ReportID	TableID	ColumnID	ColumnName	DisplayColumnName	Width	Visible	Alignment	DisplayIndex	IsHiddenColumn
+                        { "data": "FormID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                        { "data": "TableID", "autoWidth": true, "visible": false, className: "dt-body-left" },//1
+                        { "data": "ColumnID", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
+                        { "data": "FormorReport", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
+                        { "data": "ColumnName", "autoWidth": true, "visible": false, className: "dt-body-left" },//3
+                        { "data": "OriginalColumnName", "autoWidth": true, width: "15%", className: "dt-body-left" },//3
+                        {
+                            className: "dt-body-left", width: "25%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="text" value="' + value.DisplayColumnName + '" name ="DisplayColumnName" class="form-control" id="txtDisplayColumnName' + rowIndex + '"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "10%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.Width + '" name ="Width" class="form-control" id="txtWidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "10%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.Visible == '0' ? 'selected' : '';
+                                var isTrueSelect = value.Visible == '1' ? 'selected' : '';
+                                var field = "<select name='Visible' class='form-control' id='cmbVisible" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "10%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isLeftSelect = value.Alignment == '1' ? 'selected' : '';
+                                var isRightSelect = value.Alignment == '2' ? 'selected' : '';
+                                var isCenterSelect = value.Alignment == '3' ? 'selected' : '';
+                                var field = "<select name='Alignment' class='form-control' id='cmbAlignment" + rowIndex + "'><option value= '1'" + isLeftSelect + ">Left</option><option value= '3'" + isCenterSelect + ">Center</option><option value= '2'" + isRightSelect + ">Right</option></select>";
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "10%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.DisplayIndex + '" name ="DisplayIndex" class="form-control" id="txtDisplayIndex' + rowIndex + '" min="0" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.TotalYN == '0' ? 'selected' : '';
+                                var isTrueSelect = value.TotalYN == '1' ? 'selected' : '';
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var field = "<select " + isDisable + " name='Total' class='form-control' id='cmbTotal" + rowIndex + "'><option value= '0' " + isFalseSelect + ">No</option><option value= '1'" + isTrueSelect + ">Yes</option></select>";
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableSum == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableSum == '1' ? 'selected' : '';
+                                var field = "<select name='EnableSum' class='form-control' id='EnableSum" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableAvg == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableAvg == '1' ? 'selected' : '';
+                                var field = "<select name='EnableAvg' class='form-control' id='EnableAvg" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "10%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.EnableColumnMenu == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableColumnMenu == '1' ? 'selected' : '';
+                                var field = "<select name='EnableColumnMenu' class='form-control' id='EnableColumnMenu" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", "visible": (RID == 1),
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.ShowinColumnOption == '0' ? 'selected' : '';
+                                var isTrueSelect = value.ShowinColumnOption == '1' ? 'selected' : '';
+                                var field = "<select name='ShowinColumnOption' class='form-control' id='ShowinColumnOption" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                return field;
+                            }
+                        },
+                    ],
+                });
+                //tblGenColumnSettings,TableGenColumnSettings
+                TableGenColumnSettings = $('#tblGenColumnSettings').DataTable();
+            }
+        });
+    }
+    var ColumnSettingData = [];
+    $("#btnSubmitmodalGenColumnSettings").click(function () {
+        ColumnSettingData = [];
+        $("#tblGenColumnSettings tbody tr").each(function () {
+            var allValues = {};
+            rowdata = TableGenColumnSettings.row($(this)).data();
+            console.log("Row Data : ", rowdata);
+            var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
+                aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
+                aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
+                aShowinColumnOption = rowdata.ShowinColumnOption;
+            $(this).find("input").each(function (index) {
+                const fieldName = $(this).attr("name");
+                const fieldID = $(this).attr("id");
+                if (fieldName == "DisplayColumnName") {
+                    aDisplayName = $(this).val();
+                }
+                if (fieldName == "Width") {
+                    aWidth = $(this).val();
+                }
+                if (fieldName == "DisplayIndex") {
+                    aDisplayIndex = $(this).val();
+                }
+            });
+            $(this).find("select").each(function (index) {
+                const fieldName = $(this).attr("name");
+                const fieldID = $(this).attr("id");
+                if (fieldName == "Alignment") {
+                    aAlign = $(this).val();
+                }
+                if (fieldName == "Visible") {
+                    aVisible = $(this).val();
+                }
+                if (fieldName == "Total") {
+                    aTotal = $(this).val();
+                }
+                if (fieldName == "EnableColumnMenu") {
+                    aEnableColumnMenu = $(this).val();
+                }
+                if (fieldName == "EnableSum") {
+                    aEnableSum = $(this).val();
+                }
+                if (fieldName == "EnableAvg") {
+                    aEnableAvg = $(this).val();
+                }
+                if (fieldName == "ShowinColumnOption") {
+                    aShowinColumnOption = $(this).val();
+                }
+            });
+
+            var coldata = {
+                "FormID": rowdata.FormID,
+                "TableID": rowdata.TableID,
+                "ColumnID": rowdata.ColumnID,
+                "FormorReport": rowdata.FormorReport,
+                "ColumnName": rowdata.ColumnName,
+                "DisplayColumnName": aDisplayName,
+                "Width": aWidth,
+                "Visible": aVisible,
+                "Alignment": aAlign,
+                "TotalYN": aTotal,
+                "DisplayIndex": aDisplayIndex,
+                "EnableColumnMenu": aEnableColumnMenu,
+                "EnableAvg": aEnableAvg,
+                "EnableSum": aEnableSum,
+                "EnableColumnMenu": aEnableColumnMenu,
+                "ShowinColumnOption": aShowinColumnOption
+            };
+            ColumnSettingData.push(coldata);
+        });
+        console.log("ColumnSettingData : ", ColumnSettingData);
+        $.ajax({
+            url: Aurl + "columnsettings/Savecolumnsettings",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(ColumnSettingData),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        //ClearForm();
+                        //modalGenColumnSettings.style.display = "none";
+                        modalGenColumnSettings.hide();
+                        var ColumnsData = items.ColumnData;
+                        if (typeof actions !== "undefined" && actions) {
+                            ColumnsData.push(actions);
+                        }
+                        if (typeof OtherActions !== "undefined" && OtherActions) {
+                            ColumnsData.push(OtherActions);
+                        }
+                        grid.columns = ColumnsData;
+                        grid.refreshColumns();
+                        //ColumnDetails(2, 1002, SelectTableID);
+                        //setTimeout(() => {
+                        //    if (SelectTableID == 1) {
+                        //        grid.columns = columnsettings; // your original column settings array
+                        //        grid.refreshColumns();
+                        //    } else {
+                        //        Documetsgrid.columns = documentcolumnsettings; // your original column settings array
+                        //        Documetsgrid.refreshColumns();
+                        //    }
+                        //}, 500);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message);
+                        //alert(items.Message);
+                    }
+                });
+            },
+            error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+        //console.log("Column Setting Data ", ColumnSettingData);
+    });
+    function UpdateColumnWidth(nFormID, nTableID, nFormorReport, nColumnID, strColumnName, dWidth) {
+        $.ajax({
+            url: Aurl + "columnsettings/updatecolumnwidth",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                FormID: nFormID, TableID: nTableID, FormorReport: nFormorReport, ColumnID: nColumnID,
+                ColumnName: strColumnName, Width: dWidth
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                //showSuccessSnackbar("Width Updated successfully");
+            }, error: function (data) {
+                console.log(data)
+                //showErrorSnackbar("Error when Width Update");
+            }
+        });
+    }
+    function GetDocumentID(dtpDate, nBranchID, nTransID, oldprefix, isModify, fieldid) {
+        if (nBranchID > 0 && dtpDate != "") {
+            $.ajax({
+                url: Aurl + "documentseries/docid",
+                type: 'get',
+                contentType: 'json',
+                data: { TransID: nTransID, BranchID: nBranchID, DocDate: dtpDate },
+                xhrFields: {
+                    withCredentials: true
+                }, async: false,
+                success: function (data) {
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == "0") {
+                            if (isModify) {
+                                if (oldprefix == items.Prefix) {
+                                    $("#lblDocID").text(items.DocID);
+                                    document.getElementById("lblDocID").setAttribute("docprefix", items.Prefix);
+                                }
+                                else {
+                                    showErrorSnackbar("Value cannot be changed");
+                                    var olddata = $("#" + fieldid).data("oldvalue");
+                                    $("#" + fieldid).val(olddata);
+                                }
+                            } else {
+                                $("#lblDocID").text(items.DocID);
+                                document.getElementById("lblDocID").setAttribute("docprefix", items.Prefix);
+                            }
+                        }
+                        else {
+                            if (isModify) {
+                                if (oldprefix != items.Prefix) {
+                                    showErrorSnackbar("Value cannot be changed");
+                                    var olddata = $("#" + fieldid).data("oldvalue");
+                                    $("#" + fieldid).val(olddata);
+                                }
+                            } else {
+                                showErrorSnackbar(items.Message);
+                                $("#lblDocID").text("--");
+                            }
+                        }
+                    });
+                },
+                error: function (data) {
+
+                },
+            });
+        } else {
+            showErrorSnackbar("Select Valid Branch/Date");
+        }
+    }
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+        input.addEventListener("input", function () {
+
+            // Check MAX
+            if (this.max && this.value > this.max) {
+                this.value = this.max;
+            }
+            // Check MIN
+            if (this.min && this.value < this.min) {
+                this.value = this.min;
+            }
+        });
+
+    });
 </script>
