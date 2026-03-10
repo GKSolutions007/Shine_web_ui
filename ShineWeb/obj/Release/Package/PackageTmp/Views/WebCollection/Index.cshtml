@@ -1,20 +1,26 @@
 ﻿@model ShineWeb.Models.SingleMasterModel
 @{
     ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
 }
 
-<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
-<link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />
+@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+
+@*<link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />*@
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
-@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
-<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+@*<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />*@
+<link href="~/datatable/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet" />
 
-<script src="~/Scripts/bootstrap.min.js"></script>
+@*<script src="~/Scripts/bootstrap.min.js"></script>*@
+<script src="~/Scripts/5.3.8/bootstrap.bundle.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
-<script src="~/Scripts/dataTables.2.2.2.js"></script>
+@*<script src="~/Scripts/dataTables.2.2.2.js"></script>*@
+<script src="~/datatable/1.13.6/jquery.dataTables.min.js"></script>
+<script src="~/datatable/1.13.6/dataTables.bootstrap5.min.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
@@ -167,11 +173,13 @@
         -moz-transition: all 0.2s ease-in-out;
         transition: all 0.2s ease-in-out;
         position: absolute;
-        top: -40%;
+        top: -50%;
         left: 1em;
         background: #fffefe;
         color: #2b2828;
-        font-size: 1em;
+        font-size: 0.9em;
+        font-weight: 600;
+        letter-spacing: 1px;
         cursor: text;
         pointer-events: none;
         font-family: sans-serif;
@@ -191,7 +199,9 @@
         left: 1em;
         background: #fffefe;
         color: #2b2828;
-        font-size: 1em;
+        font-size: 0.9em;
+        font-weight: 600;
+        letter-spacing: 1px;
         cursor: text;
         pointer-events: none;
         font-family: sans-serif;
@@ -238,20 +248,38 @@
         overflow-y: auto;
         overflow-x: hidden;
     }*/
+    #tblCollectionData tbody tr {
+        transition: all 0.2s ease;
+    }
 
+        #tblCollectionData tbody tr:hover {
+            background: #f8fbff;
+            transform: scale(1.01);
+        }
+    .row-error {
+        color: red !important;
+        font-weight: 500;
+    }
+
+    .row-success {
+        color: green !important;
+        font-weight: 500;
+    }
 </style>
 <body>
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
     @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAdd" })
-    
-    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+
+    <div class="d-flex align-items-center gap-2">
+        <!-- Larger heading -->
+        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    </div>
     <hr />
     <div class="toastBox"></div>
-    <div id="dvMain">
-        <div class="row">
-            <div class="col-sm-12 col-md-12 col-lg-12">
+    <div class="row">
+        @*<div class="col-sm-12 col-md-12 col-lg-12">
                 <table width="100%">
                     <tr>
                         <td style="border:none;" width="13%">
@@ -308,9 +336,122 @@
                         </td>
                     </tr>
                 </table>
-            </div>
+            </div>*@
+        <div class="container-fluid">
+
+            <div class="row g-2 align-items-end">
+
+                <!-- Beat -->
+                <div class="col-12 col-md-2 col-lg-2">
+                    <span class="form-label w-100">
+                        <select class="form-control FormclrcmbField" id="cmbBeatName">
+                            <option value="0">Select</option>
+                        </select>
+                        <label class="labelup">Beat</label>
+                    </span>
+                    <div class="text-danger pt-1 ps-1" id="divErrBeat"></div>
+                </div>
+
+                <!-- Salesman -->
+                <div class="col-12 col-md-2 col-lg-2">
+                    <span class="form-label w-100">
+                        <select class="form-control FormclrcmbField" id="cmbSalesManName">
+                            <option value="0">Select</option>
+                        </select>
+                        <label class="labelup">Salesman</label>
+                    </span>
+                    <div class="text-danger pt-1 ps-1" id="divErrSalesman"></div>
+                </div>
+
+                <!-- Customer -->
+                <div class="col-12 col-md-3 col-lg-3">
+                    <span class="form-label w-100">
+                        <input hidden id="txtCustomerID" class="FormclrField" />
+                        <input class="form-control FormclrField" id="txtCustomer" />
+                        <label class="labelup">Customer</label>
+                    </span>
+                    <div class="text-danger pt-1 ps-1" id="divErrCustomer"></div>
+                </div>
+
+                <!-- Payment Mode -->
+                <div class="col-12 col-md-1 col-lg-1">
+                    <span class="form-label w-100">
+                        <select class="form-control FormclrcmbField" id="cmbPaymode">
+                            <option value="0">Select</option>
+                        </select>
+                        <label class="labelup">Payment <span class="textforabv800">Mode</span></label>
+                    </span>
+                    <div class="text-danger pt-1 ps-1" id="divErrPaymode"></div>
+                </div>
+
+                <!-- Cheque Date -->
+                <div class="col-12 col-md-1 col-lg-1">
+                    <span class="form-label w-100">
+                        <input class="clsdtpfieldfull FormclrField"
+                               type="date"
+                               id="dtpChequeDate"
+                               style="font-size:14px" />
+                        <label class="labelup"><span class="textforabv800">Cheque Date</span><span class="textforblw800">Cq Date</span></label>
+                    </span>
+                    <div class="text-danger pt-1 ps-1" id="divErrChequeDate"></div>
+                </div>
+
+                <!-- Checkbox 1-->
+                <!--<div class="col-12 col-md-1 col-lg-1 d-flex align-items-center">
+        <div class="form-check me-3 pb-2">
+            <input class="form-check-input" type="checkbox" id="chkAllowDate">
+            <label class="form-check-label" for="chkAllowDate">
+                Allow Date
+            </label>
         </div>
-        <div class="row">
+    </div>-->
+                <!-- Checkbox 2-->
+                <!--<div class="col-12 col-md-1 col-lg-1 d-flex align-items-center">
+        <div class="form-check pb-2">
+            <input class="form-check-input" type="checkbox" id="chkShowAll">
+            <label class="form-check-label" for="chkShowAll">
+                Show All
+            </label>
+        </div>
+
+    </div>-->
+                <!-- Filter Button -->
+                <!--<div class="col-12 col-md-1 col-lg-1">
+        <button id="btnFilter" class="btn btn-primary w-100">
+            <i class="bi bi-funnel-fill"></i> <span class="textforabv800">Filter</span>
+        </button>
+    </div>-->
+                <div class="col-12 col-md-3 d-flex flex-wrap align-items-center gap-2">
+
+                    <!-- Checkbox 1 -->
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" id="chkAllowDate">
+                        <label class="form-check-label" for="chkAllowDate">
+                            Allow Date
+                        </label>
+                    </div>
+
+                    <!-- Checkbox 2 -->
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" id="chkShowAll">
+                        <label class="form-check-label" for="chkShowAll">
+                            Show All
+                        </label>
+                    </div>
+
+                    <!-- Filter Button -->
+                    <div class="flex-grow-1 flex-md-grow-0">
+                        <button id="btnFilter" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel-fill"></i> <span class="textforabv800">Filter</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+    @*<div class="row mt-4">
             <div class="col-sm-12 col-md-12 col-lg-12" style="padding-right:15px;padding-bottom:20px">
                 <table class="table table-bordered  row-border order-column" id="tblCollectionData" width="100%">
                     <thead>
@@ -318,7 +459,7 @@
                             <th colspan="8" style="text-align:center;border:none">
                                 Cash ₹ : <label id="lblCash" style="color:brown;font-size:16px;" class="lblPMValuecount"> 0.00 / 0</label>
                             </th>
-                            <th colspan="6" style="text-align: center; border: none">
+                            <th colspan="7" style="text-align: center; border: none">
                                 Cheque ₹ : <label id="lblCheque" style="color:brown;font-size:16px;" class="lblPMValuecount"> 0.00 / 0</label>
                             </th>
                             <th colspan="5" style="text-align: center; border: none">
@@ -341,6 +482,7 @@
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Adj ₹</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Disc ₹</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Other ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Balance</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Cheque Date</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Ref/Cheque No</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Remarks</th>
@@ -350,65 +492,232 @@
                     </thead>
                 </table>
             </div>
+        </div>*@
+    <div class="row mt-4">
+
+        <div class="col-12 pb-4">
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-striped align-middle"
+                       id="tblCollectionData"
+                       style="width:100%; border:1px solid #dee2e6;">
+
+                    <thead class="table-light">
+
+                        <!-- Summary Row -->
+                        <tr>
+
+                            <th colspan="8" class="text-center border-0" style="letter-spacing:0.75px;">
+                                Cash ₹ :
+                                <label id="lblCash" style="font-size:16px"
+                                       class="lblPMValuecount fw-bold text-danger">
+                                    0.00 / 0
+                                </label>
+                            </th>
+
+                            <th colspan="7" class="text-center border-0" style="letter-spacing:0.75px;">
+                                Cheque ₹ :
+                                <label id="lblCheque" style="font-size:16px"
+                                       class="lblPMValuecount fw-bold text-danger">
+                                    0.00 / 0
+                                </label>
+                            </th>
+
+                            <th colspan="5" class="text-center border-0" style="letter-spacing:0.75px;">
+                                Bank Transfer ₹ :
+                                <label id="lblBankTransfer" style="font-size:16px"
+                                       class="lblPMValuecount fw-bold text-danger">
+                                    0.00 / 0
+                                </label>
+                            </th>
+
+                        </tr>
+
+                        <!-- Column Headers -->
+                        <tr class="text-center small">
+
+                            <th style="width:0%" class="trclrforcolheader">ID</th>
+                            <th style="width:0%" class="trclrforcolheader">EncID</th>
+                            <th style="width:3%" class="trclrforcolheader">
+                                <input id="chkSelectAll" type="checkbox" />
+                            </th>
+
+                            <th style="width:3%" class="trclrforcolheader">Action</th>
+                            <th style="width:2%" class="trclrforcolheader">#</th>
+                            <th style="width:10%" class="trclrforcolheader">Date</th>
+                            <th style="width:12%" class="trclrforcolheader">Beat</th>
+                            <th style="width:12%" class="trclrforcolheader">Salesman</th>
+                            <th style="width:16%" class="trclrforcolheader">Customer</th>
+                            <th style="width:12%" class="trclrforcolheader">Payment Mode</th>
+                            <th style="width:10%" class="trclrforcolheader">Invoice ₹</th>
+                            <th style="width:10%" class="trclrforcolheader">Amount</th>
+                            <th style="width:10%" class="trclrforcolheader">Adj ₹</th>
+                            <th style="width:10%" class="trclrforcolheader">Disc ₹</th>
+                            <th style="width:10%" class="trclrforcolheader">Other ₹</th>
+                            <th style="width:10%" class="trclrforcolheader">Balance</th>
+                            <th style="width:10%" class="trclrforcolheader">Cheque Date</th>
+                            <th style="width:10%" class="trclrforcolheader">Ref/Cheque No</th>
+                            <th style="width:10%" class="trclrforcolheader">Remarks</th>
+                            <th style="width:10%" class="trclrforcolheader">Narration</th>
+
+                        </tr>
+
+                    </thead>
+
+                </table>
+
+            </div>
+
         </div>
-        @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
 
+    </div>
+    @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
+    @*<div class="footerAction modal-footer">
+            <div class="p-2">
+                    <table style="width:100%">
+                        <tr>
+                            <td align="left" style="width:10%">
+                                <button type="button" style="bottom:0;left:0" class="btn btn-warning" id="btnCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>
+                            </td>
+                            <td align="right" style="width:90%">
+                                <div style="padding-right:20px" align="right">
+                                    <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
+                                    <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+        </div>*@
+    <div class="footerAction modal-footer">
 
-        <div class="footerAction modal-footer">
-            <table style="width:100%">
-                <tr>
-                    <td align="left" style="width:10%">
-                        <button type="button" style="bottom:0;left:0" class="btn btn-warning" id="btnCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>
-                    </td>
-                    <td align="right" style="width:90%">
-                        <div style="padding-right:20px" align="right">
-                            <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
-                            <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
-                        </div>
-                    </td>
-                </tr>
+        <div class="d-flex justify-content-between align-items-center w-100 p-2">
+
+            <!-- Left Corner -->
+            <button type="button" class="btn btn-warning" id="btnCancel">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+
+            <!-- Right Corner -->
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-danger" id="btnClear">
+                    <span class="glyphicon glyphicon-refresh"> Clear</span>
+                </button>
+
+                <button type="button" class="btn btn-success" id="btnSave">
+                    <span class="glyphicon glyphicon-saved"> Save</span>
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+    <!--<div class="modalBatch" id="myModalfg">
+        <div class="modal-dialog" style="width:100%;">
+            <div class="modalBatch-content">-->
+    <!-- Modal Header -->
+    <!--<div class="modal-header">
+        <button type="button" class="closefg">&times;</button>
+        <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Invoices</b></h5>
+    </div>-->
+    <!-- Modal body -->
+    <!--<div class="modal-body">
+        <div style="padding-top:2px">
+            <table class="table table-bordered  row-border order-column" id="tblInvoiceData" width="100%">
+                <thead>
+                    <tr class="trclrforcolheader">
+                        <th style="text-align:center;font-size: 12px;width:2%;">#</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Doc ID</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Date</th>
+                        <th style="text-align:center;font-size: 12px;width:15%;">Ref No</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Invoice Value</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Balance</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Adjust ₹</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Other Charge</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Discount %</th>
+                        <th style="text-align:center;font-size: 12px;width:10%;">Discount ₹</th>
+                    </tr>
+                </thead>
             </table>
         </div>
-    </div>
-
-    <div class="modalBatch" id="myModalfg">
-        <div class="modal-dialog" style="width:100%;">
-            <div class="modalBatch-content">
-                <!-- Modal Header -->
-                <div class="modal-header">
-                    <button type="button" class="closefg">&times;</button>
-                    <h5 class="modal-title" style="color:white" id="lblPopupheading"><b>Invoices</b></h5>
-                    @*<hr />*@
-                </div>
-                <!-- Modal body -->
-                <div class="modal-body">
-                    <div style="padding-top:2px">
-                        <table class="table table-bordered  row-border order-column" id="tblInvoiceData" width="100%">
-                            <thead>
-                                <tr class="trclrforcolheader">
-                                    <th style="text-align:center;font-size: 12px;width:2%;">#</th>
-                                    <th style="text-align:center;font-size: 12px;width:10%;">Doc ID</th>
-                                    <th style="text-align:center;font-size: 12px;width:10%;">Date</th>
-                                    <th style="text-align:center;font-size: 12px;width:15%;">Ref No</th>
-                                    <th style="text-align:center;font-size: 12px;width:10%;">Invoice Value</th>
-                                    <th style="text-align:center;font-size: 12px;width:10%;">Balance</th>
-                                    <th style="text-align:center;font-size: 12px;width:10%;">Adjust ₹</th>
-                                    <th style="text-align:center;font-size: 12px;width:10%;">Other Charge</th>
-                                    <th style="text-align:center;font-size: 12px;width:10%;">Discount %</th>
-                                    <th style="text-align:center;font-size: 12px;width:10%;">Discount ₹</th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
-                </div>
-                <!-- Modal footer -->
-                <div class="modal-footer" style="background-color:skyblue">
+    </div>-->
+    <!-- Modal footer -->
+    <!--<div class="modal-footer" style="background-color:skyblue">
                     <div style="padding-top:0px" align="right">
-                        <button type="button" class="btn btn-warning" id="btnPopupClose"><b>X&ensp;</b>Close</button>
+                        <button type="button" class="btn btn-warning" id="btnPopupClose"><i class="bi bi-x-circle"></i> Close</button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>-->
+    <div class="modal fade" id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+
+        <div class="modal-dialog modal-xl">
+
+            <div class="modal-content modalBatch-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header text-white" style="background-color:#0d6efd;">
+
+                    <h5 class="modal-title fw-bold" id="lblPopupheading">
+                        Invoices
+                    </h5>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                </div>
+
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-bordered table-striped align-middle"
+                               id="tblInvoiceData"
+                               style="width:100%;">
+
+                            <thead class="text-center small">
+
+                                <tr>
+                                    <th style="width:2%" class="trclrforcolheader">#</th>
+                                    <th style="width:10%" class="trclrforcolheader">Doc ID</th>
+                                    <th style="width:10%" class="trclrforcolheader">Date</th>
+                                    <th style="width:15%" class="trclrforcolheader">Ref No</th>
+                                    <th style="width:10%" class="trclrforcolheader">Invoice Value</th>
+                                    <th style="width:10%" class="trclrforcolheader">Balance</th>
+                                    <th style="width:10%" class="trclrforcolheader">Adjust ₹</th>
+                                    <th style="width:10%" class="trclrforcolheader">Other Charge</th>
+                                    <th style="width:10%" class="trclrforcolheader">Discount %</th>
+                                    <th style="width:10%" class="trclrforcolheader">Discount ₹</th>
+                                </tr>
+
+                            </thead>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-warning"
+                            id="btnPopupClose"
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Close
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 </body>
 
@@ -419,7 +728,7 @@
         searching: false,
         info: false,
         ordering: true,
-        scrollY: "350px",
+        scrollY: "450px",
         scrollX: true,
         scrollCollapse: true,
         order: [[1, 'asc']],
@@ -444,14 +753,16 @@
     var nTransMode = 1, nIsDraft = 0;
     //GetData(1);
     var RtnDisp = 1;
-    var modal = document.getElementById("myModalfg");
-    var span = document.getElementsByClassName("closefg")[0];
-    span.onclick = function () {
-        modal.style.display = "none";
-    }
+    var modal = new bootstrap.Modal(document.getElementById('myModalfg'));//document.getElementById("myModalfg");
+    
     $('#btnPopupClose').click(function (e) {
-        modal.style.display = "none";
+        //modal.style.display = "none";
+        modal.hide();
     });
+    document.getElementById('myModalfg')
+        .addEventListener('shown.bs.modal', function () {
+            if (InvoiceTable) InvoiceTable.columns.adjust().draw();
+        });
     if ($("#txtReurnPricePerm").val() == 0) {
         RtnDisp = 0;
     }
@@ -545,7 +856,7 @@
                 }
                 else if (nMode == 5) {
                     $("#btnSave").prop("disabled", false);
-                    $("#tblCollectionData tbody tr").css("color", "black").attr("title", "");                    
+                    $("#tblCollectionData tbody tr").css("color", "black").attr("title", "");
                     $.each(data, function (i, items) {
                         if (items.MsgID == 0) {
                             showSuccessSnackbar(items.Message);
@@ -553,31 +864,33 @@
                         }
                         else {
                             var ErrorIDs = items.RowID.split(',');
-                            var ErrorMSGs = items.Message.split(',');                            
+                            var ErrorMSGs = items.Message.split(',');
                             for (var i = 0; i < ErrorIDs.length; i++) {
                                 var WCID = ErrorIDs[i];
                                 var WCErrorMsg = ErrorMSGs[i];
-                                if (WCID != "") {                                    
+                                if (WCID != "") {
                                     $("#tblCollectionData tbody tr").each(function () {
                                         var rowdata = CollectionTable.row($(this)).data();
                                         var isChk = $(this).find('input[type=checkbox]').is(':checked');
-                                        var CustomerName = rowdata.CustomerName;                                        
+                                        var CustomerName = rowdata.CustomerName;
                                         if (WCID == rowdata.ID) {
-                                            $(this).css("color", "red").attr("title", WCErrorMsg);
+                                            //$(this).css('color','red').attr("title", WCErrorMsg);
+                                            $(this).find("td").css("color", "red").attr("title", WCErrorMsg);
                                         }
                                         else if (isChk) {
-                                            $(this).css("color", "green").attr("title", "Saved Successfully");
-                                        }
+                                            //$(this).css('color', 'green').attr("title", "Saved Successfully");
+                                            $(this).find("td").css("color", "green").attr("title", "Saved Successfully");
+                                        }                                       
                                     });
                                 }
                                 if (ErrorIDs.length == (i + 1)) {
                                     var errorCount = ErrorIDs.filter(id => id !== "").length;
                                     if (errorCount > 0) {
                                         showErrorSnackbar(errorCount + " records have errors. Hover on red rows for details.");
-                                    }                                    
+                                    }
                                 }
                             }
-                            
+
                         }
                     });
 
@@ -643,7 +956,7 @@
                 strCustomer = $("#txtCustomerID").val(), strChqDate = $("#dtpChequeDate").val(),
                 strAllowDate = $("#chkAllowDate").is(":checked") ? 1 : 0;
             strShowAll = $("#chkShowAll").is(":checked") ? 1 : 0;
-            
+
             $.ajax({
                 url: Aurl + "webcollection/filterdata",
                 type: 'get',
@@ -668,7 +981,7 @@
                         var custjsdata = data;
                         console.log(custjsdata);
                         $('#tblCollectionData').DataTable({
-                            scrollY: "250px",
+                            scrollY: "325px",
                             scrollX: true,
                             scrollCollapse: true,
                             paging: false,
@@ -685,7 +998,7 @@
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value, meta) {
                                         var rowIndex = meta.row;
-                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID                                        
+                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID
                                         var _action = value.StatusID == "1" || value.StatusID == "3" ? '<input type="checkbox" id="' + checkboxId + '"  name="CustomerCheck" style="" />': '';
                                         return _action;
                                     },
@@ -711,19 +1024,31 @@
                                 //{ "data": "Date", "autoWidth": true, className: "dt-body-left" },
                                 {
                                     className: "dt-body-left",
-                                    mRender: function (data, type, value) {                                      
+                                    mRender: function (data, type, value) {
                                         return '<label title="' + value.Status + '">' + value.Date + '</label>';
                                     }
                                 },
                                 { "data": "BeatName", "autoWidth": true, className: "dt-body-left" },
                                 { "data": "SalesManName", "autoWidth": true, className: "dt-body-left" },
-                                { "data": "CustomerName", "autoWidth": true, className: "dt-body-left" },
+                                //{ "data": "CustomerName", "autoWidth": true, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-left",
+                                    mRender: function (data, type, value) {
+                                        var sCustomerName = value.CustomerName || '';
+                                        var displayText = sCustomerName.length > 20
+                                            ? sCustomerName.substring(0, 20) + '...'
+                                            : sCustomerName;
+
+                                        return '<label title="' + sCustomerName + '">' + displayText + '</label>';
+                                    }
+                                },
                                 { "data": "Paymentmode", "autoWidth": true, className: "dt-body-left" },
                                 { "data": "InvoiceAmt", "autoWidth": true, className: "dt-body-right" },
                                 { "data": "collectedamt", "autoWidth": true, className: "dt-body-right" },
                                 { "data": "AdjAmt", "autoWidth": true, className: "dt-body-right" },
                                 { "data": "DiscAmt", "autoWidth": true, className: "dt-body-right" },
                                 { "data": "WriteOff", "autoWidth": true, className: "dt-body-right" },
+                                { "data": "OSAmt", "autoWidth": true, className: "dt-body-right" },
                                 { "data": "Chequedate", "autoWidth": true, className: "dt-body-left" },
                                 { "data": "Chequeno", "autoWidth": true, className: "dt-body-left" },
 
@@ -751,7 +1076,7 @@
                                 },
                                 //{ "data": "Remarks", "autoWidth": true, className: "dt-body-left" },
                                 //{ "data": "Narration", "autoWidth": true, className: "dt-body-left" },
-                                
+
                             ],
                         });
                         CollectionTable = $('#tblCollectionData').DataTable();
@@ -850,11 +1175,12 @@
         InvoiceTable.draw().clear();
         //showSuccessSnackbar("ID : " + ID);
         GetData(8, ID);
-        modal.style.display = "block";
+        //modal.style.display = "block";
+        modal.show();
     });
     $('#tblCollectionData tbody').on('click', '.clsEdit', function (e) {
         $(".clrdivs").html("");
-        rowdata = CollectionTable.row($(this).parents('tr')).data();        
+        rowdata = CollectionTable.row($(this).parents('tr')).data();
         var ID = rowdata.EncID;//[0];
         window.open(
             'CollectionPayment?name=V5BIclDO7YSWXMUYe9qSUbB92jlocOM14lUepH77xc4%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + ID,
