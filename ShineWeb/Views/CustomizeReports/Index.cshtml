@@ -1,0 +1,928 @@
+@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
+
+<link href="~/Content/selection/select2.min.css" rel="stylesheet" />
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
+<script src="~/Scripts/selection/select2.min.js"></script>
+<style>
+    :root {
+        --primary:       hsl(217, 71%, 53%);
+        --primary-light: hsl(217, 71%, 95%);
+        --primary-dark:  hsl(217, 71%, 42%);
+        --success:       hsl(145, 63%, 42%);
+        --danger:        hsl(354, 70%, 54%);
+        --bg:            hsl(220, 20%, 97%);
+        --card-bg:       #ffffff;
+        --border:        hsl(220, 13%, 91%);
+        --text:          hsl(222, 22%, 20%);
+        --text-muted:    hsl(220, 9%, 46%);
+        --shadow-sm:     0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md:     0 4px 16px rgba(0,0,0,.08);
+        --shadow-lg:     0 8px 32px rgba(0,0,0,.12);
+        --radius:        12px;
+        --radius-sm:     8px;
+        --transition:    0.25s cubic-bezier(.4,0,.2,1);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        font-size: 14px;
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0 7px;
+        border-bottom: 2px solid var(--primary-light);
+        margin-bottom: 20px;
+        animation: slideDown .4s var(--transition);
+    }
+    .page-header-icon {
+        width: 35px; height: 35px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff;
+        font-size: 22px;
+        box-shadow: 0 4px 12px hsla(217,71%,53%,.35);
+        flex-shrink: 0;
+    }
+    .page-header h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: -.3px;
+    }
+    .page-header p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    /* ── Modern Card ── */
+    .modern-card {
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow var(--transition), transform var(--transition);
+        overflow: hidden;
+    }
+    .modern-card:hover { box-shadow: var(--shadow-md); }
+
+    .card-header-band {
+        background: linear-gradient(135deg, var(--primary-light) 0%, hsl(217,71%,90%) 100%);
+        border-bottom: 1px solid var(--border);
+        padding: 5px 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .card-header-band i {
+        font-size: 20px;
+        color: var(--primary);
+    }
+    .card-header-band h6 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--primary-dark);
+        letter-spacing: .3px;
+        text-transform: uppercase;
+    }
+    .card-body-pad { padding: 15px; }
+
+    /* ── Report Selector ── */
+    .report-selector-wrap {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+    .report-selector-wrap label {
+        white-space: nowrap;
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 110px;
+    }
+    /* ── Select2 Custom Theme ── */
+    .select2-container { flex: 0.4; min-width: 200px; }
+    .select2-container--default .select2-selection--single {
+        height: 35px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        background-color: #fff;
+        transition: border-color var(--transition), box-shadow var(--transition);
+        display: flex;
+        align-items: center;
+    }
+    .select2-container--default.select2-container--open .select2-selection--single,
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px hsla(217,71%,53%,.18);
+        outline: none;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: var(--text);
+        font-size: 13.5px;
+        font-family: 'Inter', sans-serif;
+        line-height: 33px;
+        padding-left: 10px;
+        padding-right: 24px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: var(--text-muted);
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 33px;
+        right: 6px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: var(--primary-dark) transparent transparent transparent;
+    }
+    .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+        border-color: transparent transparent var(--primary-dark) transparent;
+    }
+    /* Dropdown panel */
+    .select2-dropdown {
+        border: 1.5px solid var(--primary);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-md);
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        overflow: hidden;
+    }
+    /* Search box inside dropdown */
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 5px 10px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: var(--text);
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px hsla(217,71%,53%,.15);
+        outline: none;
+    }
+    /* Options */
+    .select2-results__option {
+        padding: 7px 12px;
+        font-size: 13px;
+        color: var(--text);
+        transition: background .15s;
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+    }
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background: hsla(217,71%,53%,.12);
+        color: var(--primary-dark);
+        font-weight: 600;
+    }
+    /* Clear 'x' button */
+    .select2-container--default .select2-selection--single .select2-selection__clear {
+        color: var(--danger);
+        font-size: 24px;
+        font-weight: 700;
+        margin-right: 10px;
+        margin-bottom:5px;
+        line-height: 1;
+    }
+
+    /* ── Filter Grid area ── */
+    #filtersArea {
+        display: none;
+        animation: fadeSlideUp .35s var(--transition);
+    }
+    #filtersArea.visible { display: block; }
+
+    /* Filter cards grid */
+    #filtersGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 7px;
+    }
+
+    .filter-card {
+        background: var(--card-bg);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        padding: 6px 8px;
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow var(--transition), transform var(--transition);
+        animation: fadeSlideUp .3s var(--transition);
+    }
+    .filter-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+    .filter-card-label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-card-label i { color: var(--primary); font-size: 14px; }
+
+    /* Inputs inside filter cards */
+    .filter-card .form-control,
+    .filter-card select {
+        width: 100%;
+        height: 38px;
+        border: 1.5px solid var(--border);
+        border-radius: 6px;
+        padding: 0 12px;
+        font-size: 13px;
+        color: var(--text);
+        background: #fafbfc;
+        transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .filter-card .form-control:focus,
+    .filter-card select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px hsla(217,71%,53%,.15);
+        background: #fff;
+        outline: none;
+    }
+    .filter-card input[type="date"] {
+        font-family: 'Inter', sans-serif;
+    }
+    .filter-card input[type="checkbox"] {
+        width: 20px; height: 20px;
+        accent-color: var(--primary);
+        cursor: pointer;
+        border-radius: 4px;
+        margin-top: 6px;
+    }
+    /* Mandatory border highlight */
+    .filter-card .form-control[style*="border-color: red"],
+    .filter-card select[style*="border-color: red"] {
+        border-color: var(--danger) !important;
+        box-shadow: 0 0 0 3px hsla(354,70%,54%,.15);
+    }
+
+    /* ── Empty State ── */
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: var(--text-muted);
+        display: none;
+    }
+    .empty-state.visible { display: block; }
+    .empty-state i { font-size: 48px; opacity: .35; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; margin: 0; }
+
+    /* ── Loader ── */
+    .filters-loader {
+        display: none;
+        padding: 30px;
+        text-align: center;
+    }
+    .filters-loader.visible { display: block; }
+    .spinner-ring {
+        width: 36px; height: 36px;
+        border: 3px solid var(--border);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+        margin: 0 auto 10px;
+    }
+
+    /* ── Action Buttons ── */
+    .action-bar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding-top: 18px;
+        border-top: 1px solid var(--border);
+        margin-top: 6px;
+    }
+    .btn-modern {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 40px;
+        padding: 0 20px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+        letter-spacing: .2px;
+        white-space: nowrap;
+    }
+    .btn-modern:active { transform: scale(.97); }
+    .btn-modern i { font-size: 15px; }
+
+    .btn-clear {
+        background: hsl(354,70%,97%);
+        color: var(--danger);
+        border: 1.5px solid hsl(354,70%,88%);
+    }
+    .btn-clear:hover {
+        background: var(--danger);
+        color: #fff;
+        box-shadow: 0 4px 12px hsla(354,70%,54%,.3);
+    }
+    .btn-export {
+        background: linear-gradient(135deg, var(--success) 0%, hsl(145,63%,32%) 100%);
+        color: #fff;
+        box-shadow: 0 2px 8px hsla(145,63%,42%,.3);
+    }
+    .btn-export:hover {
+        box-shadow: 0 6px 18px hsla(145,63%,42%,.45);
+        transform: translateY(-1px);
+    }
+    .btn-export:disabled {
+        opacity: .65;
+        pointer-events: none;
+    }
+
+    /* Export spinner inside button */
+    .btn-spinner {
+        width: 14px; height: 14px;
+        border: 2px solid rgba(255,255,255,.4);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin .6s linear infinite;
+        display: none;
+    }
+    .btn-export.loading .btn-icon  { display: none; }
+    .btn-export.loading .btn-spinner { display: block; }
+
+
+    /* ── Animations ── */
+    @@keyframes slideDown {
+        from { opacity: 0; transform: translateY(-16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .fade-in { animation: fadeSlideUp .35s var(--transition); }
+
+    /* ── Responsive tweaks ── */
+    @@media (max-width: 576px) {
+        .page-header { padding: 14px 0 10px; }
+        .page-header h4 { font-size: 15px; }
+        .page-header-icon { width: 38px; height: 38px; font-size: 18px; }
+        #filtersGrid { grid-template-columns: 1fr; }
+        .action-bar { justify-content: stretch; }
+        .btn-modern { flex: 1; justify-content: center; }
+        .report-selector-wrap { flex-direction: column; align-items: stretch; }
+        .report-selector-wrap label { min-width: unset; }
+    }
+    @@media (min-width: 768px) and (max-width: 991px) {
+        #filtersGrid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── jQuery UI autocomplete ── */
+    .ui-autocomplete {
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-md);
+        padding: 4px 0;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        max-height: 220px;
+        overflow-y: auto;
+        z-index: 9999;
+    }
+    .ui-autocomplete .ui-menu-item { padding: 0; }
+    .ui-autocomplete li.each { margin: 0; }
+    .ui-autocomplete .acItem {
+        padding: 2px 5px;
+        cursor: pointer;
+        transition: background .15s;
+        color: var(--text);
+    }
+    .ui-autocomplete .acItem:hover,
+    .ui-menu-item-wrapper.ui-state-active .acItem {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+    }
+</style>
+
+<body>
+    @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+
+    <div class="toastBox"></div>
+
+    <!-- ── Page Header ── -->
+    <div class="page-header fade-in">
+        <div class="page-header-icon">
+            <i class="bi bi-bar-chart-line-fill"></i>
+        </div>
+        <div>
+            <h4 id="MainHeading">Customize Reports</h4>
+            <p>Select a report and configure its filters before exporting</p>
+        </div>
+    </div>
+
+    <!-- ── Report Selection Card ── -->
+    <div class="modern-card fade-in mb-3">
+        <div class="card-header-band">
+            <i class="bi bi-journals"></i>
+            <h6>Report Selection</h6>
+            <span class="ms-auto badge rounded-pill" id="reportCount"
+                  style="background:var(--primary-light);color:var(--primary-dark);font-size:11px;display:none;">
+            </span>
+        </div>
+        <div class="card-body-pad">
+            <div class="report-selector-wrap">
+                <label for="cmbReportNames">
+                    <i class="bi bi-file-earmark-bar-graph text-primary"></i>
+                    Report Name
+                </label>
+                <select id="cmbReportNames" style="width:100%">
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filters Section ── -->
+    <div class="modern-card fade-in">
+        <div class="card-header-band">
+            <i class="bi bi-funnel-fill"></i>
+            <h6>Report Filters</h6>
+            <span class="ms-auto badge rounded-pill" id="filterCount"
+                  style="background:var(--primary-light);color:var(--primary-dark);font-size:11px;display:none;">
+            </span>
+        </div>
+        <div class="card-body-pad">
+
+            <!-- Loader -->
+            <div class="filters-loader" id="filtersLoader">
+                <div class="spinner-ring"></div>
+                <span style="font-size:13px;color:var(--text-muted);">Loading filters…</span>
+            </div>
+
+            <!-- Empty state (before selection) -->
+            <div class="empty-state visible" id="emptyState">
+                <i class="bi bi-sliders2-vertical d-block"></i>
+                <p>Select a report above to view its filter options</p>
+            </div>
+
+            <!-- Filters Grid (populated dynamically) -->
+            <div id="filtersArea">
+                <div id="filtersGrid">
+                    <!-- Filter cards injected by JS -->
+                </div>
+
+                <!-- ── Action Bar ── -->
+                <div class="action-bar">
+                    <button type="button" class="btn-modern btn-clear" id="btnClear" tabindex="5">
+                        <i class="bi bi-arrow-counterclockwise"></i> Clear
+                    </button>
+                    <button type="button" class="btn-modern btn-export" id="btnPopupGenerate" tabindex="4">
+                        <span class="btn-icon"><i class="bi bi-file-earmark-arrow-down"></i></span>
+                        <div class="btn-spinner"></div>
+                        Export Report
+                    </button>
+                    <button hidden type="button" class="btn-modern" id="btnScript"
+                            style="background:var(--primary-light);color:var(--primary);">
+                        <i class="bi bi-code-slash"></i> Script
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hidden DataTable (keeps original AJAX logic working) -->
+            <div style="display:none;">
+                <table style="width:100%" id="tblCustomizeRepFilterData">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;font-size:12px;width:40%;"><u>Filter Name</u></th>
+                            <th style="text-align:center;font-size:12px;width:60%;"><u>Filter Value</u></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+    var Aurl = '@Session["APIurl"]';
+    var UID  = '@Session["LoginUserID"]';
+    var RID  = '@Session["RoleID"]';
+
+    // Icons per parameter type
+    var paramIcons = {
+        'Date':     'bi-calendar3',
+        'Dropdown': 'bi-card-list',
+        'Autolist': 'bi-search',
+        'Checkbox': 'bi-toggle-on',
+        'Number':   'bi-123',
+        'Text':     'bi-fonts'
+    };
+
+    // Keep original hidden DataTable for export logic
+    var TableCustomizeRep = $('#tblCustomizeRepFilterData').DataTable({
+        "bFilter":     false,
+        "bSearchable": false,
+        "bInfo":       false,
+        "bPaginate":   false,
+        "ordering":    false,
+    });
+
+    GetData(1, RID);
+
+    function GetData(nMode, nID) {
+        if (nMode == 2) {
+            showFiltersLoader(true);
+        }
+        $.ajax({
+            url: Aurl + "initiatecustomizereport",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, ID: nID, ALName: "" },
+            xhrFields: { withCredentials: true },
+            async: false,
+            success: function (data) {
+                if (nMode == 1) {
+                    $('#cmbReportNames').find("option").remove();
+                    $('#cmbReportNames').append($('<option/>', { value: "", text: "" }));
+                    var reports = JSON.parse(data);
+                    $('#reportCount').text(reports.length + ' report' + (reports.length !== 1 ? 's' : '')).show();
+                    $.each(reports, function (i, items) {
+                        $('#cmbReportNames').append($('<option/>', { value: items.ID, text: items.Name }));
+                    });
+                    // Initialise or refresh Select2
+                    if ($('#cmbReportNames').hasClass('select2-hidden-accessible')) {
+                        $('#cmbReportNames').select2('destroy');
+                    }
+                    $('#cmbReportNames').select2({
+                        placeholder: '-- Select a Report --',
+                        allowClear: true,
+                        width: '100%',
+                        dropdownAutoWidth: false,
+                        minimumResultsForSearch: 0
+                    });
+                }
+                else if (nMode == 2) {
+                    // Clear hidden DataTable
+                    TableCustomizeRep.draw().clear();
+                    TableCustomizeRep.draw().clear();
+
+                    // Clear modern grid
+                    $('#filtersGrid').empty();
+
+                    showFiltersLoader(false);
+
+                    if (data.length > 0) {
+                        var ReportFilters = JSON.parse(data);
+                        $('#emptyState').removeClass('visible');
+                        $('#filtersArea').addClass('visible');
+                        $('#filterCount').text(ReportFilters.length + ' filter' + (ReportFilters.length !== 1 ? 's' : '')).show();
+
+                        $.each(ReportFilters, function (i, items) {
+                            var ParamType = items.ParameterType;
+                            var ParVal    = "";
+                            var IsMand    = items.IsMandatory;
+                            var defval    = items.AutolistName == "1" ? "checked" : "";
+                            var icon      = paramIcons[ParamType] || 'bi-sliders';
+
+                            // Build hidden DataTable row (for export logic)
+                            if (ParamType == "Autolist") {
+                                ParVal = '<input isMandatory ="' + IsMand + '" type="text" class="form-control" name="' + items.AutolistName + '" id="' + (items.AutolistName + i) + '" />';
+                            } else if (ParamType == "Dropdown") {
+                                ParVal = '<select class="form-control" name="' + items.AutolistName + '" id="Combo' + i + '"></select>';
+                            } else if (ParamType == "Date") {
+                                ParVal = '<input isMandatory=' + IsMand + ' type="date" class="form-control" name="' + items.AutolistName + '" id="dtp' + (items.AutolistName + i) + '" />';
+                                var Datetype = items.AutolistName == "CD" ? 0 : items.AutolistName == "MF" ? 8 : 0;
+                                setDate("dtp" + (items.AutolistName + i), Datetype);
+                            } else if (ParamType == "Checkbox") {
+                                ParVal = '<input type="checkbox" name="' + items.AutolistName + '" id=chk"' + (items.AutolistName + i) + '" ' + defval + ' />';
+                            } else if (ParamType == "Number") {
+                                ParVal = '<input isMandatory ="' + IsMand + '" type="number" class="form-control" name="' + items.AutolistName + ' id=chk' + (items.AutolistName + i) + ' value =' + items.AutolistName + ' />';
+                            } else if (ParamType == "Text") {
+                                ParVal = '<input isMandatory ="' + IsMand + '" type="text" class="form-control" name="text' + items.AutolistName + '" id="txt' + (items.AutolistName + i) + '" value ="' + items.AutolistName + '" />';
+                            }
+
+                            TableCustomizeRep.row.add([
+                                '<label id="lblparamName' + i + '"><b>' + items.ParameterName + '</b></label>',
+                                ParVal
+                            ]).draw(false);
+
+                            // ── Build modern filter card ──
+                            var visibleInput = buildVisibleControl(ParamType, items, i, IsMand, defval);
+                            var mandBadge    = (IsMand == 1) ? '<span style="color:var(--danger);font-size:10px;margin-left:4px;">★ Required</span>' : '';
+                            var cardHtml = '<div class="filter-card" data-index="' + i + '">' +
+                                '<div class="filter-card-label"><i class="bi ' + icon + '"></i>' +
+                                items.ParameterName + mandBadge + '</div>' +
+                                visibleInput +
+                                '</div>';
+                            $('#filtersGrid').append(cardHtml);
+                        });
+
+                        LoadDataforAL();
+                        bindVisibleToHidden();
+                    } else {
+                        $('#filtersArea').removeClass('visible');
+                        $('#emptyState').addClass('visible').find('p').text('No filters configured for this report.');
+                        $('#emptyState i').removeClass('bi-sliders2-vertical').addClass('bi-exclamation-circle');
+                        $('#filterCount').hide();
+                    }
+                }
+            },
+            error: function () {
+                showFiltersLoader(false);
+                showErrorSnackbar("Error loading report data");
+            }
+        });
+    }
+
+    function buildVisibleControl(ParamType, items, i, IsMand, defval) {
+        if (ParamType == "Autolist") {
+            return '<input isMandatory="' + IsMand + '" type="text" class="form-control vis-ctrl" ' +
+                   'data-hid="' + (items.AutolistName + i) + '" ' +
+                   'name="' + items.AutolistName + '" id="vis_' + (items.AutolistName + i) + '" ' +
+                   'placeholder="Type to search" autocomplete="off" />';
+        } else if (ParamType == "Dropdown") {
+            return '<select class="form-control vis-ctrl" data-hid="Combo' + i + '" ' +
+                   'name="' + items.AutolistName + '" id="vis_Combo' + i + '"></select>';
+        } else if (ParamType == "Date") {
+            var Datetype = items.AutolistName == "CD" ? 0 : items.AutolistName == "MF" ? 8 : 0;
+            setDate("vis_dtp" + (items.AutolistName + i), Datetype);
+
+            return '<input isMandatory=' + IsMand + ' type="date" class="form-control vis-ctrl" ' +
+                   'data-hid="dtp' + (items.AutolistName + i) + '" ' +
+                'name="' + items.AutolistName + '" id="vis_dtp' + (items.AutolistName + i) + '" />';
+
+        } else if (ParamType == "Checkbox") {
+            return '<input type="checkbox" class="vis-ctrl" ' +
+                   'data-hid="chk' + (items.AutolistName + i) + '" ' +
+                   'name="' + items.AutolistName + '" id="vis_chk' + (items.AutolistName + i) + '" ' + defval + ' />';
+        } else if (ParamType == "Number") {
+            return '<input isMandatory="' + IsMand + '" type="number" class="form-control vis-ctrl" ' +
+                   'data-hid="chk' + (items.AutolistName + i) + '" ' +
+                   'name="' + items.AutolistName + '" id="vis_num' + (items.AutolistName + i) + '" placeholder="0" />';
+        } else if (ParamType == "Text") {
+            return '<input isMandatory="' + IsMand + '" type="text" class="form-control vis-ctrl" ' +
+                   'data-hid="txt' + (items.AutolistName + i) + '" ' +
+                   'name="text' + items.AutolistName + '" id="vis_txt' + (items.AutolistName + i) + '" ' +
+                   'value="' + items.AutolistName + '" />';
+        }
+        return '';
+    }
+
+    // Keep hidden DataTable fields in sync with visible modern controls
+    function bindVisibleToHidden() {
+        $(document).on('input change', '.vis-ctrl', function () {
+            var hid = $(this).data('hid');
+            if (this.type === 'checkbox') {
+                $('#' + hid).prop('checked', $(this).is(':checked'));
+            } else {
+                $('#' + hid).val($(this).val());
+            }
+        });
+    }
+
+    // Set dates on visible date inputs too
+    function setVisibleDates() {
+        $('.vis-ctrl[type="date"]').each(function () {
+            var hid = $(this).data('hid');
+            var hidVal = $('#' + hid).val();
+            if (hidVal) $(this).val(hidVal);
+        });
+    }
+
+    function LoadDataforAL() {
+        // Single loop over visible modern controls only.
+        // Autocomplete/options are applied to .vis-ctrl inputs/selects,
+        // and values are synced to the hidden DataTable fields via data-hid.
+        $('.vis-ctrl').each(function (i, items) {
+            var strALName = items.name;
+            var id = items.id;
+            var arrData = [];
+            if (!strALName) return;
+            $.ajax({
+                url: Aurl + "initiatecustomizereport",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: 4, ID: 0, ALName: strALName },
+                xhrFields: { withCredentials: true },
+                async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        var filterdata = JSON.parse(data);
+                        if (items.tagName == "INPUT" && items.type == "text") {
+                            $.each(filterdata, function (i, it) {
+                                arrData.push({ "label": it.Name, "id": it.ID });
+                            });
+                            $('#' + id + '').autocomplete({
+                                minLength: 0,
+                                source: arrData,
+                                select: function (event, ui) {
+                                    $('#' + id + '').val(ui.item.label);
+                                    var hid = $('#' + id + '').data('hid');
+                                    $('#' + hid).val(ui.item.label);
+                                    return false;
+                                },
+                            }).autocomplete("instance")._renderItem = function (ul, item) {
+                                return $("<li class='each'>")
+                                    .append("<div class='acItem'><span class='name'>" + item.label + "</span></div>")
+                                    .appendTo(ul);
+                            };
+                        } else if (items.tagName == "SELECT") {
+                            $.each(filterdata, function (i, it) {
+                                $('#' + id + '').append($('<option/>', { value: it.ID, text: it.Name }));
+                            });
+                            // sync selection to hidden select
+                            var hid = $('#' + id + '').data('hid');
+                            $('#' + id + '').on('change', function () {
+                                $('#' + hid).val($(this).val());
+                            });
+                        }
+                    }
+                }
+            });
+        });
+
+        setVisibleDates();
+    }
+
+    function showFiltersLoader(show) {
+        if (show) {
+            $('#filtersLoader').addClass('visible');
+            $('#emptyState').removeClass('visible');
+            $('#filtersArea').removeClass('visible');
+        } else {
+            $('#filtersLoader').removeClass('visible');
+        }
+    }
+
+    $("#cmbReportNames").on('select2:select select2:clear change', function (e) {
+        var val = e.target.value;
+        if (val == 0 || val == "") {
+            $('#filtersArea').removeClass('visible');
+            $('#emptyState').addClass('visible').find('p').text('Select a report above to view its filter options');
+            $('#emptyState i').removeClass('bi-exclamation-circle').addClass('bi-sliders2-vertical');
+            $('#filterCount').hide();
+        } else {
+            GetData(2, val);
+        }
+    });
+
+    // Clear button — full reset: report name + all filters + panel
+    $('#btnClear').on('click', function () {
+        // 1. Reset Select2 report dropdown to placeholder
+        $('#cmbReportNames').val("").trigger('change');
+
+        // 2. Hide filter area, show empty state
+        $('#filtersArea').removeClass('visible');
+        $('#filtersGrid').empty();
+        $('#filterCount').text('').hide();
+        $('#emptyState')
+            .addClass('visible')
+            .find('p').text('Select a report above to view its filter options');
+        $('#emptyState i')
+            .removeClass('bi-exclamation-circle')
+            .addClass('bi-sliders2-vertical');
+
+        // 3. Clear hidden DataTable rows
+        TableCustomizeRep.clear().draw();
+
+        // 4. Reset hidden DataTable field borders
+        $('#tblCustomizeRepFilterData tr td input, #tblCustomizeRepFilterData tr td select').each(function () {
+            if (this.type === 'checkbox') $(this).prop('checked', false);
+            else $(this).val('');
+            $(this).css('border-color', '');
+        });
+    });
+
+    function CheckMandatory() {
+        var IsValid = true;
+        if ($("#cmbReportNames").val() == 0 || $("#cmbReportNames").val() == "" || $("#cmbReportNames").val() == null) {
+            IsValid = false;
+            showErrorSnackbar("Select Valid Report");
+        } else if (IsValid) {
+            // Check visible modern controls
+            $('#filtersGrid .vis-ctrl').each(function () {
+                var FieldType  = this.type;
+                var FieldValue = this.type === 'checkbox' ? '' : this.value;
+                $(this).css("border-color", "");
+                if (FieldType == "text" || FieldType == "number" || FieldType == "date") {
+                    var IsMand = $(this).attr('ismandatory');
+                    if (IsMand == 1 && FieldValue == "") {
+                        $(this).css("border-color", "red");
+                        IsValid = false;
+                        showErrorSnackbar("Mandatory fields should not be empty");
+                    }
+                }
+            });
+            // Also check hidden DataTable inputs as fallback
+            if (IsValid) {
+                $('#tblCustomizeRepFilterData tr td input').each(function () {
+                    var FieldType  = this.type;
+                    var FieldValue = this.value;
+                    $(this).css("border-color", "");
+                    if (FieldType == "text" || FieldType == "number" || FieldType == "date") {
+                        var IsMand = document.getElementById(this.id).getAttribute('ismandatory');
+                        if (IsMand == 1 && FieldValue == "") {
+                            IsValid = false;
+                        }
+                    }
+                });
+            }
+        }
+        return IsValid;
+    }
+
+    var arrParams = [];
+    $('#btnPopupGenerate, #btnGenerate').on("click", function (e) {
+        if (CheckMandatory()) {
+            arrParams = [];
+            $('#filtersGrid .vis-ctrl').each(function () {
+                var s = this.type == "checkbox" ? $(this).is(":checked") : $(this).val();
+                if (s != null) {
+                    arrParams.push({ "Param1": s });
+                }
+            });
+            var FID = $("#cmbReportNames").val();
+            var listParams = { "ReportID": FID, "lstvFilters": arrParams };
+
+            // Show spinner
+            var $btn = $('#btnPopupGenerate');
+            $btn.addClass('loading').prop('disabled', true);
+            $btn.find('.btn-icon').hide();
+            $btn.find('.btn-spinner').show();
+
+            // Snackbar loader
+            var sb = document.getElementById("RepLoadersnackbar");
+            if (sb) sb.classList.add("show");
+
+            $.ajax({
+                url: Aurl + "initiatecustomizereport/generate",
+                type: 'post',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(listParams),
+                xhrFields: { withCredentials: true },
+                success: function (data) {
+                    if (sb) sb.classList.remove("show");
+                    $btn.removeClass('loading').prop('disabled', false);
+                    $btn.find('.btn-icon').show();
+                    $btn.find('.btn-spinner').hide();                    
+                    $.each(data, function (i, items) {
+                        if (items.ID == "0") {
+                            location.href = Aurl + 'customizereport/download?FPath=' + items.FilePath + "&FName=" + items.FileName;
+                            showSuccessSnackbar("Report Exported Successfully");
+                        } else {
+                            showErrorSnackbar(items.Msg);
+                        }
+                    });
+                },
+                error: function (errr) {
+                    if (sb) sb.classList.remove("show");
+                    $btn.removeClass('loading').prop('disabled', false);
+                    $btn.find('.btn-icon').show();
+                    $btn.find('.btn-spinner').hide();
+                    showErrorSnackbar("Error in data retrieval");
+                }
+            });
+        }
+    });
+</script>
