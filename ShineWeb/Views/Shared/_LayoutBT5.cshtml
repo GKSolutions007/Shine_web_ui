@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -409,6 +409,8 @@
         .list-container {
             margin-top: 10px;
             overflow: auto;
+            font-size:14px;
+            font-weight:500;
         }
 
         .list-item {
@@ -1210,7 +1212,38 @@
                 padding: 3px 4px !important;
             }
         }
+        .widesearchfield {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: fixed;
+            right: 15px;
+            top: 8px;
+            z-index: 10001;
+            cursor: pointer;
+            background: rgb(213 238 247);
+            color: rgb(51 52 55);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 13px;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 8px;
+            border: 1px solid rgb(229, 231, 235);
+            transition: all 0.3s ease;
+            transform: translateY(0px);
+        }
 
+        .widesearchfield:hover {
+            transform: translateY(-2px);
+            box-shadow: rgba(0, 0, 0, 0.15) 0px 4px 12px;
+            background: rgb(195, 230, 243);
+            color: #111827;
+        }
+
+        .widesearchfield:active {
+            transform: translateY(1px);
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 4px;
+        }
     </style>
 </head>
 <body>
@@ -1350,8 +1383,11 @@
 
 
                 <div style="top: 0; position: fixed; width: 100%;height:45px;z-index:10000;" class="dvmainmenuheader">
-                    <img src="~/Images/search-icon.png" id="icQS" onclick="focussearch();" data-toggle="modal" data-target="#myModal" style="padding-left:10px;width:35px;height:25px;position:fixed;right:0;top:0;z-index:10" title="Quick Search" />
-                    <!--<a href="~/Home" id="acompname" style="color:lightgreen;font-size:large"><img src="~/Images/G_large_Transparent.png" style="width:45px;height:35px" />-->@*<b> Shine Web</b>*@<!--</a>-->
+                    
+                    <div id="icQS" onclick="focussearch();" data-bs-toggle="modal" data-bs-target="#myModal" class="widesearchfield">
+                        <img src="~/Images/search-icon.png" style="width: 14px; height: 14px; opacity: 0.7;" alt="Search" />
+                        <span>Search</span>
+                    </div>
                     <table width="100%">
                         <tr>
                             <td style="width:2%" id="tdSideMenuIcon">
@@ -2256,7 +2292,7 @@
             autoDraftInterval = null;
         }
         function formatIndianCurrency(num) {
-            return '₹ ' + parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return '&#8377; ' + parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
     </script>
 
@@ -2444,13 +2480,8 @@
         $("#sidedivexpand").hide();
         $("#sidedivcollapsed").show();
     });
-
-    function focussearch() {
-        //document.getElementById("myInput").focus();
-        document.getElementById("myModal").style.display = "block"
-        //$('#myModal').modal('toggle');
-        $("#myInput").focus();
-    }
+    var modalQS = new bootstrap.Modal(document.getElementById('myModal'));
+    
     myFunction();
     function myFunction() {
         document.getElementById("listContainer").classList.toggle("show");
@@ -2561,12 +2592,18 @@
                 filteredItems[currentIndex].classList.remove("selected");
                 currentIndex++;
                 filteredItems[currentIndex].classList.add("selected");
+                filteredItems[currentIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
             }
         } else if (event.key === "ArrowUp") {
             if (currentIndex > 0) {
                 filteredItems[currentIndex].classList.remove("selected");
                 currentIndex--;
                 filteredItems[currentIndex].classList.add("selected");
+                filteredItems[currentIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+            else{
+                document.getElementById("myInput").focus();
+                document.getElementById("myModalLabel").scrollIntoView({ block: "nearest", behavior: "smooth" });
             }
         } else if (event.key === "Enter") {
             if (currentIndex !== -1) {
@@ -2582,7 +2619,15 @@
             document.getElementById("myModal").style.display = "none";
         }
     }
-    var modalQS = new bootstrap.Modal(document.getElementById('myModal'));// document.getElementById("myModal");
+    function focussearch() {
+        modalQS.show();
+        document.getElementById('myModal').addEventListener('shown.bs.modal', function () {
+            $("#myInput").focus();
+            $("#myInput").select();
+        });
+        searchDivs();
+    }
+    // document.getElementById("myModal");
     //var spanQS = document.getElementsByClassName("close")[0];
     //spanQS.onclick = function () {
     //    //modalQS.style.display = "none";
@@ -2680,10 +2725,10 @@
     document.addEventListener("keydown", function (event) {
         if (event.key === "F3") {
             //document.getElementById("myModal").style.display = "block"
-            modalQS.show();
+            //modalQS.show();
             //$('#myModal').modal('toggle');
+            event.preventDefault();            
             focussearch();
-            event.preventDefault();
         }
 
     });
