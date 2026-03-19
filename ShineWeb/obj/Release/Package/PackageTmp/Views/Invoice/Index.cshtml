@@ -1271,16 +1271,15 @@
                         </tr>
                     </table>
                 </div>
-                <div class="col-sm-12 col-md-4 col-lg-4">
+                <div class="col-sm-12 col-md-4 col-lg-4" style="min-width: 200px;">
                     <table width="100%">
                         <tr>
-                            <td></td>
-                            <td style="border:none;">
+                            <td style="border:none; padding-right:20px; white-space:nowrap;">
                                 <label class="fw-semibold" style="font-size:14px">Doc ID : </label>&ensp;<label id="lblDocID" docprefix="" class="fw-bolder" style="font-size:14px">INV/2425/001</label>
                             </td>
-                            <td style="border:none;">
+                            <td style="border:none;" align="right">
                                 <span class="form-label">
-                                    <input class="clsdtpfieldbottomborderfull" type="date" id="dtpDate" style="font-size:14px" oninput="javascript: if (this.value > this.max) { this.value = this.max; }" />
+                                    <input class="clsdtpfieldbottomborder" type="date" id="dtpDate" style="font-size:14px" oninput="javascript: if (this.value > this.max) { this.value = this.max; }" />
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrDate" class="clrdivs"></div>
                             </td>
@@ -1296,6 +1295,8 @@
                                 </div>
                             </td>
                         </tr>
+                    </table>
+                    <table width="100%">
                         <tr>
                             <td style="border:none;" colspan="3" width="100%">
                                 <textarea class="form-control FormclrField" id="txtCustomerRemarks" style="height:83px;font-size:10px;"></textarea>
@@ -2839,15 +2840,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        //dvDocuments,
-        var rdo1 = $("#rdoMainTableData").is(":checked");
-        //var rdo2 = $("#rdoDraftTableData").is(":checked");
-        $("#dvMain").hide();
-        $("#dvDocuments").show();
-        $("#MainHeading").text("Invoice");
-        //GetData(rdo1 ? 6 : 10);
-        GetFilterData();
-        stopAutoDraftSave();
+        if ($("#txtTransType").val() == 1 || $("#txtTransType").val() == 2) {
+            this.close();
+        } else {
+            var rdo1 = $("#rdoMainTableData").is(":checked");
+            //var rdo2 = $("#rdoDraftTableData").is(":checked");
+            $("#dvMain").hide();
+            $("#dvDocuments").show();
+            $("#MainHeading").text("Invoice");
+            //GetData(rdo1 ? 6 : 10);
+            GetFilterData();
+            stopAutoDraftSave();
+        }
     }
     $(document).on('click', '#btnBatchClose', function (e) {
         e.stopPropagation();
@@ -6230,7 +6234,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             xhrFields: {
                 withCredentials: true
             },
-            async: false,
+            //async: false,
             success: function (data) {
                 ProductTable.draw().clear(); ProductTable.draw().clear();
                 $("#lblPartyCloseBal,#lblPartyACDRating").text("");
@@ -7789,21 +7793,25 @@ if ($("#txtReurnPricePerm").val() == 0) {
         }
     }
 
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to Invoice
         $("#txtDraftID").val($("#txtID").val())
         var ID = $("#txtID").val();
-        GetProductViewData(11, ID);
         nTransMode = 1;
+        GetProductViewData(11, ID);
         //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnPrint").hide();
-        $("#btnEmail,#btnWhatsapp").hide();
+        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();        
         $("#dvMain").show();
         $("#dvDocuments").hide();
         Addprodgridline();
         $("#MainHeading").text("Create Invoice");
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 15);
+        }, 1000);
     }
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Home Quick Access View
         GetPrintProfile(4);
         var ID = $("#txtID").val();
         GetProductViewData(7, ID);

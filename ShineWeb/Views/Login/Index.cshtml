@@ -1,4 +1,4 @@
-﻿@model ShineWeb.Models.LoginModel
+@model ShineWeb.Models.LoginModel
 @{
     Layout = null;
 }
@@ -13,12 +13,13 @@
     <link rel="stylesheet" href="~/Content/jquery-ui.css">
     <link rel="stylesheet" href="~/Content/bootstrap-glyphicons.css">
     <link href="~/Content/Snackbar.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="~/Scripts/jquery-1.12.4.js"></script>
     <script src="~/Scripts/bootstrap.min.js"></script>
     <script src="~/Scripts/Validation.js"></script>
     <script src="~/Scripts/jquery-ui.min.js"></script>
+    <script id="GALKAAA" src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBDhzKQV1BgtvQdvhFwbAjUxUKp4iPL9Is'></script>
     <style>
         :root {
             --primary-color: #6a11cb;
@@ -282,7 +283,7 @@
             margin: auto;
         }
 
-        
+
 
         @@keyframes zoomIn {
             from {
@@ -356,6 +357,7 @@
             right: 25px;
             z-index: 3000;
         }
+
         #loadingDiv {
             position: absolute;
             top: 0;
@@ -363,14 +365,33 @@
             width: 100%;
             height: 150%;
             opacity: 90%;
-            z-index : 10000;
+            z-index: 10000;
             background-color: #C7E1BA;
         }
 
         .LoaderMsg {
-            padding:12%;
+            padding: 12%;
             font-size: 20px;
             text-align: center;
+        }
+
+        input[type=number] {
+            text-align: right;
+        }
+
+            input[type=number]::placeholder {
+                text-align: left;
+            }
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
         }
     </style>
 </head>
@@ -380,7 +401,10 @@
         <div class="login-container">
             <input id="tab-1" type="radio" name="tab" class="tab-input" checked>
             <input id="tab-2" type="radio" name="tab" class="tab-input">
-
+            <input hidden id="txtLatitude" />
+            <input hidden id="txtLongtitude" />
+            <input hidden id="txtOTPID" />
+            <input hidden id="txtUserID" />
             <div class="login-card">
                 <div class="brand-logo">
                     <img src="~/Images/G_large_Transparent.png" alt="ShineWeb Logo" />
@@ -562,6 +586,41 @@
                 </div>
             </div>
         </div>
+
+        <!-- Device Verification OTP Modal -->
+        <div class="modal-overlay modalBatch" id="myModalDeviceOTP" style="backdrop-filter: blur(8px);">
+            <div class="modal-content" style="max-width: 450px; text-align: center; border-radius: 24px; border-top: 6px solid #6a11cb; padding: 40px 30px;">
+                <div class="modal-header-custom" style="border-bottom: none; padding-bottom: 0; margin-bottom: 0; justify-content: flex-end; position: absolute; top: 15px; right: 20px;">
+                    <span class="close-modal closeDeviceOTP" style="font-size: 28px; transition: transform 0.3s; display: inline-block;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform='rotate(0deg)'">&times;</span>
+                </div>
+                <div class="modal-content-body">                    
+                    <h3 style="margin:0 0 12px 0; font-weight:800; color: #2c3e50;">Device Verification</h3>
+                    <p style="font-size: 15px; color: #7f8c8d; margin-bottom: 35px; line-height: 1.6;">
+                        We've detected a sign-in attempt from a new device. Please enter the 6-digit verification code sent to your registered email to continue.
+                    </p>
+
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                        <div class="floating-field" style="width: 100%;">
+                            <input type="number" id="txtDeviceOTP" placeholder=" " maxlength="6" oninput="javascript: if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" style="text-align: center; font-size: 24px; letter-spacing: 16px; font-weight: 700; padding: 16px 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 16px; transition: all 0.3s; outline: none;" onfocus="this.style.borderColor='#6a11cb'; this.style.boxShadow='0 0 0 4px rgba(106, 17, 203, 0.1)';" onblur="this.style.borderColor='#e9ecef'; this.style.boxShadow='none';" />
+                            <label style="background: #f8f9fa; padding: 0 5px;">6-Digit OTP</label>
+                            <div class="error-label" id="dvErrorDeviceOTP" style="text-align: center; margin-top: 8px; font-size: 13px;"></div>
+                        </div>
+                        <button type="button" class="action-btn" id="btnVerifyDeviceOTP" style="width: 100%; font-size: 16px; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; border-radius: 14px; background: linear-gradient(135deg, #6a11cb, #2575fc);">
+                            <i class="fa-solid fa-circle-check" style="font-size: 18px;"></i> Verify & Login
+                        </button>
+                    </div>
+
+                    <div class="helper-links" style="margin-top: 25px;" hidden>
+                        <p style="font-size: 14px; color: #95a5a6; margin: 0;">
+                            Didn't receive the code?
+                            <a href="javascript:void(0)" id="resendDeviceOTP" style="color: #6a11cb; font-weight: 700; margin-left: 5px; transition: all 0.3s;">
+                                <i class="fa-solid fa-rotate-right" style="margin-right: 3px;"></i> Resend
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
         <style>
         .resolution-overlay {
     position: fixed;
@@ -649,7 +708,14 @@
             $(".login-container").hide();
             //document.querySelector(".resolution-overlay").style.display = "none";            
         }
-        
+        function getDeviceId() {
+            let deviceId = localStorage.getItem("deviceId");
+            if (!deviceId) {
+                deviceId = crypto.randomUUID();
+                localStorage.setItem("deviceId", deviceId);
+            }
+            return deviceId;
+        }
         
         var Aurl = '@Session["APIurl"]';
         var url = '@Session["url"]';
@@ -658,6 +724,13 @@
         
         span.onclick = function () {
             modal.style.display = "none";
+        }
+        
+        var modalDeviceOTP = document.getElementById("myModalDeviceOTP");
+        var spanDeviceOTP = document.getElementsByClassName("closeDeviceOTP")[0];
+        
+        spanDeviceOTP.onclick = function () {
+            modalDeviceOTP.style.display = "none";
         }
         
         $('#btnClose').click(function (e) {
@@ -803,8 +876,7 @@
                 }
             }
             return IsValid;
-        }
-
+        }        
         $("#btnSignup").click(function () {
             if (VALIDATION()) {
                 $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Account Creating... Please wait</div></div>');
@@ -845,7 +917,6 @@
                 });
             }
         });
-
         function Login() {            
             var strusername = $("#txtUserName").val();
             var strpassword = $("#txtPassword").val();            
@@ -853,13 +924,17 @@
                 showErrorSnackbar("Please enter both username and password.");
                 return;
             }
+            $("#txtDeviceOTP,#txtOTPID").val("");
+            var devid = getDeviceId();
+            var Lat = $("#txtLatitude").val();
+            var Long = $("#txtLongtitude").val();
             $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Validating User... Please wait</div></div>');
             $.ajax({
                 url: Aurl + "login/get",
                 type: 'get',
                 contentType: 'json',
                 data: {
-                    UserName: strusername, Password: strpassword
+                    UserName: strusername, Password: strpassword, DeviceID: devid, Latitude: Lat, Longitude: Long
                 },
                 xhrFields: {
                     withCredentials: true
@@ -868,12 +943,26 @@
                     //
                     if (response != "") {                    
                         $.each(response, function (i, item) {
-                            if (item.RoleID > 0) {
-                                window.location.href = url + '/ValidatePermission?ID=' + item.ID;
+                            if (item.Mode == "1") {//Valid Login
+                                if (item.RoleID > 0) {
+                                    window.location.href = url + '/ValidatePermission?ID=' + item.ID;
+                                }
+                                else {
+                                    $("#loadingDiv").remove();
+                                    showErrorSnackbar("Role not assigned. Contact administrator.");
+                                }
                             }
-                            else {
+                            else if (item.Mode == "2") {//New Device Detect
                                 $("#loadingDiv").remove();
-                                showErrorSnackbar("Role not assigned. Contact administrator.");
+                                document.getElementById("myModalDeviceOTP").style.display = "flex";
+                                $("#txtDeviceOTP").focus();
+                                $("#txtOTPID").val(item.ID);
+                                $("#txtUserID").val(item.UserID);                                
+                                showSuccessSnackbar(item.ResponseMessage);
+                            }
+                            else if (item.Mode == "3") {//E-Mail Failed
+                                $("#loadingDiv").remove();
+                                showErrorSnackbar(item.ResponseMessage);
                             }
                         });
                     }
@@ -888,7 +977,41 @@
                 },
             });
         }
-
+        $("#btnVerifyDeviceOTP").click(function () {
+            $("#dvErrorDeviceOTP").html("");
+            var IsValid = true, CheckValidation = true;
+            CheckValidation = MandatoryValidation($("#txtDeviceOTP"), $("#dvErrorDeviceOTP"));
+            if (!CheckValidation) {
+                IsValid = false;
+            }
+            else {
+                var OID = $("#txtOTPID").val();
+                var UID = $("#txtUserID").val();
+                var Lat = $("#txtLatitude").val();
+                var Long = $("#txtLongtitude").val();
+                var nOTP = $("#txtDeviceOTP").val();
+                var devid = getDeviceId();
+                $.ajax({
+                    url: Aurl + "login/otpverify",
+                    type: 'get',
+                    contentType: 'json',
+                    data: {
+                        OTPID: OID, UserID: UID, DeviceID: devid, OTP: nOTP, Latitude: Lat, Longitude: Long
+                    },
+                    success: function (response) {
+                        $.each(response, function (i, item) {
+                            if (item.MsgID == "0") {
+                                window.location.href = url + '/ValidatePermission?ID=' + item.ID;
+                            }
+                            else if (item.MsgID == "1") {
+                                showErrorSnackbar(item.Message);
+                            }
+                        });
+                    }
+                });
+            }
+            
+        });
         function SendActivationmail(To,AAK) {
             $.ajax({
                 url: '@Url.Action("SendMail", "Login")',
@@ -937,6 +1060,45 @@
                 $(".login-container").show();
             }
         });
+        geolocate();
+        function geolocate() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    //var geolocation = new google.maps.LatLng(
+                    //position.coords.latitude, position.coords.longitude);
+                    var PinLat = position.coords.latitude;
+                    var PinLong = position.coords.longitude;
+                    //var location = "<b>Latitude</b>: " + position.coords.latitude + "<br/>";
+                    //location += "<b>Longitude</b>: " + position.coords.longitude + "<br/>";
+                    //location += "<b>Accuracy</b>: " + position.coords.accuracy;
+                    //document.getElementById('lblResult').innerHTML = location
+                    //ShowMsgPopup(location);
+                    //alert(location);
+                    $('#txtLatitude').val(PinLat);
+                    $('#txtLongtitude').val(PinLong);
+                }, function (error) {
+                    //alert("Error : "+error.message);
+                    // Handle different error cases
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            alert("Location access was denied. Please enable location permissions in your browser settings.");
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            alert("Location information is unavailable.");
+                            break;
+                        case error.TIMEOUT:
+                            alert("The request to get your location timed out.");
+                            break;
+                        case error.UNKNOWN_ERROR:
+                        default:
+                            alert("An unknown error occurred: " + error.message);
+                            break;
+                    }
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.")
+            }
+        }
     </script>
 </body>
 </html>
