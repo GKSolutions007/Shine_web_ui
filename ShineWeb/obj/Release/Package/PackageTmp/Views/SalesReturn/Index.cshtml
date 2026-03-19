@@ -1026,17 +1026,16 @@
                 </table>
             </div>
 
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-4" style="min-width: 200px;">
                 <table width="100%">
-                    <tr>
-                        <td></td>
-                        <td style="border:none;">
+                    <tr>                        
+                        <td style="border:none; padding-right:20px; white-space:nowrap;">
                             <label class="fw-semibold" style="font-size:14px">Doc ID : </label>&ensp;<label id="lblDocID" class="fw-bolder" docprefix="" style="font-size:14px">INV/2425/001</label>
                         </td>
-                        <td style="border:none;">
+                        <td style="border:none;" align="right">
                             <div>
                                 <span class="form-label">
-                                    <input class="clsdtpfieldbottomborderfull" type="date" id="dtpDate" style="font-size:14px"
+                                    <input class="clsdtpfieldbottomborder" type="date" id="dtpDate" style="font-size:14px"
                                            oninput="javascript: if (this.value > this.max) { this.value = this.max; }" />
                                 </span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrDate" class="clrdivs"></div>
@@ -1056,6 +1055,8 @@
                             </div>
                         </td>
                     </tr>
+                </table>
+                <table width="100%">
                     <tr>
                         <td style="border:none;" colspan="3" width="100%">
                             <textarea class="form-control FormclrField" id="txtCustomerRemarks" style="height:83px;font-size:10px;"></textarea>
@@ -2522,15 +2523,18 @@ if ($("#txtAddID").val() == 0) {
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        //dvDocuments,
-        var rdo1 = $("#rdoMainTableData").is(":checked");
-        //var rdo2 = $("#rdoDraftTableData").is(":checked");
-        $("#dvMain").hide();
-        $("#dvDocuments").show();
-        $("#MainHeading").text($("#txtFormName").val());
-        //GetData(rdo1 ? 6 : 10);
-        GetFilterData();
-        stopAutoDraftSave();
+        if ($("#txtTransType").val() == 1 || $("#txtTransType").val() == 2 || $("#txtTransType").val() == 3) {
+            this.close();
+        } else {
+            var rdo1 = $("#rdoMainTableData").is(":checked");
+            //var rdo2 = $("#rdoDraftTableData").is(":checked");
+            $("#dvMain").hide();
+            $("#dvDocuments").show();
+            $("#MainHeading").text($("#txtFormName").val());
+            //GetData(rdo1 ? 6 : 10);
+            GetFilterData();
+            stopAutoDraftSave();
+        }
     }
     var modal = {
         show: function () {
@@ -5847,7 +5851,7 @@ if ($("#txtAddID").val() == 0) {
             xhrFields: {
                 withCredentials: true
             },
-            async: false,
+            //async: false,
             success: function (data) {
                 ProductTable.draw().clear(); ProductTable.draw().clear();
                 $.each(data, function (i, items) {
@@ -6938,27 +6942,27 @@ if ($("#txtAddID").val() == 0) {
             });
         }
     }
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to New SR
         $("#txtDraftID").val($("#txtID").val())
-        //var rdo1 = $("#rdoMainTableData").is(":checked");
-        //var rdo2 = $("#rdoDraftTableData").is(":checked");
-        //alert("Bill Table : " + rdo1 + ", Draft : " + rdo2);
         var ID = $("#txtID").val();
-        GetProductViewData(11, ID);
         nTransMode = 1;
+        GetProductViewData(11, ID);
         //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+        $("#btnClear").prop("disabled", true);
         $("#dvMain").show();
         $("#dvDocuments").hide();
-        $("#btnEmail,#btnWhatsapp").hide();
-        console.log("Prod AL : " + TempAL);
+        $("#btnEmail,#btnWhatsapp,#btnPreview,#btnPDF,#btnPrint").hide();        
         setTimeout(() => {
             Addprodgridline();
         }, 300);
-
         $("#MainHeading").text("Create " + $("#txtFormName").val());
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 16);
+        }, 1000);
     }
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//$("#txtQAViewDocID").val()
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Home Quick Access View
         var ID = $("#txtID").val();
         nTransMode = 5;
         GetProductViewData(7, ID);
@@ -6971,7 +6975,7 @@ if ($("#txtAddID").val() == 0) {
         $("#MainHeading").text("View " + $("#txtFormName").val());
 
     }
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {//$("#txtQAViewDocID").val()
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {//Home Variant Inv to SR
         var ID = $("#txtID").val();
         nTransMode = 1;
         var VarType = $("#txtTransVariantID").val();

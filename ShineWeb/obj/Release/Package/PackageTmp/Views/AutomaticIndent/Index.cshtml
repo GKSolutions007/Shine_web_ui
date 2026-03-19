@@ -1047,11 +1047,16 @@ if ($("#txtAddID").val() == 0) {
         var ID = $("#txtID").val();
         GetProductViewData(8, ID);
         nTransMode = 1;
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 2);
+        }, 1000);
         //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+        $("#btnClear").prop("disabled", true);
         $("#dvMain").show();
         $("#dvDocuments").hide();
-        $("#btnEmail,#btnWhatsapp").hide();
+        $("#btnPrint,#btnPreview,#btnPDF,#btnEmail,#btnWhatsapp").hide();
         $("#MainHeading").text("Create Automatic Indent");
     }
 
@@ -1094,13 +1099,17 @@ if ($("#txtAddID").val() == 0) {
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        var rdo1 = $("#rdoMainTableData").is(":checked");
-        //var rdo2 = $("#rdoDraftTableData").is(":checked");
-        $("#dvMain").hide();
-        $("#dvDocuments").show();
-        //GetData(rdo1 ? 4 : 7);
-        GetFilterData();
-        $("#MainHeading").text("Automatic Indent");
+        if ($("#txtTransType").val() == 1 || $("#txtTransType").val() == 2) {
+            this.close();
+        } else {
+            var rdo1 = $("#rdoMainTableData").is(":checked");
+            //var rdo2 = $("#rdoDraftTableData").is(":checked");
+            $("#dvMain").hide();
+            $("#dvDocuments").show();
+            //GetData(rdo1 ? 4 : 7);
+            GetFilterData();
+            $("#MainHeading").text("Automatic Indent");
+        }
     }
     $('#tblProductDataAI tbody').on('click','input', function () {
         $(this).select();
@@ -1608,65 +1617,10 @@ setTimeout(function () { GetFilterData(); }, 800);
                     if ($.fn.DataTable.isDataTable('#tblMasterData')) {
                         searchValue = $('#tblMasterData').DataTable().search(); // get current search term
                     }
-                    $('#tblMasterData').DataTable({
-                        pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                        scrollY: "450px",
-                        scrollX: true,
-                        scrollCollapse: true,
-                        paging: true,
-                        destroy: true,
-                        data: data,
-                        fixedColumns: false,
-                        searching: true,
-                        ordering: true,
-                        sorting: false,
-                        columns: [
-                            { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                            { "data": "CurrentStatus", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                            { "data": "DocID", "autoWidth": true, className: "dt-body-left" },
-                            { "data": "Date", "autoWidth": true, className: "dt-body-left" },
-                            { "data": "RefNo", "autoWidth": true, className: "dt-body-left" },
-                            { "data": "BranchID", "autoWidth": true, className: "dt-body-left" },
-                            { "data": "VendorID", "autoWidth": true, className: "dt-body-left" },
-                            { "data": "GrossAmt", "autoWidth": true, className: "dt-body-left" },
-                            { "data": "Status", "autoWidth": true, className: "dt-body-left" },
-                            {
-                                className: "dt-body-left",
-                                "mRender": function (data, type, value) {
-                                    var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
-                                    return _action;
-                                }
-                            },
-                            {
-                                className: "dt-body-center",
-                                "mRender": function (data, type, value) {
-                                    var _action = '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
-                                    return _action;
-                                }, "visible": $("#txtViewID").val() != 0 && rdo1 != "2" ? true : false
-                            },//13
-                            {
-                                className: "dt-body-center",
-                                orderable: false,
-                                render: function () {
-                                    return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
-                                }
-                            }
-                        ],
-                        initComplete: function () {
-                            // Re-apply search value after table is fully initialized
-                            this.api().search(searchValue).draw();
-                        }
-                    });
-                    Table = $('#tblMasterData').DataTable();
-                    if (!Table.data().any()) {
+                    if (AutomaticIndent.length == 0) {
                         if (ClickType == 1)
                             showErrorSnackbar("No records found");
                     }
-                    //}
-                    //else {
-                    //    if (ClickType == 1)
-                    //    showErrorSnackbar("No records found");
-                    //}
                 }, error: function (data) {
                     if (data.status == "401") {
                         var msg = data.responseJSON.Message;
@@ -2070,183 +2024,7 @@ setTimeout(function () { GetFilterData(); }, 800);
         GetBranchwiseABSQty(ID);
         //alert("Prod ID : " + ID);
     });
-    $('#tblMasterData tbody').on('click', '.clsView', function (e) {
-        $(".clrdivs").html("");
-        rowdata = Table.row($(this).parents('tr')).data();
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        nTransMode = 5;
-        $("#txtID").val(ID);
-        GetProductViewData(5, ID);
-        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
-        $("#btnPDF,#btnPreview").prop("disabled", false);
-        $("#btnPreview,#btnPDF,#btnPrint").show();
-        $("#btnEmail,#btnWhatsapp").show();
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
-        $("#MainHeading").text("View Automatic Indent");
-        if ($("#txtEnableBranch").val() == 1) {
-            $("#cmbBranch").prop("disabled", true);
-        }
-    });
-    $(document).on('click', '.clsEdit', function (e) {
-        $(".clrdivs").html("");
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.Status;//[9];
-        if (sts != "Cancelled") {
-        $("#txtID").val(ID);
-            nTransMode = 2;
-            var rdo1 = $("#rdoMainTableData").is(":checked");
-            var rdo2 = $("#rdoDraftTableData").is(":checked");
-            //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
-            GetProductViewData(rdo1 ? 5 : 8, ID);
-            nTransMode = rdo1 ? 2 : 1;
-            $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-            //$("#btnSave,#btnClose").prop("disabled", false);
-            //$("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-            //$("#btnDraft").prop("disabled", rdo1);
-            $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-            $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-            $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-            $("#btnEmail,#btnWhatsapp").hide();
-            $("#btnSave,#btnClose").prop("disabled", false);
-            $("#btnSave,#btnClose").show();
-            $("#btnDraft").prop("disabled", !rdo2);
-            $("#dvMain").show();
-            $("#dvDocuments").hide();
-            $("#MainHeading").text(rdo1 ? "Modify Automatic Indent" : "Create Automatic Indent");
-            if ($("#txtEnableBranch").val() == 1) {
-                $("#cmbBranch").prop("disabled", true);
-            }
-        }
-        else {
-            showErrorSnackbar("Cannot Modify.This document already cancelled");
-        }
-    });
-    $(document).on('click', '.clsCancel', function (e) {
-        var rdo1 = $("#rdoMainTableData").is(":checked");
-        $(".clrdivs").html("");
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.Status;//[9];
-        if (sts != "Cancelled") {
-            $("#txtID").val(ID);
-            if (rdo1) {
-                $("#MainHeading").text("Cancel Automatic Indent")
-                nTransMode = 4;
-                GetProductViewData(5, ID);
-                $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-                $("#txtNarration,#txtRemarks").prop("disabled", false);
-                //$("#btnSave,#btnClose").prop("disabled", false);
-                //$("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-                $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-                $("#btnSave,#btnClose").prop("disabled", false);
-                $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
-                $("#btnEmail,#btnWhatsapp").hide();
-                $("#btnSave,#btnClose").show();
-                $("#dvMain").show();
-                $("#dvDocuments").hide();
-                if ($("#txtEnableBranch").val() == 1) {
-                    $("#cmbBranch").prop("disabled", true);
-                }
-            }
-            else {
-                var conf = confirm("Do you want to remove draft data?");
-                if (conf) {
-                    GetData(10, ID);
-                }
-            }
-        }
-        else {
-            showErrorSnackbar("This document already cancelled");
-        }
-        //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        //$("input[type=checkbox],#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        //showErrorSnackbar("Cancel functionality still developing");
-    });
-    $(document).on('click', '.clsVariant', function (e) {
-        $(".clrdivs").html("");
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        $("#txtID").val(ID);
-        nTransMode = 3;
-        GetData(1,1);
-        GetProductViewData(5, ID);
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
-        $("#btnEmail,#btnWhatsapp").hide();
-        $("#MainHeading").text("Variant Automatic Indent");
-        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-        //$("#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
-        //$("#btnPreview,#btnPDF").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
-        $("#btnPreview,#btnPDF").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-        $("#btnSave,#btnClose,#btnDraft").show();
-        //showErrorSnackbar("Variant functionality still developing");
-        if ($("#txtEnableBranch").val() == 1) {
-            $("#cmbBranch").prop("disabled", true);
-        }
-    });
-
-    $(document).on('click', '.clspreview', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPreview").click();
-    });
-    $(document).on('click', '.clspdf', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPDF").click();
-    });
-    $(document).on('click', '.clsemail', function (e) {//'#tblMasterData tbody'
-        rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
-        //var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnEmail").click();
-    });
-    $(document).on('click', '.clswhatsapp', function (e) {//'#tblMasterData tbody'
-        rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
-        //var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btniframeWhatsapp").click();
-    });
-    $(document).on('click', '.clsprint', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPrint").click();
-    });
-
+    
     $("#btnClear").click(function () {
         //ClearForm();
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
