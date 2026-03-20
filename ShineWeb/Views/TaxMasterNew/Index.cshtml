@@ -1,0 +1,618 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
+
+@*<script src="~/Scripts/bootstrap.min.js"></script>*@
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
+<style>
+    td {
+        font-size: 12px;
+    }
+
+    hr {
+        margin: 1rem 0;
+        color: inherit;
+        border: 0;
+        border-top: 1px solid;
+        opacity: .25;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+    /* The Modal (background) */
+    .modalBatch {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 200; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 10px;
+            border: 1px solid #888;
+            width: 35%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 7%;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalBatch-content {
+            background-color: #ffffff;
+            margin: 3% auto; /* 15% from the top and centered */
+            padding: 25px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 80%;
+            top: 25%;
+            overflow: auto;
+        }
+    }
+    /* The Close Button */
+    .closefg {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closefg:hover,
+        .closefg:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -60%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.90em;
+        font-weight: 600;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+    /*each {
+        border-bottom: 1px solid #555;
+        padding: 3px 0;
+    }
+
+    .acItem .name {
+        font-size: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .acItem .desc {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #555;
+    }
+
+    .ui-autocomplete {
+        max-height: 245px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }*/
+</style>
+<body>
+
+    @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+
+    <div class="d-flex align-items-center gap-2">
+        <!-- Larger heading -->
+        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    </div>
+    <div class="toastBox"></div>
+    <hr />
+    <div style="padding-bottom:10px;" hidden>
+        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+    </div>
+    <div id="dvMainTable">
+        <div id="my-grid" style="height: 600px; width: 100%;"></div>
+    </div>
+
+    <div class="modal fade " id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="lblPopupheading">
+                        @ViewData["FormName"]
+                    </h5>
+                    <button type="button" class="btn-close" id="modelcloseX"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <div style="padding-top:2px;" class="text-center">
+                        <table class="table w-100">
+
+                            <tr>
+                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                    <span class="form-label">
+                                        <input tabindex="1" type="text" id="txtName" class="form-control" />
+                                        <label class="labelup">Name *</label>
+                                    </span>
+                                    <div class="clrdiv text-danger" id="dvErrorName"></div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td align="left" style="border: none; padding-left: 12px" colspan="2">
+                                    <label for="chkActive">Active :</label>
+                                    <input tabindex="3" type="checkbox" id="chkActive" checked disabled />
+                                    <div class="clrdiv text-danger" id="dvErrorActive"></div>
+                                </td>
+                            </tr>
+
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer" style="background-color:skyblue">
+                    <button tabindex="5" type="button" class="btn btn-danger" id="btnClear">
+                        <span class="glyphicon glyphicon-refresh"> Clear</span>
+                    </button>
+
+                    <button tabindex="4" type="button" class="btn btn-success" id="btnSave">
+                        <span class="glyphicon glyphicon-saved"> Save</span>
+                    </button>
+
+                    <button tabindex="6" type="button" class="btn btn-warning" id="btnClose">
+                        <i class="bi bi-x-circle"></i> Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+@*
+*@
+<script>
+    const allGridActions = [
+        {
+            icon: '👁️',
+            title: 'View Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: $("#txtViewID").val() == 1,
+            handler: (rowData) => {
+                var ID = rowData.ID;//[0];
+                var Name = rowData.Name;//[1];
+                var Value = rowData.Value;//[2];
+                var Active = rowData.Active;//[3];
+                var OrgVal = rowData.Value;//[6];
+                nMode = 3;
+                //if (Table.cell(this).index().columnVisible == 3)
+                {
+                    $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
+                    $("#txtID").val(ID);
+                    $("#txtName").val(Name);
+                    $("#txtValue").val(parseInt(Value));
+                    if (FID == 16)
+                        updateInputColumn("txtValue", OrgVal);
+                    $("#chkActive").prop("checked", Active == "True");
+                    $("#chkActive,#btnSave,#txtName,#txtValue").prop("disabled", true);
+                    $("#btnClear").prop("disabled", true);
+                    $(".clrdiv").html("");
+                    modal.show();
+                }
+            }
+        },
+        {
+            icon: '✏️',
+            title: 'Edit Data',
+            className: 'dg-action-edit',
+            visible: $("#txtModifyID").val() == 1,
+            displayType: 'single_icon',
+            handler: (rowData, gridInstance) => {
+                var ID = rowData.ID;//[0];
+                var Name = rowData.Name;//[1];
+                var Value = rowData.Value;//[2];
+                var Active = rowData.Active;//[3];
+                var OrgVal = rowData.Value;//[6];
+                //if (Table.cell(this).index().columnVisible == 2)
+                {
+                    nMode = 2;
+                    $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                    $("#txtID").val(ID);
+                    $("#txtName").val(Name);
+                    $("#txtValue").val(parseInt(Value));
+                    if (FID == 16)
+                        updateInputColumn("txtValue", OrgVal);
+                    $("#chkActive").prop("checked", Active == "True");
+                    $("#chkActive,#btnSave,#txtName,#txtValue").prop("disabled", false);
+                    $("#btnClear").prop("disabled", true);
+                    $(".clrdiv").html("");
+                    modal.show();
+
+                }
+            }
+        }
+    ];
+    var columns = [
+
+    ];
+    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+    const menuActions = [];// allGrid3dotActions.filter(a => a.displayType === 'menu_item');
+    var actions = {
+        "field": "Action",
+        "header": "Action",
+        "type": "action",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": allGridActions
+    };
+</script>
+
+<script type="text/javascript">
+     var UID = '@Session["LoginUserID"]';
+ var nMode = 1;
+    var FID = $("#txtFormID").val();
+
+    //  showErrorSnackbar(FID);
+    //4- creditterm,17-gift,16-tax comp
+    if (FID == 17) {
+        $("#lbltext").text("Points *");
+        $("#trtdlbl").text("Points");
+    } else {
+        $("#lbltext").text("Value *");
+        $("#trtdlbl").text("Value");
+    }
+    var DecVal = '@Session["DecimalValues"]';
+    var Aurl = '@Session["APIurl"]';
+
+    var grid, SingleMasterData;
+    GetColumnSettingsData(2, 36, 1);
+    var arrData = [], TaxNames = [], TaxComp = [], TaxTypes = [], GstTypes =[];
+    setTimeout(() => {
+        InitiateData();
+    }, 500);
+
+    function InitiateData() {
+        $.ajax({
+            url: Aurl + "taxmaster/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: 1, ID:0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                arrData = [], TaxNames = [], TaxComp = [], TaxTypes = [], GstTypes = [];
+                if (data.length == 0) {
+                    showErrorSnackbar("No Records Found");
+                }
+                else {
+                    var taxdatas = JSON.parse(data);
+                    TaxNames = taxdatas.Table;
+                    TaxComp = taxdatas.Table1;
+                    TaxTypes = taxdatas.Table2;
+                    GstTypes = taxdatas.Table3;
+                }
+                    //Table.draw().clear();
+                $.each(TaxNames, function (i, items) {
+                        //arrData[i] = items.Name
+                        var al = {
+                            "label": items.Name,
+                            "id": items.ID,
+                        }
+                        arrData.push(al);
+                    });
+                var currentSearchValue = '';
+                if (grid) {
+                    currentSearchValue = grid ? grid.state.searchTerm : '';
+                }
+                grid = new GKBSDynamicGrid('#my-grid', columns, TaxNames, {
+                        enablePagination: true,
+                        pageSize: ItemsperPage,
+                        enableSearch: true,
+                        stickyToWindow: true,
+                        enableExport: false,
+                        enablePrint: false,
+                        enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                        enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                        enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                        enableSorting: true,
+                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
+                        rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                        //onCellChange: handleCellUpdate,
+                        customCellRenderer: (el, col, rowData) => {
+                            if (col.field === 'Active') {
+                                const val = rowData[col.field];
+                                console.log("Active : ", val);
+                                if (val) {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-active">
+                      <span class="dg-status-circle"></span> Active
+                  </div>`;
+                                } else if (!val) {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+                      <span class="dg-status-circle"></span> In-Active
+                  </div>`;
+                                }
+                            }
+                        },
+                        customButtons: [
+                            {
+                                icon: '⚙️',
+                                text: 'Settings',
+                                title: 'Settings',
+                                visible: true,
+                                onClick: (gridInstance, event) => {
+                                    /*modalGenColumnSettings.style.display = "block";*/
+                                    modalGenColumnSettings.show();
+                                    GendralColumnSettings(1, 36, 1, 0);
+                                }
+                            },
+                            {
+                                icon: '➕',
+                                text: 'Add New',
+                                title: 'Add New',
+                                visible: $("#txtAddID").val() == 1,
+                                onClick: (gridInstance, event) => {
+                                    nMode = 1;
+                                    $("#chkActive,#btnSave,#txtName,#btnClear,#txtValue").prop("disabled", false);
+                                    $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
+                                    modal.show();
+                                    ClearForm();
+                                }
+                            },
+                        ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(2, 1, 0, colIndex, field, newWidth)
+                        },
+                    });
+
+                    $("#txtName").autocomplete({
+                        minLength: 0,
+                        source: arrData,
+                        select: function (event, ui) {
+                            $("#txtName").val(ui.item.label);
+                            return false;
+                        },
+                    }).autocomplete("instance")._renderItem = function (ul, item) {
+                        return $("<li class='each'>")
+                            .append("<div class='acItem'><span class='name'>" +
+                                item.label + "</span></div>")
+                            .appendTo(ul);
+                    };
+                    setTimeout(function () {
+                        $("#txtName").val("");
+                        $('input#txtName').autocomplete("search");
+                        var esc = $.Event("keydown", { keyCode: 27 });
+                        $("#txtName").trigger(esc);
+                    }, 100);
+
+            },
+            error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    function updateInputColumn(inputID, netValue) {
+        //const label = document.getElementById(`dgvProdGross${rowId}`);
+        const input = document.getElementById(inputID);
+        var value = netValue != "" ? netValue : 0;
+        input.setAttribute('txttag', parseFloat(value).toFixed(4));
+        input.value = parseFloat(value).toFixed(DecVal);
+        input.title = netValue;
+    }
+    $(".txtsettag").focusin(function (e) {
+        var id = e.target.id;
+        if (FID == 16) {
+            const val = document.getElementById("txtValue").getAttribute("txttag");
+            $("#" + id).val(val);
+        }
+        $("#" + id).select();
+    });
+    $(".txtsettag").blur(function (e) {
+        var val = e.target.value;
+        var id = e.target.id;
+        if (FID == 16)
+            updateInputColumn(id, val);
+    });
+    function isNumberKey(evt) {
+        if (FID != 16) {
+            var charCode = (evt.which) ? evt.which : evt.keyCode
+            if (charCode > 31 && (charCode < 48 || charCode > 57))
+                return false;
+            return true;
+        }
+    }
+
+    var modal = new bootstrap.Modal(document.getElementById('myModalfg')); //document.getElementById("myModalfg");
+    //var span = document.getElementsByClassName("closefg")[0];
+    //span.onclick = function () {
+    //    modal.hide();
+    //}
+    $('#btnClose,#modelcloseX').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    function CloseForm() {
+        modal.hide();
+    }
+
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $("#txtName,#txtValue").val("");
+        $("#chkActive").prop("checked", true);
+        $("#chkActive").prop("disabled", true);
+        $(".clrdiv").html("");
+        $("#txtName").focus();
+        if (FID == 16)
+            updateInputColumn("txtValue", 0);
+        if (nMode != 1)
+            modal.hide();
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        var IsValid = true;
+        if($("#txtName").val() == "") {
+            $("#dvErrorName").html("Name should not be empty");
+            showErrorSnackbar("Name should not be empty");
+            IsValid = false;
+        }
+        if ($("#txtValue").val() == "") {
+            $("#dvErrorValue").html("Value should not be empty");
+            showErrorSnackbar("Value should not be empty");
+            IsValid = false;
+        }
+        if (IsValid) {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        }
+    });
+    function SaveData() {
+        $(".clrdiv").html("");
+        $("#btnSave").prop("disabled", true);
+        var Val = FID == 16 ? document.getElementById("txtValue").getAttribute("txttag") : $("#txtValue").val();
+            var lstMaster = {
+                "FormID": FID,
+                "Mode": nMode,
+                "ID": $("#txtID").val(),
+                "Name": $("#txtName").val(),
+                "Value": Val,
+                "Active": $("#chkActive").is(":checked") ? 1 : 0,
+                "UserID": UID
+            };
+            $.ajax({
+                url: Aurl + "taxcompgift/save",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(lstMaster),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            //showErrorSnackbar(items.Message);
+                            showSuccessSnackbar(items.Message);
+                            ClearForm();
+                            InitiateData();
+                            modal.hide();
+                        }
+                        else {
+                            $("#dvErrorName").html(items.Message);
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                },
+                error: function (data) {
+                    $("#btnSave").prop("disabled", false);
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        ////showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+    }
+
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    console.log("columns : ", columns);
+                    columns.push(actions);
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
+</script>
