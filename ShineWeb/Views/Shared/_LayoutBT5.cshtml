@@ -3898,6 +3898,43 @@ function CloseConfirmDialogMsg(message) {
             showErrorSnackbar("Select Print profile");
         }
     }
+
+    function AutoEmailDocument(ID, strTransID) {
+            let sb = document.getElementById("RepLoadersnackbar");
+            sb.classList.add("show");
+            var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
+            $.ajax({
+                url: Aurl + "invoice/AutomaticMailGenerate",
+                type: 'GET',
+                datatype: 'json',
+                data: { DocID: ID, TransID: strTransID, Copies: strcopy },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    sb.classList.remove("show");
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            if (items.MsgID == 0) {
+                                showSuccessSnackbar(items.Message);
+                            }
+                            else if (items.MsgID == 1) {
+                                showErrorSnackbar(items.Message);
+                            }
+                        });
+                    } else {
+                        showErrorSnackbar('Mail Not Send. Try Again');
+                    }
+                }, error: function (data) {
+                    sb.classList.remove("show");
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        //showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+    }
+
     $("#btnWhatsapp,#btniframeWhatsapp").click(function (e) {
         //modalPayment.style.display = "block";
         var id = $("#txtID").val() == "" ? 0 : $("#txtID").val();
