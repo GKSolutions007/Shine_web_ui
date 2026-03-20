@@ -403,6 +403,7 @@
             <input id="tab-2" type="radio" name="tab" class="tab-input">
             <input hidden id="txtLatitude" />
             <input hidden id="txtLongtitude" />
+            <input hidden id="txtPincode" />
             <input hidden id="txtOTPID" />
             <input hidden id="txtUserID" />
             <div class="login-card">
@@ -928,13 +929,14 @@
             var devid = getDeviceId();
             var Lat = $("#txtLatitude").val();
             var Long = $("#txtLongtitude").val();
+            var Pinc = $("#txtPincode").val();
             $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Validating User... Please wait</div></div>');
             $.ajax({
                 url: Aurl + "login/get",
                 type: 'get',
                 contentType: 'json',
                 data: {
-                    UserName: strusername, Password: strpassword, DeviceID: devid, Latitude: Lat, Longitude: Long
+                    UserName: strusername, Password: strpassword, DeviceID: devid, Latitude: Lat, Longitude: Long, Pincode: Pinc
                 },
                 xhrFields: {
                     withCredentials: true
@@ -990,13 +992,14 @@
                 var Lat = $("#txtLatitude").val();
                 var Long = $("#txtLongtitude").val();
                 var nOTP = $("#txtDeviceOTP").val();
+                var Pinc = $("#txtPincode").val();
                 var devid = getDeviceId();
                 $.ajax({
                     url: Aurl + "login/otpverify",
                     type: 'get',
                     contentType: 'json',
                     data: {
-                        OTPID: OID, UserID: UID, DeviceID: devid, OTP: nOTP, Latitude: Lat, Longitude: Long
+                        OTPID: OID, UserID: UID, DeviceID: devid, OTP: nOTP, Latitude: Lat, Longitude: Long, Pincode: Pinc
                     },
                     success: function (response) {
                         $.each(response, function (i, item) {
@@ -1068,6 +1071,7 @@
                     //position.coords.latitude, position.coords.longitude);
                     var PinLat = position.coords.latitude;
                     var PinLong = position.coords.longitude;
+                    console.log("position", position);
                     //var location = "<b>Latitude</b>: " + position.coords.latitude + "<br/>";
                     //location += "<b>Longitude</b>: " + position.coords.longitude + "<br/>";
                     //location += "<b>Accuracy</b>: " + position.coords.accuracy;
@@ -1076,6 +1080,7 @@
                     //alert(location);
                     $('#txtLatitude').val(PinLat);
                     $('#txtLongtitude').val(PinLong);
+                    getReverseGeocodingData(PinLat, PinLong)
                 }, function (error) {
                     //alert("Error : "+error.message);
                     // Handle different error cases
@@ -1099,6 +1104,47 @@
                 alert("Geolocation is not supported by this browser.")
             }
         }
+        function getReverseGeocodingData(lat, lng) {
+            var latlng = new google.maps.LatLng(lat, lng);
+            // This is making the Geocode request
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ 'latLng': latlng }, (results, status) => {
+                if (status !== google.maps.GeocoderStatus.OK) {
+                    alert(status);
+                }
+                // This is checking to see if the Geoeode Status is OK before proceeding
+                if (status == google.maps.GeocoderStatus.OK) {
+                    console.log(results);
+                    //var Loadintbl = "<table class='table table-hover table-bordered'>";
+                    //for (var i = 0; i < results.length; i++) {
+                    //    Loadintbl += "<tr><td>"+(i+1) +".) "+results[i].formatted_address+"</td></tr>";
+                    //}
+                    //Loadintbl += "</table>";
+                    var address = (results[0].formatted_address);
+
+                    var value = address.split(",");
+                    count = value.length;
+                    country = value[count - 1];
+                    statewithcode = value[count - 2];
+                    state = statewithcode.substr(0, statewithcode.length - 6);
+                    pincode = statewithcode.substr(statewithcode.length - 6);
+                    city = value[count - 3];
+                    var madds1 = "", madds2 = "", madds3 = "";;
+                    var ncount = Math.round((count - 3) / 2);
+                    for (var i = 0; i < count - 3; i++) {
+                        if (ncount > i) {
+                            madds1 += value[i] + ",";
+                        } else {
+                            madds2 += value[i].trim() + ",";
+                        }
+                    }
+                    madds3 = city.trim() + " - " + pincode.trim() + ", " + state.trim();
+                    address = madds1 + madds2 + madds3;
+                    $('#txtPincode').val(pincode.trim());                   
+                }
+            });
+        }
+
     </script>
 </body>
 </html>
