@@ -30,7 +30,7 @@
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
-
+<script id="GALKAAA" src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBDhzKQV1BgtvQdvhFwbAjUxUKp4iPL9Is'></script>
 <style>
     :root {
         --primary: #4f46e5;
@@ -65,7 +65,7 @@
         background: var(--bg-card);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         border-left: 5px solid var(--primary);
     }
 
@@ -593,6 +593,73 @@
     td.hidden-col {
         display: none;
     }
+
+    /* ── Map Modal ── */
+    #mapModal .modal-dialog {
+        max-width: 720px;
+    }
+
+    #mapModal .modal-content {
+        border-radius: var(--radius);
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 8px 40px rgba(79,70,229,0.22);
+    }
+
+    #mapModal .modal-header {
+        background: var(--header-bg);
+        color: #fff;
+        border-bottom: none;
+        padding: 14px 20px;
+    }
+
+        #mapModal .modal-header .modal-title {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+/*        #mapModal .modal-header .btn-close {
+            filter: invert(1) grayscale(1);
+        }*/
+
+    #mapModal .modal-body {
+        padding: 0;
+    }
+
+    #map-canvas {
+        width: 100%;
+        height: 420px;
+    }
+
+    .map-info-bar {
+        display: flex;
+        gap: 16px;
+        padding: 12px 18px;
+        background: #f5f3ff;
+        border-top: 1px solid var(--border-color);
+        font-size: 12.5px;
+        color: var(--text-main);
+        flex-wrap: wrap;
+    }
+
+        .map-info-bar .info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .map-info-bar .info-label {
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .map-info-bar i {
+            color: var(--primary);
+            font-size: 14px;
+        }
 </style>
 
 <body>
@@ -657,11 +724,38 @@
 
     <!-- Toast container -->
     <div class="toastBox"></div>
-</body>
 
+    <!-- Map Modal -->
+    <div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mapModalLabel">
+                        <i class="bi bi-geo-alt-fill"></i> Device Location
+                    </h5>
+                    <button type="button" class="btn-close" style="color:black !important" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="map-canvas"></div>
+                    <div class="map-info-bar">
+                        <div class="info-item">
+                            <i class="bi bi-clock-history"></i>
+                            <span class="info-label">Login Time:</span>
+                            <span id="mapLoginTime">-</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="bi bi-pin-map-fill"></i>
+                            <span class="info-label">Pincode:</span>
+                            <span id="mapPincode">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.js"></script>
-
 <script type="text/javascript">
     var Aurl = '@Session["APIurl"]';
     var UID  = '@Session["LoginUserID"]';
@@ -686,6 +780,7 @@
             type: 'GET',
             datatype: 'json',
             data: { Mode: 1 },
+            xhrFields: { withCredentials: true }, async:false,
             success: function (data) {
                 var DevData   = JSON.parse(data);
                 UserInfo      = DevData.Table  || [];
@@ -699,7 +794,7 @@
             },
             error: function () {
                 $('#da-loading').hide();
-                showToast('Failed to load data.', 'error');
+                //showErrorSnackbar('Failed to load data');
             }
         });
     }
@@ -740,8 +835,7 @@
             masterRow.html(
                 '<td class="hidden-col">' + u.UserID + '</td>' +
                 '<td style="text-align:center;">' + globalIdx + '</td>' +
-                '<td><div class="td-user">' +
-                    '<span class="avatar">' + initial + '</span>' +
+                '<td><div class="td-user">' +                    
                     '<span>' + u.UserName + '</span>' +
                 '</div></td>' +
                 '<td style="text-align:center;"><i class="bi bi-phone" style="color:var(--primary-light);margin-right:4px;"></i>' + (u.Mobilenumber || '-') + '</td>' +
@@ -850,12 +944,12 @@
                     : '<span class="status-badge inactive"><i class="bi bi-x-circle-fill"></i> No</span>';
 
                 // Locate icon button (always shown)
-                var locateBtn = '<button class="btn-locate btnLocate" data-lat="' + (d.Latitude || '') + '" data-lng="' + (d.Longtitude || '') + '" title="Locate Device"><i class="bi bi-geo-alt-fill"></i> Locate</button>';
+                var locateBtn = '<button class="btn-locate btnLocate" data-lat="' + (d.Latitude || '') + '" data-lng="' + (d.Longtitude || '') + '" data-logintime="' + (d.LoginTime || '') + '" data-pincode="' + (d.Pincode || '') + '" title="Locate Device"><i class="bi bi-geo-alt-fill"></i> Locate</button>';
 
                 // Approve (Active=0) or Remove (Active=1)
                 var actionBtn = isActive
-                    ? '<button class="btn-deactivate btnDeActivates" data-deviceid="' + d.DeviceID + '" data-userid="' + d.UserID + '"><i class="bi bi-trash3-fill"></i> Remove</button>'
-                    : '<button class="btn-activate btnActivates" data-deviceid="' + d.DeviceID + '" data-userid="' + d.UserID + '"><i class="bi bi-check-circle-fill"></i> Approve</button>';
+                    ? '<button class="btn-deactivate btnDeActivates" data-deviceid="' + d.ID + '" data-userid="' + d.UserID + '"><i class="bi bi-trash3-fill"></i> Remove</button>'
+                    : '<button class="btn-activate btnActivates" data-deviceid="' + d.ID + '" data-userid="' + d.UserID + '"><i class="bi bi-check-circle-fill"></i> Approve</button>';
 
                 tbody.append(
                     '<tr>' +
@@ -887,51 +981,131 @@
         e.stopPropagation();
         var deviceId = $(this).data('deviceid');
         var userId   = $(this).data('userid');
-        ActiveandDeActivateUser(5, deviceId, userId);
+        ActiveandDeActivateUser(2, deviceId);
     });
     $('#tblBody').on('click', '.btnDeActivates', function (e) {
         e.stopPropagation();
         var deviceId = $(this).data('deviceid');
         var userId   = $(this).data('userid');
-        ActiveandDeActivateUser(6, deviceId, userId);
+        ActiveandDeActivateUser(3, deviceId, userId);
     });
     $('#tblBody').on('click', '.btnLocate', function (e) {
         e.stopPropagation();
-        var lat = $(this).data('lat');
-        var lng = $(this).data('lng');
-        if (lat && lng) {
-            window.open('https://www.google.com/maps?q=' + lat + ',' + lng, '_blank');
+        var lat       = parseFloat($(this).data('lat'));
+        var lng       = parseFloat($(this).data('lng'));
+        var loginTime = $(this).data('logintime') || '-';
+        var pincode   = $(this).data('pincode')   || '-';
+
+        if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0)) {
+            $('#mapLoginTime').text(loginTime);
+            $('#mapPincode').text(pincode);
+            var mapModal = new bootstrap.Modal(document.getElementById('mapModal'));
+            mapModal.show();
+            // wait for modal to be visible before initialising the map
+            document.getElementById('mapModal').addEventListener('shown.bs.modal', function onShown() {
+                document.getElementById('mapModal').removeEventListener('shown.bs.modal', onShown);
+                initMapModal(lat, lng, loginTime, pincode);
+            });
         } else {
-            showToast('Location data not available for this device.', 'error');
+            showErrorSnackbar('Location data not available for this device.');
         }
     });
 
+    function initMapModal(lat, lng, loginTime, pincode) {
+        var center = { lat: lat, lng: lng };
+        var map = new google.maps.Map(document.getElementById('map-canvas'), {
+            center: center,
+            zoom: 15,
+            mapTypeId: google.maps.MapTypeId.HYBRID,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            zoomControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_CENTER
+            },
+            styles: [
+                { featureType: 'poi', stylers: [{ visibility: 'off' }] }
+            ]
+        });
+
+        var marker = new google.maps.Marker({
+            position: center,
+            map: map,
+            title: 'Device Location',
+            animation: google.maps.Animation.DROP,
+            icon: {
+                url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+            }
+        });
+
+        var infoContent =
+            '<div style="font-family:Inter,sans-serif;padding:6px 4px;min-width:180px;">' +
+            '  <div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:6px;">' +
+            '    <i class="bi bi-geo-alt-fill"></i> Device Location' +
+            '  </div>' +
+            '  <div style="font-size:12px;margin-bottom:3px;"><b>Login Time:</b> ' + loginTime + '</div>' +
+            '  <div style="font-size:12px;"><b>Pincode:</b> ' + pincode + '</div>' +
+            '</div>';
+
+        var infoWindow = new google.maps.InfoWindow({ content: infoContent });
+        // open info window automatically
+        //infoWindow.open(map, marker);
+
+        // also open on marker click
+        marker.addListener('click', function () {
+            infoWindow.open(map, marker);
+        });
+    }
+
     // ── Activate / Deactivate ─────────────────────────────────────────
-    function ActiveandDeActivateUser(Mode, DeviceID, UserID) {
+    function ActiveandDeActivateUser(Mode, ID, UserID) {
         $.ajax({
-            url: Aurl + "SystemApproval/save",
+            url: Aurl + "DeviceApproval/save",
             type: 'GET',
             datatype: 'json',
-            data: { nMode: Mode, nDeviceID: DeviceID, nUserID: UserID },
+            data: { nMode: Mode, nID: ID },
+            xhrFields: { withCredentials: true },
+            async: false,
             success: function (data) {
-                if (Mode == 5) {
-                    showToast('Device Activated Successfully!', 'success');
+                if (Mode == 2) {
+                    showSuccessSnackbar('Device Activated Successfully!');
                     // update local data
-                    var d = UserDeviceInfo.find(function(x){ return String(x.DeviceID) === String(DeviceID); });
-                    if (d) d.IsActive = 1;
-                } else {
-                    showToast('Device Deactivated Successfully!', 'error');
-                    var d = UserDeviceInfo.find(function(x){ return String(x.DeviceID) === String(DeviceID); });
-                    if (d) d.IsActive = 0;
-                }
-                // Re-render the sub-row in place
-                if (expandedRow !== null) {
-                    var masterRow = $('tr.master-row[data-userid="' + expandedRow + '"]');
-                    expandRowFor(expandedRow, masterRow, false);
+                    var d = UserDeviceInfo.find(function(x){ return String(x.ID) === String(ID); });
+                    if (d) d.Active = 1;
+                    // Re-render the sub-row in place
+                    if (expandedRow !== null) {
+                        var masterRow = $('tr.master-row[data-userid="' + expandedRow + '"]');
+                        expandRowFor(expandedRow, masterRow, false);
+                    }
+                } else if (Mode == 3) {
+                    showSuccessSnackbar('Device Removed Successfully!');
+                    // Remove the device from in-memory data
+                    var idx = UserDeviceInfo.findIndex(function(x){ return String(x.ID) === String(ID); });
+                    if (idx !== -1) UserDeviceInfo.splice(idx, 1);
+
+                    // Update DeviceCount in UserInfo data and badge
+                    if (UserID) {
+                        var user = UserInfo.find(function(u){ return String(u.UserID) === String(UserID); });
+                        if (user && user.DeviceCount > 0) {
+                            user.DeviceCount = user.DeviceCount - 1;
+                            // Recalculate from actual remaining devices for accuracy
+                            var remaining = UserDeviceInfo.filter(function(x){ return String(x.UserID) === String(UserID); }).length;
+                            user.DeviceCount = remaining;
+                            $('tr.master-row[data-userid="' + UserID + '"] .badge-count')
+                                .html('<i class="bi bi-devices"></i> ' + remaining);
+                        }
+                    }
+
+                    // Re-render the sub-row (rows reorder automatically)
+                    if (expandedRow !== null) {
+                        var masterRow = $('tr.master-row[data-userid="' + expandedRow + '"]');
+                        expandRowFor(expandedRow, masterRow, false);
+                    }
                 }
             },
-            error: function () {
-                showToast('Operation failed. Please try again.', 'error');
+            error: function (error) {
+                console.log("Error : ", error);
+                showErrorSnackbar('Operation failed. Please try again.');
             }
         });
     }
@@ -943,7 +1117,7 @@
         var start      = Math.min((currentPage - 1) * pageSize + 1, total);
         var end        = Math.min(currentPage * pageSize, total);
 
-        $('#lblPageInfo').text('Showing ' + (total ? start : 0) + '–' + end + ' of ' + total + ' users');
+        $('#lblPageInfo').text('Showing ' + (total ? start : 0) + '-' + end + ' of ' + total + ' users');
 
         var pager = $('#pager');
         pager.empty();
@@ -972,18 +1146,9 @@
         nextBtn.on('click', function () { currentPage++; expandedRow = null; renderTable(); });
         pager.append(nextBtn);
     }
-
-    // ── Toast helper ─────────────────────────────────────────────────
-    function showToast(msg, type) {
-        var icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill';
-        var toast = $('<div class="da-toast ' + type + '"><i class="bi ' + icon + '"></i>' + msg + '</div>');
-        $('.toastBox').append(toast);
-        setTimeout(function () {
-            toast.fadeOut(400, function () { $(this).remove(); });
-        }, 3000);
-    }
+   
     // ── Remove All Devices ────────────────────────────────────────────
-    function RemoveAllDevices(UserID) {
+    function RemoveAllDevices(ID) {
         $.confirm({
             title: '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Remove All Devices',
             content: 'Are you sure you want to remove <strong>all registered devices</strong> for this user? This action cannot be undone.',
@@ -993,39 +1158,13 @@
                     text: 'Yes, Remove All',
                     btnClass: 'btn-danger',
                     action: function () {
-                        $.ajax({
-                            url: Aurl + "SystemApproval/save",
-                            type: 'GET',
-                            datatype: 'json',
-                            data: { nMode: 7, nDeviceID: 0, nUserID: UserID },
-                            success: function (data) {
-                                showToast('All devices removed successfully!', 'error');
-                                // Remove devices from local array
-                                UserDeviceInfo = UserDeviceInfo.filter(function (d) {
-                                    return String(d.UserID) !== String(UserID);
-                                });
-                                // Update DeviceCount in UserInfo
-                                var u = UserInfo.find(function (x) { return String(x.UserID) === String(UserID); });
-                                if (u) u.DeviceCount = 0;
-                                var fu = filteredData.find(function (x) { return String(x.UserID) === String(UserID); });
-                                if (fu) fu.DeviceCount = 0;
-                                // Collapse row if open
-                                if (String(expandedRow) === String(UserID)) {
-                                    var openMaster = $('tr.master-row[data-userid="' + UserID + '"]');
-                                    var openInner  = $('tr.sub-row[data-for="' + UserID + '"] .sub-row-inner');
-                                    collapseRow(openMaster, openInner);
-                                    expandedRow = null;
-                                }
-                                renderTable();
-                            },
-                            error: function () {
-                                showToast('Failed to remove devices. Please try again.', 'error');
-                            }
-                        });
+                        ActiveandDeActivateUser(4, ID);
+                        InitiateData();
                     }
                 },
                 cancel: {
-                    text: 'Cancel'
+                    text: 'Cancel',
+                    btnClass: 'btn-warning',
                 }
             }
         });
