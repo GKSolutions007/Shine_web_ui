@@ -18,6 +18,7 @@
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/mrptaxcall.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
@@ -323,7 +324,7 @@
             <!-- Branch -->
             <div class="col-12 col-md-2">
                 <span class="form-label">
-                    <select class="form-select FormclrcmbField" id="cmbBranch">
+                    <select class="form-control FormclrcmbField" id="cmbBranch">
                         <option value="0">Select Branch</option>
                     </select>
                     <label class="labelup" for="cmbBranch">Branch *</label>
@@ -440,12 +441,12 @@
         @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
 
 
-    <div class="footerAction modal-footer">
-        <button type="button" class="btn btn-danger" id="btnClear">
+    <div class="footerAction modal-footer p-2">
+        <button type="button" class="btn btn-danger me-2" id="btnClear">
             <i class="bi bi-arrow-clockwise"></i> Clear
         </button>
         <button type="button" class="btn btn-success" id="btnSave">
-            <i class="bi bi-floppy"></i> Save
+            <i class="glyphicon glyphicon-saved"></i> Save
         </button>
     </div>
     </div>
@@ -598,6 +599,7 @@ function updateInputColumn(inputID, netValue) {
         var isInclusiveChk = $("#chkInclusive").is(":checked");
         var currrowdata = ProductTable.row(nCurrentRowIndex).data();
         var currrowindex = ProductTable.row(nCurrentRowIndex).index();
+        var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
         var SalesMargin = parseFloat($("#txtSalesMargin").attr("txttag"));
         var ECPMargin = parseFloat($("#txtECPMargin").attr("txttag"));
         var SPLMargin = parseFloat($("#txtSPLMargin").attr("txttag"));
@@ -606,6 +608,9 @@ function updateInputColumn(inputID, netValue) {
             var PurchasePrice = 0, InclMRP = 0, ExclMRP = 0;
             var tp = parseFloat($('#txtHTaxPern').val());
             if (currrowindex == rowindex) {
+                let $container = $(this);
+                let MRP = $container.find('input[name="MRP"]').attr("txttag");
+                let MRTTaxAmt = getSalesMRPontax(MRP);
                 $(this).find("input[name=MRP]").each(function (index) {
                     InclMRP = parseFloat($(this).attr("txttag"));
                 });
@@ -782,7 +787,7 @@ function updateInputColumn(inputID, netValue) {
     GetData(1, "");
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempBatch = [];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
-    var prodids = 0;
+    var prodids = 0,arrSalesTaxDetails = [];
     function GetData(nMode, strID = null,ShowErr = 0) {
         $.ajax({
             url: Aurl + "productpricechange/get",
@@ -874,6 +879,7 @@ function updateInputColumn(inputID, netValue) {
                 }
                 else if (nMode == 3) {
                     //ProductTable.draw().clear();
+                    arrSalesTaxDetails = [];
                     ProductRID = 0;
                     if (data.length > 0) {
                         $.each(data, function (i, items) {
@@ -883,6 +889,7 @@ function updateInputColumn(inputID, netValue) {
                             $('#txtHTaxPern').val(items.GSTPern);
                             $('#txtUOMName').val(items.BaseUOMName);
                             $('#lblLocationName').text(items.LocationID);
+                            arrSalesTaxDetails = ReturnTaxDetails(items.SalesTaxID, 1);
                             var BatEnable = items.TrackBatch == "True" ? "" : "disabled";
                             var PDKEnable = items.TrackPDK == "True" ? "" : "disabled";
                             var TotQty = 0;
@@ -895,28 +902,7 @@ function updateInputColumn(inputID, netValue) {
                             updateInputColumn("txtSPLMargin", items.SPLonpPern);
                             $("#txtSPLMargin").css("color", items.SPLonpPern >= 0 ? "green" : "red");
                             $.each(items.lstProdPrice, function (i, itemsProd) {
-                                TotQty += parseFloat(itemsProd.ActualQty);
-                                //ProductTable.row.add([
-                                //    itemsProd.InventoryID,
-                                //    '<input type="checkbox" style="border:none;height:15px;width:15px;" name="CheckBatch" class="clsCheckBatch"/>',
-                                //    '<p style="font-size:14px;">' + (i + 1) + '</p>',
-                                //    itemsProd.TransDate,
-                                //    '<input name="BatchNo" class="gdInput" value="' + itemsProd.BatchNo + '" title="' + itemsProd.BatchNo + '" disabled />',
-                                //    '<input name="PKD" type="date" class="gdInput" value="' + itemsProd.PKD + '" title="' + itemsProd.PKD + '" disabled />',
-                                //    '<input name="Expiry" type="date" class="gdInput" value="' + itemsProd.Expiry + '" title="' + itemsProd.Expiry + '" disabled />',
-                                //    '<input min="0" txttag="' + itemsProd.ActualQty + '" title="' + itemsProd.ActualQty + '" type="number" step="any" id="dgvProdQty' + ProductRID + '" name ="ActQty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.ActualQty).toFixed(DecVal) + '" disabled/>',
-                                //    '<input min="0" txttag="' + itemsProd.PurchasePrice + '" title="' + itemsProd.PurchasePrice + '" type="number" step="any" id="dgvProdPurchasePrice' + ProductRID + '" name="PurchasePrice" class="gdInput txtsettag" value="' + parseFloat(itemsProd.PurchasePrice).toFixed(DecVal) + '" disabled/>',
-                                //    '<input min="0" txttag="' + itemsProd.SalePrice + '" title="' + itemsProd.SalePrice + '" type="number" step="any" id="dgvProdSalePrice' + ProductRID + '" name="SalePrice" class="gdInput txtsettag" value="' + parseFloat(itemsProd.SalePrice).toFixed(DecVal) + '" disabled/>',
-                                //    '<input min="0" txttag="' + itemsProd.ECP + '" title="' + itemsProd.ECP + '" type="number" step="any" id="dgvProdECPPrice' + ProductRID + '" name="ECP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.ECP).toFixed(DecVal) + '" disabled/>',
-                                //    '<input min="0" txttag="' + itemsProd.SPLPrice + '" title="' + itemsProd.SPLPrice + '" type="number" step="any" id="dgvProdSPLPrice' + ProductRID + '" name="SPLPrice" class="gdInput txtsettag" value="' + parseFloat(itemsProd.SPLPrice).toFixed(DecVal) + '" disabled/>',
-                                //    '<input min="0" txttag="' + itemsProd.ReturnPrice + '" title="' + itemsProd.ReturnPrice + '" type="number" step="any" id="dgvProdReturnPrice' + ProductRID + '" name="ReturnPrice" class="gdInput txtsettag" value="' + parseFloat(itemsProd.ReturnPrice).toFixed(DecVal) + '" disabled/>',// ' + RtnDisp +'
-                                //    '<input min="0" txttag="' + itemsProd.MRP + '" title="' + itemsProd.MRP + '" type="number" step="any" id="dgvProdMRP' + ProductRID + '" name="MRP" class="gdInput txtsettag dgvProdMRP" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" disabled/>',
-                                //    '<input min="0" txttag="' + itemsProd.MRPExcl + '" title="' + itemsProd.MRPExcl + '" type="number" step="any" id="dgvProdMRPExcl' + ProductRID + '" name="MRPExcl" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRPExcl).toFixed(DecVal) + '" disabled/>',
-                                //]).draw(false);
-                                //ProductRID++;
-                                //ProductTable.column(4).visible(items.TrackBatch == "True");
-                                //ProductTable.column(5).visible(items.TrackPDK == "True");
-                                //ProductTable.column(6).visible(items.TrackPDK == "True");
+                                TotQty += parseFloat(itemsProd.ActualQty);                                
                                 $("#trFooter").show();
                                 $("#lblPTQty").text(TotQty.toFixed(DecVal));
                                 setupArrowKeyNavigation();
@@ -1091,14 +1077,31 @@ function updateInputColumn(inputID, netValue) {
             }
         });
     }
+    function getSalesMRPontax(MRP) {
+        var dTaxAmt = 0;
+        var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+        for (var i = 0; i < arrSalesTaxDetails.length; i++) {
+            var nAppon = arrSalesTaxDetails[i].AppOn;
+            var dCumTax = arrSalesTaxDetails[i].CumulativeTax;
+            if (nAppon == -1) {
+                var dPrice = (MRP / (1 + (dApponMRPCum / 100)));
+                dTaxAmt += (dPrice * dCumTax) / 100;
+            }
+        }
+        return dTaxAmt;
+    }
     function ChkInclusiveAction() {
         var isChk = $("#chkInclusive").is(":checked");
         let result = [];
         var dTotQty = 0, dFreeTotQty = 0, dDmgTotQty = 0, dPPrice = 0, dQty = 0, dFreeQty = 0, dDmgQty = 0, dQtyTotValue = 0, dDmgQtyTotValue = 0;
+        var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
         var TPern = parseFloat($("#txtHTaxPern").val());
         var TaxPern = (TPern / 100) + 1;
         $("#tblProductData tbody tr").each(function () {
             var allValues = {};
+            let $container = $(this);
+            let MRP = $container.find('input[name="MRP"]').attr("txttag");
+            let MRTTaxAmt = getSalesMRPontax(MRP);
             $(this).find("input[type=number]").each(function (index) {
                 const fieldName = $(this).attr("name");
                 const fieldID = $(this).attr("id");
@@ -1107,10 +1110,10 @@ function updateInputColumn(inputID, netValue) {
                     var Price = parseFloat(fullValue);
                     var SumValue = 0;
                     if (isChk) {
-                        SumValue = parseFloat(Price * TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price + MRTTaxAmt) : parseFloat(Price * TaxPern);
                     }
                     else {
-                        SumValue = parseFloat(Price / TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price - MRTTaxAmt) : parseFloat(Price / TaxPern);
                     }
                     updateInputColumn(fieldID, SumValue);
                 }
@@ -1118,10 +1121,10 @@ function updateInputColumn(inputID, netValue) {
                     var Price = parseFloat(fullValue);
                     var SumValue = 0;
                     if (isChk) {
-                        SumValue = parseFloat(Price * TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price + MRTTaxAmt) : parseFloat(Price * TaxPern);
                     }
                     else {
-                        SumValue = parseFloat(Price / TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price - MRTTaxAmt) : parseFloat(Price / TaxPern);
                     }
                     updateInputColumn(fieldID, SumValue);
                 }
@@ -1129,10 +1132,10 @@ function updateInputColumn(inputID, netValue) {
                     var Price = parseFloat(fullValue);
                     var SumValue = 0;
                     if (isChk) {
-                        SumValue = parseFloat(Price * TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price + MRTTaxAmt) : parseFloat(Price * TaxPern);
                     }
                     else {
-                        SumValue = parseFloat(Price / TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price - MRTTaxAmt) : parseFloat(Price / TaxPern);
                     }
                     updateInputColumn(fieldID, SumValue);
                 }
@@ -1140,10 +1143,10 @@ function updateInputColumn(inputID, netValue) {
                     var Price = parseFloat(fullValue);
                     var SumValue = 0;
                     if (isChk) {
-                        SumValue = parseFloat(Price * TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price + MRTTaxAmt) : parseFloat(Price * TaxPern);
                     }
                     else {
-                        SumValue = parseFloat(Price / TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price - MRTTaxAmt) : parseFloat(Price / TaxPern);
                     }
                     updateInputColumn(fieldID, SumValue);
                 }
@@ -1151,10 +1154,10 @@ function updateInputColumn(inputID, netValue) {
                     var Price = parseFloat(fullValue);
                     var SumValue = 0;
                     if (isChk) {
-                        SumValue = parseFloat(Price * TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price + MRTTaxAmt) : parseFloat(Price * TaxPern);
                     }
                     else {
-                        SumValue = parseFloat(Price / TaxPern);
+                        SumValue = dApponMRPCum > 0 ? (Price - MRTTaxAmt) : parseFloat(Price / TaxPern);
                     }
                     updateInputColumn(fieldID, SumValue);
                 }
