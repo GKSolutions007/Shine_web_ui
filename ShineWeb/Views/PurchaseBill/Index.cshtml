@@ -1016,7 +1016,7 @@
                                 <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Net ₹</th>
                                 <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span></th>
                                 <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TransPrice</th>
-                                <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Location</th>
+                                <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Location</th>                                
                             </tr>
                         </thead>
                         <tfoot>
@@ -1263,7 +1263,7 @@
                                 <a href="javascript:void(0);" id="toggleTax"> [+] </a>
                             </td>
                             <td style="border:none;" align="right">
-                                <label id="lblTaxAmount" class="form-control text-end fw-bold fs-5" style="border: none; max-width: 100%;">0.00</label>
+                                <label id="lblTaxAmount" class="form-control lblPT text-end fw-bold fs-5" style="border: none; max-width: 100%;">0.00</label>
                             </td>
                         </tr>
                         <tr class="bgclrfortr taxDetails" style="display:none;">
@@ -3222,10 +3222,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var TPren = parseFloat($("#txtBatchTaxPern").val());
             let removeprodarr = BatchAcceptArray.filter(a => a.ProdID != $("#txtHProdID").val());
             BatchAcceptArray = removeprodarr;
+            var TotalMRPonTax = 0, dApponMRPCum = 0, dMRPonTax = 0;
             startAutoDraftSave();
             $("#tblBatch tbody tr").each(function () {
                 var allValues = {};
                 rowdata = TableBatch.row($(this)).data();
+                let RowMRP = $(this).find("input[name='MRP']").attr("txttag");
+                dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+                dMRPonTax = getPurchaseMRPontax(RowMRP);
                 $(this).find("input").each(function (index) {
                     const fieldName = $(this).attr("name");
                     const fieldID = $(this).attr("id");
@@ -3238,7 +3242,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var slp = 0;
                         if (isChk) {
                             var price = parseFloat($(this).attr("txttag"));
-                            slp = (price / ((TPren / 100) + 1));
+                            
+                            slp = dApponMRPCum > 0 ? price + parseFloat(dMRPonTax) : (price / ((TPren / 100) + 1));
                             allValues[fieldName] = slp;
                         } else {
                             slp = parseFloat($(this).attr("txttag"));
@@ -3250,6 +3255,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         allValues[fieldName] = val;
                     }
                 });
+                let RowQty = parseFloat($(this).find("input[name='Qty']").attr("txttag"));                
+                let RowDmgQty = parseFloat($(this).find("input[name='DmgQty']").attr("txttag"));
+                TotalMRPonTax += (parseFloat(dMRPonTax) * (RowQty + RowDmgQty));
                 allValues["InventoryID"] = rowdata[0];
                 allValues["ProdID"] = $("#txtHProdID").val();
                 allValues["TrackInventory"] = TempProd.TrackInventory;
@@ -3281,11 +3289,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var Freeqty = document.getElementById("txtBatchFreeQty").getAttribute('txttag');
             var Dmgqty = document.getElementById("txtBatchDmgQtyTotal").getAttribute('txttag');
             var Calcgross = parseFloat(qty) + parseFloat(Dmgqty);
-            var goods = isChk == "0" ? Calcgross : (Calcgross / (1 + (TPren / 100)));
-            var PDiscAmt = (PDiscPren * goods) / 100;
-            var gross = goods - PDiscAmt;
-            var TAmt = (gross * TPren) / 100;
-            var NAmt = gross + TAmt;
+            var goods = isChk == "0" ? Calcgross : dApponMRPCum > 0 ? (Calcgross + TotalMRPonTax) : (Calcgross / (1 + (TPren / 100)));
+            //var PDiscAmt = (PDiscPren * goods) / 100;
+            //var gross = goods - PDiscAmt;
+            //var TAmt = dApponMRPCum > 0 ? gross + TotalMRPonTax : (gross * TPren) / 100;
+            //var NAmt = gross + TAmt;
             var Q1 = document.getElementById("txtBatchQty").getAttribute("txttag"); //$("#txtBatchQty").val()
             var Q2 = document.getElementById("txtBatchFreeQty").getAttribute("txttag");
             var Q3 = document.getElementById("txtBatchDmgQty").getAttribute("txttag");
@@ -3294,13 +3302,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var TDPern = document.getElementById("txtTradeDiscPern").getAttribute("txttag");
                 var ADPern = document.getElementById("txtAddnlDiscPern").getAttribute("txttag");
 
-                var goods = isChk == "0" ? Calcgross : (Calcgross / (1 + (TPren / 100)));
+                var goods = isChk == "0" ? Calcgross : dApponMRPCum > 0 ? (Calcgross + TotalMRPonTax) : (Calcgross / (1 + (TPren / 100)));
                 var PDiscAmt = (PDiscPren * goods) / 100;
                 var TDiscAmt = (TDPern * (goods - PDiscAmt)) / 100;
                 var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
 
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
-                var TAmt = (gross * TPren) / 100;
+                var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
                 var NAmt = gross + TAmt;
                 var TrdDiscEnable = $("#txtTradeDiscPern").is(":disabled") ? "" : TDPern > 0 ? "disabled" : "";
                 var AdnlDiscEnable = $("#txtAddnlDiscPern").is(":disabled") ? "" : ADPern > 0 ? "disabled" : "";
@@ -3340,9 +3348,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     '<input type="number" txttag ="' + ADiscAmt + '" title="' + ADiscAmt + '" step="any" id="dgvProdADAmt' + ProductRID + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(ADiscAmt).toFixed(DecVal) + '" ' + AdnlDiscEnable +'  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
                     '<label name="Goods" class="lblsettag" lbltag="' + goods + '"  title="' + goods + '" id="dgvProdGoods' + ProductRID + '">' + parseFloat(goods).toFixed(DecVal) + '</label>',
                     '<label name="Gross" class="lblsettag" lbltag="' + gross + '"  title="' + gross +'" id="dgvProdGross' + ProductRID + '">' + parseFloat(gross).toFixed(DecVal) + '</label>',
-                    '<label name="TaxAmt" class="lblsettag" lbltag="' + TAmt + '"  title="' + TAmt + '" id="dgvProdTax' + ProductRID + '">' + parseFloat(TAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + $("#txtBatchTaxName").val() + '</label>',
+                    '<label name="TaxAmt" class="lblsettag" lbltag="' + TAmt + '"  title="' + TAmt + '" id="dgvProdTax' + ProductRID + '">' + parseFloat(TAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + $("#txtBatchTaxName").val() + '</label>' +
+                    '<label hidden name="ApponMRPCum" class="lblsettag" lbltag="' + dApponMRPCum + '"  title="' + dApponMRPCum + '" id="dgvProdApponMRPCum' + ProductRID + '">' + parseFloat(dApponMRPCum).toFixed(DecVal) + '</label>' +
+                    '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + TotalMRPonTax + '"   title="' + TotalMRPonTax + '"id="dgvProdTotalMRPonTax' + ProductRID + '">' + parseFloat(TotalMRPonTax).toFixed(DecVal) + '</label>',
                     '<label name="NetAmt" class="lblsettag" lbltag="' + NAmt + '"   title="' + NAmt + '"id="dgvProdNet' + ProductRID + '">' + parseFloat(NAmt).toFixed(DecVal) + '</label>',
-                    DiffField, DiffPrice, LocationField
+                    DiffField, DiffPrice, LocationField                    
                 ]).draw(false);
                 $("#dgvLocation" + ProductRID).val($("#cmbLocation").val())
                 ProductRID++;
@@ -3355,7 +3365,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var ADPern = parseFloat($("#txtGridAddnlDisc").val());
                 var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
-                var TAmt = (gross * TPren) / 100;
+                var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
                 var NAmt = gross + TAmt;
                 var DiffPrice = $("#txtTransBillPrice").val() != "" ? parseFloat($("#txtTransBillPrice").val()) * selConvFact : 0;
                 $("#tblProductData tbody tr").each(function () {
@@ -3418,9 +3428,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 var clrcolor = Diff >= 0 ? "green" : "red";
                                 $(this).css("color", clrcolor);
                             }
+                            if (fieldName == "ApponMRPCum") {
+                                //showSuccessSnackbar("ApponMRPCum : " + dApponMRPCum);
+                                updateLabelColumn(fieldID, dApponMRPCum);
+                            }
+                            if (fieldName == "TotalMRPonTax") {
+                                //showSuccessSnackbar("TotalMRPonTax : " + TotalMRPonTax);
+                                updateLabelColumn(fieldID, TotalMRPonTax);
+                            }
                             //allValues[fieldName] = $(this).val();
                         });
-                    }
+                                              
+                    }                 
                 });
             }
             modal.hide();
@@ -3521,14 +3540,15 @@ var Url = '@Session["url"].ToString()';
         $(".lblPT").text(0.00);
         var dPTQty = 0, dPTFreeQty = 0, dPTDmgQty = 0, dPTGoods = 0, dPTGross = 0, dPTTax = 0, dPTNet = 0, TotProdDisc = 0, TotTradeDisc = 0,
             TotAddnlDisc = 0, Value = 0, dQty = 0, dGross = 0, dNet = 0, DiffExcl = 0, DiffIncl = 0;
-        console.log("ProductTable row count:", ProductTable.rows().count());
-        console.log("ProductTable all data:", ProductTable.rows().data().toArray());
+        //console.log("ProductTable row count:", ProductTable.rows().count());
+        //console.log("ProductTable all data:", ProductTable.rows().data().toArray());
+        if (ProductTable.rows().count() == 0) return;
         $("#tblProductData tbody tr").each(function () {
             var allValues = {};
             var rowdata = ProductTable.row($(this)).data();
 
-            var TInvoicePrice = parseFloat($(this).find("td").eq(20).text() || 0);
-            var TaxPern = parseFloat($(this).find("td").eq(3).text() || 0);
+            var TInvoicePrice = parseFloat(rowdata[20] || 0);//$(this).find("td").eq(20).text()
+            var TaxPern = parseFloat(rowdata[3] || 0);
 
             $(this).find("input").each(function (index) {
                 const fieldName = $(this).attr("name");
@@ -3787,6 +3807,8 @@ var Url = '@Session["url"].ToString()';
                     Addnldiscamt = parseFloat(fullValue);
                 }
             });
+            var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+            var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 0;  
             $(this).find("label").each(function (index) {
                 const fieldName = $(this).attr("name");
                 const fieldID = $(this).attr("id");
@@ -3805,10 +3827,8 @@ var Url = '@Session["url"].ToString()';
                     dPTGross = grs.toFixed(DecVal);
                 }
                 if (fieldName == "TaxAmt") {
-                    var tamt = ((taxpern * dPTGross) / 100);
-                    //$(this).text(tamt.toFixed(DecVal));
-                    updateLabelColumn(fieldID, tamt);
-                    //setTagValue(fieldID, fieldName, tamt,2);
+                    var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dPTGross) / 100);                    
+                    updateLabelColumn(fieldID, tamt);                    
                     dPTTax = tamt.toFixed(DecVal);
                 }
                 if (fieldName == "NetAmt") {
@@ -4101,8 +4121,9 @@ var Url = '@Session["url"].ToString()';
 
         var GridProdID = rowdata[0];
         var taxpern = parseFloat(rowdata[3]);
-        var TInvoicePrice = parseFloat(rowdata[20]);
-
+        var TInvoicePrice = parseFloat(rowdata[20]);        
+             
+        //showSuccessSnackbar("dAppMRPonTax : " + dAppMRPonTax + "<br/>TotMRPonTaxAmt : " + TotMRPonTaxAmt);
         let existTradeDiscPern = getTagEl($r, "input[name='TradeDiscPern']");
         let existAddnlDiscPern = getTagEl($r, "input[name='AddnlDiscPern']");
         let existGoodsAmt = getTagEl($r, "label[name='Goods']");
@@ -4127,8 +4148,9 @@ var Url = '@Session["url"].ToString()';
 
         var dGross = (existGoodsAmt - (trdamt + addnlamt + ProdDiscAmt));
         updateLbl($r, "label[name='Gross']", dGross);
-
-        var tamt = ((taxpern * dGross) / 100);
+        var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+        var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;   
+        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4197,8 +4219,9 @@ var Url = '@Session["url"].ToString()';
 
         var dGross = (existGoodsAmt - (trdamt + addnlamt + ProdDiscAmt));
         updateLbl($r, "label[name='Gross']", dGross);
-
-        var tamt = ((taxpern * dGross) / 100);
+        var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+        var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;   
+        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4257,7 +4280,9 @@ var Url = '@Session["url"].ToString()';
         var dGross = (existGoodsAmt - (trdamt + existAddnlDiscAmt + existProdDiscAmt));
         updateLbl($r, "label[name='Gross']", dGross);
 
-        var tamt = ((taxpern * dGross) / 100);
+        var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+        var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
+        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4319,7 +4344,9 @@ var Url = '@Session["url"].ToString()';
         var dGross = (existGoodsAmt - (TradeDiscAmt + existAddnlDiscAmt + existProdDiscAmt));
         updateLbl($r, "label[name='Gross']", dGross);
 
-        var tamt = ((taxpern * dGross) / 100);
+        var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+        var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
+        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4378,7 +4405,9 @@ var Url = '@Session["url"].ToString()';
         var dGross = (existGoodsAmt - (addnldamt + existTradeDiscAmt + existProdDiscAmt));
         updateLbl($r, "label[name='Gross']", dGross);
 
-        var tamt = ((taxpern * dGross) / 100);
+        var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+        var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
+        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4440,7 +4469,9 @@ var Url = '@Session["url"].ToString()';
         var dGross = (existGoodsAmt - (AddnlDiscAmt + existTradeDiscAmt + existProdDiscAmt));
         updateLbl($r, "label[name='Gross']", dGross);
 
-        var tamt = ((taxpern * dGross) / 100);
+        var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+        var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
+        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4798,6 +4829,8 @@ var Url = '@Session["url"].ToString()';
                     Addnldiscamt = parseFloat(document.getElementById(fieldID).getAttribute('txttag'));
                 }
             });
+            var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+            var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 0;  
             $(this).find("label").each(function (index) {
                 const fieldName = $(this).attr("name");
                 const fieldID = $(this).attr("id");
@@ -4814,7 +4847,7 @@ var Url = '@Session["url"].ToString()';
                     dPTGross = grs;
                 }
                 if (fieldName == "TaxAmt") {
-                    var tamt = ((taxpern * dPTGross) / 100);
+                    var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dPTGross) / 100);
                     updateLabelColumn(fieldID, tamt);
                     //$(this).text(tamt);
                     dPTTax = tamt;
@@ -5576,6 +5609,7 @@ function setDate1(FieldID,Type) {
                     });
                     ProductRID = 0;
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
+                    var hdnfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
                     var dataSet = items.lstProdGrid.map(function (itemsProd, nRowIndex) {
                         var gross = parseFloat(itemsProd.GrossAmt);
                         var goods = parseFloat(itemsProd.GoodsAmt);
@@ -5608,7 +5642,7 @@ function setDate1(FieldID,Type) {
                             itemsProd.Code,///'<label name="ProdCode">' +
                             itemsProd.UomID,//'<label name="UOMID">' +
                             itemsProd.TaxPern,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/> <span style="font-size:16px;" class="glyphicon glyphicon-edit clseditprod"  title="Edit Product"></span>' +
+                            '<span ' + hdnfields +' style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/> <span style="font-size:16px;" class="glyphicon glyphicon-edit clseditprod"  title="Edit Product"></span>' +
                             '&ensp;<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
                             '<input name = "ProName" class="gdInput" value="' + itemsProd.Name + '" disabled title="' + itemsProd.Name + '"/><br/>' + itemsProd.Code,
@@ -5628,7 +5662,9 @@ function setDate1(FieldID,Type) {
                             '<input type="number" txttag ="' + AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + '  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
                             '<label class="lblsettag" name="Goods" lbltag=' + goods + ' id="dgvProdGoods' + nRowIndex + '" title="' + goods + '">' + parseFloat(goods).toFixed(DecVal) + '</label>',
                             '<label class="lblsettag" name="Gross" lbltag=' + gross + ' id="dgvProdGross' + nRowIndex + '" title="' + gross + '">' + parseFloat(gross).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>',
+                            '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>' +
+                            '<label hidden name="ApponMRPCum" class="lblsettag" lbltag="' + itemsProd.CumMRPonTax + '"  title="' + itemsProd.CumMRPonTax + '" id="dgvProdApponMRPCum' + ProductRID + '">' + parseFloat(itemsProd.CumMRPonTax).toFixed(DecVal) + '</label>' +
+                            '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + itemsProd.MRPonTax + '"   title="' + itemsProd.MRPonTax + '"id="dgvProdTotalMRPonTax' + ProductRID + '">' + parseFloat(itemsProd.MRPonTax).toFixed(DecVal) + '</label>',
                             '<label class="lblsettag" name="NetAmt" lbltag=' + itemsProd.NetAmt + ' id="dgvProdNet' + nRowIndex + '" title="' + itemsProd.NetAmt + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
                             DiffField, itemsProd.TransactionPrice, LocationField
                         ];
