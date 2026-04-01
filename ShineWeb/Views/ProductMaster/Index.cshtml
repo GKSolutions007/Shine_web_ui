@@ -2934,7 +2934,7 @@ function updateInputColumn(inputID, netValue) {
             CalculateRetailMarginPern(MRP);
         }, 500);
     });
-    function CalulatePurchaseTax() {
+    function CalulatePurchaseTax(FromMRP = false,MRPValue = 0) {
         //arrPurchaseTaxDetails = [];
         var TID = $("#cmbPTax").val();
         var tx = arrTax.filter(a => a.TaxID == TID);
@@ -2944,7 +2944,7 @@ function updateInputColumn(inputID, netValue) {
             $("#txtPTaxPern").val(0);
         //arrPurchaseTaxDetails = ReturnTaxDetails(TID, 1);
         //arrSalesTaxDetails = ReturnTaxDetails(items.SalesTaxID, 1);        
-        var MRP = document.getElementById("txtMRP").getAttribute("txttag");
+        var MRP = FromMRP ? MRPValue : document.getElementById("txtMRP").getAttribute("txttag");
         var dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
         var dTaxAmt = 0;
         
@@ -3043,6 +3043,8 @@ function updateInputColumn(inputID, netValue) {
         var SalePerc = document.getElementById("txtSPricePerc").getAttribute("txttag");
         var ECPPerc = document.getElementById("txtECPricePerc").getAttribute("txttag");
         var SPLPerc = document.getElementById("txtSPLPricePerc").getAttribute("txttag");
+        //updateInputColumn("txtMRP", MRP);
+        CalulatePurchaseTax(true, MRP);
         ApplySalesonPercValue(SalePerc, "txtSPricePerc", MRP, exclpp);
         ApplyECPonPercValue(ECPPerc, "txtECPricePerc", MRP, exclpp);
         ApplySPLonPercValue(SPLPerc, "txtSPLPricePerc", MRP, exclpp);
@@ -3065,14 +3067,15 @@ function updateInputColumn(inputID, netValue) {
         var val = parseFloat(dValue);
         var id = nFieldID;
         if ($("#cmbSTax").val() > 0) {
+            var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+            var dTaxAmt = 0;
             if (!isChk) {
                 var exclprice = dExclPPrice;// document.getElementById("txtPurPrice").getAttribute("txttag");
                 var perc = val > 0 ? (parseFloat(val) / 100) + 1 : 1;
                 var aftpercapply = exclprice * perc;
                 var txpern = $("#txtSTaxPern").val();
                 var tp = (txpern / 100) + 1; var incl = 0;
-                var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
-                var dTaxAmt = 0;
+                
                 if (dApponMRPCum > 0) {
                     dTaxAmt = getSalesMRPontax(dMRP);
                     incl = aftpercapply + dTaxAmt;
@@ -3089,11 +3092,18 @@ function updateInputColumn(inputID, netValue) {
                 var tp = (parseFloat(txpern) / 100) + 1;
                 if (val < parseFloat(100))
                 {
-
+                    var excl = 0;
                     var SalePerc = parseFloat(val);// document.getElementById("txtSPricePerc").getAttribute("txttag");
-                    var aftpercapply = SalePerc > 0 ? (MRP - ((MRP * SalePerc) / 100)) : 0; //MRP / perc;
-                    updateInputColumn("txtSPriceIncl", aftpercapply);
-                    var excl = parseFloat(aftpercapply) / tp;
+                    var aftpercapply = SalePerc > 0 ? (MRP - ((MRP * SalePerc) / 100)) : MRP; //MRP / perc;
+
+                    if (dApponMRPCum > 0) {
+                        dTaxAmt = getSalesMRPontax(dMRP);
+                        excl = aftpercapply - dTaxAmt;
+                    }
+                    else {
+                        excl = parseFloat(aftpercapply / tp);
+                    }                    
+                    updateInputColumn("txtSPriceIncl", aftpercapply);                     
                     updateInputColumn("txtSPrice", excl);
                     //updateInputColumn(id, val);
                 }
@@ -3123,17 +3133,21 @@ function updateInputColumn(inputID, netValue) {
         var isChk = $("#chkApplySalesPerc").is(":checked");
         var exclprice = document.getElementById("txtPurPrice").getAttribute("txttag");
         var MRP = document.getElementById("txtMRP").getAttribute("txttag");
+        var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+        var dTaxAmt = 0;
         if (isChk) {
             var MRP = parseFloat(document.getElementById("txtMRP").getAttribute("txttag"));
             var txpern = $("#txtSTaxPern").val();
             var tp = (parseFloat(txpern) / 100) + 1;
             var SalePerc = parseFloat(document.getElementById("txtSPricePerc").getAttribute("txttag"));
             if (SalePerc < 100) {
+                dTaxAmt = getSalesMRPontax(MRP);
+
                 var perc = (parseFloat(SalePerc) / 100) + 1;
                 //var aftpercapply = MRP / perc;
                 var aftpercapply = (MRP - ((MRP * SalePerc) / 100));
                 updateInputColumn("txtSPriceIncl", aftpercapply);
-                var excl = parseFloat(aftpercapply) / tp;
+                var excl = dApponMRPCum > 0 ? (aftpercapply - dTaxAmt) :  parseFloat(aftpercapply) / tp;
                 updateInputColumn("txtSPrice", excl);
             } else {
                 updateInputColumn("txtSPricePerc", 0);
@@ -3152,8 +3166,7 @@ function updateInputColumn(inputID, netValue) {
             var txpern = $("#txtSTaxPern").val();
             //var incl = SalePerc > 0 ? parseFloat(aftpercapply) + parseFloat((exclprice * txpern) / 100) : 0;
             //$("#txtPurPrice").val(incl);
-            var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
-            var dTaxAmt = 0, incl = 0;
+            var incl = 0;
             if (dApponMRPCum > 0) {
                 dTaxAmt = getSalesMRPontax(MRP);
                 incl = aftpercapply + dTaxAmt;
@@ -3183,15 +3196,15 @@ function updateInputColumn(inputID, netValue) {
         var val = dValue;// e.target.value;
         var id = nFieldID;// e.target.id;
         if ($("#cmbSTax").val() > 0) {
+            var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+            var dTaxAmt = 0;
             if (!isChk) {
                 var exclprice = dExclPPrice;// document.getElementById("txtPurPrice").getAttribute("txttag");
                 var perc = val > 0 ? (parseFloat(val) / 100) + 1 : 1;
                 var aftpercapply = exclprice * perc;
 
                 var txpern = parseFloat($("#txtSTaxPern").val());
-                var tp = (txpern / 100) + 1;                                       
-                var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
-                var dTaxAmt = 0;
+                var tp = (txpern / 100) + 1;                                                       
                 if (dApponMRPCum > 0) {
                     dTaxAmt = getSalesMRPontax(dMRP);
                     incl = aftpercapply + dTaxAmt;
@@ -3207,12 +3220,22 @@ function updateInputColumn(inputID, netValue) {
                 var txpern = $("#txtSTaxPern").val();
                 var tp = (parseFloat(txpern) / 100) + 1;
                 if (val < parseFloat(100)) {
-                    var SalePerc = parseFloat(val);// document.getElementById("txtSPricePerc").getAttribute("txttag");
-                    var perc = SalePerc > 0 ? (parseFloat(SalePerc) / 100) + 1 : 0;
-                    //var aftpercapply = MRP / perc;
-                    var aftpercapply = SalePerc > 0 ? (MRP - ((MRP * SalePerc) / 100)) : 0;
+                    var excl = 0;
+                    var SalePerc = parseFloat(val);
+                    var perc = SalePerc > 0 ? (parseFloat(SalePerc) / 100) + 1 : 1;
+                    
+                    var aftpercapply = SalePerc > 0 ? (MRP - ((MRP * SalePerc) / 100)) : MRP;
+
+                    if (dApponMRPCum > 0) {
+                        dTaxAmt = getSalesMRPontax(dMRP);
+                        excl = aftpercapply - dTaxAmt;
+                    }
+                    else {
+                        excl = parseFloat(aftpercapply / tp);
+                    }      
+
                     updateInputColumn("txtECPriceIncl", aftpercapply);
-                    var excl = parseFloat(aftpercapply) / tp;
+                    //var excl = parseFloat(aftpercapply) / tp;
                     updateInputColumn("txtECPrice", excl);
                     //updateInputColumn(id, val);
                 }
@@ -3241,19 +3264,22 @@ function updateInputColumn(inputID, netValue) {
         var isChk = $("#chkApplyECPPerc").is(":checked");
         var exclprice = document.getElementById("txtPurPrice").getAttribute("txttag");
         var MRP = document.getElementById("txtMRP").getAttribute("txttag");
-
+        var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+        var dTaxAmt = 0;
         if (isChk) {
+
             var MRP = parseFloat(document.getElementById("txtMRP").getAttribute("txttag"));
             var txpern = $("#txtSTaxPern").val();
             var tp = (parseFloat(txpern) / 100) + 1;
 
             var SalePerc = parseFloat(document.getElementById("txtECPricePerc").getAttribute("txttag"));
+            dTaxAmt = getSalesMRPontax(MRP);
             if (SalePerc < 100) {
                 var perc = (parseFloat(SalePerc) / 100) + 1;
                 //var aftpercapply = MRP / perc;
                 var aftpercapply = (MRP - ((MRP * SalePerc) / 100));
                 updateInputColumn("txtECPriceIncl", aftpercapply);
-                var excl = parseFloat(aftpercapply) / tp;
+                var excl = dApponMRPCum > 0 ? (aftpercapply - dTaxAmt) : parseFloat(aftpercapply) / tp;
                 updateInputColumn("txtECPrice", excl);
             } else {
                 updateInputColumn("txtECPricePerc", 0);
@@ -3271,8 +3297,7 @@ function updateInputColumn(inputID, netValue) {
 
             var txpern = $("#txtSTaxPern").val();
             //var incl = SalePerc > 0 ?parseFloat(aftpercapply) + parseFloat((exclprice * txpern) / 100) : 0;
-            var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
-            var dTaxAmt = 0, incl = 0;
+            var incl = 0;
             if (dApponMRPCum > 0) {
                 dTaxAmt = getSalesMRPontax(MRP);
                 incl = aftpercapply + dTaxAmt;
@@ -3303,6 +3328,8 @@ function updateInputColumn(inputID, netValue) {
         var val = dValue;// e.target.value;
         var id = nFieldID;// e.target.id;
         if ($("#cmbSTax").val() > 0) {
+            var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+            var dTaxAmt = 0;
             if (!isChk) {
                 var exclprice = dExclPPrice;// document.getElementById("txtPurPrice").getAttribute("txttag");
                 var perc = val > 0 ? (parseFloat(val) / 100) + 1 : 1;
@@ -3311,8 +3338,7 @@ function updateInputColumn(inputID, netValue) {
                 var txpern = $("#txtSTaxPern").val();
                 var tp = (txpern / 100) + 1;                
                 var incl = 0;// parseFloat(aftpercapply * tp);                
-                var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
-                var dTaxAmt = 0;
+                
                 if (dApponMRPCum > 0) {
                     dTaxAmt = getSalesMRPontax(dMRP);
                     incl = aftpercapply + dTaxAmt;
@@ -3327,12 +3353,25 @@ function updateInputColumn(inputID, netValue) {
                 var txpern = $("#txtSTaxPern").val();
                 var tp = (parseFloat(txpern) / 100) + 1;
                 if (val < parseFloat(100)) {
-                    var SalePerc = parseFloat(val);// document.getElementById("txtSPricePerc").getAttribute("txttag");
-                    var perc = (parseFloat(SalePerc) / 100) + 1;
-                    var aftpercapply = (MRP - ((MRP * SalePerc) / 100));
-                    //var aftpercapply = MRP / perc;
+                   
+                    var excl = 0;
+                    var SalePerc = parseFloat(val);
+                    var perc = SalePerc > 0 ? (parseFloat(SalePerc) / 100) + 1 : 1;
+
+                    var aftpercapply = 0;// SalePerc > 0 ? (MRP - ((MRP * SalePerc) / 100)) : MRP;
+
+                    if (dApponMRPCum > 0) {
+                        dTaxAmt = getSalesMRPontax(dMRP);
+                        aftpercapply = SalePerc > 0 ? (MRP - ((MRP * SalePerc) / 100)) : MRP;
+                        excl = aftpercapply - dTaxAmt;
+                    }
+                    else {
+                        aftpercapply = SalePerc > 0 ? (MRP - ((MRP * SalePerc) / 100)) : MRP;
+                        excl = parseFloat(aftpercapply / tp);
+                    }      
+
                     updateInputColumn("txtSPLPriceIncl", aftpercapply);
-                    var excl = parseFloat(aftpercapply) / tp;
+                    //var excl = parseFloat(aftpercapply) / tp;
                     updateInputColumn("txtSPLPrice", excl);
                     //updateInputColumn(id, val);
                 }
@@ -3362,14 +3401,17 @@ function updateInputColumn(inputID, netValue) {
         var isChk = $("#chkApplySPLPerc").is(":checked");
         var exclprice = document.getElementById("txtPurPrice").getAttribute("txttag");
         var MRP = parseFloat(document.getElementById("txtMRP").getAttribute("txttag"));
+        var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+        var dTaxAmt = 0;
         if (isChk) {            
             var txpern = $("#txtSTaxPern").val();
             var tp = (parseFloat(txpern) / 100) + 1;
             var SalePerc = parseFloat(document.getElementById("txtSPLPricePerc").getAttribute("txttag"));
             if (SalePerc < 100) {
+                dTaxAmt = getSalesMRPontax(MRP);
                 var aftpercapply = (MRP - ((MRP * SalePerc) / 100));
                 updateInputColumn("txtSPLPriceIncl", aftpercapply);
-                var excl = parseFloat(aftpercapply) / tp;
+                var excl = dApponMRPCum > 0 ? aftpercapply - dTaxAmt : parseFloat(aftpercapply) / tp;
                 updateInputColumn("txtSPLPrice", excl);
             }
             else
@@ -3386,8 +3428,7 @@ function updateInputColumn(inputID, netValue) {
             var perc = SalePerc > 0 ? (parseFloat(SalePerc) / 100) + 1 : 1;
             var aftpercapply = exclprice * perc;
             var txpern = $("#txtSTaxPern").val();
-            var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
-            var dTaxAmt = 0, incl = 0;
+          var incl = 0;
             if (dApponMRPCum > 0) {
                 dTaxAmt = getSalesMRPontax(MRP);
                 incl = aftpercapply + dTaxAmt;
