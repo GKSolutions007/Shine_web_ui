@@ -46,6 +46,7 @@
 <script src="~/datatable/1.13.6/dataTables.bootstrap5.min.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_Grid/js/gridui.js"></script>
+<script src="~/Scripts/js/mrptaxcall.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
 </header>
@@ -742,23 +743,20 @@
         <div class="row mt-2">
 
                 <!-- Vendor Select -->
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-2">
                     <table class="w-100">
                         <tr class="bgclrfortr">
-                            <td colspan="2" style="border:none;">
-                                <div class="input-group">
-                                    <span class="form-label flex-fill">
-                                        <input class="form-control FormclrField" type="text" id="txtSearch" placeholder="Select Vendor">
-                                        <label class="labelup">Select *</label>
-                                    </span>
+                            <td style="border:none;">
+                                <span class="form-label">
+                                    <select class="form-select FormclrcmbField" id="cmbBranch">
+                                        <option value="0">Select Branch</option>
+                                    </select>
+                                    <label class="labelup">Branch *</label>
+                                </span>
 
-                                    <span id="VendInfo" class="input-group-text">
-                                        <i class="bi bi-info-circle"></i>
-                                    </span>
-                                </div>
-
-                                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrSearch"></div>
+                                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrBranch"></div>
                             </td>
+                            
                         </tr>
 
                         <tr hidden>
@@ -772,21 +770,32 @@
                 </div>
 
                 <!-- Branch + Ref -->
-                <div class="col-12 col-md-5">
+                <div class="col-12 col-md-7">
                     <table class="w-100">
-
                         <tr class="bgclrfortr">
                             <td style="border:none;">
-                                <span class="form-label">
-                                    <select class="form-select FormclrcmbField" id="cmbBranch">
-                                        <option value="0">Select Branch</option>
-                                    </select>
-                                    <label class="labelup">Branch *</label>
-                                </span>
+                                <div class="input-group">
+                                    <span class="form-label flex-fill">
+                                        <input class="form-control FormclrField" type="text" id="txtSearch" placeholder="Select Vendor">
+                                        <label class="labelup">Select *</label>
+                                    </span>
 
-                                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrBranch"></div>
+                                    <span id="VendInfo" class="input-group-text">
+                                        <i class="bi bi-info-circle"></i>
+                                    </span>
+                                </div>
+
+                                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrSearch"></div>
                             </td>
-
+                            <td style="border: none;">
+                                <span class="form-label">
+                                    <select class="form-select" id="cmbUOMType">
+                                        <option value="1">Base</option>
+                                        <option value="2">Purchase</option>
+                                    </select>
+                                    <label class="labelup">UOM Type</label>
+                                </span>
+                            </td>
                             <td style="border:none;">
                                 <span class="form-label">
                                     <input class="form-control FormclrField"
@@ -797,23 +806,9 @@
 
                                     <label class="labelup">Ref No</label>
                                 </span>
-
                                 <div class="text-danger pt-1 ps-1 clrdivs" id="divErrRefNo"></div>
                             </td>
                         </tr>
-
-                        <tr class="bgclrfortr">
-                            <td style="border: none; padding-top: 15px;" >
-                                <span class="form-label">
-                                    <select class="form-select" id="cmbUOMType">
-                                        <option value="1">Base</option>
-                                        <option value="2">Purchase</option>
-                                    </select>
-                                    <label class="labelup">UOM Type</label>
-                                </span>
-                            </td>
-                        </tr>
-
                     </table>
                 </div>
 
@@ -886,6 +881,8 @@
                             <input hidden id="txtUOMName" class="dtgFields" />
                             <input hidden id="txtUOMID" class="dtgFields" />
                             <input hidden id="txtUOMCR" class="dtgFields" />
+                            <input hidden id="txtMRPonTax" class="dtgFields" />
+                            <input hidden id="txtMRP" class="dtgFields" />
                         </td>
                     </tr>
                     <!--<tr>
@@ -1032,7 +1029,7 @@
 
 
                         <td width="10%" style="padding-top:15px;">
-                            <button class="btn btn-primary" id="btnBatch">Add</button>
+                            <button class="btn btn-primary" id="btnBatch"><i class="glyphicon glyphicon-plus"></i> Add Item</button>
                             <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrProductBatch" class="clrdivs"></div>
                         </td>
 
@@ -1066,6 +1063,7 @@
                         <th style="text-align:center;font-size: 12px;width:5%;" class="trclrforcolheader">Tax %</th>
                         <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Tax ₹</th>
                         <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Net ₹</th>
+                        <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">MRPonTax</th>
                     </tr>
                 </thead>
                 <tfoot>
@@ -1271,7 +1269,7 @@
                                 <a href="javascript:void(0);" id="toggleTax"> [+] </a>
                             </td>
                             <td class="text-end" style="border:none;">
-                                <label id="lblTaxAmount">0.00</label>
+                                <label id="lblTaxAmount" class="fw-bold fs-5">0.00</label>
                             </td>
                         </tr>
 
@@ -1280,7 +1278,7 @@
                                 <label>CGST Amount :</label>
                             </td>
                             <td class="text-end" style="border:none;">
-                                <label lbltag="0" id="lblCGST" class="lblsettag">0.00</label>
+                                <label lbltag="0" id="lblCGST" class="lblsettag fw-bold fs-5">0.00</label>
                             </td>
                         </tr>
 
@@ -1289,7 +1287,7 @@
                                 <label>SGST Amount :</label>
                             </td>
                             <td class="text-end" style="border:none;">
-                                <label lbltag="0" id="lblSGST" class="lblsettag">0.00</label>
+                                <label lbltag="0" id="lblSGST" class="lblsettag fw-bold fs-5">0.00</label>
                             </td>
                         </tr>
 
@@ -1298,7 +1296,7 @@
                                 <label>IGST Amount :</label>
                             </td>
                             <td class="text-end" style="border:none;">
-                                <label lbltag="0" id="lblIGST" class="lblsettag">0.00</label>
+                                <label lbltag="0" id="lblIGST" class="lblsettag fw-bold fs-5">0.00</label>
                             </td>
                         </tr>
 
@@ -1308,7 +1306,7 @@
                             </td>
                             <td class="text-end" style="border:none;">
                                 <input txttag="0" type="number" step="any" id="txtRoundOff"
-                                       class="form-control gdInput FormclrField txtsettag" />
+                                       class="form-control gdInput FormclrField txtsettag fw-bold fs-5" />
                             </td>
                         </tr>
 
@@ -1317,7 +1315,7 @@
                                 <label>Rounded Net Amount :</label>
                             </td>
                             <td class="text-end" style="border:none;font-size:16px;">
-                                <label lbltag="0" id="lblRoundNet" class="lblsettag">0.00</label>
+                                <label lbltag="0" id="lblRoundNet" class="lblsettag fw-bold fs-4">0.00</label>
                             </td>
                         </tr>
                     </table>
@@ -1810,8 +1808,8 @@
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0, 1, 2, 3, 4, 5], "visible": false, searchable: false, filter: false }, { "targets": [8], width: "35%" },
-            { "targets": [9, 10, 11], width: "8%" }],
+        "columnDefs": [{ "targets": [0, 1, 2, 3, 4, 5,17], "visible": false, searchable: false, filter: false }, { "targets": [8], width: "35%" },
+            { "targets": [9, 10, 11], width: "8%" }, { "targets": [13, 14,15, 16], class: "dt-body-right" }],
         //ajax: {
         //    url: 'initial_url',
         //    dataSrc: [],
@@ -2011,8 +2009,8 @@ setTimeout(function () { GetFilterData(); }, 800);
         var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
         var isedit = nTransMode == 2;
         GetDocumentID(DocDate, Branch, 3, prefix, isedit, id);
-    });
-
+    });    
+    var arrPurchaseTaxDetails = [];
     function GetData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "purchaseorder/get",
@@ -2085,10 +2083,6 @@ setTimeout(function () { GetFilterData(); }, 800);
                             }
                             TempAL.push(al);
                         });
-                        //var txtName = $('#txtHProds');
-                        //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
-                        //autocomplete.data('typeahead').source = null;
-                        //autocomplete.data('typeahead').source = arrProdCodeName;
                         $("#txtHProds").autocomplete({
                             minLength: 0,
                             source: TempAL,
@@ -2159,33 +2153,37 @@ setTimeout(function () { GetFilterData(); }, 800);
                     });
                 }
                 else if (nMode == 4) {
+                    arrPurchaseTaxDetails = [];
                     var UOMType = $("#cmbUOMType").val();
                     $.each(data, function (i, items) {
-
+                        var TaxPern = parseFloat(items.GSTPern);
+                        var UOMName = UOMType == 1 ? items.BaseUOMName : items.PurchaseUomName;
+                        var UOMID = UOMType == 1 ? parseInt(items.BaseUomID) : parseInt(items.PurchaseUomID);
                         $('#txtHProdID').val(items.ID);
                         $('#txtHProdCode').val(items.Code);
                         $('#lblProdCodeAS').text("Code : " + items.Code);
                         $('#txtHProds').val(items.Name);
+                        $('#txtUOMName').val(UOMName);
+                        $('#txtUOMID').val(UOMID);
+                        $('#txtUOMCR').val(items.PurchaseCR);
                         $('#txtTaxPern').val(items.GSTPern);
                         $('#txtTaxName').val(items.TaxName);
                         $('#txtTaxID').val(items.PurchaseTaxID);
+                        $('#txtMRP').val(items.MRP);
+                        
+                        var Price = UOMType == 1 ? parseFloat(items.PurchasePrice) : (parseFloat(items.PurchasePrice) * parseFloat(items.PurchaseCR))
 
-                        var UOMName = UOMType == 1 ? items.BaseUOMName : items.PurchaseUomName;
-                        var UOMID = UOMType == 1 ? items.BaseUomID : items.PurchaseUomID;
-                        $('#txtUOMName').val(UOMName);
-                        $('#txtUOMID').val(UOMID);
-                        var Price = UOMType == 1 ? items.PurchasePrice : (parseFloat(items.PurchasePrice) * parseFloat(items.PurchaseCR))
-                        var TaxPern = items.GSTPern;
-                        $('#txtUOMCR').val(items.PurchaseCR);
-                        //$('#txtExclPrice').val(Price);
-                        var Incl = (Price * (1 + (TaxPern / 100)))
+                        arrPurchaseTaxDetails = ReturnTaxDetails(items.PurchaseTaxID, 1);
+                        var dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+                        $('#txtMRPonTax').val(dApponMRPCum);
+                        var dMRPonTaxAmt = getPurchaseMRPontax(items.MRP);
+                        var Incl = dApponMRPCum > 0 ? (Price + dMRPonTaxAmt) : (Price * (1 + (TaxPern / 100)))
                         //$('#txtInclPrice').val(items.Name);
                         updateInputColumn("txtInclPrice", Incl);
                         updateInputColumn("txtExclPrice", Price);
                         updateInputColumn("txtQty", 1);
                         $("#txtQty").select();
                         TempProd = items;
-
                     });
                 }
                 else if (nMode == 12) {
@@ -2200,6 +2198,20 @@ setTimeout(function () { GetFilterData(); }, 800);
                 }
             }
         });
+    }
+    function getPurchaseMRPontax(MRP) {
+        var dTaxAmt = 0;
+        var dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+        for (var i = 0; i < arrPurchaseTaxDetails.length; i++) {
+            var nAppon = arrPurchaseTaxDetails[i].AppOn;
+            var dCumTax = arrPurchaseTaxDetails[i].CumulativeTax;
+            if (nAppon == -1) {
+                var dPrice = (MRP / (1 + (dApponMRPCum / 100)));
+                dTaxAmt += (dPrice * dCumTax) / 100;
+            }
+        }
+
+        return dTaxAmt;
     }
      var Url = '@Session["url"].ToString()';
  $("#openproduct").click(function (e) {
@@ -2522,30 +2534,9 @@ setTimeout(function () { GetFilterData(); }, 800);
             var incl = document.getElementById("txtInclPrice").getAttribute("txttag");//  ReturnTagValue("txtInclPrice", "");
             var qty = document.getElementById("txtQty").getAttribute("txttag");// ReturnTagValue("txtQty", "");
             var gross = excl * qty;
-            var tax = ((gross * TPren) / 100);
             var net = incl * qty;
-            var newRows = [
-                {
-                    ProdID: $("#txtHProdID").val(),//'<label name="ProdID">'
-                    Code: $('#txtHProdCode').val(),///'<label name="ProdCode">' +
-                    UomID: $("#txtUOMID").val(),//'<label name="UOMID">' +
-                    TaxID: $("#txtTaxID").val(),
-                    TaxPern: TPren,
-                    UOM: $("#txtUOMCR").val(),
-                    Action: '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&emsp; <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a><br/><span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>',
-                    SNo : '<p style="font-size:14px;">' + Sno + '</p>',
-                    Name: '<input disabled name = "ProName" class="gdInput" value="' + PName + '" title="' + PName + '" style="border:none;"/><br/>' + $('#txtHProdCode').val(),
-                    ExclPrice: '<input txttag="' + excl + '" title="' + excl + '" type="number" disabled step="any" id="dgvProdExclPrice' + ProductRID + '" name ="Excl" class="gdInput txtsettag" value="' + parseFloat(excl).toFixed(DecVal) + '" style="border:none;"/>',
-                    InclPrice: '<input txttag="' + incl + '" title="' + incl + '" type="number" disabled step="any" id="dgvProdInclPrice' + ProductRID + '" name="Incl" class="gdInput txtsettag" value="' + parseFloat(incl).toFixed(DecVal) + '" style="border:none;" />',
-                    Qty: '<input txttag="' + qty + '" title="' + qty + '" type="number" disabled step="any" id="dgvProdQty' + ProductRID + '" name="Qty" class="gdInput txtsettag" value="' + parseFloat(qty).toFixed(DecVal) + '" style="border:none;"/>',
-                    UomName: '<label name="UOM">' + $("#txtUOMName").val() + '</label>',
-                    GrossAmt: '<label lbltag="' + gross + '" class="lblsettag" name="Gross" id="dgvProdGross' + ProductRID + '" title="' + gross + '">' + gross.toFixed(DecVal) + '</label>',
-                    TaxName: '<label name="Tax">' + $("#txtTaxName").val() + '</label>',
-                    TaxAmt: '<label lbltag="' + tax + '" name="TaxAmt" id="dgvProdTax' + ProductRID + '" title="' + tax + '">' + tax.toFixed(DecVal) + '</label>',
-                    NetAmt: '<label lbltag="' + net + '" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + net + '">' + net.toFixed(DecVal) + '</label>'
-                }
-            ];
-            //ProductTable.rows.add(newRows).draw(false);
+            var tax = net - gross;// ((gross * TPren) / 100);
+            
             ProductTable.row.add([
                 $("#txtHProdID").val(),//'<label name="ProdID">'
                 $('#txtHProdCode').val(),///'<label name="ProdCode">' +
@@ -2563,12 +2554,10 @@ setTimeout(function () { GetFilterData(); }, 800);
                 '<label lbltag="' + gross + '" class="lblsettag" name="Gross" id="dgvProdGross' + ProductRID + '" title="' + gross + '">' + gross.toFixed(DecVal) + '</label>',
                 '<label name="Tax">' + $("#txtTaxName").val() + '</label>',
                 '<label lbltag="' + tax + '" name="TaxAmt" id="dgvProdTax' + ProductRID + '" title="' + tax + '">' + tax.toFixed(DecVal) + '</label>',
-                '<label lbltag="' + net + '" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + net + '">' + net.toFixed(DecVal) + '</label>'
+                '<label lbltag="' + net + '" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + net + '">' + net.toFixed(DecVal) + '</label>',
+                $('#txtMRPonTax').val()
             ]).draw(false);
-            //setTagValue("dgvProdQty" + ProductRID, "", qty);
-            //setTagValue("dgvProdInclPrice" + ProductRID, "", incl); setTagValue("dgvProdExclPrice" + ProductRID, "", excl);
-            //setTagValue("dgvProdGross" + ProductRID, "", gross, 2); setTagValue("dgvProdTax" + ProductRID, "", tax, 2);
-            //setTagValue("dgvProdNet" + ProductRID, "", net, 2);
+           
             ProductRID++;
             $(".dtgFields").val("");
             $('#lblProdCodeAS,#lblABS').text("");
@@ -2673,15 +2662,22 @@ setTimeout(function () { GetFilterData(); }, 800);
     $("#txtExclPrice").change(function (e) {
         var value = e.target.value;
         var TPern = parseFloat($("#txtTaxPern").val());
-        var Incl = (value * (1 + (TPern / 100)))
-        //setTagValue("txtInclPrice", "", Incl);
+        var MRP = parseFloat($("#txtMRP").val());
+        var dApponMRPCum = parseFloat($('#txtMRPonTax').val());
+        var dMRPonTaxAmt = getPurchaseMRPontax(MRP);
+        var Incl = dApponMRPCum > 0 ? (parseFloat(value) + dMRPonTaxAmt) : (value * (1 + (TPern / 100)));
+        //var Incl = (value * (1 + (TPern / 100)))
         updateInputColumn("txtInclPrice", Incl);
     });
     $("#txtInclPrice").change(function (e) {
         var value = e.target.value;
         var TPern = parseFloat($("#txtTaxPern").val());
-        var excl = (value / (1 + (TPern / 100)))
-        //setTagValue("txtExclPrice", "", excl);
+
+        var MRP = parseFloat($("#txtMRP").val());
+        var dApponMRPCum = parseFloat($('#txtMRPonTax').val());
+        var dMRPonTaxAmt = getPurchaseMRPontax(MRP);
+        var excl = dApponMRPCum > 0 ? (parseFloat(value) - dMRPonTaxAmt) : (value / (1 + (TPern / 100)));
+        //var excl = (value / (1 + (TPern / 100)))        
         updateInputColumn("txtExclPrice", excl);
     });
     $("#txtRoundOff").change(function (e) {
@@ -2818,7 +2814,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                             '<label lbltag="' + itemsProd.GrossAmt + '" class="lblsettag" name="Gross" id="dgvProdGross' + ProductRID + '" title="' + (itemsProd.GrossAmt) + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
                             '<label name="Tax">' + itemsProd.TaxName + '</label>',
                             '<label lbltag="' + itemsProd.TaxAmt + '" class="lblsettag" name="TaxAmt" id="dgvProdTax' + ProductRID + '" title="' + (itemsProd.TaxAmt) + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label>',
-                            '<label lbltag="' + itemsProd.NetAmt + '" class="lblsettag" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + (itemsProd.NetAmt) + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>'
+                            '<label lbltag="' + itemsProd.NetAmt + '" class="lblsettag" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + (itemsProd.NetAmt) + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
+                            itemsProd.MRPonTax
                         ];
                     });
                     $('#tblProductData').DataTable({
@@ -2848,9 +2845,10 @@ setTimeout(function () { GetFilterData(); }, 800);
                             { title: "Quantity", className: "dt-body-right", width: "6%" },
                             { title: "UOM", className: "dt-body-left", width: "6%" },
                             { title: "Gross ₹", className: "dt-body-right", width: "9%" },
-                            { title: "Tax %", className: "dt-body-left", width: "9%" },
+                            { title: "Tax %", className: "dt-body-right", width: "9%" },
                             { title: "Tax ₹", className: "dt-body-right", width: "9%" },
-                            { title: "Net ₹", className: "dt-body-right", width: "9%" }
+                            { title: "Net ₹", className: "dt-body-right", width: "9%" },
+                            { title: "MRPonTax", className: "dt-body-right", width: "0%", visible: false }
                         ]
                     });
                     

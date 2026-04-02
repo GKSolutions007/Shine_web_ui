@@ -268,9 +268,25 @@
 
                     <!-- Action Buttons -->
                     <div class="row mt-4 border-top pt-3">
+                        <div class="col-12 " style="display:flex; justify-content:center; margin-bottom:20px;">
+                            <div id="progressWrapper" style="display:none; width:350px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                    <span style="font-size:14px; font-weight:500;" id="lblExportmsg">Exporting...</span>
+                                    <span id="progressText" style="font-size:14px; font-weight:600;">0%</span>
+                                </div>
 
+                                <div style="width:100%; background:#e5e7eb; border-radius:10px; overflow:hidden; height:14px;">
+                                    <div id="progressBar"
+                                         style="width:0%; height:100%;
+                    background:linear-gradient(90deg, #4f46e5, #3b82f6);
+                    transition:width 0.4s ease;
+                    border-radius:10px;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-12 text-center">
-
+                           
                             <button class="btn btn-warning btn-action" id="btnExportData">
                                 <i class="bi bi-download"></i> Export Data
                             </button>
@@ -448,62 +464,97 @@
             $('#dvImpComp').html("");
 
             $.ajax({
-                url: Aurl + (Trans == 9 ? "uploadtransactionimportfile" : "uploadimportfile"),
+                url: Aurl + "transactionimport/startimport",
                 type: 'POST',
                 datatype: "JSON",
                 data: File,
                 cache: false,
                 contentType: false,
                 processData: false,
-                success: function (data) {
-                    $("#btnLoadData").prop("disabled", false);
-                    $('#dvProgImg').hide();
+                success: function (jobId) {                    
+                    var interval = setInterval(function () {
+                        $.get(Aurl + "transactionimport/progress?jobId=" + jobId, function (res) {
+                            console.log("job res ", res);
+                            updateProgress(res.progressMessage, res.progress);
+                            if (res.progress === 100 && res.completed) {
+                                clearInterval(interval);
+                                $("#btnLoadData").prop("disabled", false);
+                                //window.location = Aurl + "transactionimport/download?jobId=" + jobId;
 
-                    // Error Handling codes
-                    if (data == "0") showErrorSnackbar("No Records found");
-                    else if (data == "0.1") showErrorSnackbar("No Records found in Header and Items Sheet");
-                    else if (data == "0.2") showErrorSnackbar("No Records found in Header Sheet");
-                    else if (data == "0.3") showErrorSnackbar("No Records found in Items Sheet");
-                    else if (data == "1") showErrorSnackbar("Choose any one file");
-                    else if (data == "2") showErrorSnackbar("Column Name mismatching in selected file");
-                    else if (data == "21") showErrorSnackbar("Column Name mismatching in Header and Items Sheet");
-                    else if (data == "22") showErrorSnackbar("Column Name mismatching in Header Sheet");
-                    else if (data == "23") showErrorSnackbar("Column Name mismatching in Items Sheet");
-                    else {
-                        // Success case returns array
-                         $.each(data, function (i, items) {
-                            //$('#dvmsg').show();
-                            $('#dvImpComp').html(items.Msg);
-                            $('#dvImpComp').removeClass('alert-success alert-danger');
-
-                            if (items.ID == "0") {
-                                $('#dvImpComp').addClass('alert-success');
-                                showSuccessSnackbar("Data Imported Successfully"); // Actually success
-                                $('#lblTotCount').text(items.Total);
-                                $('#lblsaved').text(items.Saved);
-                                $('#lblnotsaved').text(items.UnSaved);
-                                $("#file").val(null);
-                                fileNameDisplay.textContent = ""; // Clear file name
+                                setTimeout(function () {
+                                    $("#progressContainer").hide();
+                                }, 2000);
                             }
-                            else if (items.ID == "2") {
-                                showErrorSnackbar("Error : " + items.Msg);
-                                $('#dvImpComp').addClass('alert-danger');
+                            else if (res.completed) {
+                                clearInterval(interval);
+                                $("#btnLoadData").prop("disabled", false);
+                                if (res.ErrorID == 0) {
+                                    window.location = Aurl + "transactionimport/download?jobId=" + jobId;
+                                }
+                                else {
+                                    showErrorSnackbar(res.ErrorMessage);
+                                }
                             }
-                            else {
-                                $('#dvImpComp').addClass('alert-danger');
-                                $('#lblTotCount').text("-");
-                                $('#lblsaved').text("-");
-                                $('#lblnotsaved').text("-");
-                                location.href = Aurl + 'downloaderrordata?FPath=' + items.FilePath + "&FName=" + items.FileName;
-                                showErrorSnackbar("Error Occured");
+                            if (res.progress === -1) {//res.progress === -1
+                                clearInterval(interval);
+                                alert("Import failed");
                             }
                         });
-                    }
-                }, error: function (data) {
-                    $('#dvProgImg').hide();
+                    }, 1000);
+                },
+                error: function (data) {
+                    updateProgress("Error while import", 0);
                     $("#btnLoadData").prop("disabled", false);
-                    showErrorSnackbar("Error Occured");
                 }
+                //success: function (data) {
+                //    $("#btnLoadData").prop("disabled", false);
+                //    $('#dvProgImg').hide();
+
+                //    // Error Handling codes
+                //    if (data == "0") showErrorSnackbar("No Records found");
+                //    else if (data == "0.1") showErrorSnackbar("No Records found in Header and Items Sheet");
+                //    else if (data == "0.2") showErrorSnackbar("No Records found in Header Sheet");
+                //    else if (data == "0.3") showErrorSnackbar("No Records found in Items Sheet");
+                //    else if (data == "1") showErrorSnackbar("Choose any one file");
+                //    else if (data == "2") showErrorSnackbar("Column Name mismatching in selected file");
+                //    else if (data == "21") showErrorSnackbar("Column Name mismatching in Header and Items Sheet");
+                //    else if (data == "22") showErrorSnackbar("Column Name mismatching in Header Sheet");
+                //    else if (data == "23") showErrorSnackbar("Column Name mismatching in Items Sheet");
+                //    else {
+                //        // Success case returns array
+                //         $.each(data, function (i, items) {
+                //            //$('#dvmsg').show();
+                //            $('#dvImpComp').html(items.Msg);
+                //            $('#dvImpComp').removeClass('alert-success alert-danger');
+
+                //            if (items.ID == "0") {
+                //                $('#dvImpComp').addClass('alert-success');
+                //                showSuccessSnackbar("Data Imported Successfully"); // Actually success
+                //                $('#lblTotCount').text(items.Total);
+                //                $('#lblsaved').text(items.Saved);
+                //                $('#lblnotsaved').text(items.UnSaved);
+                //                $("#file").val(null);
+                //                fileNameDisplay.textContent = ""; // Clear file name
+                //            }
+                //            else if (items.ID == "2") {
+                //                showErrorSnackbar("Error : " + items.Msg);
+                //                $('#dvImpComp').addClass('alert-danger');
+                //            }
+                //            else {
+                //                $('#dvImpComp').addClass('alert-danger');
+                //                $('#lblTotCount').text("-");
+                //                $('#lblsaved').text("-");
+                //                $('#lblnotsaved').text("-");
+                //                location.href = Aurl + 'downloaderrordata?FPath=' + items.FilePath + "&FName=" + items.FileName;
+                //                showErrorSnackbar("Error Occured");
+                //            }
+                //        });
+                //    }
+                //}, error: function (data) {
+                //    $('#dvProgImg').hide();
+                //    $("#btnLoadData").prop("disabled", false);
+                //    showErrorSnackbar("Error Occured");
+                //}
             });
         } else {
             $("#btnLoadData").prop("disabled", false);
@@ -531,17 +582,80 @@
     $("#btnTemplate").click(function () {
         var Trans = $("#cmbTransaction").val();
         var TName = $("#cmbTransaction option:selected").text();
-        location.href = Aurl + 'generatetemplate?TransID=' + Trans + "&TransName=" + TName;
+        location.href = Aurl + 'transactionimport/template?TransID=' + Trans + "&TransName=" + TName;
     });
 
-    $("#btnExportData").click(function () {
+    $("#btnExportData1").click(function () {
         var Trans = $("#cmbTransaction").val();
         var TName = $("#cmbTransaction option:selected").text();
         var From = $("#dtpFrom").val();
         var To = $("#dtpTo").val();
-        location.href = Aurl + 'transactionimport/template?TransID=' + Trans + '&TransName=' + TName + '&FromDate=' + From + "&ToDate=" + To;
+        if (From == "") {
+            showErrorSnackbar("Select From Date");
+        } else if (To == "") {
+            showErrorSnackbar("Select To Date");
+        }
+        else {
+            location.href = Aurl + 'transactionimport/exportdata?TransID=' + Trans + '&TransName=' + TName + '&FromDate=' + From + "&ToDate=" + To;
+        }
     });
+    $("#btnExportData").click(function () {
 
+        var Trans = $("#cmbTransaction").val();
+        var TName = $("#cmbTransaction option:selected").text();
+        var From = $("#dtpFrom").val();
+        var To = $("#dtpTo").val();
+
+        $("#progressContainer").show();
+        $("#progressBar").css("width", "0%");
+        $.ajax({
+            url: Aurl + "transactionimport/startexport",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                TransID: Trans,
+                TransName: TName,
+                FromDate: From,
+                ToDate: To
+            }),
+            success: function (jobId) {
+                var interval = setInterval(function () {
+                    $.get(Aurl + "transactionimport/progress?jobId=" + jobId, function (res) {                        
+                        updateProgress(res.progressMessage, res.progress);
+                        if (res.progress === 100 && res.completed) {
+                            clearInterval(interval);
+
+                            window.location = Aurl + "transactionimport/download?jobId=" + jobId;
+
+                            setTimeout(function () {
+                                $("#progressContainer").hide();
+                            }, 2000);
+                        }
+                        if (res.progress === -1) {
+                            clearInterval(interval);
+                            alert("Export failed");
+                        }
+                    });
+                }, 1000);
+            }
+        });
+    });
+    function updateProgress(progmsg,percent) {
+        percent = Math.round(percent);
+
+        $("#progressWrapper").show();
+        $("#progressBar").css("width", percent + "%");
+        $("#progressText").text(percent + "%");
+        $("#lblExportmsg").text(progmsg);
+        
+        if (percent === 100) {
+            $("#progressBar").css("background", "linear-gradient(90deg, #16a34a, #22c55e)");
+            $("#progressText").text("Completed");            
+            setTimeout(() => {
+                $("#progressWrapper").hide();
+            }, 5000);
+        }
+    }
     const fromDate = document.getElementById('dtpFrom');
     const toDate = document.getElementById('dtpTo');
     const errorMsg = document.getElementById('dvErrorDates');
