@@ -2482,7 +2482,7 @@
         $("#sidedivcollapsed").show();
     });
     var modalQS = new bootstrap.Modal(document.getElementById('myModal'));
-    
+
     myFunction();
     function myFunction() {
         document.getElementById("listContainer").classList.toggle("show");
@@ -2728,54 +2728,11 @@
             //document.getElementById("myModal").style.display = "block"
             //modalQS.show();
             //$('#myModal').modal('toggle');
-            event.preventDefault();            
+            event.preventDefault();
             focussearch();
         }
 
     });
-    $('input, select').on('keydown', function (e) {
-        //if (e.key === "Enter") {
-        //    console.log("Enter 2");
-        //    e.preventDefault(); // Prevent default behavior
-        //    let $next = $(this).nextAll('input, select').first(); // Find the next input or select
-        //    if ($next.length) {
-        //        $next.focus(); // Focus the next element
-        //    }
-        //}
-    });
-    //$(document).on('keydown', ':focusable', function (e) {
-    //    if (e.which == 13) {
-    //        if (e.target.localName != "button") {
-    //            e.preventDefault();
-    //            //var $canfocus = $(':focusable');
-    //            //var btn = $canfocus.button;
-    //            //var index = $canfocus.index(this) + 1;
-    //            //var tabindex = e.target.tabIndex;
-    //            ////index = tabindex;
-    //            //if (index >= $canfocus.length) index = 0;
-    //            //$canfocus.eq(index).focus();
-
-    //            let active = document.activeElement;
-    //            let target = $('[tabindex="' + (active.tabIndex + 1) + '"]');
-    //            if (target.length > 0) {
-    //                if (target[0].disabled) {
-    //                    target = $('[tabindex="' + (active.tabIndex + 2) + '"]');
-    //                    if (target[0].disabled) {
-    //                        target = $('[tabindex="' + (active.tabIndex + 3) + '"]');
-    //                    }
-    //                }
-    //                target.focus();
-    //            }
-    //        }
-    //    }
-    //    if (e.shiftKey && e.which == 13) {
-    //        e.preventDefault();
-    //        var $canfocus = $(':focusable');
-    //        var index = $canfocus.index(this) - 1;
-    //        if (index >= $canfocus.length) index = 0;
-    //        $canfocus.eq(index).focus();
-    //    }
-    //});
 
     function InvoiceCollectionModalPopup(InvID,nICTransID) {
         TableInvoiceCollection.draw().clear(); TableInvoiceCollection.draw().clear();
@@ -2796,7 +2753,7 @@
             success: function (data) {
                 if (data.length > 0) {
                     //modalInvColl.style.display = "block";
-                    modalInvColl.show();                    
+                    modalInvColl.show();
                     var Tot = 0, InvoiceAmt = 0;
                     $.each(eval(data), function (i, items) {
                         TableInvoiceCollection.row.add([
@@ -2836,6 +2793,20 @@
 
     GetFilterComboData();
     function GetFilterComboData() {
+        var FDT = '@Session["FilterDateType"]';
+        var FilterDate = localStorage.getItem("FilterDatelist");
+        $('#cmbFilterDatetype').find("option").remove();
+        $.each(JSON.parse(FilterDate), function (i, items) {
+            $('#cmbFilterDatetype').append($('<option/>', {
+                value: items.ID,
+                text: items.Code,
+                title: items.Name
+            }));
+        });
+        $('#cmbFilterDatetype').val(FDT);
+        SetFilterDate();
+    }
+    function GetFilterComboData_old() {
         var FDT = '@Session["FilterDateType"]';
         $.ajax({
             url: Aurl + "getfilterdates/get",
@@ -2951,6 +2922,9 @@
                         }
                     }
                 }
+            }
+            else {
+                //showErrorSnackbar("button");
             }
         }
         else if (e.key === 'ArrowLeft' && e.target.id === "btnSave") {
@@ -3167,6 +3141,7 @@
             });
         if (cfFocus == 1) {
             $(".clsYes").focus();
+            $(".clsYes").select();
         }
         else if (cfFocus == 2) {
             $(".clsNo").focus();
@@ -3193,6 +3168,7 @@
                         .find(".ui-dialog-titlebar-close")
                         .removeClass("ui-dialog-titlebar-close")
                         .html("x");
+
                 },
                 close: function () {
                     // Remove event listener when dialog is closed
@@ -3218,13 +3194,15 @@
                     }
                 ],
             });
-        if (ClearcfFocus == 1) {
-            $(".clsYes").focus();
-        }
-        else {
-            $(".clsNo").focus();
-        }
-    };
+
+            if (ClearcfFocus == 1) {
+                $(".clsYes").focus();
+            }
+            else {
+                $(".clsNo").focus();
+            }
+
+    }
     var ClosecfFocus = '@Session["CloseConfirmFocus"]';
 //$(".ui-dialog-titlebar-close").html('x');
 function CloseConfirmDialogMsg(message) {
@@ -3234,7 +3212,7 @@ function CloseConfirmDialogMsg(message) {
         .dialog({
             modal: true,
             closeOnEscape: true,
-            title: 'Confirm Popup',
+            title: 'Close Confirm Popup',
             zIndex: 1000,
             autoOpen: true,
             width: '300px',
@@ -3545,8 +3523,56 @@ function CloseConfirmDialogMsg(message) {
             }
         });
     }
+
     var albgc = "";
-    function GetColorData(nMode, strName = null) {
+    function GetColorData() {
+        var themedata = localStorage.getItem("ThemeData");
+        //console.log("themedata ", JSON.parse(themedata));
+        $.each(JSON.parse(themedata), function (i, items) {
+            $(".navbar-fixed-top,.sidenav,.dropdown-container,.dvmainmenuheader").css("background-color", items.MenuHeader);
+            $("#acompname").css("color", items.CompanyNameColor);
+            console.log("dvmainmenuheader ", items.MenuHeader)
+            $(".btn-info").css("background-color", items.AddButton);
+
+            $(".btn-primary").css("background-color", items.DraftButton);
+            $(".btn-success").css("background-color", items.SaveButton);
+
+            $(".btn-danger").css("background-color", items.ClearButton);
+
+            $(".btn-warning").css("background-color", items.CloseButton).css("color", "white");
+
+            $(".clrforpdf").css("background-color", items.PDFButton);
+            $(".clrforpreview").css("background-color", items.PreviewButton);
+            $(".clrforpdf").css("color", "white");
+            $(".clrforpreview").css("color", "white");
+            $(".modal-header").css("background-color", items.PopupHeader);
+
+            $(".modal-footer").css("background-color", items.PopupFooter);
+
+            $(".clsclrYes,.clsYes").css("background-color", items.ConfirmPopupYes);
+
+            $(".clsclrNo,.clsNo").css("background-color", items.ConfirmPopupNo);
+
+            $("ul a").css("color", items.SubMenuColor);
+            $(".dropdown-btn,#algot").css("color", items.MenuColor);
+            $(".trclrforcolheader").css("background-color", items.GridHeaderBackGround);
+            $(".trclrforcolheader,.dg-btn").css("color", items.GridHeaderTextColor);
+            $(".modal-title").css("color", items.PopupHeaderText);
+            //$(".ui-menu-item-wrapper.ui-state-active").attr("style", "background-color: " + items.AutocompleteBG + " !important");
+            document.documentElement.style.setProperty('--header-bg', items.GridHeaderBackGround);
+            document.documentElement.style.setProperty('--header-text', items.GridHeaderTextColor);
+            document.documentElement.style.setProperty('--primary-color', items.GridHeaderBackGround);
+
+            document.documentElement.style.setProperty('--dynamic-bg', items.AutocompleteBG);
+            document.documentElement.style.setProperty('--submenuborderleft', items.MenuHeader);
+            //$(".acItem .name").css("color", items.AutocompleteLine1);
+            document.documentElement.style.setProperty('--acitemname', items.AutocompleteLine1);
+            //$(".acItem .desc").css("color", items.AutocompleteLine2);
+            document.documentElement.style.setProperty('--acitemdesc', items.AutocompleteLine2);
+            document.documentElement.style.setProperty('--CompanyNameColor', items.CompanyNameColor);
+        });
+    }
+    function GetColorData_old(nMode, strName = null) {
         $.ajax({
             url: Aurl + "colorsettings/get",
             type: 'get',
@@ -4032,7 +4058,7 @@ function CloseConfirmDialogMsg(message) {
         //}
         //document.body.appendChild(ifr);
     }
-    
+
     function previewiframe(link) {
         console.log(link);
         const options = "#toolbar=0&navpanes=0&scrollbar=0&zoom=80";
@@ -4708,5 +4734,5 @@ function CloseConfirmDialogMsg(message) {
     //document.querySelectorAll('input[type="date"]').forEach(input => {
     //    input.classList.remove("form-control");
     //    input.classList.add("clsdtpfield");
-    //});   
+    //});
 </script>
