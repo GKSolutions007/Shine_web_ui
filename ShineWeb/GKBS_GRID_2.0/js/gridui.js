@@ -57,6 +57,17 @@ class GKBSDynamicGrid {
     }
     constructor(selector, columns, data, options = {}) {
         this.container = document.querySelector(selector);
+        if (!this.container) return;
+
+        // 💡 NEW: Instance Management
+        // If there's an existing grid instance on this container, destroy it first
+        if (this.container._gkbsGrid && typeof this.container._gkbsGrid.destroy === 'function') {
+            console.log("Existing grid detected on container. Cleaning up...");
+            this.container._gkbsGrid.destroy();
+        }
+        // Store this instance on the container for future cleanup
+        this.container._gkbsGrid = this;
+
         this.columns = columns; // Stores config including current width
         this.originalData = data;
 
@@ -79,6 +90,11 @@ class GKBSDynamicGrid {
             onCellClick: null, // 💡 NEW: Cell click callback
             onCellDoubleClick: null, // 💡 NEW: Cell double-click callback
             onColumnResize: null, // 💡 NEW: Column resize callback
+            onEnter: null, // 💡 NEW: Enter key callback
+            selectFromFirstRow: false, // 💡 NEW: Auto-select first row on render
+            initialFocusField: null,   // 💡 NEW: Field to match for initial focus
+            initialFocusValue: null,   // 💡 NEW: Value to match for initial focus
+            initialFocusCriteria: null // 💡 NEW: Object for multi-field matching logic
         }, options);
 
         // --- 2. State Initialization ---
@@ -141,6 +157,35 @@ class GKBSDynamicGrid {
 
         // --- 5. Initialization ---
         this.init();
+    }
+
+    /**
+     * Completely cleans up the grid instance, removing DOM listeners
+     * and clearing references to prevent memory leaks and duplicate events.
+     */
+    destroy() {
+        console.log("Destroying grid instance...");
+
+        // 1. Remove keyboard navigation listener
+        if (this._keyNavHandler) {
+            this.container.removeEventListener('keydown', this._keyNavHandler);
+        }
+
+        // 2. Remove global click listener
+        if (this.globalClickListener) {
+            document.removeEventListener('click', this.globalClickListener);
+        }
+
+        // 3. Reset internal state
+        this._activeRowIndex = -1;
+
+        // 4. Clear the reference on the DOM container
+        if (this.container && this.container._gkbsGrid === this) {
+            delete this.container._gkbsGrid;
+        }
+
+        // Note: We don't clear the innerHTML here because it might be 
+        // immediately replaced by a new grid instance's render call.
     }
     // Inside DynamicGrid class:
 
@@ -256,6 +301,13 @@ class GKBSDynamicGrid {
     }
     init() {
         this.container.classList.add('dg-container');
+        // Ensure container is focusable for keyboard navigation
+        if (this.container.tabIndex === -1) {
+            this.container.tabIndex = 0;
+        }
+        // 💡 NEW: Always reset focus index on initialization/re-bind
+        this._activeRowIndex = -1;
+
         // Initial processing
         this.processData();
         this.render();
@@ -570,6 +622,9 @@ class GKBSDynamicGrid {
                 newScrollWrapper.scrollTop = scrollTop;
             }
         }
+
+        // 10. Setup keyboard navigation (Arrow Up / Arrow Down)
+        this.setupKeyboardNavigation();
     }
     // --- NEW: Status Bar Logic ---
     renderStatusBar(parentContainer) {
@@ -596,7 +651,7 @@ class GKBSDynamicGrid {
             }
 
             // Only calculate for 'number' types
-            if (col.type === 'number' || col.Total === true) {
+            if (col.type === 'number' || col.Total === true || col.EnableCount || col.EnableUnique) {
                 const values = dataToCalculate
                     .map(row => parseFloat(row[col.field]))
                     .filter(val => !isNaN(val)); // Filter out bad data
@@ -606,14 +661,29 @@ class GKBSDynamicGrid {
                     const sum = values.reduce((a, b) => a + b, 0);
                     // 2. Calculate Average
                     const avg = sum / values.length;
-
+                    // 3. Unique Records
+                    var UniqueCounts = 0;
+                    if (col.EnableUnique) {
+                        UniqueCounts = new Set(dataToCalculate.map(item => item[col.field])).size;
+                        console.log("have no : " + col.field, Object.values(values));
+                    }
                     // Format numbers (e.g., 12,300.50)
                     const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-                    cell.innerHTML = `
+                    cell.innerHTML = `                    
+                    `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${dataToCalculate.length}</div> ` : ``) + ` 
+                    `+ (col.EnableUnique ? ` <div><span class="dg-stat-label">Unique:</span>${UniqueCounts}</div> ` : ``) + ` 
                         `+ (col.EnableSum ? ` <div><span class="dg-stat-label">Sum:</span>${fmt(sum)}</div> ` : ``) + `
                         `+ (col.EnableAvg ? ` <div><span class="dg-stat-label">Avg:</span>${fmt(avg)}</div> ` : ``) + `
                     `;
+                }
+                else {
+                    // 
+                    const uniqueCount = new Set(dataToCalculate.map(item => item[col.field])).size;
+                    console.log(col.field, dataToCalculate.map(item => item[col.field]));
+                    cell.innerHTML = `                    
+                    `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${dataToCalculate.length}</div> ` : ``) + ` 
+                    `+ (col.EnableUnique ? ` <div><span class="dg-stat-label">Unique:</span>${uniqueCount}</div> ` : ``) + ``;
                 }
             } else {
                 // Optional: Show Count for text columns
@@ -1502,9 +1572,9 @@ class GKBSDynamicGrid {
         popup.innerHTML += `
     <div class="dg-filter-group">
     <div class="dg-filter-group">
-            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}">Sort A to Z</div>
-            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}">Sort Z to A</div>
-            <hr/>
+            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}" hidden>Sort A to Z</div>
+            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}" hidden>Sort Z to A</div>
+            <hr hidden/>
             <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}">📏 Auto Fit This Column</div>
             <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}">📏 Auto Fit All Columns</div>
         </div>
@@ -1646,6 +1716,25 @@ class GKBSDynamicGrid {
             // --- NEW: Attach Double-Click Listener ---
             rowEl.addEventListener('dblclick', () => {
                 this.handleRowDoubleClick(row);
+            });
+
+            // --- Keyboard Nav: Set active row on mouse click ---
+            rowEl.addEventListener('mousedown', (e) => {
+                // Don't intercept clicks on input/select/button elements
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
+
+                const body = this.container.querySelector('.dg-body');
+                if (!body) return;
+
+                // Remove highlight from all rows
+                Array.from(body.querySelectorAll('.dg-row')).forEach(r => r.classList.remove('dg-row-keyboard-active'));
+
+                // Set and highlight this row
+                this._activeRowIndex = rIndex;
+                rowEl.classList.add('dg-row-keyboard-active');
+
+                // Focus the container so arrow keys work immediately
+                this.container.focus();
             });
             this.columns.forEach(col => {
                 if (col.visible === false) {
@@ -3454,5 +3543,139 @@ class GKBSDynamicGrid {
      */
     refreshColumns() {
         this.render();
+    }
+
+    // --- Keyboard Navigation (Arrow Up / Arrow Down) ---
+    setupKeyboardNavigation() {
+        // Make the container focusable so it can receive keyboard events
+        if (!this.container.hasAttribute('tabindex')) {
+            this.container.setAttribute('tabindex', '0');
+        }
+
+        // Remove any previously attached keyboard listener to avoid duplicates
+        if (this._keyNavHandler) {
+            this.container.removeEventListener('keydown', this._keyNavHandler);
+        }
+
+        // Track the currently highlighted row index (-1 = none)
+        if (this._activeRowIndex === undefined) {
+            this._activeRowIndex = -1;
+        }
+
+        const body = this.container.querySelector('.dg-body');
+        if (!body) return;
+        const rows = Array.from(body.querySelectorAll('.dg-row'));
+        if (rows.length === 0) return;
+
+        // --- NEW: Initial Dynamic Focus Logic ---
+        if (this._activeRowIndex === -1) {
+            if (this.options.selectFromFirstRow) {
+                this._activeRowIndex = 0;
+            } else if (this.options.initialFocusCriteria && typeof this.options.initialFocusCriteria === 'object') {
+                const pageData = this.getPaginatedData();
+                const matchIndex = pageData.findIndex(row => {
+                    return Object.entries(this.options.initialFocusCriteria).every(([field, value]) => {
+                        return String(row[field]) === String(value);
+                    });
+                });
+                if (matchIndex !== -1) {
+                    this._activeRowIndex = matchIndex;
+                }
+            } else if (this.options.initialFocusField && this.options.initialFocusValue !== null) {
+                const pageData = this.getPaginatedData();
+                const matchIndex = pageData.findIndex(row =>
+                    String(row[this.options.initialFocusField]) === String(this.options.initialFocusValue)
+                );
+                if (matchIndex !== -1) {
+                    this._activeRowIndex = matchIndex;
+                }
+            }
+        }
+
+        const applyHighlight = (index) => {
+            // Remove highlight from all rows
+            rows.forEach(r => r.classList.remove('dg-row-keyboard-active'));
+
+            // Add highlight to the active row
+            const activeRow = rows[index];
+            if (activeRow) {
+                activeRow.classList.add('dg-row-keyboard-active');
+
+                // --- Scroll row into view INSIDE the grid's scroll wrapper ---
+                const scrollWrapper = this.container.querySelector('.dg-scroll-wrapper');
+                if (scrollWrapper) {
+                    if (index === 0) {
+                        scrollWrapper.scrollTop = 0;
+                    } else {
+                        const wrapperRect = scrollWrapper.getBoundingClientRect();
+                        const rowRect = activeRow.getBoundingClientRect();
+                        const rowTopRel = rowRect.top - wrapperRect.top;
+                        const rowBottomRel = rowRect.bottom - wrapperRect.top;
+
+                        const header = scrollWrapper.querySelector('.dg-header-row');
+                        const headerHeight = header ? header.offsetHeight : 0;
+
+                        if (rowTopRel < headerHeight) {
+                            scrollWrapper.scrollTop += (rowTopRel - headerHeight);
+                        } else if (rowBottomRel > scrollWrapper.clientHeight) {
+                            scrollWrapper.scrollTop += (rowBottomRel - scrollWrapper.clientHeight) + 20;
+                        }
+                    }
+                }
+            }
+        };
+
+        this._keyNavHandler = (e) => {
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') return;
+
+            // Prevent default behavior (scroll for arrows, form submit etc for enter)
+            e.preventDefault();
+
+            const body = this.container.querySelector('.dg-body');
+            if (!body) return;
+            const rows = Array.from(body.querySelectorAll('.dg-row'));
+            if (rows.length === 0) return;
+
+            // --- Handle Enter Key ---
+            if (e.key === 'Enter') {
+                if (this._activeRowIndex >= 0 && this._activeRowIndex < rows.length) {
+                    const pageData = this.getPaginatedData();
+                    const rowData = pageData[this._activeRowIndex];
+                    if (rowData) {
+                        // 1. If onEnter callback is defined, trigger it
+                        if (this.options.onEnter && typeof this.options.onEnter === 'function') {
+                            this.options.onEnter(rowData, this);
+                        } else {
+                            // 2. Fallback: Show original alert if no callback provided
+                            // Create a clean copy without internal _gridId for display
+                            const displayData = { ...rowData };
+                            delete displayData._gridId;
+
+                            //alert(`Row Data:\n\n${JSON.stringify(displayData, null, 2)}`);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // --- Handle Arrow Keys ---
+            // Determine next index
+            if (e.key === 'ArrowDown') {
+                this._activeRowIndex = Math.min(this._activeRowIndex + 1, rows.length - 1);
+            } else if (e.key === 'ArrowUp') {
+                this._activeRowIndex = Math.max(this._activeRowIndex - 1, 0);
+            }
+
+            applyHighlight(this._activeRowIndex);
+        };
+
+        this.container.addEventListener('keydown', this._keyNavHandler);
+
+        // Apply initial highlight if an active row was determined
+        if (this._activeRowIndex !== -1) {
+            applyHighlight(this._activeRowIndex);
+            // 💡 NEW: Automatically focus the container so keyboard navigation works immediately
+            this.container.focus({ preventScroll: true });
+        }
     }
 }

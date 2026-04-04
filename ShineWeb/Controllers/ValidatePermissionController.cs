@@ -13,7 +13,7 @@ namespace ShineWeb.Controllers
     public class ValidatePermissionController : Controller
     {
         DataTable dtRes,dtParent, dtPermission, dtReportParent, dtReportPermission, dtAppconfig, dtFinancialReportParent,
-            dtFinancialReportPermission,dtCompReg = new DataTable();
+            dtFinancialReportPermission,dtCompReg , dtThemes = new DataTable();
         // GET: ValidatePermission
         clsBusinessLayer bl = new clsBusinessLayer();
         public ActionResult Index(string ID)
@@ -41,12 +41,14 @@ namespace ShineWeb.Controllers
                     dtReportPermission = dtResult.Tables[6];
                     dtFinancialReportParent = dtResult.Tables[7];
                     dtFinancialReportPermission = dtResult.Tables[8];
+                    dtThemes = dtResult.Tables[9];
                 }
             }
             //DataTable dtRes = bl.BL_ExecuteParamSP("uspManageUsers", 4, ID);            
             Session["LoginUserID"] = dtRes.Rows[0][0].ToString();
             Session["LoginUser"] = dtRes.Rows[0][1].ToString();
             Session["RoleID"] = dtRes.Rows[0]["RoleID"].ToString();
+            Session["UserImgData"] = dtRes.Rows[0]["ImgData"].ToString();
             Session["NavBarVisible"] = "UserPermission";
             //DataTable dtParent = bl.BL_ExecuteParamSP("uspMenuPermission", 1, null);
             //DataTable dtPermission = bl.BL_ExecuteParamSP("uspMenuPermission", 2, Convert.ToInt32(Session["RoleID"]), Convert.ToInt32(Session["LoginUserID"]));//Convert.ToInt32(Session["LoginUserID"])
@@ -99,6 +101,9 @@ namespace ShineWeb.Controllers
             Session["dtFinancialReportParent"] = dtFinancialReportParent;
             Session["dtFinancialReportPermission"] = dtFinancialReportPermission;
             Session["dtCompany"] = dtCompReg;
+            string ThemeJson = JsonConvert.SerializeObject(dtThemes);
+            Session["JsonTheme"] = "";// ThemeJson;
+            ViewData["JsonTheme"] = ThemeJson;
             return RedirectToAction("Index", "Home");
         }
     }

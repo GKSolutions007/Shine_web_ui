@@ -25,6 +25,7 @@ namespace ShineWeb.Models
         public string EnableReturnPrice { get; set; }
         public string EnablePurchasePrice { get; set; }
         public string EnableBranch { get; set; }
+        public string EnablePaid { get; set; }
         public string EnableSave { get; set; }
         public string EnableUpdateTransPrice { get; set; }
         public string EnablePriceEditInTransaction { get; set; }

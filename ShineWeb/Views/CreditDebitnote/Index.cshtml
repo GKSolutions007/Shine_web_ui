@@ -1,8 +1,10 @@
 ﻿@model ShineWeb.Models.SingleMasterModel
 @{
     ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
 }
-<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 @*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
@@ -12,7 +14,8 @@
 @*<script src="~/Scripts/bootstrap.min.js"></script>
     <script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
 <script src="~/Scripts/jquery-1.11.1.min.js"></script>
-<script src="~/Scripts/bootstrap_3.3.7.min.js"></script>
+@*<script src="~/Scripts/bootstrap_3.3.7.min.js"></script>*@
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
@@ -142,7 +145,7 @@
             -moz-transition: all 0.2s ease-in-out;
             transition: all 0.2s ease-in-out;
             position: absolute;
-            top: -40%;
+            top: -51%;
             left: 1em;
             background: #fffefe;
             color: #2b2828;
@@ -162,7 +165,7 @@
             -moz-transition: all 0.2s ease-in-out;
             transition: all 0.2s ease-in-out;
             position: absolute;
-            top: -18%;
+            top: -22%;
             left: 1em;
             background: #fffefe;
             color: #2b2828;
@@ -220,272 +223,234 @@
     @Html.HiddenFor(model => model.EnableBranch, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableBranch" })
 
     <input hidden id="txtStatus" />
-    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+
+    <div class="d-flex align-items-center gap-2">
+        <!-- Larger heading -->
+        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    </div>
     <hr />
     <div class="toastBox"></div>
-    <div style="padding-bottom:10px;" hidden>
-        <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
-    </div>
     <div id="dvMainTable">
-        <div style="width:100%;">
-            <table class="table">
-                <tr>
-                    <td>
-                        <span class="form-label">
-                            <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
-                            <label class="labelup" for="txtCode"> Party Name</label>
-                        </span>
-                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFParty" class="clrdivs"></div>
-                    </td>
-                    <td>
-                        <span class="form-label">
+        <div class="row text-end mb-3">
+            <!-- Blank -->
+            <div class="col-12 col-md-1"></div>  <!-- ← changed from col-md-3 to col-md-2 -->
+            <!-- Branch (NEW) -->
+            <div class="col-12 col-md-2">
+                <span class="form-label">
+                    <select class="form-control FormfilterclrField" id="cmbFilterBranch">
+                        <option value="0">Select Branch</option>
+                    </select>
+                    <label class="labelup">Branch</label>
+                </span>
+            </div>
+            <!--Party Name -->
+            <div class="col-12 col-md-2">
+                <span class="form-label">
+                    <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
+                    <label class="labelup" for="txtCode"> Party Name</label>
+                </span>
+                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFParty"></div>
+            </div>
+            <!--Account Name -->
+            <div class="col-12 col-md-2">
+                <span class="form-label">
+                    <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterAccount" placeholder="">
+                    <label class="labelup" for="txtCode"> Account Name</label>
+                </span>
+                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFAccount"></div>
+            </div>
+            <!-- Period -->
+            <div class="col-12 col-md-1">
+                <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
+            </div>
+            <!-- From Date -->
+            <div class="col-12 col-md-1">
+                <span class="form-label">
+                    <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                    <label class="labelup" for="txtCode"> From</label>
+                </span>
+                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFFrom"></div>
+            </div>
+            <!-- To Date -->
+            <div class="col-12 col-md-1">
+                <span class="form-label">
+                    <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                    <label class="labelup" for="txtCode"> To</label>
+                </span>
+                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFTo"></div>
+            </div>
+            <!-- All Status-->
+            <div class="col-12 col-md-1">
+                <input tabindex="1" style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowAll">
+                <label for="chkShowAll" style="font-size:14px;">All Status</label>
+            </div>
+            <!--Filter-->
+            <div class="col-12 col-md-1">
 
-                            <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterAccount" placeholder="">
-                            <label class="labelup" for="txtCode"> Account Name</label>
-                        </span>
-                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFAccount" class="clrdivs"></div>
-                    </td>
-                    <td>
-                        <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
-                    </td>
-                    <td>
-                        <span class="form-label">
-                            <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
-                            <label class="labelup" for="txtCode"> From</label>
-                        </span>
-                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFFrom" class="clrdivs"></div>
-                    </td>
-                    <td>
+                <button id="btnFilter" class="btn btn-primary ps-2"><span class="glyphicon glyphicon-filter" style="color: white"></span>&#x2009;Filter</button>
 
-                        <span class="form-label">
-                            <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
-                            <label class="labelup" for="txtCode"> To</label>
-                        </span>
-                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
-                    </td>
-                    <td>
-                        <input tabindex="1" style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowAll">
-                        <label for="chkShowAll" style="font-size:14px;">All Status</label>
-                    </td>
-                    <td>
-                        <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
-                    </td>
-                </tr>
-            </table>
+            </div>
+        </div>
             <div id="my-grid" style="height: 600px; width: 100%;"></div>
-        </div>
-        <div hidden>
-            <table class="table table-bordered" id="tblMasterData" width="100%">
-                <thead>
-                    @*<tr id="trAdd">
-                            <th></th>
-                            <th align="right" colspan="10">
-                                <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
-                            </th>
-                        </tr>*@
-                    <tr class="trclrforcolheader">
-                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                        <th style="text-align:center;font-size: 12px;width:0%;">StatusID</th>
-                        <th style="text-align:center;font-size: 12px;width:9%;">Doc ID</th>
-                        <th style="text-align:center;font-size: 12px;width:9%;">Date</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">Ref No</th>
-                        <th style="text-align:center;font-size: 12px;width:20%;">Party Name</th>
-                        <th style="text-align:center;font-size: 12px;width:20%;">Account</th>
-                        <th style="text-align:center;font-size: 12px;width:8%;">Value</th>
-                        <th style="text-align:center;font-size: 12px;width:8%;">Balance</th>
-                        <th style="text-align:center;font-size: 12px;width:6%;">Status</th>
-                        <th style="text-align:center;font-size: 12px;width:6%;">User</th>
-                        <th style="text-align:center;font-size: 12px;width:3%;" title="View">
-                            <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
-                            </span>
-                        </th>
-                        <th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
-                            <span class="glyphicon glyphicon-pencil" style="font-size:16px">
-                            </span>
-                        </th>
-                        @*<th style="text-align:center;font-size: 12px;width:3%;" title="Cancel">
-                                <span class="glyphicon glyphicon-remove-circle" style="font-size:16px">
-                                </span>
-                            </th>
-                            <th style="text-align:center;font-size: 12px;width:3%;" title="View">
-                                <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
-                                </span>
-                            </th>
-                            <th style="text-align:center;font-size: 12px;width:3%;" title="Variant">
-                                <span class="glyphicon glyphicon-file" style="font-size:12px">
-                                </span>
-                            </th>*@
-                    </tr>
-                </thead>
-            </table>
-        </div>
     </div>
-    <div class="modalBatch" id="myModalfg">
+
+    <!--<div class="modalBatch" id="myModalfg">
         <div class="modal-dialog" style="width:auto;">
-            <div class="modalBatch-content">
-                <!-- Modal Header -->
-                <div class="modal-header">
-                    <button type="button" class="closefg">&times;</button>
-                    <h5 class="modal-title" style="color:white; font-weight:800" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
-                    @*<hr />*@
-                </div>
-                <!-- Modal body -->
-                <div class="modal-body">
-                    <div style="padding-top:2px">
-                        <div class="row" style="padding-top:2px;">
-                            <!-- Doc ID -->
-                            <div class="col-sm-3 col-md-3 col-lg-3">
-                                <table>
-                                    <tr>
-                                        <td align="right" width="40%">
-                                            <label>Doc ID :</label>
-                                        </td>
-                                        <td width="60%">
-                                            <label id="lblDocID" docprefix="" style="font-size:12px">CRDR/2425/1</label>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-
-                            <!-- Ref No -->
-                            <div class="col-sm-3 col-md-3 col-lg-3">
-                                <table>
-                                    <tr>
-                                        <td colspan="2">
-                                            <span class="form-label">
-                                                <input tabindex="1" class="form-control FormclrField" type="text" id="txtRefNo"
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
-                                                       oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
-                                                <label class="labelup" for="txtRefNo">Ref No</label>
-                                            </span>
-                                            <div id="divErrRefNo" class="clrdiv" style="color:red"></div>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-
-                            <!-- Branch -->
-                            <div class="col-sm-3 col-md-3 col-lg-3">
-                                <table>
-                                    <tr>
-                                        <td colspan="2">
-                                            <span class="form-label">
-                                                <select class="form-control FormclrcmbField" id="txtBranchName" @(Model.EnableBranch == "1" ? "disabled" : "")>
-                                                    <option value="0">Select Branch</option>
-                                                </select>
-                                                <label class="labelup" for="txtBranchName">Branch *</label>
-                                            </span>
-                                            <div id="dvErrorBranchName" class="clrdiv" style="color:red"></div>
-                                        </td
-                                    </tr>
-                                </table>
-                            </div>
-
-                            <!-- Date -->
-                            <div class="col-sm-3 col-md-3 col-lg-3">
-                                <table>
-                                    <tr>
-                                        <td colspan="2">
-                                            <span class="form-label">
-                                                <input class="form-control FormclrField" type="date" id="dtpDate"
-                                                       oninput="if (this.value > this.max) { this.value = this.max; }" />
-                                                <label class="labelup" for="dtpDate">Date</label>
-                                            </span>
-                                            <div id="dvErrorDate" class="clrdiv" style="color:red"></div>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-
-                        <hr />
-                        <div class="row">
-                            <div style="padding-top:2px; width:100%" class="col-sm-12 col-md-12 col-lg-12">
-
-                                <div class="col-sm-6 col-md-6 col-lg-6">
-
-                                    <table class="table" style="width:100%">
-                                        <tr>
-                                            <td style="border:none;padding-right:7px" colspan="2">
-
-                                                <span class="form-label">
-                                                    <input tabindex="1" type="text" id="txtPartyName" class="form-control FormclrField" placeholder="" />
-                                                    <label class="labelup">Party Name *</label>
-                                                </span>
-                                                <div class="clrdiv" id="dvErrorPartyName" style="color:red"></div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="border:none;padding-right:7px" colspan="2">
-
-                                                <span class="form-label">
-                                                    <input tabindex="1" txttag="0" type="number" id="txtValue" class="form-control FormclrField txtsettag" placeholder=""
-                                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
-                                                           oninput="sanitizeNumericOnly(this, '#dvErrorValue')" />
-                                                    <label class="labelup">Value *</label>
-                                                </span>
-                                                <div class="clrdiv" id="dvErrorValue" style="color:red"></div>
-                                            </td>
-                                        </tr>
-
-                                        <tr class="bgclrfortr">
-                                            <td style="border:none;" colspan="2">
-                                                <div>
-                                                    <span class="form-label">
-                                                        <input tabindex="1" class="form-control FormclrField" type="text" id="txtRemarks" placeholder=""
-                                                               onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
-                                                               oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
-                                                        <label class="labelup" for="txtCode">Remarks</label>
-                                                    </span>
-                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdiv"></div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div style="padding-bottom:2px" class="col-sm-6 col-md-6 col-lg-6">
-
-                                    <table class="table" width="100%">
-                                        <tr>
-                                            <td style="border:none;padding-right:7px" colspan="2">
-
-                                                <span class="form-label">
-                                                    <input tabindex="7" type="text" class="form-control FormclrField" id="txtAccountName" placeholder="" />
-                                                    <label class="labelup">Account Name *</label>
-
-                                                </span>
-                                                <div class="clrdiv" id="dvErrorAccountName" style="color:red"></div>
-                                            </td>
-                                        </tr>
-                                        <tr class="bgclrfortr">
-                                            <td style="border:none;" colspan="2">
-                                                <div>
-                                                    <span class="form-label">
-                                                        <textarea class="form-control FormclrField" rows="3" id="txtNarration"
-                                                                  onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
-                                                                  oninput="sanitizeAlphaNumeric(this, '#divErrNarration')"></textarea>
-                                                        <label class="labelupfortextarea" for="txtCode">Narration</label>
-                                                    </span>
-                                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNarration" class="clrdiv"></div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="modalBatch-content">-->
+    <!-- Modal Header -->
+    <!--<div class="modal-header">
+        <button type="button" class="closefg">&times;</button>
+        <h5 class="modal-title" style="color:white; font-weight:800" id="lblPopupheading"><b>Add @ViewData["FormName"]</b></h5>
+    </div>-->
+    <!-- Modal body -->
+    <!--<div class="modal-body">
+        <div style="padding-top:2px">
+            <div class="row" style="padding-top:2px;">-->
+    <!-- Doc ID -->
+    <!--<div class="col-sm-3 col-md-3 col-lg-3">
+        <table>
+            <tr>
+                <td align="right" width="40%">
+                    <label>Doc ID :</label>
+                </td>
+                <td width="60%">
+                    <label id="lblDocID" docprefix="" style="font-size:12px">CRDR/2425/1</label>
+                </td>
+            </tr>
+        </table>
+    </div>-->
+    <!-- Ref No -->
+    <!--<div class="col-sm-3 col-md-3 col-lg-3">
+        <table>
+            <tr>
+                <td colspan="2">
                     <span class="form-label">
-
+                        <input tabindex="1" class="form-control FormclrField" type="text" id="txtRefNo"
+                               onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
+                               oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
+                        <label class="labelup" for="txtRefNo">Ref No</label>
                     </span>
+                    <div id="divErrRefNo" class="clrdiv" style="color:red"></div>
+                </td>
+            </tr>
+        </table>
+    </div>-->
+    <!-- Branch -->
+    <!--<div class="col-sm-3 col-md-3 col-lg-3">
+        <table>
+            <tr>
+                <td colspan="2">
+                    <span class="form-label">
+                        <select class="form-control FormclrcmbField" id="txtBranchName" @(Model.EnableBranch == "1" ? "disabled" : "")>
+                            <option value="0">Select Branch</option>
+                        </select>
+                        <label class="labelup" for="txtBranchName">Branch *</label>
+                    </span>
+                    <div id="dvErrorBranchName" class="clrdiv" style="color:red"></div>
+                </td>
+            </tr>
+        </table>
+    </div>-->
+    <!-- Date -->
+    <!--<div class="col-sm-3 col-md-3 col-lg-3">
+                    <table>
+                        <tr>
+                            <td colspan="2">
+                                <span class="form-label">
+                                    <input class="clsdtpfieldfull FormclrField" type="date" id="dtpDate"
+                                           oninput="if (this.value > this.max) { this.value = this.max; }" />
+                                    <label class="labelup" for="dtpDate">Date</label>
+                                </span>
+                                <div id="dvErrorDate" class="clrdiv" style="color:red"></div>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
-                <!-- Modal footer -->
-                <div class="modal-footer">
-                    @*<div style="padding-top:0px" align="right">
-                            <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
-                            <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
-                            <button type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
-                        </div>*@
+            </div>
+
+            <hr />
+            <div class="row">
+                <div style="padding-top:2px; width:100%" class="col-sm-12 col-md-12 col-lg-12">
+
+                    <div class="col-sm-6 col-md-6 col-lg-6">
+
+                        <table class="table" style="width:100%">
+                            <tr>
+                                <td style="border:none;padding-right:7px" colspan="2">
+
+                                    <span class="form-label">
+                                        <input tabindex="1" type="text" id="txtPartyName" class="form-control FormclrField" placeholder="" />
+                                        <label class="labelup">Party Name *</label>
+                                    </span>
+                                    <div class="clrdiv" id="dvErrorPartyName" style="color:red"></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="border:none;padding-right:7px" colspan="2">
+
+                                    <span class="form-label">
+                                        <input tabindex="1" txttag="0" type="number" id="txtValue" class="form-control FormclrField txtsettag" placeholder=""
+                                               onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
+                                               oninput="sanitizeNumericOnly(this, '#dvErrorValue')" />
+                                        <label class="labelup">Value *</label>
+                                    </span>
+                                    <div class="clrdiv" id="dvErrorValue" style="color:red"></div>
+                                </td>
+                            </tr>
+
+                            <tr class="bgclrfortr">
+                                <td style="border:none;" colspan="2">
+                                    <div>
+                                        <span class="form-label">
+                                            <input tabindex="1" class="form-control FormclrField" type="text" id="txtRemarks" placeholder=""
+                                                   onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
+                                                   oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
+                                            <label class="labelup" for="txtCode">Remarks</label>
+                                        </span>
+                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdiv"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div style="padding-bottom:2px" class="col-sm-6 col-md-6 col-lg-6">
+
+                        <table class="table" width="100%">
+                            <tr>
+                                <td style="border:none;padding-right:7px" colspan="2">
+
+                                    <span class="form-label">
+                                        <input tabindex="7" type="text" class="form-control FormclrField" id="txtAccountName" placeholder="" />
+                                        <label class="labelup">Account Name *</label>
+
+                                    </span>
+                                    <div class="clrdiv" id="dvErrorAccountName" style="color:red"></div>
+                                </td>
+                            </tr>
+                            <tr class="bgclrfortr">
+                                <td style="border:none;" colspan="2">
+                                    <div>
+                                        <span class="form-label">
+                                            <textarea class="form-control FormclrField" rows="3" id="txtNarration"
+                                                      onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
+                                                      oninput="sanitizeAlphaNumeric(this, '#divErrNarration')"></textarea>
+                                            <label class="labelupfortextarea" for="txtCode">Narration</label>
+                                        </span>
+                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNarration" class="clrdiv"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span class="form-label">
+
+        </span>
+    </div>-->
+    <!-- Modal footer -->
+    <!--<div class="modal-footer">
                     <table width="100%">
                         <tr>
                             <td width="20%" align="left" style="padding-left:20px">
@@ -508,7 +473,7 @@
                                     <button type="button" class="btn clrforpreview" id="btnPrint"><span class="glyphicon glyphicon-print"> Print</span></button>
                                     <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
                                     <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
-                                    <button type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                                    <button type="button" class="btn btn-warning" id="btnClose"><i class="bi bi-x-circle"></i> Close</button>
                                 </div>
                             </td>
                         </tr>
@@ -516,10 +481,272 @@
                 </div>
             </div>
         </div>
+    </div>-->
+
+    <div class="modal fade " id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="lblPopupheading">
+                        Add @ViewData["FormName"]
+                    </h5>
+                    <button type="button" class="btn-close" id="modelcloseX"></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+
+                    <div class="container-fluid">
+
+                        <div class="row pt-1">
+
+                            <!-- Branch -->
+                            <div class="col-md-3">
+                                <span class="form-label">
+                                    <select class="form-control FormclrcmbField"
+                                            id="txtBranchName"
+                                            @(Model.EnableBranch == "1" ? "disabled" : "")>
+                                        <option value="0">Select Branch</option>
+                                    </select>
+                                    <label class="labelup">Branch *</label>
+                                </span>
+                                <div id="dvErrorBranchName" class="clrdiv text-danger"></div>
+                            </div>
+                            <!-- Ref No -->
+                            <div class="col-md-3">
+                                <span class="form-label">
+                                    <input class="form-control FormclrField"
+                                           type="text"
+                                           id="txtRefNo"
+                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
+                                           oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
+                                    <label class="labelup">Ref No</label>
+                                </span>
+                                <div id="divErrRefNo" class="clrdiv text-danger"></div>
+                            </div>
+                            <!-- Blank -->
+                            <div class="col-12 col-md-3 mb-3"></div>
+                            <!-- Doc ID -->
+                            <div class="col-12 col-md-3">
+                                <table>
+                                    <tr>
+                                        <td align="right">
+                                            <span class="fw-semibold">
+                                                Doc ID :
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <label id="lblDocID" docprefix="" style="font-size:14px" class="fw-bolder">CRDR/2425/1</label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td align="right">
+                                            <span class="fw-semibold">
+                                                Date :
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <input class="clsdtpfieldbottomborder FormclrField"
+                                                   type="date"
+                                                   id="dtpDate"
+                                                   oninput="if (this.value > this.max) { this.value = this.max; }"
+                                                   placeholder="Date" />
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrDate"></div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="row">
+
+                            <!-- LEFT -->
+                            <div class="col-md-6">
+
+                                <table class="table w-100">
+
+                                    <tr>
+                                        <td style="border:none;padding-right:7px" colspan="2">
+
+                                            <span class="form-label">
+                                                <input type="text" id="txtPartyName"
+                                                       class="form-control FormclrField" />
+                                                <label class="labelup">Party Name *</label>
+                                            </span>
+                                            <div class="clrdiv text-danger" id="dvErrorPartyName"></div>
+
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="border:none;padding-right:7px" colspan="2">
+
+                                            <span class="form-label">
+                                                <input type="number"
+                                                       id="txtValue"
+                                                       txttag="0"
+                                                       class="form-control FormclrField txtsettag"
+                                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
+                                                       oninput="sanitizeNumericOnly(this, '#dvErrorValue')" />
+                                                <label class="labelup">Value *</label>
+                                            </span>
+
+                                            <div class="clrdiv text-danger" id="dvErrorValue"></div>
+
+                                        </td>
+                                    </tr>
+
+                                    <tr class="bgclrfortr">
+                                        <td style="border:none" colspan="2">
+
+                                            <span class="form-label">
+                                                <input class="form-control FormclrField"
+                                                       type="text"
+                                                       id="txtRemarks"
+                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
+                                                       oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
+                                                <label class="labelup">Remarks</label>
+                                            </span>
+
+                                            <div class="text-danger pt-1 ps-1" id="divErrRemarks"></div>
+
+                                        </td>
+                                    </tr>
+
+                                </table>
+
+                            </div>
+
+                            <!-- RIGHT -->
+                            <div class="col-md-6">
+
+                                <table class="table w-100">
+
+                                    <tr>
+                                        <td style="border:none;padding-right:7px" colspan="2">
+
+                                            <span class="form-label">
+                                                <input type="text"
+                                                       class="form-control FormclrField"
+                                                       id="txtAccountName" />
+                                                <label class="labelup">Account Name *</label>
+                                            </span>
+
+                                            <div class="clrdiv text-danger" id="dvErrorAccountName"></div>
+
+                                        </td>
+                                    </tr>
+
+                                    <tr class="bgclrfortr">
+                                        <td style="border:none" colspan="2">
+
+                                            <span class="form-label">
+                                                <textarea class="form-control FormclrField"
+                                                          rows="3"
+                                                          id="txtNarration"
+                                                          onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
+                                                          oninput="sanitizeAlphaNumeric(this, '#divErrNarration')"></textarea>
+                                                <label class="labelupfortextarea">Narration</label>
+                                            </span>
+
+                                            <div class="text-danger pt-1 ps-1" id="divErrNarration"></div>
+
+                                        </td>
+                                    </tr>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+
+                    <div class="container-fluid">
+
+                        <div class="row align-items-center">
+
+                            <!-- Print Profile -->
+                            <div class="col-md-3 text-start">
+
+                                <span class="form-label">
+                                    <select class="form-control" id="cmbPrintProfile">
+                                        <option value="0">Select</option>
+                                    </select>
+                                    <label class="labelup">Print Profile</label>
+                                </span>
+
+                                <div class="text-danger pt-1 ps-1" id="divErrPrintProfile"></div>
+
+                            </div>
+                            <!-- Copies -->
+                            <div class="col-md-1 text-start">
+                                <span class="form-label flex-grow-1">
+                                    <input id="txtNoofCopies" class="form-control" value="1" type="number"
+                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'divErrPrintProfile')" oninput="sanitizeNumericOnly(this, 'divErrPrintProfile')" />
+                                    <label class="labelup">Copies</label>
+                                </span>
+                                <div class="text-danger pt-1 ps-1" id="divErrPrintCopy"></div>
+                            </div>
+                            <!-- Buttons -->
+                            <div class="col-md-8 text-end">
+
+                                <button class="btn text-white" id="btnWhatsapp" style="background-color:green">
+                                    <i class="fa-brands fa-whatsapp"></i> Whatsapp
+                                </button>
+
+                                <button class="btn clrforpdf" id="btnEmail">
+                                    <i class="fa-solid fa-envelope"></i> Mail
+                                </button>
+
+                                <button class="btn clrforpdf" id="btnPDF">
+                                    <i class="fa-regular fa-file-pdf"></i> PDF
+                                </button>
+
+                                <button class="btn btn-primary" id="btnPreview">
+                                    <i class="fa-solid fa-print"></i> Preview
+                                </button>
+
+                                <button class="btn clrforpreview" id="btnPrint">
+                                    <i class="fa-solid fa-print"></i> Print
+                                </button>
+
+                                <button class="btn btn-danger" id="btnClear">
+                                    <span class="glyphicon glyphicon-refresh"> Clear</span>
+                                </button>
+
+                                <button class="btn btn-success" id="btnSave">
+                                    <span class="glyphicon glyphicon-saved"> Save</span>
+                                </button>
+
+                                <button class="btn btn-warning" id="btnClose">
+                                    <i class="bi bi-x-circle"></i> Close
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
     </div>
 </body>
 
 <script>
+    var nTransMode = 1;
     const allGridActions = [
         {
             icon: '👁️',
@@ -630,6 +857,7 @@
                     nTransMode = 4;
                     GetData(3, ID);
                     $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                    $("#txtNarration,#txtRemarks").prop("disabled", false);
                     $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
                     $("#btnSave,#btnClose").prop("disabled", false);
                     $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
@@ -756,46 +984,22 @@
     //document.body.style.zoom = "85%";
     //$("#tblMasterData_length > label").text("abc");
 
-    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-        "bFilter": true,
-        "bSearchable": true,
-        "bInfo": true,
-        "bPaginate": true,
-        "ordering": true,
-        scrollY: "400px",
-        scrollX: true,
-        scrollCollapse: true,
-        "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false }],
-        "sLengthMenu": "Showing _MENU_ entries per page"
-
-    });
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
     }
     var Aurl = '@Session["APIurl"]';
+    var RID = '@Session["RoleID"]';
     if ($("#txtAddID").val() == 0) {
         $("#trAdd").hide();
         $("#btnAdd").hide();
     }
        var enableBranch = '@(Model.EnableBranch ?? "0")';
     console.log("EnableBranch:", enableBranch);
-    var DefBranch = '@Session["DefaultBranch"]';
-    //if ($("#txtModifyID").val() == 0) {
-    //    Table.column(9).visible(false);
-    //}
-    //if ($("#txtCancelID").val() == 0) {
-    //    Table.column(10).visible(false);
-    //}
-    //if ($("#txtViewID").val() == 0) {
-    //    Table.column(11).visible(false);
-    //}
-    //if ($("#txtVariantID").val() == 0) {
-    //    Table.column(12).visible(false);
-    //}
+   
     if ($("#txtEnableBranch").val() == 1) {
-        $("#txtBranchName").prop("disabled", true);
+        $("#txtBranchName,#cmbFilterBranch").prop("disabled", true);
     }
-    
+
     if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
         //$("#dvMainTable").hide();
     }
@@ -845,22 +1049,23 @@
     });
     $("#dtpDate").change(function (e) {
         var DocDate = e.target.value;
-        var id = e.target.id;        
+        var id = e.target.id;
         var Branch = $("#txtBranchName").val();
         var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
         var isedit = nTransMode == 2;
         GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
     });
-    
+
     $("#txtBranchName").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
         var DocDate = $("#dtpDate").val();
-        var Branch = e.target.value;        
-        var id = e.target.id;        
+        var Branch = e.target.value;
+        var id = e.target.id;
         var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
         var isedit = nTransMode == 2;
         GetDocumentID(DocDate, Branch, FID, prefix, isedit, id);
     });
-    
+
     var arrPartyData = [], arrAccountData = [], arrBranchData = [], arrALPartyData = [], arrALAccountData = [], arrALBranchData = [], nIndexarrParty = 0, nIndexarrAccount = 0, nIndexarrBranch;
     function GetData(nMode,nID) {
         $.ajax({
@@ -879,7 +1084,6 @@
                         value: 0,
                         text: "-- Select --",
                     }));
-
 
                     arrPartyData = [], arrAccountData = [], arrBranchData = [], arrALPartyData = [], arrALAccountData = [], arrALBranchData = [];
                     nIndexarrParty = 0, nIndexarrAccount = 0, nIndexarrBranch = 0;
@@ -909,47 +1113,22 @@
                         if (items.FType == 4) {
                             $("#lblDocID").text(items.Name);
                         }
-                        if (items.FType == 5) {
-                            var al = {
-                                "label": items.Name,
-                            }
-                            arrALBranchData.push(al);
-                            arrBranchData[nIndexarrBranch] = items.Name;
-                            nIndexarrBranch++;
-                            $('#txtBranchName').append($('<option/>', {
-                                value: items.ID,
-                                text: items.Name,
-                            }));
-                        }
+                        //if (items.FType == 5) {
+                        //    var al = {
+                        //        "label": items.Name,
+                        //    }
+                        //    arrALBranchData.push(al);
+                        //    arrBranchData[nIndexarrBranch] = items.Name;
+                        //    nIndexarrBranch++;
+                        //    $('#txtBranchName').append($('<option/>', {
+                        //        value: items.ID,
+                        //        text: items.Name,
+                        //    }));
+                        //}
                     });
                     SetAutlistforFields();
-                    $("#txtBranchName").val(DefBranch);
-                }
-                if (nMode == 2) {
-                    Table.draw().clear();
-                    if (data.length > 0) {
-                        $.each(data, function (i, items) {
-                            Table.row.add([
-                                items.ID,
-                                items.DocID,
-                                items.DocDate,
-                                items.RefNo,
-                                items.BranchID,
-                                items.PartyID,
-                                items.FAID,
-                                items.NoteValue,
-                                items.Balance,
-                                items.Status,
-                                items.Status == 'Amended' || items.Status == 'Cancelled' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
-                                items.Status == 'Amended' || items.Status == 'Cancelled' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-remove-circle clsCancel" style="font-size:16px" title="Cancel"></span></a>',
-                                '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
-                                '<a href="javascript:void(0)" class="clsVariant" style = "font-size:12px"><span class="glyphicon glyphicon-file clsVariant" style="font-size:12px" title="Variant"></span></a>',
-                            ]).draw(false);
-                        });
-                    }
-                    else {
-                        showErrorSnackbar("No records found");
-                    }
+                    //$("#txtBranchName").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 if (nMode == 3) {
                     $.each(data, function (i, items) {
@@ -962,12 +1141,12 @@
                          $("#txtRemarks").val(items.Remark), $("#txtNarration").val(items.Narration),
                             $("#cmbUDN").val(items.UDFId), $("#txtStatus").val(items.Status);
                         updateInputColumn("txtValue", items.NoteValue);
-                        modal.style.display = "block";
+                        modal.show();
                     });
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#txtBranchName").prop("disabled", true);
                     }
-                }
+                } txtBranchName
             }, error: function (data) {
                 if (data.status == "401") {
                     var msg = data.responseJSON.Message;
@@ -976,6 +1155,38 @@
             }
         });
     }
+
+    function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#txtBranchName,#cmbFilterBranch').empty();
+                $('#txtBranchName,#cmbFilterBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#txtBranchName,#cmbFilterBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#txtBranchName,#cmbFilterBranch').val(defaultBranch);//.trigger("change");
+                }
+            }
+        });
+    }
+
         var DecVal = '@Session["DecimalValues"]';
 function updateInputColumn(inputID, netValue) {
     //const label = document.getElementById(`dgvProdGross${rowId}`);
@@ -1040,23 +1251,23 @@ function updateInputColumn(inputID, netValue) {
             $("#divErrFFrom").html("From date should be lessthan To Date");
         }
         if (IsValid) {
-            var strAcc = $("#txtFilterAccount").val().trim(), strParty = $("#txtFilterParty").val().trim(), dFrom = $("#dtpFFrom").val(),
+            var strBranch = $("#cmbFilterBranch").val(), strAcc = $("#txtFilterAccount").val().trim(), strParty = $("#txtFilterParty").val().trim(), dFrom = $("#dtpFFrom").val(),
                 dTo = $("#dtpFTo").val(), chkshow = $("#chkShowAll").is(":checked") ? "1" : "0";
             $.ajax({
                 url: Aurl + "creditdebitnote/getfilterdata",
                 type: 'get',
                 contentType: 'json',
-                data: { Mode: 2, TransID: FID, AccName: strAcc, Party: strParty, FromDate: dFrom, ToDate: dTo, Showall: chkshow },
+                data: { Mode: 2, TransID: FID, Branch: strBranch, AccName: strAcc, Party: strParty, FromDate: dFrom, ToDate: dTo, Showall: chkshow },
                 xhrFields: {
                     withCredentials: true
                 },
                 success: function (data) {
-                    Table.draw().clear(); Table.draw().clear();
+                    if (data.length == 0) {
+                        showErrorSnackbar("No Records Found");
+                    }
                     var billjsdata = eval(data);
-                    console.log("singleIconAction : ", singleIconAction);
-                    console.log("rowActionsMenu : ", menuActions);
-                    console.log("columns : ", columns);
-                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, billjsdata, {
+                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
+                    grid = new GKBSDynamicGrid('#my-grid', columns, billjsdata, {
                         enablePagination: true,
                         pageSize: ItemsperPage,
                         enableSearch: true,
@@ -1095,7 +1306,8 @@ function updateInputColumn(inputID, netValue) {
                                     //console.log("gridInstance : ", gridInstance);
                                     //console.log("event : ", event);
                                     //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
-                                    modalGenColumnSettings.style.display = "block";
+                                    /*modalGenColumnSettings.style.display = "block";*/
+                                    modalGenColumnSettings.show();
                                     GendralColumnSettings(1, 16, 1, 0);
                                 }
                             },
@@ -1113,12 +1325,14 @@ function updateInputColumn(inputID, netValue) {
                                     $("#btnSave,#btnClear,#btnClose").prop("disabled", false);
                                     $("#btnPreview,#btnPDF").prop("disabled", true);
                                     $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
-                                    modal.style.display = "block";
+                                    modal.show();
                                     ClearForm();
                                     setTimeout(() => {
                                         var DocDate = $("#dtpDate").val();
                                         var Branch = $("#txtBranchName").val();
-                                        GetDocumentID(DocDate, Branch, FID);
+                                        if (Branch > 0 && DocDate !== "") {
+                                            GetDocumentID(DocDate, Branch, FID);
+                                        }
                                     }, 1000);
                                 }
                             },
@@ -1147,127 +1361,11 @@ function updateInputColumn(inputID, netValue) {
                             UpdateColumnWidth(16, 1, 0, colIndex, field, newWidth)
                         },
                     });
-                    var searchValue = '';
-                    if ($.fn.DataTable.isDataTable('#tblMasterData')) {
-                        searchValue = $('#tblMasterData').DataTable().search(); // get current search term
-                    }
-                    $('#tblMasterData').DataTable({
-                        pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                        scrollY: "450px",
-                        scrollX: true,
-                        scrollCollapse: true,
-                        paging: true,
-                        destroy: true,
-                        data: billjsdata,
-                        fixedColumns: false,
-                        searching: true,
-                        ordering: true,
-                        sorting: false,
-                        pageLength: ItemsperPage, // default page size
-                        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                        columns: [
-                            { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
-                            { "data": "StatusID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
-                            { "data": "DocID", "autoWidth": true, className: "dt-body-left" },//1
-                            { "data": "DocDate", "autoWidth": true, className: "dt-body-left" },//2
-                            { "data": "RefNo", "autoWidth": true, className: "dt-body-left" },//3
-                            { "data": "PartyID", "autoWidth": true, className: "dt-body-left" },//4
-                            { "data": "FAID", "autoWidth": true, className: "dt-body-left" },//5
-                            { "data": "NoteValue", "autoWidth": true, className: "dt-body-right" },//6
-                            { "data": "Balance", "autoWidth": true, className: "dt-body-right" },//9
-                            { "data": "Status", "autoWidth": true, className: "dt-body-left" },//10
-                            {
-                                className: "dt-body-left",
-                                "mRender": function (data, type, value) {
-                                    var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
-                                    return _action;
-                                }
-                            },
-                            {
-                                className: "dt-body-center", orderable: false,
-                                "mRender": function (data, type, value) {
-                                    var _action = '<a href="javascript:void(0)" style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
-                                    return _action;
-                                }, "visible": $("#txtViewID").val() == 0 ? false : true
-                            },
-                            {
-                                className: "dt-body-center",
-                                orderable: false,
-                                render: function () {
-                                    return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
-                                }
-                            }
-//                            {
-//                                className: "dt-body-center",
-//                                orderable: false,
-//                                render: function (data, type, row) {
 
-//                                    var status = row.Status;
-//                                    var edit = '', cancel = '', view = '', variant = '', Print = '', Preview = '', PDF = '';
-//                                    if ($("#txtViewID").val() == 1) {
-//                                        var Print = '<a class="dropdown-item clsprint" href="javascript:void(0)">🖨 Print</a>';
-//                                        var Preview = '<a class="dropdown-item clspreview" href="javascript:void(0)#">🖨 Preview</a>';
-//                                        var PDF = '<a class="dropdown-item clspdf" href="javascript:void(0)">📕 PDF</a>';
-//                                    }
-//                                    if (status !== 'Amended' && status !== 'Cancelled') {
-//                                        if ($("#txtModifyID").val() == 1)
-//                                            edit = '<a class="dropdown-item clsEdit" href="javascript:void(0)">✏️ Edit</a>';
-//                                        if ($("#txtCancelID").val() == 1)
-//                                            cancel = '<a class="dropdown-item clsCancel" href="javascript:void(0)">❌ Cancel</a>';
-//                                    }
-//                                    if ($("#txtVariantID").val() == 1)
-//                                        variant = '<a class="dropdown-item clsVariant" href="javascript:void(0)">📄 Variant</a>';
-//                                    return `
-//<div class="dropdown">
-//    <button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown">
-//        &#8942;
-//    </button>
-//    <ul class="dropdown-menu  action-dropdown" style="right:0;left:auto;">
-//        ${edit ? `<li>${edit}</li>` : ''}
-//        ${cancel ? `<li>${cancel}</li>` : ''}
-//        ${variant ? `<li>${variant}</li>` : ''}
-//        ${Print ? `<li>${Print}</li>` : ''}
-//        ${Preview ? `<li>${Preview}</li>` : ''}
-//        ${PDF ? `<li>${PDF}</li>` : ''}
-//    </ul>
-//</div>`;
-//                                }
-//                            }
-
-                        ],
-                        initComplete: function () {
-                            // Re-apply search value after table is fully initialized
-                            this.api().search(searchValue).draw();
-                        }
-                    });
-                    Table = $('#tblMasterData').DataTable();
-                    if (!Table.data().any()) {
+                    if (billjsdata.length == 0) {
                         if (ClickType == 1)
                             showErrorSnackbar("No records found");
-                    }
-                    //if (data.length > 0) {
-                    //    $.each(data, function (i, items) {
-                    //        Table.row.add([
-                    //            items.ID,
-                    //            items.DocID,
-                    //            items.DocDate,
-                    //            items.RefNo,
-                    //            items.PartyID,
-                    //            items.FAID,
-                    //            items.NoteValue,
-                    //            items.Balance,
-                    //            items.Status,
-                    //            items.Status == 'Amended' || items.Status == 'Cancelled' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
-                    //            items.Status == 'Amended' || items.Status == 'Cancelled' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-remove-circle clsCancel" style="font-size:16px" title="Cancel"></span></a>',
-                    //            '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
-                    //            '<a href="javascript:void(0)" class="clsVariant" style = "font-size:12px"><span class="glyphicon glyphicon-file clsVariant" style="font-size:12px" title="Variant"></span></a>',
-                    //        ]).draw(false);
-                    //    });
-                    //}
-                    //else {
-                    //    if (ClickType == 1)
-                    //    showErrorSnackbar("No records found");
-                    //}
+                    }                    
                 }, error: function (data) {
                     if (data.status == "401") {
                         var msg = data.responseJSON.Message;
@@ -1367,17 +1465,17 @@ function updateInputColumn(inputID, netValue) {
                 .appendTo(ul);
         };
     }
-    var modal = document.getElementById("myModalfg");
-    var span = document.getElementsByClassName("closefg")[0];
-    span.onclick = function () {
-        //modal.style.display = "none";
-        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
-    }
+    var modal = new bootstrap.Modal(document.getElementById('myModalfg'));//document.getElementById("myModalfg");
+    //var span = document.getElementsByClassName("closefg")[0];
+    //span.onclick = function () {
+    //    //modal.hide();
+    //    if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    //}
     function CloseForm() {
         if ($("#txtTransType").val() == 3 || $("#txtTransType").val() == 2) {
             this.close();
         } else {
-            modal.style.display = "none";
+            modal.hide();
         }
     }
 
@@ -1390,7 +1488,7 @@ function updateInputColumn(inputID, netValue) {
         $("#btnSave,#btnClear,#btnClose").prop("disabled", false);
         $("#btnPreview,#btnPDF").prop("disabled", true);
         $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
-        modal.style.display = "block";
+        modal.show();
         ClearForm();
     });
     $('#btnClear').click(function (e) {
@@ -1429,10 +1527,11 @@ function setDate1(FieldID,Type) {
         setDate("dtpDate", 0);
         SetFilterDate();
         SetTagZero();
-        $("#txtBranchName").val(DefBranch);
+        //$("#txtBranchName").val(DefBranch);
+        LoadBranchByRoles();
         //setTimeout(function () { GetFilterData(); }, 800);
         if (nTransMode != 1)
-            modal.style.display = "none";
+            modal.hide();
         $("#btnPreview,#btnPDF").prop("disabled", true);
         $("#txtProdDiscAmt").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnPrint").hide();
@@ -1444,7 +1543,7 @@ function setDate1(FieldID,Type) {
     $("#btnSave").click(function () {
         $(".clrdiv").html("");
         var IsValid = true, ChkFormation = true;
-        if ($("#txtBranchName").val() == 0) {
+        if ($("#txtBranchName").val() == 0 || $("#txtBranchName").val() == "") {
             IsValid = false;
             $("#divErrBranch").html("Select Branch");
             showErrorSnackbar("Select Branch");
@@ -1548,7 +1647,7 @@ function setDate1(FieldID,Type) {
                             ClearForm();
                             //GetData(2,"");
                             GetFilterData();
-                            modal.style.display = "none";
+                            modal.hide();
 
                         }
                         else if (items.Message == "Code") {
@@ -1574,142 +1673,8 @@ function setDate1(FieldID,Type) {
                 }
             });
     }
-    var nTransMode = 1;
-    $('#tblMasterData tbody').on('click', '.clsView', function (e) {
-        $(".clrdiv").html("");
-        rowdata = Table.row($(this).parents('tr')).data();
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.Status;//[8];
-        nTransMode = 5;
-        $("#txtID").val(ID);
-        GetData(3, ID);
-        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
-        $("#btnPreview,#btnPDF,#btnPrint").show();
-        $("#btnEmail,#btnWhatsapp").show();
-        $("#btnSave,#btnClear,#btnDraft").hide();
-        var hdfkl = $("#txtFormName").val();
-        $(".modal-title#lblPopupheading").text("View " + $("#txtFormName").val());
-    });
-    $(document).on('click', '.clsEdit', function (e) {
-        $(".clrdiv").html("");
-        // rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.Status;//[8];
-        if (sts != "Cancelled") {
-            $("#txtID").val(ID);
-            nTransMode = 2;
-            //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
-            GetData(3, ID);
-            nTransMode = 2;
-            $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-            $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-            $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-            $("#btnSave,#btnClose").prop("disabled", false);
-            $("#btnSave,#btnClose").show();
-            $("#btnEmail,#btnWhatsapp").hide();
-            $(".modal-title#lblPopupheading").text("Modify " + $("#txtFormName").val());
-        }
-        else {
-            showErrorSnackbar("Cannot Modify.This document already cancelled");
-        }
-    });
-    $(document).on('click', '.clsCancel', function (e) {
-        $(".clrdiv").html("");
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.Status;//[8];
-        if (sts != "Cancelled") {
-            $(".modal-title#lblPopupheading").text("Cancel " + $("#txtFormName").val());
-            $("#txtID").val(ID);
-            nTransMode = 4;
-            GetData(3, ID);
-            $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-            $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-            $("#btnSave,#btnClose").prop("disabled", false);
-            $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
-            $("#btnSave,#btnClose").show();
-            $("#btnEmail,#btnWhatsapp").hide();
-            $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-        }
-        else {
-            showErrorSnackbar("This document already cancelled");
-        }
-    });
-    $(document).on('click', '.clsVariant', function (e) {
-        $(".clrdiv").html("");
-        nTransMode = 3;
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.Status;//[8];
-        $("#txtID").val(ID);
-        GetData(1,"");
-        GetData(3, ID);
-        $(".modal-title#lblPopupheading").text("Variant " + $("#txtFormName").val());
-        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
-        $("#btnPreview,#btnPDF").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-        $("#btnEmail,#btnWhatsapp").hide();
-        $("#btnSave,#btnClose,#btnDraft").show();
-        //showErrorSnackbar("Variant functionality still developing");
-    });
-    $(document).on('click', '.clspreview', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.StatusID;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPreview").click();
-    });
-    $(document).on('click', '.clspdf', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.StatusID;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPDF").click();
-    });
-    $(document).on('click', '.clsemail', function (e) {//'#tblMasterData tbody'
-        rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
-        //var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnEmail").click();
-    });
-    $(document).on('click', '.clswhatsapp', function (e) {//'#tblMasterData tbody'
-        rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
-        //var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btniframeWhatsapp").click();
-    });
-    $(document).on('click', '.clsprint', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.StatusID;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPrint").click();
-    });
+
+
     function GetColumnSettingsData(nMode, nFormID, nTableID) {
         $.ajax({
             url: Aurl + "columnsettings/getcolumnsettings",

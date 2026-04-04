@@ -1,21 +1,39 @@
 ﻿@model ShineWeb.Models.SingleMasterModel
 @{
     ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
 }
-<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
-<link rel="stylesheet" href="~/Content/jquery-ui.css">
-<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
+@*<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />*@
+<link href="~/datatable/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet" />
 
-<script src="~/Scripts/bootstrap.min.js"></script>
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+@*<script src="~/Scripts/bootstrap.min.js"></script>*@
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
-@*<script src="~/Scripts/Validation.js"></script>*@
-<script src="~/Scripts/dataTables.2.2.2.js"></script>
+@*<script src="~/Scripts/dataTables.2.2.2.js"></script>*@
+<script src="~/datatable/1.13.6/jquery.dataTables.min.js"></script>
+<script src="~/datatable/1.13.6/dataTables.bootstrap5.min.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
+    table.dataTable tfoot th, table.dataTable tfoot td {
+        text-align: right !important;
+    }
+
+    table.dataTable thead th, table.dataTable thead td {
+        text-align: left !important;
+    }
 
     each {
         border-bottom: 1px solid #555;
@@ -63,117 +81,397 @@
     }
     /* The Modal (background) */
     .modalBatch {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
+        display: none;
+        position: fixed;
+        z-index: 200;
         left: 0;
-        top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        /*overflow: auto;*/ /* Enable scroll if needed */
-        background-color: rgb(0,0,0); /* Fallback color */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        top: 30px;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.3s ease-out;
     }
 
-    /* Modal Content/Box */
-    @@media only screen and (min-width: 600px) {
-        .modalBatch-content {
-            background-color: #ffffff;
-            margin: 3% auto; /* 15% from the top and centered */
-            padding: 10px;
-            border: 1px solid #888;
-            width: 35%; /* Could be more or less, depending on screen size */
-            height: 70%;
-            top: 5%;
-            /* overflow: auto;*/
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
         }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @@keyframes zoomIn {
+        from {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .modalBatch-content {
+        background-color: #ffffff;
+        margin: 2% auto;
+        border: none;
+        width: 45%;
+        max-width: 1000px;
+        height: auto;
+        max-height: 90vh;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-direction: column;
+        animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
     }
 
     @@media only screen and (max-width: 600px) {
         .modalBatch-content {
-            background-color: #ffffff;
-            margin: 10% auto; /* 15% from the top and centered */
-            padding: 25px;
-            border: 1px solid #888;
-            width: 95%; /* Could be more or less, depending on screen size */
-            height: 80%;
-            top: 20%;
-            /*overflow: auto;*/
+            width: 95%;
+            margin: 5% auto;
+            max-height: 95vh;
         }
     }
-    /* The Close Button */
+
+    .modal-header {
+      
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .modal-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #111827;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     .closefg {
-        color: #aaa;
-        float: right;
-        font-size: 10px;
-        font-weight: bold;
+        background: #f3f4f6;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #6b7280;
+        padding: 0;
+        line-height: 1;
     }
 
-        .closefg:hover,
-        .closefg:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
+        .closefg:hover {
+            background: #fee2e2;
+            color: #ef4444;
+            transform: rotate(90deg);
         }
 
-    .form-label {
-        position: relative;
-        display: block;
-        clear: both;
-        max-width: 500px;
-        margin: 0 auto;
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
     }
 
-    .labelup {
-        -webkit-transform: translateY(50%);
-        -moz-transform: translateY(-50%);
-        -ms-transform: translateY(-50%);
-        -o-transform: translateY(-50%);
-        transform: translateY(50%);
-        -webkit-transition: all 0.2s ease-in-out;
-        -moz-transition: all 0.2s ease-in-out;
-        transition: all 0.2s ease-in-out;
-        position: absolute;
-        top: -40%;
-        left: 1em;
-        background: #fffefe;
-        color: #2b2828;
-        font-size: 1em;
-        cursor: text;
-        pointer-events: none;
-        font-family: sans-serif;
+
+
+    /* Grid Layout for Header Fields */
+    .modal-fields-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+        /* margin-bottom: 20px;*/
+    }
+
+    @@media (max-width: 768px) {
+        .modal-fields-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Compact Input Styles */
+    .form-group-compact {
+        position: relative;
+    }
+
+        .form-group-compact label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #4b5563;
+            margin-bottom: 0px;
+        }
+
+    .form-control-compact {
+        width: 100%;
+        padding: 6px 10px;
+        font-size: 13px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background-color: #fff;
+    }
+
+        .form-control-compact:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-control-compact:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+    .error-msg {
+        font-size: 11px;
+        color: #ef4444;
+        margin-top: 2px;
+        min-height: 15px;
+    }
+
+    /* Table Styling Overrides */
+    #tblMasterData_wrapper {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    #tblMasterData {
+        margin: 0 !important;
+        border: none !important;
+    }
+
+        #tblMasterData thead th {
+            background-color: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            font-size: 11px;
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+
+        #tblMasterData tbody td {
+            padding: 4px 8px !important;
+            vertical-align: middle;
+            font-size: 12px;
+            color: #4b5563;
+            border-bottom: 1px solid #f3f4f6 !important;
+        }
+
+        #tblMasterData .form-control {
+            padding: 4px 8px;
+            font-size: 12px;
+            height: 28px;
+            border-radius: 4px;
+        }
+
+    /* Action Buttons */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.2s;
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+
+        /* .btn-save { background: #10b981; color: white; }
+    .btn-save:hover { background: #059669; }
+    .btn-clear { background: #fff; border-color: #d1d5db; color: #374151; }
+    .btn-clear:hover { background: #f9fafb; }
+    .btn-close { background: #f3f4f6; color: #374151; }
+    .btn-close:hover { background: #e5e7eb; } */
+
+        .btn-action i {
+            width: 10px;
+            height: 10px;
+        }
+
+    .dupError {
+        border: 2px solid red;
+        background: #ffe6e6;
     }
 </style>
 <body>
     @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
-    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+
+    <div class="d-flex align-items-center gap-2">
+        <!-- Larger heading -->
+        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    </div>
     <hr />
     <div class="toastBox"></div>
-    <div class="row">        
-        <div class="col-sm-12 col-md-7 col-lg-7"></div>
-        <div class="col-sm-12 col-md-5 col-lg-5">
-            <table class="table table-bordered" id="tblMasterData" width="100%">
-                <thead>
-                    <tr class="trclrforcolheader">
-                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                        <th style="text-align:center;font-size: 12px;width:3%;">#</th>
-                        <th style="text-align:center;font-size: 12px;width:50%;">Transaction</th>
-                        <th style="text-align:center;font-size: 12px;width:30%;">Prefix</th>
-                        <th style="text-align:center;font-size: 12px;width:17%;">Doc Value</th>
-                    </tr>
-                </thead>
-               
-            </table>
-            <div style="padding-top:0px" align="right">
-                <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
-                <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
-            </div>
+    <div>
+        <div id="dvMainTable">
+            <div id="my-grid" style="height: 600px; width: 100%;"></div>
         </div>
     </div>
+    <div class="modal fade" id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lblPopupheading">
+                        <i data-lucide="file-text"></i>
+                        <b>Add @ViewData["FormName"]</b>
+                    </h5>
+                    <button type="button" class="closefg" title="Close" data-bs-dismiss="modal">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div id="dvAssign">
+
+                        <!-- Top Fields -->
+                        <div class="modal-fields-grid">
+                            <div class="form-group-compact">
+                                <label>Branch *</label>
+                                <select class="form-select FormclrcmbField" id="cmbBranch">
+                                    <option value="0">Select Branch</option>
+                                </select>
+                                <div id="divErrBranch" class="error-msg clrdiv"></div>
+                            </div>
+
+                            <div class="form-group-compact">
+                                <label>From Date *</label>
+                                <input type="text" id="txtID" hidden />
+                                <input type="text" id="txtOrgFromDate" hidden />
+                                <input type="text" id="txtOrgToDate" hidden />
+                                <input type="text" id="txtOrgBranchID" hidden />
+
+                                <input type="date" id="txtFromDate" class="form-control clsdtpfieldfull" />
+                                <div id="dvErrorFromDate" class="error-msg clrdiv"></div>
+                            </div>
+
+                            <div class="form-group-compact">
+                                <label>To Date *</label>
+                                <input type="date" id="txtToDate" class="form-control clsdtpfieldfull" />
+                                <div id="dvErrorToDate" class="error-msg clrdiv"></div>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="pt-2">
+                            <table class="table table-striped" id="tblMasterData">
+                                <thead>
+                                    <tr>
+                                        <th style="width:0%;" class="trclrforcolheader">ID</th>
+                                        <th style="width:3%;" class="trclrforcolheader">#</th>
+                                        <th style="width:50%;" class="trclrforcolheader">Transaction</th>
+                                        <th style="width:30%;" class="trclrforcolheader">Prefix</th>
+                                        <th style="width:17%;" class="trclrforcolheader">Doc Value</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button tabindex="4" type="button" class="btn btn-danger" id="btnClear">
+                        <span class="glyphicon glyphicon-refresh"> Clear</span>
+                    </button>
+                    <button tabindex="3" type="button" class="btn btn-success" id="btnSave">
+                        <span class="glyphicon glyphicon-saved"> Save</span>
+                    </button>
+                    <button tabindex="5" type="button" class="btn btn-warning" id="btnClose">
+                        <i class="bi bi-x-circle"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+        </div>
 </body>
 
+<script>
+    const allGridActions = [
+        {
+            icon: '👁️',
+            title: 'View Data',
+            className: 'dg-action-view',
+            // 💡 NEW TAG: This action will be rendered as a single icon
+            displayType: 'single_icon',
+            visible: true,// $("#txtViewID").val() == 1,
+            handler: (rowData) => {
+                nMode = 3;
+                var fromdate = rowData.hdFromDate;
+                var todate = rowData.hdToDate;
+                var BranchID = rowData.hdBranchID;
+                var ID = rowData.hdID;
+                GetData(3, ID);
+                $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
+                $(".clrdiv").html("");
+                $("#btnSave,#txtFromDate,#txtToDate,#btnClear,#cmbBranch").prop("disabled", true);
+                modal.show();
+                lucide.createIcons();
+            }
+        },
+        {
+            icon: '✏️',
+            title: 'Edit Data',
+            className: 'dg-action-edit',
+            visible: true,//$("#txtModifyID").val() == 1,
+            // 💡 NEW TAG: This action will be rendered in the 3-dot menu
+            displayType: 'single_icon',
+            handler: (rowData, gridInstance) => {
+                nMode = 2;
+                var fromdate = rowData.hdFromDate;
+                var todate = rowData.hdToDate;
+                var BranchID = rowData.hdBranchID;
+                var ID = rowData.hdID;
+                GetData(3, ID);
+                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                $("#btnSave,#txtFromDate,#txtToDate,#cmbBranch").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                $(".clrdiv").html("");
+                modal.show();
+                lucide.createIcons();
+            }
+        }]
+    var columns = [
 
+    ];
+    const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
+    const menuActions = [];// allGrid3dotActions.filter(a => a.displayType === 'menu_item');
+    var actions = {
+        "field": "Action",
+        "header": "Action",
+        "type": "action",
+        "width": 80,
+        "align": "center",
+        "visible": true,
+        "specialColumn": true,
+        "ShowinColumnOption": false,
+        "actions": allGridActions
+    };
+</script>
 <script type="text/javascript">
     var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
         "bFilter": false,
@@ -186,68 +484,72 @@
         scrollCollapse: true,
         "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
     });
-
+    // Batch Modal
+    document.getElementById('myModalfg')
+        .addEventListener('shown.bs.modal', function () {
+            if (Table) Table.columns.adjust().draw();
+        });
     var Aurl = '@Session["APIurl"]';
     var UID = '@Session["LoginUserID"]';
     var nMode = 1;
     var FID = $("#txtFormID").val();
-    GetData(1,0);
+    var grid;
+    GetColumnSettingsData(2, 34, 1);
+    //GetData(1, 0);
+    setTimeout(() => {
+        GetData(2);
+    }, 500);
+    GetData(4);
     var arrData = [];
-    function GetData(nMode,nMenuID) {
+    function GetData(dMode, strID = "0") {
         $.ajax({
             url: Aurl + "documentseries/get",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, Name: nMenuID },
+            data: { Mode: dMode, ID: strID },
             xhrFields: {
                 withCredentials: true
             },
             success: function (data) {
-                if (nMode == 1) {
+                if (dMode == 1) {
                     //Table.draw().clear(); Table.draw().clear();
                     if (data.length > 0) {
-                        //$.each(data, function (i, items) {
-                        //    Table.row.add([
-                        //        items.ID,
-                        //        (i + 1),                                
-                        //        items.Name,
-                        //        '<input name = "Prefix" type="text" class="form-control" value="' + items.Mode + '">',
-                        //        '<input name= "DocValue" type="number" class="form-control" value="' + items.Value +'">'
-                        //    ]).draw(false);
-                        //});
+                        var docdata = JSON.parse(data);
                         $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
                             scrollY: "450px",
                             scrollX: true,
                             scrollCollapse: true,
-                            paging: true,
+                            paging: false,
                             destroy: true,
-                            data: data,
+                            data: docdata,
                             fixedColumns: false,
                             searching: true,
-                            ordering: true,
+                            ordering: false,
                             sorting: false,
                             columns: [
-                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "TransID", "autoWidth": true, "visible": false, className: "dt-body-left" },
                                 {
-                                    className: "dt-body-center",
+                                    className: "dt-body-center", width: "5%",
                                     "mRender": function (data, type, value, meta) {
                                         var rowIndex = meta.row;
                                         var _action = (rowIndex + 1);// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
                                         return _action;
                                     }
                                 },
-                                { "data": "Name", "autoWidth": true, className: "dt-body-left" },                                
+                                { "data": "TransName", "autoWidth": true, className: "dt-body-left", width: "50%" },
                                 {
-                                    className: "dt-body-center",
-                                    "mRender": function (data, type, value) {
-                                        var _action = '<input name = "Prefix" type="text" class="form-control" value="' + value.Mode + '">';
+                                    className: "dt-body-center", width: "30%",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var _action = '<input name = "Prefix" type="text" class="form-control clsPrefix" id="txtPrefix' + rowIndex + '" value="' + value.DocPrefix + '">';
                                         return _action;
                                     }
                                 },
                                 {
-                                    className: "dt-body-center",
-                                    "mRender": function (data, type, value) {
-                                        var _action = '<input name= "DocValue" type="number" class="form-control" value="' + value.Value + '" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)">';
+                                    className: "dt-body-center", width: "15%",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var _action = '<input name= "DocValue" type="number" class="form-control" value="1" id="txtDocValue' + rowIndex +'" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)">';
                                         return _action;
                                     }
                                 },
@@ -258,6 +560,142 @@
                     else {
                         showErrorSnackbar("No Records Found");
                     }
+                }
+                if (dMode == 3) {
+                    Table.draw().clear(); Table.draw().clear();
+                    if (data.length > 0) {
+                        //txtOrgFromDate,txtOrgToDate
+                        var dsdata = JSON.parse(data);
+                        var FromDate = dsdata[0].FromDate;
+                        var ToDate = dsdata[0].ToDate;
+                        FromDate = FromDate.split('T')[0];
+                        ToDate = ToDate.split('T')[0];
+                        $("#txtFromDate,#txtOrgFromDate").val(FromDate);
+                        $("#txtToDate,#txtOrgToDate").val(ToDate);
+                        $("#cmbBranch,#txtOrgBranchID").val(dsdata[0].BranchID);
+                        $("#txtID").val(dsdata[0].ID)
+                        $('#tblMasterData').DataTable({
+                            pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: false,
+                            destroy: true,
+                            data: dsdata,
+                            fixedColumns: false,
+                            searching: true,
+                            ordering: true,
+                            sorting: false,
+                            columns: [
+                                { "data": "TransID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-center", width: "5%",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var _action = (rowIndex + 1);// '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>';
+                                        return _action;
+                                    }
+                                },
+                                { "data": "TransName", "autoWidth": true, className: "dt-body-left", width: "50%" },
+                                {
+                                    className: "dt-body-center", width: "30%",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var disb = nMode == 3 ? "disabled" : "";
+                                        var _action = '<input ' + disb + ' name = "Prefix" type="text" class="form-control clsPrefix" id="txtPrefix' + rowIndex +'" value="' + value.DocPrefix + '">';
+                                        return _action;
+                                    }
+                                },
+                                {
+                                    className: "dt-body-center", width: "15%",
+                                    "mRender": function (data, type, value, meta) {
+                                        var rowIndex = meta.row;
+                                        var disb = nMode == 3 ? "disabled" : "";
+                                        var _action = '<input ' + disb + ' name= "DocValue" type="number" class="form-control" id="txtDocValue' + rowIndex +'" value="' + value.DocValue + '" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)">';
+                                        return _action;
+                                    }
+                                },
+                            ],
+                        });
+                        Table = $('#tblMasterData').DataTable();
+                    }
+                    else {
+                        showErrorSnackbar("No Records Found");
+                    }
+                }
+                if (dMode == 2) {
+                    var DocSeries = JSON.parse(data)
+                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
+                    grid = new GKBSDynamicGrid('#my-grid', columns, DocSeries, {
+                        enablePagination: true,
+                        pageSize: ItemsperPage,
+                        enableSearch: true,
+                        stickyToWindow: true,
+                        enableExport: false,
+                        enablePrint: false,
+                        enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
+                        enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
+                        enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                        enableSorting: true,
+
+                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
+                        rowActionsMenu: menuActions,       // Pass the Delete/Print actions
+                        //onCellChange: handleCellUpdate,
+                        customCellRenderer: (el, col, rowData) => {
+                        },
+                        customButtons: [
+                            {
+                                icon: '⚙️',
+                                text: 'Settings',
+                                title: 'Settings',
+                                visible: true,
+                                onClick: (gridInstance, event) => {
+                                    //console.log("gridInstance : ", gridInstance);
+                                    //console.log("event : ", event);
+                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                /*    modalGenColumnSettings.style.display = "block";*/
+                                    modalGenColumnSettings.show();
+                                    GendralColumnSettings(1, 34, 1, 0);
+                                }
+                            },
+                            {
+                                icon: '➕',
+                                text: 'Add New',
+                                title: 'Add New',
+                                visible: true,//$("#txtAddID").val() == 1,
+                                onClick: (gridInstance, event) => {
+                                    nMode = 1;
+                                    $("#btnSave,#txtFromDate,#txtToDate,#btnClear,#cmbBranch").prop("disabled", false);
+                                    $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
+                                    modal.show();
+                                    lucide.createIcons();
+                                    ClearForm();
+                                }
+                            },
+                        ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(34, 1, 0, colIndex, field, newWidth)
+                        },
+                    });
+                }
+                if (dMode == 4) {
+                    $('#cmbBranch').find("option").remove();
+                    $('#cmbBranch').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        $('#cmbBranch').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                    });
                 }
             }, error: function (data) {
                 if (data.status == "401") {
@@ -270,56 +708,47 @@
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
-    
-    $('#cmbModule').change(function (e) {
-        var val = e.target.value;
-        if (val > 0) {
-            GetData(2, val);
-        }
-        else{
-            Table.draw().clear(); Table.draw().clear();
+
+    $('#tblMasterData tbody').on('change', '.clsPrefix', function (e) {
+        var currentValue = e.target.value.trim();
+        $('.clsPrefix').removeClass("dupError");
+        var duplicates = $('#tblMasterData tbody .clsPrefix').filter(function () {
+            return $(this).val().trim() === currentValue;
+        });
+        if (duplicates.length > 1) {
+
+            showErrorSnackbar("Document Prefix already given in another transaction");
+            duplicates.addClass("dupError");
+            //e.target.value = "";
+            e.target.focus();
         }
     });
+
+    //Prefix
+    var modal = new bootstrap.Modal(document.getElementById('myModalfg'));// document.getElementById("myModalfg");
+    //var span = document.getElementsByClassName("closefg")[0];
+    //span.onclick = function () {
+    //    modal.hide();
+    //}
+    $('#btnClose').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    function CloseForm() {
+        modal.hide();
+    }
     $('#btnClear').click(function (e) {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
     function ClearForm() {
         $(".clrdiv").html("");
-        GetData(1, 0);
-    }
-    function AddMenus() {
-        $("#tblMasterData tbody tr").each(function () {
-            var nOrder = 0;
-            rowdata = Table.row($(this)).data();
-            nMenuID = rowdata.ID;//[0];
-            $(this).find("input").each(function (index) {
-                nOrder = $(this).val();
-            });
-        });
+        var crdate = new Date().toISOString().split('T')[0];
+        $("#txtFromDate,#txtToDate").val(crdate);
+        $("#cmbBranch").val(0);
+        $("#txtOrgToDate,#txtOrgFromDate,#txtOrgBranchID,#txtID").val("");
+        GetData(1);
     }
     function ValidateOrder() {
-        var IsValid = true;
-        $("#tblMasterData tbody tr").each(function () {
-            var nOrder = 0;
-            rowdata = Table.row($(this)).data();
-            var nMenuID = rowdata;//[0];
-            nMenuID = rowdata.Name;//[2];
-           
-            var valhasvalue = true;
-            $(this).css("color", "black");
-            $(this).find("input").each(function (index) {
-                $(this).css("border-color", "black");                
-                if ($(this).val() == "") {
-                    IsValid = false;
-                    valhasvalue = false;
-                    $(this).css("border-color", "red");
-                }
-            });
-            if (!valhasvalue) {
-                $(this).css("color", "red");
-            }
-        });
-        return IsValid;
+        return true;
     }
     $("#btnSave").click(function () {
         $(".clrdiv").html("");
@@ -333,13 +762,41 @@
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
+
+        var fromDate = $("#txtFromDate").val();
+        var toDate = $("#txtToDate").val();
+        var BranchID = $("#cmbBranch").val();
+        if (BranchID == 0 || BranchID == "") {
+            $("#divErrBranch").html("Select Branch");
+            $("#cmbBranch").focus();
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
+        if (fromDate === "") {
+            $("#dvErrorFromDate").html("From Date is mandatory");
+            $("#txtFromDate").focus();
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
+        if (toDate === "") {
+            $("#dvErrorToDate").html("To Date is mandatory");
+            $("#txtToDate").focus();
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
+        if (fromDate > toDate) {
+            showErrorSnackbar("From Date should be less than To Date");
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
+
         var listdoc = [];
+        var isValid = true;
         $("#tblMasterData tbody tr").each(function () {
             var strPrefix = "", strDocval = "";
             rowdata = Table.row($(this)).data();
-            var nMenuID = rowdata.ID;//[0];
-            var valhasvalue = true;
-            
+            var nTrans = rowdata.TransID;//[0];
+
             $(this).find("input").each(function (index) {
                 const fieldName = $(this).attr("name");
                 if (fieldName == "Prefix") {
@@ -349,15 +806,60 @@
                     strDocval = $(this).val();
                 }
             });
+
+            if (strPrefix === "" || strDocval === "") {
+                isValid = false;
+                $(this).css("background-color", "#ffdddd"); // Highlight invalid row
+            } else {
+                $(this).css("background-color", ""); // Reset background
+            }
+
             var lst = {
-                "ID": nMenuID,
+                "ID": nTrans,
                 "Prefix": strPrefix,
                 "DocValue": strDocval
             }
             listdoc.push(lst);
         });
+        if (!isValid) {
+            showErrorSnackbar("Prefix and Doc Value are mandatory for all rows.");
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
+        var prefixes = [];
+        // remove old highlights
+        $(".clsPrefix").removeClass("dupError");
+        // loop all prefix inputs
+        $("#tblMasterData tbody .clsPrefix").each(function () {
+            var val = $(this).val().trim();
+            if (val !== "") {
+                // check duplicate
+                if (prefixes.includes(val.toLowerCase())) {
+                    // highlight duplicate cell
+                    $(this).addClass("dupError");
+                    $("#btnSave").prop("disabled", false);
+                    showErrorSnackbar("Duplicate Prefix not allowed");
+                    isValid = false;
+                    return;
+                }
+                else {
+                    prefixes.push(val.toLowerCase());
+                }
+            }
+        });
+        if (!isValid) {
+            $("#btnSave").prop("disabled", false);
+            return;
+        }
         var lstMaster = {
-            "Mode": 2,
+            "Mode": nMode,
+            "ID": $("#txtID").val(),
+            "FromDate": fromDate,
+            "ToDate": toDate,
+            "BranchID": $("#cmbBranch").val(),
+            "orgFromDate": $("#txtOrgFromDate").val(),
+            "orgToDate": $("#txtOrgToDate").val(),
+            "orgBranchID": $("#txtOrgBranchID").val(),
             "UserID": UID,
             "lstDocSeries": listdoc
         };
@@ -376,11 +878,13 @@
                 $.each(data, function (i, items) {
                     if (items.MsgID == 0) {
                         showSuccessSnackbar(items.Message);
+                        modal.hide();
+                        GetData(2);
                         //alert(items.Message);
                     }
                     else {
                         //$("#dvErrorName").html(items.Message);
-                        showSuccessSnackbar(items.Message);
+                        showErrorSnackbar(items.Message);
                     }
                 });
             }, error: function (data) {
@@ -391,7 +895,7 @@
                 }
             }
         });
-    }    
+    }
     $('input, select ,button, textarea').on('keydown', function (e) {
         if (e.key === "Enter") {
             if (e.target.localName != "button") {
@@ -414,4 +918,26 @@
             $canfocus.eq(index).focus();
         }
     });
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    columns = (data);
+                    columns.push(actions);
+                } else {
+                    showErrorSnackbar("No column data found");
+                }
+            }
+        });
+    }
+    lucide.createIcons();
 </script>

@@ -1,24 +1,52 @@
-﻿@model ShineWeb.Models.SingleMasterModel
-@{
-    ViewBag.Title = ViewData["FormName"];//Purchase Order
-}
-<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
-<link href="~/Content/navbar.css" rel="stylesheet" />
-<link href="~/Content/buttonTop.css" rel="stylesheet" />
+﻿@*@model ShineWeb.Models.SingleMasterModel
+    @{
+        ViewBag.Title = ViewData["FormName"];//Purchase Order
+    }
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/navbar.css" rel="stylesheet" />
+    <link href="~/Content/buttonTop.css" rel="stylesheet" />*@
+
 @*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
-<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
-<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
+
+@*<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+    <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />*@
 
 
 @*<script src="~/Scripts/bootstrap.min.js"></script>
     <script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
+
+@*<script src="~/Scripts/jquery-1.11.1.min.js"></script>
+    <script src="~/Scripts/bootstrap_3.3.7.min.js"></script>
+    <script src="~/Scripts/jquery-3.7.1.js"></script>
+    <script src="~/Scripts/jquery-ui.js"></script>
+    <script src="~/Scripts/dataTables.2.2.2.js"></script>
+    <script src="~/Scripts/js/refreshtoken.js"></script>
+    <script src="~/GKBS_Grid/js/gridui.js"></script>*@
+
+@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+
+<link href="~/datatable/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
+
 <script src="~/Scripts/jquery-1.11.1.min.js"></script>
-<script src="~/Scripts/bootstrap_3.3.7.min.js"></script>
-<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
-<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<!-- Bootstrap 5 -->
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<script src="~/Scripts/5.3.8/bootstrap.bundle.min.js"></script>
+
+<script src="~/datatable/1.13.6/jquery.dataTables.min.js"></script>
+<script src="~/datatable/1.13.6/dataTables.bootstrap5.min.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_Grid/js/gridui.js"></script>
+<script src="~/Scripts/js/mrptaxcall.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
 </header>
@@ -239,11 +267,13 @@
         -moz-transition: all 0.2s ease-in-out;
         transition: all 0.2s ease-in-out;
         position: absolute;
-        top: -40%;
+        top: -65%;
         left: 1em;
         background: #fffefe;
         color: #2b2828;
-        font-size: 1em;
+        font-size: 0.9em;
+        font-weight: 600;
+        letter-spacing: 1px;
         cursor: text;
         pointer-events: none;
         font-family: sans-serif;
@@ -259,11 +289,13 @@
         -moz-transition: all 0.2s ease-in-out;
         transition: all 0.2s ease-in-out;
         position: absolute;
-        top: -18%;
+        top: -26%;
         left: 1em;
         background: #fffefe;
         color: #2b2828;
-        font-size: 1em;
+        font-size: 0.9em;
+        font-weight: 600;
+        letter-spacing: 1px;
         cursor: text;
         pointer-events: none;
         font-family: sans-serif;
@@ -277,6 +309,17 @@
         color: white;
         background-color: azure;
     }
+
+    #tblBatch {
+        table-layout: fixed !important;
+        width: 100% !important;
+    }
+
+        #tblBatch td, #tblBatch th {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
     /*input:focus + .labelup,
     input:not(:placeholder-shown) + .labelup, textarea:focus + .labelup, textarea:not(:placeholder-shown) + .labelup {
         top: -35%;
@@ -374,275 +417,460 @@
 
     <input hidden id="txtSAdd1" /><input hidden id="txtSAdd2" /><input hidden id="txtSAdd3" />
     <input hidden id="txtPincode" /><input hidden id="txtStatus" /><input hidden class="FormclrField" id="txtDraftID" />
-    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+    <div class="d-flex align-items-center gap-2">
+        <!-- Larger heading -->
+        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    </div>
 
     <div class="toastBox"></div>
     <div id="dvDocuments">
         <hr />
-        <div style="width:100%;">
-            <div class="col-sm-12 col-md-12 col-lg-12">
-                <div class="col-sm-12 col-md-4 col-lg-4">
-                    <div class="toggle">
-                        <input type="radio" name="sizeBy" value="dimensions" id="rdoMainTableData" checked />
-                        <label for="rdoMainTableData">PO Data</label>
-                        <input type="radio" name="sizeBy" value="dimensions" id="rdoDraftTableData" />
-                        <label for="rdoDraftTableData">Draft Data</label>
-                        <input type="radio" name="sizeBy" value="dimensions" id="rdoAITableData" />
-                        <label for="rdoAITableData">Indent Data</label>
+        @*<div style="width:100%;">
+                <div class="col-sm-12 col-md-12 col-lg-12">
+                    <div class="col-sm-12 col-md-4 col-lg-4">
+                        <div class="toggle">
+                            <input type="radio" name="sizeBy" value="dimensions" id="rdoMainTableData" checked />
+                            <label for="rdoMainTableData">PO Data</label>
+                            <input type="radio" name="sizeBy" value="dimensions" id="rdoDraftTableData" />
+                            <label for="rdoDraftTableData">Draft Data</label>
+                            <input type="radio" name="sizeBy" value="dimensions" id="rdoAITableData" />
+                            <label for="rdoAITableData">Indent Data</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-8 col-lg-8">
+                        <table>
+                            <tr>
+                                <td hidden>
+                                    <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
+                                </td>
+                                <td style="padding-left: 7px; padding: 0">
+                                    <span class="form-label">
+                                        <select class="form-control FormclrcmbField" id="cmbFilterBranch"><option value="0">Select Branch</option></select>
+                                        <label class="labelup" for="txtCode"> Branch </label>
+                                    </span>
+                                </td>
+                                <td style="padding-left: 7px; padding: 0">
+                                    <span class="form-label">
+                                        <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
+                                        <label class="labelup" for="txtCode"> Party</label>
+                                    </span>
+                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFParty" class="clrdivs"></div>
+                                </td>
+                                <td style="padding-left: 7px; padding: 0">
+                                    <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();">
+                                    </select>
+                                </td>
+                                <td style="border: none;padding:0">
+                                    <span class="form-label">
+                                        <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                                        <label class="labelup" for="txtCode"> From</label>
+                                    </span>
+                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFFrom" class="clrdivs"></div>
+                                </td>
+                                <td style="padding-left: 7px; padding: 0">
+
+                                    <span class="form-label">
+                                        <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                                        <label class="labelup" for="txtCode"> To</label>
+                                    </span>
+                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
+                                </td>
+                                <td style="padding-left: 7px; padding: 0">
+                                    <input tabindex="1" style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowAll">
+                                    <label for="chkShowAll" style="font-size:14px;">All Status</label>
+                                </td>
+                                <td style="padding-left: 7px; padding: 0">
+                                    <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
-                <div class="col-sm-12 col-md-8 col-lg-8">
-                    <table>
-                        <tr>
-                            <td hidden>
-                                <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
-                            </td>
-                            <td style="padding-left: 7px; padding: 0">
-                                <span class="form-label">
-                                    <select class="form-control FormclrcmbField" id="cmbFilterBranch"><option value="0">Select Branch</option></select>
-                                    <label class="labelup" for="txtCode"> Branch </label>
-                                </span>
-                            </td>
-                            <td style="padding-left: 7px; padding: 0">
-                                <span class="form-label">
-                                    <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
-                                    <label class="labelup" for="txtCode"> Party</label>
-                                </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFParty" class="clrdivs"></div>
-                            </td>
-                            <td style="padding-left: 7px; padding: 0">
-                                <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();">
-                                </select>
-                            </td>
-                            <td style="border: none;padding:0">
-                                <span class="form-label">
-                                    <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
-                                    <label class="labelup" for="txtCode"> From</label>
-                                </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFFrom" class="clrdivs"></div>
-                            </td>
-                            <td style="padding-left: 7px; padding: 0">
+                <div id="my-grid" style="height: 600px; width: 100%;"></div>
+            </div>*@
+        <div class="w-100">
 
-                                <span class="form-label">
-                                    <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
-                                    <label class="labelup" for="txtCode"> To</label>
-                                </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
-                            </td>
-                            <td style="padding-left: 7px; padding: 0">
-                                <input tabindex="1" style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowAll">
-                                <label for="chkShowAll" style="font-size:14px;">All Status</label>
-                            </td>
-                            <td style="padding-left: 7px; padding: 0">
-                                <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
-                            </td>
-                        </tr>
-                    </table>
+            <div class="row">
+                <div class="col-12">
+
+                    <div class="row">
+
+                        <!-- Radio Toggle -->
+                        <div class="col-12 col-md-4">
+                            <div class="toggle">
+                                <input type="radio" name="sizeBy" value="dimensions" id="rdoMainTableData" checked>
+                                <label for="rdoMainTableData">PO Data</label>
+
+                                <input type="radio" name="sizeBy" value="dimensions" id="rdoDraftTableData">
+                                <label for="rdoDraftTableData">Draft Data</label>
+
+                                <input type="radio" name="sizeBy" value="dimensions" id="rdoAITableData">
+                                <label for="rdoAITableData">Indent Data</label>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="col-12 col-md-8">
+
+                            <table>
+                                <tr>
+
+                                    <td hidden>
+                                        <button id="btnAdd" class="btn btn-info">
+                                            Add
+                                        </button>
+                                    </td>
+
+                                    <td class="ps-2 p-0">
+                                        <span class="form-label">
+                                            <select class="form-control FormclrcmbField" id="cmbFilterBranch">
+                                                <option value="0">Select Branch</option>
+                                            </select>
+                                            <label class="labelup">Branch</label>
+                                        </span>
+                                    </td>
+
+                                    <td class="ps-2 p-0">
+                                        <span class="form-label">
+                                            <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty">
+                                            <label class="labelup">Party</label>
+                                        </span>
+
+                                        <div id="divErrFParty" class="clrdivs text-danger pt-1 ps-1"></div>
+                                    </td>
+
+                                    <td class="ps-2 p-0">
+                                        <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
+                                    </td>
+
+                                    <td class="p-0">
+                                        <span class="form-label">
+                                            <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom">
+                                            <label class="labelup">From</label>
+                                        </span>
+
+                                        <div id="divErrFFrom" class="clrdivs text-danger pt-1 ps-1"></div>
+                                    </td>
+
+                                    <td class="ps-2 p-0">
+                                        <span class="form-label">
+                                            <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo">
+                                            <label class="labelup">To</label>
+                                        </span>
+
+                                        <div id="divErrFTo" class="clrdivs text-danger pt-1 ps-1"></div>
+                                    </td>
+
+                                    <td class="ps-2 p-0">
+                                        <input tabindex="1" class="FormfilterclrField" type="checkbox" id="chkShowAll">
+                                        <label for="chkShowAll" class="fs-6">All Status</label>
+                                    </td>
+
+                                    <td class="ps-2 p-0">
+                                        <button id="btnFilter" class="btn btn-primary">
+                                            Filter
+                                        </button>
+                                    </td>
+
+                                </tr>
+                            </table>
+
+                        </div>
+
+                    </div>
+
                 </div>
             </div>
-            <div id="my-grid" style="height: 600px; width: 100%;"></div>
+
+            <div id="my-grid" style="height:600px;width:100%;"></div>
+
         </div>
         @*<button id="btnLoadDraft" class="btn btn-primary"><span class="glyphicon glyphicon-download-alt	" style="color: white"></span>&#x2009;Load Draft Data</button>*@
-
         <hr />
-        <div hidden>
-            <table class="table table-bordered" id="tblMasterData" width="100%">
-                <thead>
-                    <tr class="trclrforcolheader">
-                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                        <th style="text-align:center;font-size: 12px;width:0%;">Status</th>
-                        <th style="text-align:center;font-size: 12px;width:9%;">Doc ID</th>
-                        <th style="text-align:center;font-size: 12px;width:9%;">Date</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">Ref No</th>
-                        <th style="text-align:center;font-size: 12px;width:12%;">Branch</th>
-                        <th style="text-align:center;font-size: 12px;width:20%;">Party Name</th>
-                        <th style="text-align:center;font-size: 12px;width:8%;">Gross ₹</th>
-                        <th style="text-align:center;font-size: 12px;width:8%;">Tax ₹</th>
-                        <th style="text-align:center;font-size: 12px;width:8%;">Net ₹</th>
-                        <th style="text-align:center;font-size: 12px;width:6%;">Status</th>
-                        <th style="text-align:center;font-size: 12px;width:6%;">User</th>
-                        <th style="text-align:center;font-size: 12px;width:3%;" title="View">
-                            <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
-                            </span>
-                        </th>
-                        <th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
-                            <span class="glyphicon glyphicon-pencil" style="font-size:16px">
-                            </span>
-                        </th>
-                        @*<th style="text-align:center;font-size: 12px;width:3%;" title="Edit">
-                                <span class="glyphicon glyphicon-pencil" style="font-size:16px">
-                                </span>
-                            </th>
-                            <th style="text-align:center;font-size: 12px;width:3%;" title="Cancel">
-                                <span class="glyphicon glyphicon-remove-circle" style="font-size:16px">
-                                </span>
-                            </th>
-                            <th style="text-align:center;font-size: 12px;width:3%;" title="View">
-                                <span class="glyphicon glyphicon-eye-open" style="font-size:16px">
-                                </span>
-                            </th>
-                            <th style="text-align:center;font-size: 12px;width:3%;" title="Variant">
-                                <span class="glyphicon glyphicon-file" style="font-size:12px">
-                                </span>
-                            </th>*@
-                    </tr>
-                </thead>
-            </table>
-        </div>
     </div>
 
     <div id="dvMain">
         <hr />
-        <div class="col-sm-12 col-md-12 col-lg-12">
-            <div class="col-sm-12 col-md-4 col-lg-4">
-                <table width="100%">
-                    <tr class="bgclrfortr">
-                        <td style="border:none;" colspan="2">
-                            <div class="input-group">
-                                <span class="form-label">
-                                    <input class="form-control FormclrField" type="text" id="txtSearch" placeholder="Select Vendor">
-                                    <label class="labelup" for="txtCode"> Select *</label>
-                                </span>
-                                <span id="VendInfo" class="input-group-addon"><span class="glyphicon glyphicon-info-sign" style="background-color:white;"></span></span>
-                            </div>
-                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrSearch" class="clrdivs"></div>
-                        </td>
-                    </tr>
-                    <tr hidden>
-                        <td style="border:none;" colspan="2">
-                            <label id="lblName"> </label><br /><label id="lblMob1"></label><br /><label id="lblGSTIN"></label>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-sm-12 col-md-5 col-lg-5">
-                <table width="100%">
-                    <tr class="bgclrfortr">
-                        <td style="border:none;">
-                            <div>
-                                <span class="form-label">
-                                    <select class="form-control FormclrcmbField" id="cmbBranch"><option value="0">Select Branch</option></select>
-                                    <label class="labelup" for="txtCode"> Branch *</label>
-                                </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBranch" class="clrdivs"></div>
-                            </div>
-                        </td>
-                        <td style="border:none;">
-                            <div>
-                                <span class="form-label">
-                                    <input class="form-control FormclrField" type="text" id="txtRefNo" placeholder=""
-                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
-                                           oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
-                                    <label class="labelup" for="txtCode"> Ref No</label>
-                                </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr hidden>
-                        <td style="border:none;">
-                            <div>
-                                <span class="form-label">
-                                    <select class="form-control FormclrcmbField" id="cmbFilter">
-                                        <option value="0">Select Filter</option>
-                                        <option value="1">Manufacturer</option>
-                                        <option value="2">Brand</option>
-                                        <option value="3">Category</option>
-                                    </select>
-                                    <label class="labelup" for="txtCode">Filter</label>
-                                </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
-                            </div>
-                        </td>
-                        <td style="border:none;">
-                            <div>
-                                <span class="form-label">
-                                    <select class="form-control FormclrcmbField" id="cmbFilterData" style="width:100%">
-                                    </select>
-                                    <label class="labelup" id="lblFilterData" for="txtCode"></label>
-                                </span>
-
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="bgclrfortr">
-                        <td style="border:none;">
+        <!--<div class="col-sm-12 col-md-12 col-lg-12">
+        <div class="col-sm-12 col-md-4 col-lg-4">
+            <table width="100%">
+                <tr class="bgclrfortr">
+                    <td style="border:none;" colspan="2">
+                        <div class="input-group">
                             <span class="form-label">
-                                <select class="form-control" id="cmbUOMType">
-                                    <option value="1">Base</option>
-                                    <option value="2">Purchase</option>
-                                </select>
-                                <label class="labelup">UOM Type</label>
-
+                                <input class="form-control FormclrField" type="text" id="txtSearch" placeholder="Select Vendor">
+                                <label class="labelup" for="txtCode"> Select *</label>
                             </span>
-                        </td>
+                            <span id="VendInfo" class="input-group-addon"><span class="glyphicon glyphicon-info-sign" style="background-color:white;"></span></span>
+                        </div>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrSearch" class="clrdivs"></div>
+                    </td>
+                </tr>
+                <tr hidden>
+                    <td style="border:none;" colspan="2">
+                        <label id="lblName"> </label><br /><label id="lblMob1"></label><br /><label id="lblGSTIN"></label>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-sm-12 col-md-5 col-lg-5">
+            <table width="100%">
+                <tr class="bgclrfortr">
+                    <td style="border:none;">
+                        <div>
+                            <span class="form-label">
+                                <select class="form-control FormclrcmbField" id="cmbBranch"><option value="0">Select Branch</option></select>
+                                <label class="labelup" for="txtCode"> Branch *</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrBranch" class="clrdivs"></div>
+                        </div>
+                    </td>
+                    <td style="border:none;">
+                        <div>
+                            <span class="form-label">
+                                <input class="form-control FormclrField" type="text" id="txtRefNo" placeholder=""
+                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
+                                       oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
+                                <label class="labelup" for="txtCode"> Ref No</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr hidden>
+                    <td style="border:none;">
+                        <div>
+                            <span class="form-label">
+                                <select class="form-control FormclrcmbField" id="cmbFilter">
+                                    <option value="0">Select Filter</option>
+                                    <option value="1">Manufacturer</option>
+                                    <option value="2">Brand</option>
+                                    <option value="3">Category</option>
+                                </select>
+                                <label class="labelup" for="txtCode">Filter</label>
+                            </span>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
+                        </div>
+                    </td>
+                    <td style="border:none;">
+                        <div>
+                            <span class="form-label">
+                                <select class="form-control FormclrcmbField" id="cmbFilterData" style="width:100%">
+                                </select>
+                                <label class="labelup" id="lblFilterData" for="txtCode"></label>
+                            </span>
 
-                        <td style="border:none;" hidden>
-                            <table>
-                                <tr>
-                                    <td style="border:none;">
-                                        <div>
-                                            <span class="form-label">
-                                                <input tabindex="1" class="form-control FormclrField" type="number" id="txtRefNo" placeholder="">
-                                                <label class="labelup" for="txtCode"> Days</label>
-                                            </span>
-                                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
+                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="bgclrfortr">
+                    <td style="border:none;">
+                        <span class="form-label">
+                            <select class="form-control" id="cmbUOMType">
+                                <option value="1">Base</option>
+                                <option value="2">Purchase</option>
+                            </select>
+                            <label class="labelup">UOM Type</label>
 
-                                        </div>
-                                    </td>
-                                    <td style="border:none;" width="30%">
-                                        <button class="btn btn-primary" id="btnLoadFilter">Load</button>&ensp;
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-sm-12 col-md-3 col-lg-3">
-                <table width="100%">
-                    @*<tr>
-                            <td style="border:none">
-                                <h4 id="MainHeading">@ViewData["FormName"]</h4>
-                            </td>
-                        </tr>*@
-                    <tr>
-                        <td style="border:none;" width="20%">
-                            <label style="font-size:14px">Doc ID : </label>
-                        </td>
-                        <td style="border:none;">
-                            <label id="lblDocID" style="font-size:14px">PO/2425/001</label>
-                        </td>
-                    </tr>
-                    <tr hidden>
-                        <td style="border:none;" colspan="2">
-                            <div>
-                                <span class="form-label">
-                                    <select class="form-control FormclrcmbField" id="cmbUDN"><option value="0">Select UDN</option></select>
-                                    <label class="labelup" for="txtCode">UDN</label>
-                                </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCode" class="clrdivs"></div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="border:none;" colspan="2">
-                            <div>
-                                <span class="form-label">
-                                    <input class="form-control FormclrField" type="date" id="dtpDate" oninput="javascript: if (this.value > this.max) { this.value = this.max; }" />
-                                    <label class="labelup" for="txtCode">Date *</label>
-                                </span>
+                        </span>
+                    </td>
+
+                    <td style="border:none;" hidden>
+                        <table>
+                            <tr>
+                                <td style="border:none;">
+                                    <div>
+                                        <span class="form-label">
+                                            <input tabindex="1" class="form-control FormclrField" type="number" id="txtRefNo" placeholder="">
+                                            <label class="labelup" for="txtCode"> Days</label>
+                                        </span>
+                                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRefNo" class="clrdivs"></div>
+
+                                    </div>
+                                </td>
+                                <td style="border:none;" width="30%">
+                                    <button class="btn btn-primary" id="btnLoadFilter">Load</button>&ensp;
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-sm-12 col-md-3 col-lg-3">
+            <table width="100%">-->
+        @*<tr>
+                <td style="border:none">
+                    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+                </td>
+            </tr>*@
+        <!--<tr>
+            <td style="border:none;" width="20%">
+                <label style="font-size:14px">Doc ID : </label>
+            </td>
+            <td style="border:none;">
+                <label id="lblDocID" docprefix="" style="font-size:14px">PO/2425/001</label>
+            </td>
+        </tr>
+        <tr hidden>
+            <td style="border:none;" colspan="2">
+                <div>
+                    <span class="form-label">
+                        <select class="form-control FormclrcmbField" id="cmbUDN"><option value="0">Select UDN</option></select>
+                        <label class="labelup" for="txtCode">UDN</label>
+                    </span>
+                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnCode" class="clrdivs"></div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="border:none;" colspan="2">
+                <div>
+                    <span class="form-label">
+                        <input class="clsdtpfieldbottomborderfull FormclrField" type="date" id="dtpDate" oninput="javascript: if (this.value > this.max) { this.value = this.max; }" />-->
+        @*<label class="labelup" for="txtCode">Date *</label>*@
+        <!--</span>
                                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrDate" class="clrdivs"></div>
                             </div>
                         </td>
                     </tr>
                 </table>
             </div>
+        </div>-->
+
+    <div class="container-fluid">
+        <div class="row mt-2">
+
+                <!-- Vendor Select -->
+                <div class="col-12 col-md-2">
+                    <table class="w-100">
+                        <tr class="bgclrfortr">
+                            <td style="border:none;">
+                                <span class="form-label">
+                                    <select class="form-select FormclrcmbField" id="cmbBranch">
+                                        <option value="0">Select Branch</option>
+                                    </select>
+                                    <label class="labelup">Branch *</label>
+                                </span>
+
+                                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrBranch"></div>
+                            </td>
+                            
+                        </tr>
+
+                        <tr hidden>
+                            <td colspan="2" style="border:none;">
+                                <label id="lblName"></label><br>
+                                <label id="lblMob1"></label><br>
+                                <label id="lblGSTIN"></label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Branch + Ref -->
+                <div class="col-12 col-md-7">
+                    <table class="w-100">
+                        <tr class="bgclrfortr">
+                            <td style="border:none;">
+                                <div class="input-group">
+                                    <span class="form-label flex-fill">
+                                        <input class="form-control FormclrField" type="text" id="txtSearch" placeholder="Select Vendor">
+                                        <label class="labelup">Select *</label>
+                                    </span>
+
+                                    <span id="VendInfo" class="input-group-text">
+                                        <i class="bi bi-info-circle"></i>
+                                    </span>
+                                </div>
+
+                                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrSearch"></div>
+                            </td>
+                            <td style="border: none;">
+                                <span class="form-label">
+                                    <select class="form-select" id="cmbUOMType">
+                                        <option value="1">Base</option>
+                                        <option value="2">Purchase</option>
+                                    </select>
+                                    <label class="labelup">UOM Type</label>
+                                </span>
+                            </td>
+                            <td style="border:none;">
+                                <span class="form-label">
+                                    <input class="form-control FormclrField"
+                                           type="text"
+                                           id="txtRefNo"
+                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
+                                           oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')">
+
+                                    <label class="labelup">Ref No</label>
+                                </span>
+                                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrRefNo"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Document Info -->
+                <div class="col-12 col-md-3 d-flex justify-content-end">
+                    @*<table >
+            <tr>
+                <td style="border:none;">
+                    <span class="fw-semibold">Doc ID :</span>
+                </td>
+                <td style="border:none;">
+                    <label id="lblDocID" docprefix="" style="font-size:14px" class="fw-semibold">
+                        PO/2425/001
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input class="clsdtpfieldbottomborder"
+                           type="date"
+                           id="dtpDate"
+                           oninput="if (this.value > this.max) { this.value = this.max; }"
+                           placeholder="Date" />
+                    <div class="text-danger pt-1 ps-1 clrdivs" id="divErrDate"></div>
+                </td>
+            </tr>
+        </table>*@
+                    <table>
+                        <tr>
+                            <td align="right">
+                                <span class="fw-semibold">
+                                    Doc ID :
+                                </span>
+                            </td>
+                            <td>
+                                <span id="lblDocID" docprefix="" style="font-size:14px" class="fw-bolder">PO/2425/1</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">
+                                <span class="fw-semibold">
+                                    Date :
+                                </span>
+                            </td>
+                            <td>
+                                <input class="clsdtpfieldbottomborder FormclrField"
+                                       type="date"
+                                       id="dtpDate"
+                                       oninput="if (this.value > this.max) { this.value = this.max; }"
+                                       placeholder="Date" />
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="text-danger pt-1 ps-1 clrdivs" id="divErrDate"></div>
+                </div>
+
+            </div>
         </div>
 
         <div>
             <div>
+                <hr />
                 <table class="table table-borderless" width="100%">
                     <tr hidden>
                         <td>
@@ -653,62 +881,162 @@
                             <input hidden id="txtUOMName" class="dtgFields" />
                             <input hidden id="txtUOMID" class="dtgFields" />
                             <input hidden id="txtUOMCR" class="dtgFields" />
+                            <input hidden id="txtMRPonTax" class="dtgFields" />
+                            <input hidden id="txtMRP" class="dtgFields" />
                         </td>
                     </tr>
+                    <!--<tr>
+
+                    <td width="40%">
+                        <input id="txtHProdCode" hidden />
+                        <div class="input-group">
+                            <span id="openproduct" class="input-group-addon" title="Product"><span class="glyphicon glyphicon-export"></span></span>
+                            <span class="form-label">
+                                <input class="form-control dtgFields" id="txtHProds" />
+                                <label class="labelup" for="txtCode">Item Details </label>
+                            </span>
+                            <span id="ItemInfo" class="input-group-addon"><span class="glyphicon glyphicon-info-sign" style="background-color:white;"></span></span>
+                        </div>
+                        <table>
+                            <tr>
+                                <td>
+                                    <label class="form-label" style="padding-left: 1em" id="lblProdCodeAS"></label>
+                                </td>
+                                <td>
+                                    <label class="form-label" style="padding-left: 2em" id="lblABS" title="click to see Branch Qty"></label>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProduct" class="clrdivs"></div>
+                    </td>
+                    <td width="10%">
+                        <span class="form-label">
+                            <input txttag="0" class="form-control clstxtTag dtgFields txtsettag" type="number" step="any" id="txtExclPrice"
+                                   onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)" />
+                            <label class="labelup">Excl Price </label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrExclPrice" class="clrdivs"></div>
+                    </td>
+                    <td width="10%">
+                        <span class="form-label">
+                            <input txttag="0" class="form-control clstxtTag dtgFields txtsettag" type="number" step="any" id="txtInclPrice"
+                                   onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)" />
+                            <label class="labelup">Incl Price </label>
+                        </span>
+                    </td>
+                    <td width="10%">
+                        <span class="form-label">
+                            <input txttag="0" class="form-control clstxtTag dtgFields txtsettag" type="number" step="any" id="txtQty"
+                                   onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)" />
+                            <label class="labelup">Qty </label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrQty" class="clrdivs"></div>
+                    </td>
+                    <td width="10%">
+                        <button class="btn btn-primary" id="btnBatch">Add</button>&ensp;-->
+                    @*<button class="btn btn-info" tabindex="5">Add</button>*@
+                    <!--<div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProductBatch" class="clrdivs"></div>
+                        </td>
+                        <td width="20%">
+                        </td>
+                    </tr>-->
+
                     <tr>
 
-                        <td width="40%">
-                            <input id="txtHProdCode" hidden />
+                        <td width="40%" style="padding-top:15px;">
+                            <input id="txtHProdCode" type="hidden" />
+
                             <div class="input-group">
-                                <span id="openproduct" class="input-group-addon" title="Product"><span class="glyphicon glyphicon-export"></span></span>
-                                <span class="form-label">
-                                    <input class="form-control dtgFields" id="txtHProds" />
-                                    <label class="labelup" for="txtCode">Item Details </label>
+
+                                <span id="openproduct" class="input-group-text" title="Product">
+                                    <i class="bi bi-box-arrow-up-right"></i>
                                 </span>
-                                <span id="ItemInfo" class="input-group-addon"><span class="glyphicon glyphicon-info-sign" style="background-color:white;"></span></span>
+
+                                <span class="form-label flex-grow-1">
+                                    <input class="form-control dtgFields" id="txtHProds" />
+                                    <label class="labelup" for="txtHProds">Item Details</label>
+                                </span>
+
+                                <span id="ItemInfo" class="input-group-text">
+                                    <i class="bi bi-info-circle"></i>
+                                </span>
+
                             </div>
+
                             <table>
                                 <tr>
                                     <td>
-                                        <label class="form-label" style="padding-left: 1em" id="lblProdCodeAS"></label>
+                                        <label class="form-label ps-3" id="lblProdCodeAS"></label>
                                     </td>
                                     <td>
-                                        <label class="form-label" style="padding-left: 2em" id="lblABS" title="click to see Branch Qty"></label>
+                                        <label class="form-label ps-4" id="lblABS" title="click to see Branch Qty"></label>
                                     </td>
                                 </tr>
                             </table>
 
-                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProduct" class="clrdivs"></div>
+                            <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrProduct" class="clrdivs"></div>
                         </td>
-                        <td width="10%">
+
+
+                        <td width="10%" style="padding-top:15px;">
                             <span class="form-label">
-                                <input txttag="0" class="form-control clstxtTag dtgFields txtsettag" type="number" step="any" id="txtExclPrice"
-                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)" />
-                                <label class="labelup">Excl Price </label>
+                                <input txttag="0"
+                                       class="form-control clstxtTag dtgFields txtsettag"
+                                       type="number"
+                                       step="any"
+                                       id="txtExclPrice"
+                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"
+                                       oninput="sanitizeNumericOnly(this, null)" />
+
+                                <label class="labelup">Excl Price</label>
                             </span>
-                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrExclPrice" class="clrdivs"></div>
+
+                            <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrExclPrice" class="clrdivs"></div>
                         </td>
-                        <td width="10%">
+
+
+                        <td width="10%" style="padding-top:15px;">
                             <span class="form-label">
-                                <input txttag="0" class="form-control clstxtTag dtgFields txtsettag" type="number" step="any" id="txtInclPrice"
-                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)" />
-                                <label class="labelup">Incl Price </label>
+                                <input txttag="0"
+                                       class="form-control clstxtTag dtgFields txtsettag"
+                                       type="number"
+                                       step="any"
+                                       id="txtInclPrice"
+                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"
+                                       oninput="sanitizeNumericOnly(this, null)" />
+
+                                <label class="labelup">Incl Price</label>
                             </span>
                         </td>
-                        <td width="10%">
+
+
+                        <td width="10%" style="padding-top:15px;">
                             <span class="form-label">
-                                <input txttag="0" class="form-control clstxtTag dtgFields txtsettag" type="number" step="any" id="txtQty"
-                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)" />
-                                <label class="labelup">Qty </label>
+                                <input txttag="0"
+                                       class="form-control clstxtTag dtgFields txtsettag"
+                                       type="number"
+                                       step="any"
+                                       id="txtQty"
+                                       onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"
+                                       oninput="sanitizeNumericOnly(this, null)" />
+
+                                <label class="labelup">Qty</label>
                             </span>
-                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrQty" class="clrdivs"></div>
+
+                            <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrQty" class="clrdivs"></div>
                         </td>
-                        <td width="10%">
-                            <button class="btn btn-primary" id="btnBatch">Add</button>&ensp;@*<button class="btn btn-info" tabindex="5">Add</button>*@
-                            <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProductBatch" class="clrdivs"></div>
+
+
+                        <td width="10%" style="padding-top:15px;">
+                            <button class="btn btn-primary" id="btnBatch"><i class="glyphicon glyphicon-plus"></i> Add Item</button>
+                            <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrProductBatch" class="clrdivs"></div>
                         </td>
+
+
                         <td width="20%">
                         </td>
+
                     </tr>
                     <tr>
                     </tr>
@@ -735,6 +1063,7 @@
                         <th style="text-align:center;font-size: 12px;width:5%;" class="trclrforcolheader">Tax %</th>
                         <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Tax ₹</th>
                         <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Net ₹</th>
+                        <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">MRPonTax</th>
                     </tr>
                 </thead>
                 <tfoot>
@@ -760,110 +1089,242 @@
             @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
         </div>
 
-        <div class="col-sm-12 col-md-12 col-lg-12" style="padding-bottom:200px;">
-            <div class="col-sm-12 col-md-3 col-lg-3">
+        @*<div class="col-sm-12 col-md-12 col-lg-12" style="padding-bottom:200px;">
+                <div class="col-sm-12 col-md-3 col-lg-3">
 
-            </div>
-            <div class="col-sm-12 col-md-3 col-lg-3">
-                <table class="table" width="100%">
-                    <tr class="bgclrfortr">
-                        <td style="border:none;" width="80">
-                            <div>
+                </div>
+                <div class="col-sm-12 col-md-3 col-lg-3">
+                    <table class="table" width="100%">
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" width="80">
+                                <div>
+                                    <span class="form-label">
+                                        <select class="form-control" id="cmbPrintProfile"><option value="0">Select</option></select>
+                                        <label class="labelup"> Print Profile</label>
+                                    </span>
+                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
+                                </div>
+                            </td>
+                            <td style="border:none;" width="20">
+                                <div>
+                                    <span class="form-label">
+                                        <input id="txtNoofCopies" type="number" class="form-control" value="1"
+                                               onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)" />
+                                        <label class="labelup">Copies</label>
+                                    </span>
+                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-sm-12 col-md-3 col-lg-3">
+                    <table class="table">
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" colspan="2">
+                                <div>
+                                    <span class="form-label">
+                                        <input class="form-control FormclrField" type="text" id="txtRemarks" placeholder=""
+                                               onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
+                                               oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
+                                        <label class="labelup" for="txtCode">Remarks</label>
+                                    </span>
+                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdivs"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" colspan="2">
+                                <div>
+                                    <span class="form-label">
+                                        <textarea class="form-control FormclrField" rows="3" id="txtNarration"
+                                                  onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
+                                                  oninput="sanitizeAlphaNumeric(this, '#divErrNarration')"></textarea>
+                                        <label class="labelupfortextarea" for="txtCode">Narration</label>
+                                    </span>
+                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNarration" class="clrdivs"></div>
+                                </div>
+                            </td>
+                    </table>
+                </div>
+                <div class="col-sm-12 col-md-3 col-lg-3">
+                    <table class="table">
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" align="right">
+                                <label>Tax Amount :</label>
+                                <a href="javascript:void(0);" id="toggleTax"> [+] </a>
+                            </td>
+                            <td style="border:none;" align="right">
+                                <label id="lblTaxAmount">0.00</label>
+                            </td>
+                        </tr>
+                        <tr class="bgclrfortr taxDetails" style="display:none;">
+                            <td style="border:none;" align="right">
+                                <label>CGST Amount : </label>
+                            </td>
+                            <td style="border:none;" align="right">
+                                <label lbltag="0" id="lblCGST" class="lblsettag">0.00</label>
+                            </td>
+                        </tr>
+                        <tr class="bgclrfortr taxDetails" style="display:none;">
+                            <td style="border:none;" align="right">
+                                <label>SGST Amount : </label>
+                            </td>
+                            <td style="border:none;" align="right">
+                                <label lbltag="0" id="lblSGST" class="lblsettag">0.00</label>
+                            </td>
+                        </tr>
+                        <tr class="bgclrfortr" hidden>
+                            <td style="border:none;" align="right">
+                                <label>IGST Amount : </label>
+                            </td>
+                            <td style="border:none;" align="right">
+                                <label lbltag="0" id="lblIGST" class="lblsettag">0.00</label>
+                            </td>
+                        </tr>
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" align="right">
+                                <label>Round off : </label>
+                            </td>
+                            <td style="border:none;" align="right">
+                                <input txttag="0" type="number" step="any" id="txtRoundOff" class="gdInput FormclrField txtsettag" />
+                            </td>
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" align="right">
+                                <label>Rounded Net Amount : </label>
+                            </td>
+                            <td style="border:none;font-size:16px;" align="right">
+                                <label lbltag="0" id="lblRoundNet" class="lblsettag">0.00</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>*@
+        <div class="container-fluid pb-5" style="padding-bottom:200px;">
+            <div class="row">
+
+                <div class="col-12 col-md-3"></div>
+
+                <!-- Print Profile -->
+                <div class="col-12 col-md-3">
+                    <table class="table w-100">
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" width="80%">
                                 <span class="form-label">
-                                    <select class="form-control" id="cmbPrintProfile"><option value="0">Select</option></select>
-                                    <label class="labelup"> Print Profile</label>
+                                    <select class="form-control" id="cmbPrintProfile">
+                                        <option value="0">Select</option>
+                                    </select>
+                                    <label class="labelup">Print Profile</label>
                                 </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
-                            </div>
-                        </td>
-                        <td style="border:none;" width="20">
-                            <div>
+                                <div class="text-danger pt-1 ps-1" id="divErrPrintProfile"></div>
+                            </td>
+
+                            <td style="border:none;" width="20%">
                                 <span class="form-label">
                                     <input id="txtNoofCopies" type="number" class="form-control" value="1"
-                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)" />
+                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"
+                                           oninput="sanitizeNumericOnly(this, null)" />
                                     <label class="labelup">Copies</label>
                                 </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPrintProfile" class="clrdivs"></div>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-sm-12 col-md-3 col-lg-3">
-                <table class="table">
-                    <tr class="bgclrfortr">
-                        <td style="border:none;" colspan="2">
-                            <div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Remarks + Narration -->
+                <div class="col-12 col-md-3">
+                    <table class="table">
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" colspan="2">
                                 <span class="form-label">
-                                    <input class="form-control FormclrField" type="text" id="txtRemarks" placeholder=""
+                                    <input class="form-control FormclrField" type="text" id="txtRemarks"
                                            onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrRemarks')"
                                            oninput="sanitizeAlphaNumeric(this, '#divErrRemarks')" />
-                                    <label class="labelup" for="txtCode">Remarks</label>
+                                    <label class="labelup">Remarks</label>
                                 </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrRemarks" class="clrdivs"></div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="bgclrfortr">
-                        <td style="border:none;" colspan="2">
-                            <div>
+                                <div class="text-danger pt-1 ps-1" id="divErrRemarks"></div>
+                            </td>
+                        </tr>
+
+                        <tr class="bgclrfortr">
+                            <td style="border:none;" colspan="2">
                                 <span class="form-label">
                                     <textarea class="form-control FormclrField" rows="3" id="txtNarration"
                                               onbeforeinput="return AlphaNumericBeforeInput(event, this,'#divErrNarration')"
                                               oninput="sanitizeAlphaNumeric(this, '#divErrNarration')"></textarea>
-                                    <label class="labelupfortextarea" for="txtCode">Narration</label>
+                                    <label class="labelupfortextarea">Narration</label>
                                 </span>
-                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrNarration" class="clrdivs"></div>
-                            </div>
-                        </td>
-                </table>
-            </div>
-            <div class="col-sm-12 col-md-3 col-lg-3">
-                <table class="table">
-                    <tr class="bgclrfortr">
-                        <td style="border:none;" align="right">
-                            <label>CGST Amount : </label>
-                        </td>
-                        <td style="border:none;" align="right">
-                            <label lbltag="0" id="lblCGST" class="lblsettag">0.00</label>
-                        </td>
-                    </tr>
-                    <tr class="bgclrfortr">
-                        <td style="border:none;" align="right">
-                            <label>SGST Amount : </label>
-                        </td>
-                        <td style="border:none;" align="right">
-                            <label lbltag="0" id="lblSGST" class="lblsettag">0.00</label>
-                        </td>
-                    </tr>
-                    <tr class="bgclrfortr" hidden>
-                        <td style="border:none;" align="right">
-                            <label>IGST Amount : </label>
-                        </td>
-                        <td style="border:none;" align="right">
-                            <label lbltag="0" id="lblIGST" class="lblsettag">0.00</label>
-                        </td>
-                    </tr>
-                    <tr class="bgclrfortr">
-                        <td style="border:none;" align="right">
-                            <label>Round off : </label>
-                        </td>
-                        <td style="border:none;" align="right">
-                            <input txttag="0" type="number" step="any" id="txtRoundOff" class="gdInput FormclrField txtsettag" />
-                        </td>
-                    <tr class="bgclrfortr">
-                        <td style="border:none;" align="right">
-                            <label>Rounded Net Amount : </label>
-                        </td>
-                        <td style="border:none;font-size:16px;" align="right">
-                            <label lbltag="0" id="lblRoundNet" class="lblsettag">0.00</label>
-                        </td>
-                    </tr>
-                </table>
+                                <div class="text-danger pt-1 ps-1" id="divErrNarration"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Tax Section -->
+                <div class="col-12 col-md-3">
+                    <table class="table">
+                        <tr class="bgclrfortr">
+                            <td class="text-end" style="border:none;">
+                                <label>Tax Amount :</label>
+                                <a href="javascript:void(0);" id="toggleTax"> [+] </a>
+                            </td>
+                            <td class="text-end" style="border:none;">
+                                <label id="lblTaxAmount" class="fw-bold fs-5">0.00</label>
+                            </td>
+                        </tr>
+
+                        <tr class="bgclrfortr taxDetails" style="display:none;">
+                            <td class="text-end" style="border:none;">
+                                <label>CGST Amount :</label>
+                            </td>
+                            <td class="text-end" style="border:none;">
+                                <label lbltag="0" id="lblCGST" class="lblsettag fw-bold fs-5">0.00</label>
+                            </td>
+                        </tr>
+
+                        <tr class="bgclrfortr taxDetails" style="display:none;">
+                            <td class="text-end" style="border:none;">
+                                <label>SGST Amount :</label>
+                            </td>
+                            <td class="text-end" style="border:none;">
+                                <label lbltag="0" id="lblSGST" class="lblsettag fw-bold fs-5">0.00</label>
+                            </td>
+                        </tr>
+
+                        <tr class="bgclrfortr d-none">
+                            <td class="text-end" style="border:none;">
+                                <label>IGST Amount :</label>
+                            </td>
+                            <td class="text-end" style="border:none;">
+                                <label lbltag="0" id="lblIGST" class="lblsettag fw-bold fs-5">0.00</label>
+                            </td>
+                        </tr>
+
+                        <tr class="bgclrfortr">
+                            <td class="text-end" style="border:none;">
+                                <label>Round off :</label>
+                            </td>
+                            <td class="text-end" style="border:none;">
+                                <input txttag="0" type="number" step="any" id="txtRoundOff"
+                                       class="form-control gdInput FormclrField txtsettag fw-bold fs-5" />
+                            </td>
+                        </tr>
+
+                        <tr class="bgclrfortr">
+                            <td class="text-end" style="border:none;">
+                                <label>Rounded Net Amount :</label>
+                            </td>
+                            <td class="text-end" style="border:none;font-size:16px;">
+                                <label lbltag="0" id="lblRoundNet" class="lblsettag fw-bold fs-4">0.00</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
             </div>
         </div>
         <div class="footerAction modal-footer">
-            <div style="padding-right:20px" align="right">
+            <div style="padding-right:20px" align="right" class="p-2">
                 <button type="button" class="btn" id="btnWhatsapp" style="background-color:green;color:white"><i class='fa-brands fa-whatsapp' style='color:white'></i> Whatsapp</button>
                 <button type="button" class="btn clrforpdf" id="btnEmail"><span class="glyphicon glyphicon-envelope"> Mail</span></button>
                 <button type="button" class="btn clrforpdf" id="btnPDF"><i class='fa-regular fa-file-pdf' style='color:white'></i> PDF</button>
@@ -872,54 +1333,109 @@
                 <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
                 <button type="button" class="btn btn-primary" id="btnDraft"><span class="glyphicon glyphicon-saved"> Draft</span></button>
                 <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
-                <button type="button" class="btn btn-warning" id="btnClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
+                <button type="button" class="btn btn-warning" id="btnClose"><i class="bi bi-x-circle"></i> Close</button>
             </div>
         </div>
     </div>
-    <div class="modalBatch" id="myModalfg">
+
+    <!--<div class="modalBatch" id="myModalfg">
         <div class="modal-dialog" style="width:auto;">
-            <div class="modalBatch-content">
-                <!-- Modal Header -->
-                <div class="modal-header">
-                    <button type="button" class="closefg">&times;</button>
-                    <h5 class="modal-title" style="color:black" id="lblPopupheading"><b>Previous Batch</b></h5>
+            <div class="modalBatch-content">-->
+    <!-- Modal Header -->
+    <!--<div class="modal-header">
+        <button type="button" class="closefg">&times;</button>
+        <h5 class="modal-title" style="color:black" id="lblPopupheading"><b>Previous Batch</b></h5>
+    </div>
+    <div style="width:100%;padding-bottom:7px">
+        <table class="table table-bordered row-border order-column" id="tblBatch" style="width:100%">
+            <thead>
+                <tr style="background-color: #cfe2f3">
+                    <th colspan="3"></th>
+                    <th>
+                        MOH : <label id="lblMOH" class="lblBatchvalue">112.00</label>
+                    </th>
+                    <th>
+                        MOQ : <label id="lblMOQ" class="lblBatchvalue">42.00</label>
+                    </th>
+                    <th colspan="2">
+                        <span class="form-label">
+                            <select class="form-control FormclrcmbField" id="cmbProdBatchUOM">
+                            </select>
+
+                        </span>
+                    </th>
+                </tr>
+                <tr style="background-color: #cfe2f3">
+                    <th colspan="3"></th>
+                    <th>
+                        ABS Qty:<label id="lblAbsqty" class="lblBatchvalue">12.00</label>
+                    </th>
+                    <th>
+                        Value :<label id="lblABSValue" class="lblBatchvalue">1200.00</label>
+                    </th>
+                    <th>
+                        SR Qty : <label id="lblRTNQty" class="lblBatchvalue">100.00</label>
+                    </th>
+                    <th>
+                        DR Qty : <label id="lblDMGRTNQty" class="lblBatchvalue">100.00</label>
+                    </th>
+                </tr>
+
+                <tr style="background-color: #073763;color:white">
+                    <th>BasePurchaseQty</th>
+                    <th>BasePurchasePrice</th>
+                    <th>BaseSaleQty</th>
+                    <th style="width:25%">Date</th>
+                    <th style="width:25%">Purchase Qty</th>
+                    <th style="width:25%">Purchase Price</th>
+                    <th style="width:25%">Sale Qty</th>
+                </tr>
+            </thead>
+        </table>
+    </div>-->
+    <!-- Modal footer -->
+    <!--<div class="modal-footer" style="background-color:skyblue">
+                    <div style="padding-top:0px" align="right">
+                        <button type="button" class="btn btn-warning" id="btnBatchInfoClose"><i class="bi bi-x-circle"></i> Close</button>
+                    </div>
                 </div>
-                <div style="width:100%;padding-bottom:7px">
-                    <table class="table table-bordered row-border order-column" id="tblBatch" style="width:100%">
+            </div>
+        </div>
+    </div>-->
+
+    <div class="modal fade" id="myModalfg" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color:#90ee90">
+                    <h5 class="modal-title"><b>Previous Batch</b></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" id="btnBatchClose"></button>
+                </div>
+
+                <!-- Table with info rows INSIDE thead -->
+                <div class="table-responsive pb-2">
+                    <table class="table table-bordered mb-0" id="tblBatch" style="width:100%">
                         <thead>
-                            <tr style="background-color: #cfe2f3">
+                            <!-- Info Row 1 - MOH, MOQ, UOM -->
+                            <tr style="background-color:#cfe2f3;">
                                 <th colspan="3"></th>
-                                <th>
-                                    MOH : <label id="lblMOH" class="lblBatchvalue">112.00</label>
-                                </th>
-                                <th>
-                                    MOQ : <label id="lblMOQ" class="lblBatchvalue">42.00</label>
-                                </th>
+                                <th>MOH : <label id="lblMOH" class="lblBatchvalue">112.00</label></th>
+                                <th>MOQ : <label id="lblMOQ" class="lblBatchvalue">42.00</label></th>
                                 <th colspan="2">
-                                    <span class="form-label">
-                                        <select class="form-control FormclrcmbField" id="cmbProdBatchUOM">
-                                        </select>
-
-                                    </span>
+                                    <select class="form-select form-select-sm" id="cmbProdBatchUOM"></select>
                                 </th>
                             </tr>
-                            <tr style="background-color: #cfe2f3">
+                            <!-- Info Row 2 - ABS, Value, SR, DR -->
+                            <tr style="background-color:#cfe2f3;">
                                 <th colspan="3"></th>
-                                <th>
-                                    ABS Qty:<label id="lblAbsqty" class="lblBatchvalue">12.00</label>
-                                </th>
-                                <th>
-                                    Value :<label id="lblABSValue" class="lblBatchvalue">1200.00</label>
-                                </th>
-                                <th>
-                                    SR Qty : <label id="lblRTNQty" class="lblBatchvalue">100.00</label>
-                                </th>
-                                <th>
-                                    DR Qty : <label id="lblDMGRTNQty" class="lblBatchvalue">100.00</label>
-                                </th>
+                                <th>ABS Qty : <label id="lblAbsqty" class="lblBatchvalue">12.00</label></th>
+                                <th>Value : <label id="lblABSValue" class="lblBatchvalue">1200.00</label></th>
+                                <th>SR Qty : <label id="lblRTNQty" class="lblBatchvalue">100.00</label></th>
+                                <th>DR Qty : <label id="lblDMGRTNQty" class="lblBatchvalue">100.00</label></th>
                             </tr>
-
-                            <tr style="background-color: #073763;color:white">
+                            <!-- Actual Column Headers - 7 columns matching data -->
+                            <tr style="background-color:#073763; color:white;">
                                 <th>BasePurchaseQty</th>
                                 <th>BasePurchasePrice</th>
                                 <th>BaseSaleQty</th>
@@ -931,13 +1447,13 @@
                         </thead>
                     </table>
                 </div>
-                <!-- Modal footer -->
-                <div class="modal-footer" style="background-color:skyblue">
-                    <div style="padding-top:0px" align="right">
-                        <button type="button" class="btn btn-warning" id="btnBatchInfoClose"><span class="glyphicon glyphicon-remove"> Close</span></button>
-                    </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" id="btnBatchInfoClose">Close</button>
                 </div>
-            </div>  
+
+            </div>
         </div>
     </div>
 </body>
@@ -970,7 +1486,7 @@
                 visible: ViewPerm,
                 // $("#txtViewID").val() == 1,
                 handler: (rowdata) => {
-                    $(".clrdivs").html("");                   
+                    $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
                     nTransMode = 5;
                     $("#txtID").val(ID);
@@ -987,6 +1503,7 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
+                    LoadBranchByRoles();
                 }
             },
             {
@@ -1011,7 +1528,7 @@
                 },
                 displayType: 'menu_item',
                 handler: (rowdata, gridInstance) => {
-                    $(".clrdivs").html("");              
+                    $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[9];
                     if (sts != "Cancelled") {
@@ -1037,6 +1554,7 @@
                         if ($("#txtEnableBranch").val() == 1) {
                             $("#cmbBranch").prop("disabled", true);
                         }
+                        LoadBranchByRoles();
                     }
                     else {
                         showErrorSnackbar("Cannot Modify.This document already cancelled");
@@ -1050,7 +1568,7 @@
                 visible: mapusersRole.canVariant && Permrdo1 == "1",
                 displayType: 'menu_item',
                 handler: (rowdata, gridInstance) => {
-                    $(".clrdivs").html("");              
+                    $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
                     $("#txtID").val(ID);
                     nTransMode = 3;
@@ -1072,6 +1590,12 @@
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
                     }
+                    setTimeout(() => {
+                        var DocDate = $("#dtpDate").val();
+                        var Branch = $("#cmbBranch").val();
+                        LoadBranchByRoles();
+                        GetDocumentID(DocDate, Branch, 3);
+                    }, 1000);
                 }
             },
             {
@@ -1098,7 +1622,7 @@
                 },
                 displayType: 'menu_item',
                 handler: (rowdata, gridInstance) => {
-                    $(".clrdivs").html("");       
+                    $(".clrdivs").html("");
                     var rdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : $("#rdoAITableData").is(":checked") ? "3" : "4";
 
                     var ID = rowdata.ID;//[0];
@@ -1111,6 +1635,7 @@
                             var rdo2 = $("#rdoDraftTableData").is(":checked");
                             GetProductViewData(7, ID);
                             $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+                            $("#txtNarration,#txtRemarks").prop("disabled", false);
                             //$("#btnSave,#btnClose").prop("disabled", false);
                             //$("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
                             $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
@@ -1124,6 +1649,7 @@
                             if ($("#txtEnableBranch").val() == 1) {
                                 $("#cmbBranch").prop("disabled", true);
                             }
+                            LoadBranchByRoles();
                         }
                         else {
                             var conf = confirm("Do you want to remove draft data?");
@@ -1250,28 +1776,7 @@
     //    });
     //}
     //dvDocuments,
-        $("#dvMain").hide();
-    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-        "bFilter": true,
-        "bSearchable": true,
-        "bInfo": true,
-        "bPaginate": true,
-        "ordering": true,
-        scrollY: "400px",
-        scrollX: true,
-        scrollCollapse: true,
-        "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false, }],
-
-        //"footerCallback": function (row, data, start, end, display) {
-        //    total = this.api()
-        //        .column(6)
-        //        .data()
-        //        .reduce(function (a, b) {
-        //            return parseInt(a) + parseInt(b);
-        //        }, 0);
-        //    showErrorSnackbar(total);
-        //}
-    });
+        $("#dvMain").hide();    
     var TableBatch = $('#tblBatch').DataTable({
         "bFilter": false,
         "bSearchable": false,
@@ -1282,8 +1787,18 @@
         scrollY: "180px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0, 1, 2], "visible": false, searchable: false, }, { "targets": [3], width: "10%" }, { "targets": [4, 5, 6], width: "8%" }]
+        autoWidth: false,
+        "columnDefs": [{ "targets": [0, 1, 2], "visible": false, searchable: false, }, { "targets": [3], width: "10%" }, { "targets": [4, 5, 6], width: "8%" }],
+        drawCallback: function () {              // ✅ ADD THIS
+            this.api().columns.adjust();
+        }
     });
+    document.getElementById('myModalfg')
+        .addEventListener('shown.bs.modal', function () {
+            // $('#tblProductHistory').DataTable().columns.adjust().draw();
+            if (TableBatch) TableBatch.columns.adjust().draw();
+
+        });
     var ProductTable = $('#tblProductData').DataTable({
         paging: false,
         searching: false,
@@ -1293,8 +1808,8 @@
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0, 1, 2, 3, 4, 5], "visible": false, searchable: false, filter: false }, { "targets": [8], width: "35%" },
-            { "targets": [9, 10, 11], width: "8%" }],
+        "columnDefs": [{ "targets": [0, 1, 2, 3, 4, 5,17], "visible": false, searchable: false, filter: false }, { "targets": [8], width: "35%" },
+            { "targets": [9, 10, 11], width: "8%" }, { "targets": [13, 14,15, 16], class: "dt-body-right" }],
         //ajax: {
         //    url: 'initial_url',
         //    dataSrc: [],
@@ -1313,36 +1828,21 @@ if ($("#txtAddID").val() == 0) {
     $("#trAdd").hide();
     $("#btnAdd").hide();
     }
-
+    LoadBranchByRoles();
         var enableBranch = '@(Model.EnableBranch ?? "0")';
     console.log("EnableBranch:", enableBranch);
 
     if ($("#txtEnableBranch").val() == 1) {
-        $("#cmbBranch").prop("disabled", true);
+        $("#cmbBranch,#cmbFilterBranch").prop("disabled", true);
     }
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {
-        $("#txtDraftID").val($("#txtID").val())
-        //var rdo1 = $("#rdoMainTableData").is(":checked");
-        //var rdo2 = $("#rdoDraftTableData").is(":checked");
-        //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
-        var ID = $("#txtID").val();
-        GetProductViewData(10, ID);
-        nTransMode = 1;
-        //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
-        $("#btnEmail,#btnWhatsapp").hide();
-
-        $("#MainHeading").text("Create " + $("#txtFormName").val());
-    }
-    var modal = document.getElementById("myModalfg");
-    var span = document.getElementsByClassName("closefg")[0];
-    span.onclick = function () {
-        modal.style.display = "none";
-    }
+    
+    var modal = new bootstrap.Modal(document.getElementById('myModalfg')); //document.getElementById("myModalfg");
+    //var span = document.getElementsByClassName("closefg")[0];
+    //span.onclick = function () {
+    //    modal.hide();
+    //}
     $('#btnBatchInfoClose').click(function (e) {
-        modal.style.display = "none";
+        modal.hide();
     });
 
     $("#btnAdd").click(function () {
@@ -1357,15 +1857,19 @@ if ($("#txtAddID").val() == 0) {
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        $("#dvMain").hide();
-        $("#dvDocuments").show();
-        //dvDocuments,
-        var rdo1 = $("#rdoMainTableData").is(":checked");
-        //var rdo2 = $("#rdoDraftTableData").is(":checked");
-        //GetData(rdo1 ? 6 : 9);
-        GetFilterData();
-        stopAutoDraftSave();
-        $("#MainHeading").text($("#txtFormName").val());
+        if ($("#txtTransType").val() == 1 || $("#txtTransType").val() == 2) {
+            this.close();
+        } else {
+            $("#dvMain").hide();
+            $("#dvDocuments").show();
+            //dvDocuments,
+            var rdo1 = $("#rdoMainTableData").is(":checked");
+            //var rdo2 = $("#rdoDraftTableData").is(":checked");
+            //GetData(rdo1 ? 6 : 9);
+            GetFilterData();
+            stopAutoDraftSave();
+            $("#MainHeading").text($("#txtFormName").val());
+        }
     }
     function Scrolltoid(id) {
         //window.scrollTo(id[0].offsetLeft, id[0].offsetTop);
@@ -1484,6 +1988,29 @@ setTimeout(function () { GetFilterData(); }, 800);
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
     var prodids = 0;
+
+    $('#dtpDate,#cmbBranch').on('focus', function () {
+        $(this).data("oldvalue", $(this).val());
+    });
+    $("#dtpDate").change(function (e) {
+        var DocDate = e.target.value;
+        var id = e.target.id;
+        var Branch = $("#cmbBranch").val();
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 3, prefix, isedit, id);
+    });
+
+    $("#cmbBranch").change(function (e) {
+        if (typeof GetDocumentID !== "function") return;
+        var DocDate = $("#dtpDate").val();
+        var Branch = e.target.value;
+        var id = e.target.id;
+        var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
+        var isedit = nTransMode == 2;
+        GetDocumentID(DocDate, Branch, 3, prefix, isedit, id);
+    });    
+    var arrPurchaseTaxDetails = [];
     function GetData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "purchaseorder/get",
@@ -1534,7 +2061,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                         }
                     });
                     SetAutlistforFields();
-                    $("#cmbBranch").val(DefBranch);
+                    //$("#cmbBranch").val(DefBranch);
+                    LoadBranchByRoles();
                 }
                 else if (nMode == 2) {
                     arrProdCode = [], arrProdName = [], TempAL = [];
@@ -1555,10 +2083,6 @@ setTimeout(function () { GetFilterData(); }, 800);
                             }
                             TempAL.push(al);
                         });
-                        //var txtName = $('#txtHProds');
-                        //autocomplete = txtName.typeahead({ scrollBar: true, onSelect: displayResult });
-                        //autocomplete.data('typeahead').source = null;
-                        //autocomplete.data('typeahead').source = arrProdCodeName;
                         $("#txtHProds").autocomplete({
                             minLength: 0,
                             source: TempAL,
@@ -1629,69 +2153,38 @@ setTimeout(function () { GetFilterData(); }, 800);
                     });
                 }
                 else if (nMode == 4) {
+                    arrPurchaseTaxDetails = [];
                     var UOMType = $("#cmbUOMType").val();
                     $.each(data, function (i, items) {
-
+                        var TaxPern = parseFloat(items.GSTPern);
+                        var UOMName = UOMType == 1 ? items.BaseUOMName : items.PurchaseUomName;
+                        var UOMID = UOMType == 1 ? parseInt(items.BaseUomID) : parseInt(items.PurchaseUomID);
                         $('#txtHProdID').val(items.ID);
                         $('#txtHProdCode').val(items.Code);
                         $('#lblProdCodeAS').text("Code : " + items.Code);
                         $('#txtHProds').val(items.Name);
+                        $('#txtUOMName').val(UOMName);
+                        $('#txtUOMID').val(UOMID);
+                        $('#txtUOMCR').val(items.PurchaseCR);
                         $('#txtTaxPern').val(items.GSTPern);
                         $('#txtTaxName').val(items.TaxName);
                         $('#txtTaxID').val(items.PurchaseTaxID);
+                        $('#txtMRP').val(items.MRP);
+                        
+                        var Price = UOMType == 1 ? parseFloat(items.PurchasePrice) : (parseFloat(items.PurchasePrice) * parseFloat(items.PurchaseCR))
 
-                        var UOMName = UOMType == 1 ? items.BaseUOMName : items.PurchaseUomName;
-                        var UOMID = UOMType == 1 ? items.BaseUomID : items.PurchaseUomID;
-                        $('#txtUOMName').val(UOMName);
-                        $('#txtUOMID').val(UOMID);
-                        var Price = UOMType == 1 ? items.PurchasePrice : (parseFloat(items.PurchasePrice) * parseFloat(items.PurchaseCR))
-                        var TaxPern = items.GSTPern;
-                        $('#txtUOMCR').val(items.PurchaseCR);
-                        //$('#txtExclPrice').val(Price);
-                        var Incl = (Price * (1 + (TaxPern / 100)))
+                        arrPurchaseTaxDetails = ReturnTaxDetails(items.PurchaseTaxID, 1);
+                        var dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+                        $('#txtMRPonTax').val(dApponMRPCum);
+                        var dMRPonTaxAmt = getPurchaseMRPontax(items.MRP);
+                        var Incl = dApponMRPCum > 0 ? (Price + dMRPonTaxAmt) : (Price * (1 + (TaxPern / 100)))
                         //$('#txtInclPrice').val(items.Name);
                         updateInputColumn("txtInclPrice", Incl);
                         updateInputColumn("txtExclPrice", Price);
                         updateInputColumn("txtQty", 1);
                         $("#txtQty").select();
                         TempProd = items;
-
                     });
-                }
-                else if (nMode == 6 || nMode == 9) {
-                    Table.draw().clear(); Table.draw().clear();
-                    if (data.length > 0) {
-                        $.each(data, function (i, items) {
-                            Table.row.add([
-                                items.ID,
-                                items.DocID,
-                                items.Date,
-                                items.RefNo,
-                                items.BranchID,
-                                items.VendorID,
-                                items.GrossAmt,
-                                items.TaxAmt,
-                                items.NetAmt,
-                                items.Status,
-                                items.Status == 'Amended' || items.Status == 'Cancelled' || items.Status == 'Close' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-pencil clsEdit" style="font-size:16px" title="Edit"></span></a>',
-                                items.Status == 'Amended' || items.Status == 'Cancelled' || items.Status == 'Close' ? '' : '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-remove-circle clsCancel" style="font-size:16px" title="Cancel"></span></a>',
-                                '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>',
-                                '<a href="javascript:void(0)" class="clsVariant" style = "font-size:12px"><span class="glyphicon glyphicon-file clsVariant" style="font-size:12px" title="Variant"></span></a>',
-                            ]).draw(false);
-                        });
-                        if (nMode == 9) {
-                            //Table.column(11).visible(false);
-                            Table.column(12).visible(false);
-                            Table.column(13).visible(false);
-                        } else {
-                            //Table.column(11).visible(true);
-                            Table.column(12).visible(true);
-                            Table.column(13).visible(true);
-                        }
-                    }
-                    else {
-                        showErrorSnackbar("No records found");
-                    }
                 }
                 else if (nMode == 12) {
                     var rdo1 = $("#rdoMainTableData").is(":checked");
@@ -1705,6 +2198,20 @@ setTimeout(function () { GetFilterData(); }, 800);
                 }
             }
         });
+    }
+    function getPurchaseMRPontax(MRP) {
+        var dTaxAmt = 0;
+        var dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+        for (var i = 0; i < arrPurchaseTaxDetails.length; i++) {
+            var nAppon = arrPurchaseTaxDetails[i].AppOn;
+            var dCumTax = arrPurchaseTaxDetails[i].CumulativeTax;
+            if (nAppon == -1) {
+                var dPrice = (MRP / (1 + (dApponMRPCum / 100)));
+                dTaxAmt += (dPrice * dCumTax) / 100;
+            }
+        }
+
+        return dTaxAmt;
     }
      var Url = '@Session["url"].ToString()';
  $("#openproduct").click(function (e) {
@@ -1766,7 +2273,8 @@ setTimeout(function () { GetFilterData(); }, 800);
         GetFilterData(1);
     });
     var Showall = '@Session["Showallstatus"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+    @*var DefBranch = '@Session["DefaultBranch"]';*@
+    
       $("#chkShowAll").prop("checked", Showall == '1');
     function GetFilterData(ClickType = 0) {//arrVendorName,divErrFTo,divErrFFrom,divErrFParty
         var IsValid = true;
@@ -1803,7 +2311,6 @@ setTimeout(function () { GetFilterData(); }, 800);
                     withCredentials: true
                 },
                 success: function (data) {
-                    Table.draw().clear(); Table.draw().clear();
 
                         PurchaseOrder = data;
                         var CancelYN = $("#txtCancelID").val() == 0 || rdo1 == "3" ? false : true;
@@ -1839,7 +2346,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                                         //console.log("gridInstance : ", gridInstance);
                                         //console.log("event : ", event);
                                         //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
-                                        modalGenColumnSettings.style.display = "block";
+                                        /*modalGenColumnSettings.style.display = "block";*/
+                                        modalGenColumnSettings.show();
                                         GendralColumnSettings(1, 24, 1, 0);
                                     }
                                 },
@@ -1858,6 +2366,11 @@ setTimeout(function () { GetFilterData(); }, 800);
                                         $("#dvDocuments").hide();
                                         ClearForm();
                                         GetData(2, $("#cmbUOMType").val());
+                                        setTimeout(() => {
+                                            var DocDate = $("#dtpDate").val();
+                                            var Branch = $("#cmbBranch").val();
+                                            GetDocumentID(DocDate, Branch, 3);
+                                        }, 1000);
                                     }
                                 },
                             ],
@@ -1885,64 +2398,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 UpdateColumnWidth(24, 1, 0, colIndex, field, newWidth)
                             },
                         });
-                    if (data.length > 0) {
-                        var searchValue = '';
-                        if ($.fn.DataTable.isDataTable('#tblMasterData')) {
-                            searchValue = $('#tblMasterData').DataTable().search(); // get current search term
-                        }
-                        $('#tblMasterData').DataTable({
-                            pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                            scrollY: "450px",
-                            scrollX: true,
-                            scrollCollapse: true,
-                            paging: true,
-                            destroy: true,
-                            data: data,
-                            fixedColumns: false,
-                            searching: true,
-                            ordering: true,
-                            sorting: false,
-                            columns: [
-                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                                { "data": "CurrentStatus", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                                { "data": "DocID", "autoWidth": true, className: "dt-body-left" },
-                                { "data": "Date", "autoWidth": true, className: "dt-body-left" },
-                                { "data": "RefNo", "autoWidth": true, className: "dt-body-left" },
-                                { "data": "BranchID", "autoWidth": true, className: "dt-body-left" },
-                                { "data": "VendorID", "autoWidth": true, className: "dt-body-left" },
-                                { "data": "GrossAmt", "autoWidth": true, className: "dt-body-right" },
-                                { "data": "TaxAmt", "autoWidth": true, className: "dt-body-right" },
-                                { "data": "NetAmt", "autoWidth": true, className: "dt-body-right" },
-                                { "data": "Status", "autoWidth": true, className: "dt-body-left" },
-                                {
-                                    className: "dt-body-left",
-                                    "mRender": function (data, type, value) {
-                                        var _action = '<label title="' + value.CDate + '">' + value.CBy + '</label>';
-                                        return _action;
-                                    }
-                                },
-                                {
-                                    className: "dt-body-center", orderable: false,
-                                    "mRender": function (data, type, value) {
-                                        var _action = '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-eye-open clsView" style="font-size:16px" title="View"></span></a>';
-                                        return _action;
-                                    }, "visible": ViewYN
-                                },
-                                {
-                                    className: "dt-body-center",
-                                    orderable: false,
-                                    render: function () {
-                                        return `<button class="btn btn-default btn-xs action-btn">&#8942;</button>`;
-                                    }
-                                }
-                            ],
-                            initComplete: function () {
-                                // Re-apply search value after table is fully initialized
-                                this.api().search(searchValue).draw();
-                            }
-                        });
-                        Table = $('#tblMasterData').DataTable();
-
+                    if (data.length > 0) {                       
                     }
                     else {
                         if (ClickType == 1)
@@ -2078,30 +2534,9 @@ setTimeout(function () { GetFilterData(); }, 800);
             var incl = document.getElementById("txtInclPrice").getAttribute("txttag");//  ReturnTagValue("txtInclPrice", "");
             var qty = document.getElementById("txtQty").getAttribute("txttag");// ReturnTagValue("txtQty", "");
             var gross = excl * qty;
-            var tax = ((gross * TPren) / 100);
             var net = incl * qty;
-            var newRows = [
-                {
-                    ProdID: $("#txtHProdID").val(),//'<label name="ProdID">'
-                    Code: $('#txtHProdCode').val(),///'<label name="ProdCode">' +
-                    UomID: $("#txtUOMID").val(),//'<label name="UOMID">' +
-                    TaxID: $("#txtTaxID").val(),
-                    TaxPern: TPren,
-                    UOM: $("#txtUOMCR").val(),
-                    Action: '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&emsp; <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a><br/><span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>',
-                    SNo : '<p style="font-size:14px;">' + Sno + '</p>',
-                    Name: '<input disabled name = "ProName" class="gdInput" value="' + PName + '" title="' + PName + '" style="border:none;"/><br/>' + $('#txtHProdCode').val(),
-                    ExclPrice: '<input txttag="' + excl + '" title="' + excl + '" type="number" disabled step="any" id="dgvProdExclPrice' + ProductRID + '" name ="Excl" class="gdInput txtsettag" value="' + parseFloat(excl).toFixed(DecVal) + '" style="border:none;"/>',
-                    InclPrice: '<input txttag="' + incl + '" title="' + incl + '" type="number" disabled step="any" id="dgvProdInclPrice' + ProductRID + '" name="Incl" class="gdInput txtsettag" value="' + parseFloat(incl).toFixed(DecVal) + '" style="border:none;" />',
-                    Qty: '<input txttag="' + qty + '" title="' + qty + '" type="number" disabled step="any" id="dgvProdQty' + ProductRID + '" name="Qty" class="gdInput txtsettag" value="' + parseFloat(qty).toFixed(DecVal) + '" style="border:none;"/>',
-                    UomName: '<label name="UOM">' + $("#txtUOMName").val() + '</label>',
-                    GrossAmt: '<label lbltag="' + gross + '" class="lblsettag" name="Gross" id="dgvProdGross' + ProductRID + '" title="' + gross + '">' + gross.toFixed(DecVal) + '</label>',
-                    TaxName: '<label name="Tax">' + $("#txtTaxName").val() + '</label>',
-                    TaxAmt: '<label lbltag="' + tax + '" name="TaxAmt" id="dgvProdTax' + ProductRID + '" title="' + tax + '">' + tax.toFixed(DecVal) + '</label>',
-                    NetAmt: '<label lbltag="' + net + '" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + net + '">' + net.toFixed(DecVal) + '</label>'
-                }
-            ];
-            //ProductTable.rows.add(newRows).draw(false);
+            var tax = net - gross;// ((gross * TPren) / 100);
+            
             ProductTable.row.add([
                 $("#txtHProdID").val(),//'<label name="ProdID">'
                 $('#txtHProdCode').val(),///'<label name="ProdCode">' +
@@ -2119,12 +2554,10 @@ setTimeout(function () { GetFilterData(); }, 800);
                 '<label lbltag="' + gross + '" class="lblsettag" name="Gross" id="dgvProdGross' + ProductRID + '" title="' + gross + '">' + gross.toFixed(DecVal) + '</label>',
                 '<label name="Tax">' + $("#txtTaxName").val() + '</label>',
                 '<label lbltag="' + tax + '" name="TaxAmt" id="dgvProdTax' + ProductRID + '" title="' + tax + '">' + tax.toFixed(DecVal) + '</label>',
-                '<label lbltag="' + net + '" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + net + '">' + net.toFixed(DecVal) + '</label>'
+                '<label lbltag="' + net + '" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + net + '">' + net.toFixed(DecVal) + '</label>',
+                $('#txtMRPonTax').val()
             ]).draw(false);
-            //setTagValue("dgvProdQty" + ProductRID, "", qty);
-            //setTagValue("dgvProdInclPrice" + ProductRID, "", incl); setTagValue("dgvProdExclPrice" + ProductRID, "", excl);
-            //setTagValue("dgvProdGross" + ProductRID, "", gross, 2); setTagValue("dgvProdTax" + ProductRID, "", tax, 2);
-            //setTagValue("dgvProdNet" + ProductRID, "", net, 2);
+           
             ProductRID++;
             $(".dtgFields").val("");
             $('#lblProdCodeAS,#lblABS').text("");
@@ -2202,6 +2635,7 @@ setTimeout(function () { GetFilterData(); }, 800);
         updateLabelColumn("lblPTQty", dPTQty);
         //setTagValue("lblPTQty", "", dPTQty, 2);
         //setTagValue("lblCGST", "", (dPTTax / 2), 2); setTagValue("lblSGST", "", (dPTTax / 2), 2); setTagValue("lblIGST", "", dPTNet, 2);
+        updateLabelColumn("lblTaxAmount", dPTTax);
         updateLabelColumn("lblCGST", (dPTTax / 2)); updateLabelColumn("lblSGST", (dPTTax / 2)); updateLabelColumn("lblIGST", dPTTax);
         //setTagValue("lblPTGross", "", dPTGross, 2); setTagValue("lblPTTax", "", dPTTax, 2); setTagValue("lblPTNet", "", dPTNet, 2);
         updateLabelColumn("lblPTGross",  dPTGross); updateLabelColumn("lblPTTax", dPTTax); updateLabelColumn("lblPTNet", dPTNet);
@@ -2228,15 +2662,22 @@ setTimeout(function () { GetFilterData(); }, 800);
     $("#txtExclPrice").change(function (e) {
         var value = e.target.value;
         var TPern = parseFloat($("#txtTaxPern").val());
-        var Incl = (value * (1 + (TPern / 100)))
-        //setTagValue("txtInclPrice", "", Incl);
+        var MRP = parseFloat($("#txtMRP").val());
+        var dApponMRPCum = parseFloat($('#txtMRPonTax').val());
+        var dMRPonTaxAmt = getPurchaseMRPontax(MRP);
+        var Incl = dApponMRPCum > 0 ? (parseFloat(value) + dMRPonTaxAmt) : (value * (1 + (TPern / 100)));
+        //var Incl = (value * (1 + (TPern / 100)))
         updateInputColumn("txtInclPrice", Incl);
     });
     $("#txtInclPrice").change(function (e) {
         var value = e.target.value;
         var TPern = parseFloat($("#txtTaxPern").val());
-        var excl = (value / (1 + (TPern / 100)))
-        //setTagValue("txtExclPrice", "", excl);
+
+        var MRP = parseFloat($("#txtMRP").val());
+        var dApponMRPCum = parseFloat($('#txtMRPonTax').val());
+        var dMRPonTaxAmt = getPurchaseMRPontax(MRP);
+        var excl = dApponMRPCum > 0 ? (parseFloat(value) - dMRPonTaxAmt) : (value / (1 + (TPern / 100)));
+        //var excl = (value / (1 + (TPern / 100)))        
         updateInputColumn("txtExclPrice", excl);
     });
     $("#txtRoundOff").change(function (e) {
@@ -2259,6 +2700,51 @@ setTimeout(function () { GetFilterData(); }, 800);
         var value = e.target.value;
         calculateProdGrid();
     });
+
+        function LoadBranchByRoles() {
+        var RID = '@Session["RoleID"]';
+        console.log("RoleID being sent:", RID);
+        $.ajax({
+            url: Aurl + "BranchMapping/getByRole",
+            type: 'GET',
+            dataType: 'json',
+            data: { RoleID: RID },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                console.log("Data returned from API:", data);
+                $('#cmbBranch,#cmbFilterBranch').empty();
+                $('#cmbBranch,#cmbFilterBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
+                var defaultBranch = 0;
+                $.each(data, function (i, item) {
+                    console.log("Adding item to dropdown:", item);
+                    $('#cmbBranch,#cmbFilterBranch').append($('<option/>', {
+                        value: item.BranchID,
+                        text: item['Branch Name']
+                    }));
+                    if (item.SetAsDefault) {
+                        defaultBranch = item.BranchID;
+                    }
+                });
+                if (defaultBranch != 0) {
+                    $('#cmbBranch,#cmbFilterBranch').val(defaultBranch);//.trigger("change");
+                }
+            }
+        });
+    }
+
+    document.getElementById("toggleTax").addEventListener("click", function () {
+        var rows = document.querySelectorAll(".taxDetails");
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].style.display === "none") {
+                rows[i].style.display = "table-row";
+                this.innerText = " [-] ";
+            } else {
+                rows[i].style.display = "none";
+                this.innerText = " [+] ";
+            }
+        }
+    });
+
     function GetProductViewData(nMode, strName = null, strID = null) {
         $.ajax({
             url: Aurl + "purchaseorder/get",
@@ -2280,7 +2766,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                     $("#txtVendorID").val(items.VendorID);
                     $("#dtpDate").val(items.Date),$("#cmbBranch").val(items.BranchID);
                     if (nTransMode != 3) {
-                        $("#lblDocID").text(items.DocID);
+                        $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     }
                     $("#txtRefNo").val(items.RefNo),
 
@@ -2309,29 +2795,6 @@ setTimeout(function () { GetFilterData(); }, 800);
                     });
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                     ProductRID = 0;
-                    //$.each(items.lstProdGrid, function (i, itemsProd) {
-                    //
-                    //    ProductTable.row.add([
-                    //        itemsProd.ProdID,
-                    //        itemsProd.Code,
-                    //        itemsProd.UomID,
-                    //        itemsProd.TaxID,
-                    //        itemsProd.TaxPern,
-                    //        itemsProd.UOM,
-                    //        '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&emsp; <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a><br/><span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>',
-                    //        '<p style="font-size:14px;">' + (i + 1) + '</p>',
-                    //        '<input disabled name = "ProName" class="gdInput" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '" style="border:none;"/><br/>' + itemsProd.Code,
-                    //        '<input txttag="' + itemsProd.ExclPrice + '" title="' + itemsProd.ExclPrice + '" type="number" disabled step="any" id="dgvProdExclPrice' + ProductRID + '" name ="Excl" class="gdInput txtsettag" value="' + parseFloat(itemsProd.ExclPrice).toFixed(DecVal) + '" style="border:none;"/>',
-                    //        '<input txttag="' + itemsProd.InclPrice + '" title="' + itemsProd.InclPrice + '" type="number" disabled step="any" id="dgvProdInclPrice' + ProductRID + '" name="Incl" class="gdInput txtsettag" value="' + parseFloat(itemsProd.InclPrice).toFixed(DecVal) + '" style="border:none;" />',
-                    //        '<input txttag="' + itemsProd.Qty + '" title="' + itemsProd.Qty + '" type="number" disabled step="any" id="dgvProdQty' + ProductRID + '" name="Qty" class="gdInput" value="' + parseFloat(itemsProd.Qty).toFixed(DecVal) + '" style="border:none;"/>',
-                    //        '<label name="UOM">' + itemsProd.UomName + '</label>',
-                    //        '<label lbltag="' + itemsProd.GrossAmt + '" class="lblsettag" name="Gross" id="dgvProdGross' + ProductRID + '" title="' + (itemsProd.GrossAmt) + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
-                    //        '<label name="Tax">' + itemsProd.TaxName + '</label>',
-                    //        '<label lbltag="' + itemsProd.TaxAmt + '" class="lblsettag" name="TaxAmt" id="dgvProdTax' + ProductRID + '" title="' + (itemsProd.TaxAmt) + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label>',
-                    //        '<label lbltag="' + itemsProd.NetAmt + '" class="lblsettag" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + (itemsProd.NetAmt) + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>'
-                    //    ]).draw(false);
-                    //    ProductRID++;
-                    //});
 
                     var dataSet = items.lstProdGrid.map(function (itemsProd, i) {
                         return [
@@ -2351,7 +2814,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                             '<label lbltag="' + itemsProd.GrossAmt + '" class="lblsettag" name="Gross" id="dgvProdGross' + ProductRID + '" title="' + (itemsProd.GrossAmt) + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
                             '<label name="Tax">' + itemsProd.TaxName + '</label>',
                             '<label lbltag="' + itemsProd.TaxAmt + '" class="lblsettag" name="TaxAmt" id="dgvProdTax' + ProductRID + '" title="' + (itemsProd.TaxAmt) + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label>',
-                            '<label lbltag="' + itemsProd.NetAmt + '" class="lblsettag" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + (itemsProd.NetAmt) + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>'
+                            '<label lbltag="' + itemsProd.NetAmt + '" class="lblsettag" name="NetAmt" id="dgvProdNet' + ProductRID + '" title="' + (itemsProd.NetAmt) + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
+                            itemsProd.MRPonTax
                         ];
                     });
                     $('#tblProductData').DataTable({
@@ -2381,120 +2845,13 @@ setTimeout(function () { GetFilterData(); }, 800);
                             { title: "Quantity", className: "dt-body-right", width: "6%" },
                             { title: "UOM", className: "dt-body-left", width: "6%" },
                             { title: "Gross ₹", className: "dt-body-right", width: "9%" },
-                            { title: "Tax %", className: "dt-body-left", width: "9%" },
+                            { title: "Tax %", className: "dt-body-right", width: "9%" },
                             { title: "Tax ₹", className: "dt-body-right", width: "9%" },
-                            { title: "Net ₹", className: "dt-body-right", width: "9%" }
+                            { title: "Net ₹", className: "dt-body-right", width: "9%" },
+                            { title: "MRPonTax", className: "dt-body-right", width: "0%", visible: false }
                         ]
                     });
-                    //$('#tblProductData').DataTable({
-                    //    scrollY: "450px",
-                    //    scrollX: true,
-                    //    scrollCollapse: true,
-                    //    paging: false,
-                    //    destroy: true,
-                    //    data: items.lstProdGrid,
-                    //    fixedColumns: false,
-                    //    searching: false,
-                    //    ordering: false,
-                    //    sorting: true,
-                    //    info: false,
-                    //    columns: [
-                    //        { "data": "ProdID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                    //        { "data": "Code", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                    //        { "data": "UomID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                    //        { "data": "TaxID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                    //        { "data": "TaxPern", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                    //        { "data": "UOM", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                    //        {
-                    //            data: null,
-                    //            className: "dt-body-left", "autoWidth": true,
-                    //            "mRender": function (data, type, row, meta) {
-                    //                return '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>' +
-                    //                    '&emsp; <a href="javascript:void(0)" style="cursor: pointer;">' +
-                    //                    '<span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a><br/>' +
-                    //                    '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>';
-                    //            }
-                    //        },
-                    //        {
-                    //            data: null,
-                    //            className: "dt-body-center", "autoWidth": true,
-                    //            "mRender": function (data, type, row, meta) {
-                    //                return '<p style="font-size:14px;">' + (meta.row + 1) + '</p>';
-                    //            }
-                    //        },
-                    //        {
-                    //            data: "Name",
-                    //            className: "dt-body-left", "autoWidth": true,
-                    //            "mRender": function (data, type, row, meta) {
-                    //                return '<input disabled name="ProName" class="gdInput" value="' + row.Name + '" title="' + row.Name + '" style="border:none;" /><br/>' + row.Code;
-                    //            }
-                    //        },
-                    //        {
-                    //            data:"ExclPrice",
-                    //            className: "dt-body-right", "autoWidth": true,
-                    //            "mRender": function (data, type, row, meta) {
-                    //                var rowIndex = meta.row;
-                    //                return '<input txttag="' + row.ExclPrice + '" title="' + row.ExclPrice + '" type="number" disabled step="any" id="dgvProdExclPrice' + rowIndex + '" name ="Excl" class="gdInput txtsettag" value="' + parseFloat(row.ExclPrice).toFixed(DecVal) + '" style="border:none;"/>';
-                    //            }
-                    //        },
-                    //        {
-                    //            data: "InclPrice",
-                    //            className: "dt-body-right", "autoWidth": true,
-                    //            "mRender": function (data, type, row, meta) {
-                    //                var rowIndex = meta.row;
-                    //                return '<input txttag="' + row.InclPrice + '" title="' + row.InclPrice + '" type="number" disabled step="any" id="dgvProdExclPrice' + rowIndex + '" name="Incl" class="gdInput txtsettag" value="' + parseFloat(row.InclPrice).toFixed(DecVal) + '" style="border:none;" />';
-                    //            }
-                    //        },
-                    //        {
-                    //            data:"Qty",
-                    //            className: "dt-body-right",
-                    //            "mRender": function (data, type, row, meta) {
-                    //                var rowIndex = meta.row;
-                    //                return '<input txttag="' + row.Qty + '" title="' + row.Qty + '" type="number" disabled step="any" id="dgvProdQty' + rowIndex + '" name="Qty" class="gdInput" value="' + parseFloat(row.Qty).toFixed(DecVal) + '" style="border:none;" />';
-                    //            }
-                    //        },
-                    //        {
-                    //            data: "UomName",
-                    //            className: "dt-body-left", "autoWidth": true,
-                    //            "mRender": function (data, type, row, meta) {
-                    //                var rowIndex = meta.row;
-                    //                return '<label name="UOM">' + row.UomName + '</label>';
-                    //            }
-                    //        },
-                    //        {
-                    //            data: "GrossAmt",
-                    //            className: "dt-body-right",
-                    //            "mRender": function (data, type, row, meta) {
-                    //                var rowIndex = meta.row;
-                    //                return '<label lbltag="' + row.GrossAmt + '" class="lblsettag" name="Gross" id="dgvProdGross' + rowIndex + '" title="' + row.GrossAmt + '">' + parseFloat(row.GrossAmt).toFixed(DecVal) + '</label>';
-                    //            }
-                    //        },
-                    //        {
-                    //            data: "TaxName",
-                    //            className: "dt-body-left",
-                    //            "mRender": function (data, type, row, meta) {
-                    //                var rowIndex = meta.row;
-                    //                return '<label name="Tax">' + row.TaxName + '</label>';
-                    //            }
-                    //        },
-                    //        {
-                    //            data: "TaxAmt",
-                    //            className: "dt-body-right",
-                    //            "mRender": function (data, type, row, meta) {
-                    //                var rowIndex = meta.row;
-                    //                return '<label lbltag="' + row.TaxAmt + '" class="lblsettag" name="TaxAmt" id="dgvProdTax' + rowIndex + '" title="' + row.TaxAmt + '">' + parseFloat(row.TaxAmt).toFixed(DecVal) + '</label>';
-                    //            }
-                    //        },
-                    //        {
-                    //            data: "NetAmt",
-                    //            className: "dt-body-right",
-                    //            "mRender": function (data, type, row, meta) {
-                    //                var rowIndex = meta.row;
-                    //                return '<label lbltag="' + row.NetAmt + '" class="lblsettag" name="NetAmt" id="dgvProdNet' + rowIndex + '" title="' + row.NetAmt + '">' + parseFloat(row.NetAmt).toFixed(DecVal) + '</label>';
-                    //            }
-                    //        }
-                    //    ],
-                    //});
+                    
                     ProductTable = $('#tblProductData').DataTable();
                     $(".dtgFields").val("");
                     $('#lblProdCodeAS,#lblABS').text("");
@@ -2543,7 +2900,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                 },
                 success: function (data) {
                     arrBaseProductBatchInfo = [];
-                    modal.style.display = "block";
+                    modal.show();
                     $('#cmbProdBatchUOM').find("option").remove();
                     $.each(data, function (i, items) {
                         $("#lblAbsqty").text(items.ABSQty);
@@ -2698,174 +3055,7 @@ setTimeout(function () { GetFilterData(); }, 800);
             GetFilterData(1);
         }, 200);
     });
-    $('#tblMasterData tbody').on('click', '.clsView', function (e) {
-        $(".clrdivs").html("");
-        rowdata = Table.row($(this).parents('tr')).data();
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        nTransMode = 5;
-        $("#txtID").val(ID);
-        GetProductViewData(7, ID);
-        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        //$("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        //$("#btnPreview,#btnPDF,#btnClose").prop("disabled", false);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
-        $("#btnPDF,#btnPreview").prop("disabled", false);
-        $("#btnPreview,#btnPDF,#btnPrint").show();
-        $("#dvMain").show();
-        $("#btnEmail,#btnWhatsapp").show();
-        $("#dvDocuments").hide();
-        $("#MainHeading").text("View " + $("#txtFormName").val());
-    });
-    $(document).on('click', '.clsEdit', function (e) {
-        $(".clrdivs").html("");
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.Status;//[9];
-        if (sts != "Cancelled") {
-        $("#txtID").val(ID);
-            nTransMode = 2;
-            var rdo1 = $("#rdoMainTableData").is(":checked");
-            var rdo2 = $("#rdoDraftTableData").is(":checked");
-            //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
-            GetProductViewData(rdo1 ? 7 : rdo2 ? 10 : 14, ID);
-            nTransMode = rdo1 ? 2 : 1;
-            $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-            //$("#btnSave,#btnClose").prop("disabled", false);
-            //$("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-            $("#btnDraft").prop("disabled", rdo1);
-            $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-            $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-            $("#btnEmail,#btnWhatsapp").hide();
-            $("#btnSave,#btnClose").prop("disabled", false);
-            $("#btnSave,#btnClose").show();
-            $("#dvMain").show();
-            $("#dvDocuments").hide();
-            $("#MainHeading").text((rdo1 ? "Modify " : "Create") + $("#txtFormName").val());
-        }
-        else {
-            showErrorSnackbar("Cannot Modify.This document already cancelled");
-        }
-    });
-    $(document).on('click', '.clsCancel', function (e) {
-        var rdo1 = $("#rdoMainTableData").is(":checked");
-        $(".clrdivs").html("");
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.Status;//[9];
-        if (sts != "Cancelled") {
-            $("#txtID").val(ID);
-            if (rdo1) {
-                nTransMode = 4;
-                var rdo1 = $("#rdoMainTableData").is(":checked");
-                var rdo2 = $("#rdoDraftTableData").is(":checked");
-                GetProductViewData(7, ID);
-                $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-                //$("#btnSave,#btnClose").prop("disabled", false);
-                //$("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-                $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-                $("#btnSave,#btnClose").prop("disabled", false);
-                $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
-                $("#btnSave,#btnClose").show();
-                $("#dvMain").show();
-                $("#dvDocuments").hide();
-                $("#btnEmail,#btnWhatsapp").hide();
-                $("#MainHeading").text("Cancel " + $("#txtFormName").val());
-            }
-            else {
-                var conf = confirm("Do you want to remove draft data?");
-                if (conf) {
-                    GetData(12, ID);
-                }
-            }
-        }
-        else {
-            showErrorSnackbar("This document already cancelled");
-        }
-        //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        //$("input[type=checkbox],#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        //showErrorSnackbar("Cancel functionality still developing");
-    });
-    $(document).on('click', '.clsVariant', function (e) {
-        $(".clrdivs").html("");
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        $("#txtID").val(ID);
-        nTransMode = 3;
-        GetData(1);
-        var rdo1 = $("#rdoMainTableData").is(":checked");
-        var rdo2 = $("#rdoDraftTableData").is(":checked");
-        GetProductViewData(rdo1 ? 7 : rdo2 ? 10 : 14, ID);
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
-        $("#MainHeading").text("Variant " + $("#txtFormName").val());
-        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-        //$("#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
-        //$("#btnPreview,#btnPDF").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
-        $("#btnPreview,#btnPDF").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-        $("#btnEmail,#btnWhatsapp").hide();
-        $("#btnSave,#btnClose,#btnDraft").show();
-        //showErrorSnackbar("Variant functionality still developing");
-    });
 
-    $(document).on('click', '.clspreview', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPreview").click();
-    });
-    $(document).on('click', '.clspdf', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPDF").click();
-    });
-    $(document).on('click', '.clsemail', function (e) {//'#tblMasterData tbody'
-        rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
-        //var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnEmail").click();
-    });
-    $(document).on('click', '.clswhatsapp', function (e) {//'#tblMasterData tbody'
-        rowdata = window.__SelectedRowData;//Table.row($(this).parents('tr')).data();
-        //var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btniframeWhatsapp").click();
-    });
-
-    $(document).on('click', '.clsprint', function (e) {
-        //rowdata = Table.row($(this).parents('tr')).data();
-        rowdata = window.__SelectedRowData;
-        var selrow = Table.row($(this).parents('tr')).index();
-        var ID = rowdata.ID;//[0];
-        var sts = rowdata.CurrentStatus;//[9];
-        $("#txtID").val(ID);
-        $("#txtStatus").val(sts);
-        $("#btnPrint").click();
-    });
     $("#btnClear").click(function () {
         //ClearForm();
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
@@ -2886,6 +3076,7 @@ setTimeout(function () { GetFilterData(); }, 800);
         ProductTable.draw().clear();
         ProductTable.draw().clear();
         $("#cmbUOMType").prop("disabled", false);
+        $("#cmbUOMType").val(1);
         $("#txtNoofCopies").val("1");
         stopAutoDraftSave();
         GetData(1);
@@ -2898,13 +3089,18 @@ setTimeout(function () { GetFilterData(); }, 800);
         SetTagZero();
         setDate("dtpDate", 0);
         SetFilterDate();
-        $("#cmbBranch").val(DefBranch);
+        //$("#cmbBranch").val(DefBranch);
+        LoadBranchByRoles();
         setTimeout(function () { GetFilterData(); }, 800);
         $("#MainHeading").text($("#txtFormName").val());
         $("#txtSearch").focus();
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
+        $("#tblProductData tbody tr").find("label[name='TaxAmt']").attr("lbltag", 0).text("0.00");
+
+        // Recalculate totals (CGST, SGST, Tax Amount, etc.)
+        calculateProdGrid();
     }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
@@ -3081,8 +3277,10 @@ setTimeout(function () { GetFilterData(); }, 800);
                                     } else if (allowprint == 3 || allowprint == 4) {
                                         PrintConfirmDialogMsg(items.ID, PrintTransID, PrintConfigID, "Do you want to print ?");
                                     }
-                                    if (SendAutoMail == 1) {
-                                        EmailDocument(items.ID, PrintTransID, PrintConfigID);
+                                    //if (SendAutoMail == 1)
+                                    {
+                                        //EmailDocument(items.ID, PrintTransID, PrintConfigID);
+                                        AutoEmailDocument(items.ID, PrintTransID);
                                     }
                                 }
                                 ClearForm();
@@ -3115,7 +3313,24 @@ setTimeout(function () { GetFilterData(); }, 800);
             SaveData();
         }
     });
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//$("#txtQAViewDocID").val()
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to New PO
+        $("#txtDraftID").val($("#txtID").val())
+        var ID = $("#txtID").val();
+        GetProductViewData(10, ID);
+        nTransMode = 1;
+        //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("#btnClear").prop("disabled", true);
+        $("#dvMain").show();
+        $("#dvDocuments").hide();
+        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
+        $("#MainHeading").text("Create " + $("#txtFormName").val());
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 3);
+        }, 1000);
+    }
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
         var ID = $("#txtID").val();
         GetProductViewData(7, ID);
         $(".FormclrField,.FormclrcmbField").prop("disabled", true);

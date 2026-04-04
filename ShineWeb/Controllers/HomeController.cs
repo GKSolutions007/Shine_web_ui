@@ -12,7 +12,7 @@ using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 namespace ShineWeb.Controllers
 {
     public class HomeController : Controller
-    {
+    { 
         public ActionResult Index(string ID)
         {
             if (Session["LoginUserID"] == null)

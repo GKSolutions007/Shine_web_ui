@@ -615,4 +615,11 @@ document.addEventListener("keydown", function (event) {
         if (!IsEnable && IsVisible)
             $("#btnClose").click();
     }
+    if (event.key === "F10") {
+        event.preventDefault();
+        $("#tblProductData tbody tr:first")
+            .find("input:enabled, select:enabled, textarea:enabled")
+            .first()
+            .focus();
+    }
 });

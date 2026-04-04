@@ -1,11 +1,8 @@
 ﻿// auth.js (Global Authentication Script)
 
 // Base URL of API
-//const baseURL = "https://localhost:44396/api/";
-//const baseURL = "https://gksapp.in/shinewebapi/api/";
-//const baseURL = "https://gksapp.in/VIG001API/api/";
 var baseURL = document.getElementById("hdnApiurl").value;
-
+var UIURL = document.getElementById("hdnurl").value;
 // Function to refresh access token globally
 function refreshAccessToken(callback) {
     //console.log("Attempting to refresh access token...");
@@ -25,7 +22,7 @@ function refreshAccessToken(callback) {
         },
         error: function () {
             //console.log("Refresh token expired, redirecting to login.");
-            window.location.href = "/";
+            window.location.href = UIURL;// "/";
         }
     });
 }
