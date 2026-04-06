@@ -2368,7 +2368,7 @@
     }
 
     // Centralized PDF embed/print function used by all views
-    function printEmbedDocument(testlink) {
+    function printEmbedDocument1(testlink) {
         try {
             var apiBase = '@Session["APIurl"]';
             var url = buildPdfUrl(apiBase, testlink);
@@ -3046,11 +3046,13 @@
                                 $input.val(data.value);
                                 if (data.txttag) {
                                     $input.attr('txttag', data.txttag);
-                                    $label[0].style.color = data.color;
+                                    $input[0].style.color = data.color;
                                 }
                             }
                         });
-
+                        if (typeof ReLoadProductAutolists === "function") {
+                            ReLoadProductAutolists();
+                        }
                         // Restore select values
                         $.each(editedData.selects, function(id, value) {
                             var $select = $newRow.find('#' + id);
@@ -3096,6 +3098,7 @@
     }
         var cfFocus = '@Session["ConfirmFocus"]';
     function ConfirmDialogMsg(message) {
+        //showErrorSnackbar("Save conf popup");
         var IsAccepted = false;
         $('<div></div>').appendTo('body')
             .html('<div><h5>' + message + '</h5></div>')
@@ -4058,7 +4061,52 @@ function CloseConfirmDialogMsg(message) {
         //}
         //document.body.appendChild(ifr);
     }
+    function printEmbedDocument_TEST(testlink) {
+    var ismoborwin = '@Session["DeviceOS"]';
 
+    console.log("testlink", testlink);
+
+    if (['Windows', 'macOS'].includes(ismoborwin)) {
+        fetch(testlink)
+            .then(response => response.blob())
+            .then(pdfBlob => {
+
+                const urlCreator = window.webkitURL;
+                if (!urlCreator) {
+                    console.error("Blob URL not supported");
+                    window.open(testlink, '_blank');
+                    return;
+                }
+
+                const pdfURL = urlCreator.createObjectURL(pdfBlob);
+
+                let ifr = document.createElement("iframe");
+                ifr.style.position = 'absolute';
+                ifr.style.width = "0px";
+                ifr.style.height = "0px";
+                ifr.style.border = "none";
+                ifr.src = pdfURL;
+
+                ifr.onload = function () {
+                    ifr.contentWindow.focus();
+                    ifr.contentWindow.print();
+
+                    // Clean up
+                    setTimeout(() => {
+                        urlCreator.revokeObjectURL(pdfURL);
+                        document.body.removeChild(ifr);
+                    }, 1000);
+                };
+
+                document.body.appendChild(ifr);
+            })
+            .catch(err => {
+                console.error("Failed to load PDF:", err);
+            });
+    } else {
+        window.open(testlink, '_blank');
+    }
+}
     function previewiframe(link) {
         console.log(link);
         const options = "#toolbar=0&navpanes=0&scrollbar=0&zoom=80";

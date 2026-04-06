@@ -5125,16 +5125,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $("#tblProductData tbody").on('focusin', 'tr', function () {
         SelRowIndex = $(this).closest('tr').index();
         nCurrentRowIndex = ProductTable.row(this).index();
-
-        rowdata = ProductTable.row($(this).closest('tr')).data();
+        //rowdata = ProductTable.row($(this).closest('tr')).data();
         editingRow = ProductTable.row($(this).closest('tr'));
-        //var nProdID = rowdata[0];
-        //if (nProdID > 0) {
-        //    editingRow = ProductTable.row($(this).closest('tr'));
-        //} else {
-        //    editingRow = null;
-        //}
-        console.log("editingRow ", editingRow, "Row Data : ", rowdata);
     });
     //$('#tblProductData tbody').on('focusin', 'td>.dgvexcl', function (e) {
     //    var Prodrowdata = ProductTable.row(SelRowIndex).data();
@@ -5248,9 +5240,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
             0,
             0,
             0,0,0,'','','',0,0,0,0,
-            '',//'<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod123" title="Remove Product" hidden></span>',
+            '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
             '<p style="font-size:14px;">' + (sno+ 1) + '</p>',
-            $('#txtHProdCode').val() + '<br/><input name = "ProName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID +'" value="" title=""/>',
+            $('#txtHProdCode').val() + '<br/><input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID +'" value="" title=""/>',
             //PName,
             //'<input min="0" type="number" step="any" class="gdInput" name="HSN" value=""txtsettag/>',
             '<input disabled min="0" type="number" txttag ="0" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="0"/>',//
@@ -5298,6 +5290,32 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var hasqty = parseFloat(document.getElementById("lblPTQty").getAttribute("lbltag"));
         //$("#cmbPriceType").prop("disabled", hasqty > 0);
         setupArrowKeyNavigation1();
+    }
+    function ReLoadProductAutolists(){
+         const ProdALInputs = document.querySelectorAll('#tblProductData tbody input[name=ProdName]');
+          ProdALInputs.forEach((input, index) => {
+              var FID = ProdALInputs[index].id;
+                  $("#" + FID).autocomplete({
+    minLength: 0, autoFocus: true,
+    source: TempAL,
+    select: function (event, ui) {
+        $("#" + FID).val(ui.item.code);
+        $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
+        modal.show();
+        $("#clrdivs").html("");
+        var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+        GetData(4, ui.item.code, CustID);
+        $("#btnBatch").focus();
+        return false;
+    },
+}).autocomplete("instance")._renderItem = function (ul, item) {
+    return $("<li class='each'>")
+        .append("<div class='acItem'><span class='name'>" +
+            item.label + "</span><br><span class='desc'>" +
+            item.line2 + "</span></div>")
+        .appendTo(ul);
+};
+              });
     }
     // 👇 Function to apply keydown listener to all input elements in the table
     function setupArrowKeyNavigation1() {
@@ -5824,8 +5842,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             items.ProdID,
                             items.SalesTaxID,
                             items.GSTPern, orgPrice, items.BaseUomID, BTbat, BTpkd, BTexp, trkivYN, batchYN, pkdYN, SerYN,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>' +
-                            '<br/> <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/> <span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;' +
+                            '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
                             '<p style="font-size:14px;">' + (SelRowIndex + 1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID + '" value="' + items.Name + '" title="' + items.Name + '"/><br/>' + items.Code + " | " + $("#txtTempABS").val(),//<br/><label>MRP : ' + parseFloat(MRP).toFixed(2) +'</label>
                             '<input disabled min="0" type="number" txttag ="' + MRP + '" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(MRP).toFixed(2) + '" title="' + MRP + '"/> ',
@@ -6441,6 +6459,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     GetProductList();
                     ProductRID = 0;
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
+                    var visbfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
                     var dataSet = items.lstProdInfo.map(function (itemsProd, nRowIndex) {
                         var strUOMs = "";
                         for (var j = 0; j < itemsProd.UOMList.length; j++) {
@@ -6465,8 +6484,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             itemsProd.TaxID,
                             itemsProd.TaxPern, itemsProd.OrgPrice, itemsProd.UomID, itemsProd.BatchNo, itemsProd.PKD, itemsProd.Expiry,
                             itemsProd.InvYN, itemsProd.BatchYN, itemsProd.PKDYN, itemsProd.SerialYN,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;'+
-                            '<br/> <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>&ensp;<span style="font-size:16px;" '+visbfields+' class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/><span style="font-size:16px;" '+visbfields+' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;'+
+                            ' <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
                             '<input disabled min="0" type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" title="' + itemsProd.MRP + '"' + disbfields + '/>',

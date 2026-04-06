@@ -1759,7 +1759,7 @@
         "ordering": false,
         scrollY: "250px",
     });
-
+    var editingRow = null; 
     //$("#VendInfo").hide();
     $("#VendInfo").click(function () {
         if ($("#txtVendorID").val() != "") {
@@ -2033,7 +2033,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
         ////$("#tblProductData").DataTable().ajax.reload();
     }
     $('#tblProductData tbody').on('click', '.clsremoveprod', function () {
-        ProductTable.row($(this).parents('tr')).remove().draw();
+        //ProductTable.row($(this).parents('tr')).remove().draw();
+        var row = ProductTable.row($(this).closest('tr'));
+        if (row.node()) {
+            row.remove().draw(false);
+        }        
         calculateProdGrid();
         ReorderSerialNo();
     });
@@ -2501,10 +2505,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         //showErrorSnackbar('Row index: ' + ProductTable.row(this).index());
         nCurrentRowIndex = ProductTable.row(this).index()
     });
-    $('#tblProductData tbody').on('focusin', 'tr', function () {
-        //showErrorSnackbar('Row index: ' + ProductTable.row(this).index());
-        nCurrentRowIndex = ProductTable.row(this).index()
-    });
+    
     $('#tblProductData tbody').on('change', '.dgvcmbUOM', function (e) {
         var currrowdata = ProductTable.row(nCurrentRowIndex).data();
         var ProdID = currrowdata[0];
@@ -3155,9 +3156,12 @@ function setDate1(FieldID,Type) {
     });
     var SelRowIndex = -1;
     $("#tblProductData tbody").on('focusin', 'tr', function () {
+        nCurrentRowIndex = ProductTable.row(this).index()
         SelRowIndex = $(this).closest('tr').index();
-        //showErrorSnackbar('Row index: ' + $(this).closest('tr').index());
+        //rowdata = ProductTable.row($(this).closest('tr')).data();
+        editingRow = ProductTable.row($(this).closest('tr'));
     });
+   
     function Addprodgridline() {
         ProductRID++;
         var pid = "dgvProdName" + ProductRID;
@@ -3167,9 +3171,9 @@ function setDate1(FieldID,Type) {
             0,
             0,
             0,
-            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>',//<span style="font-size:0px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;<br/>',
+            '<span style="font-size:0px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
             '<p style="font-size:14px;">' + (sno+ 1) + '</p>',
-            $('#txtHProdCode').val() + '<br/><input name = "ProName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID +'" value="" title=""/>',
+            $('#txtHProdCode').val() + '<br/><input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID +'" value="" title=""/>',
             //PName,
             //'<input type="number" step="any" class="gdInput" name="HSN" value=""txtsettag/>',
             '<input type="number" txttag ="0" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="0"/>',
@@ -3205,32 +3209,7 @@ function setDate1(FieldID,Type) {
                 //showErrorSnackbar("prod row index : " + EditRowID);
                 return false;
                 },
-            }).
-            //    on("keyup", function () {
-            //    clearTimeout(scanTimer);
-            //    const $input = $(this);
-            //    const code = $input.val().trim();
-
-            //    scanTimer = setTimeout(() => {
-            //        if (code.length > 0) {
-            //            // Perform custom search
-            //            const match = TempAL.find(item =>
-            //                item.label.toLowerCase() === code.toLowerCase()
-            //            );
-            //            if (match) {
-            //                // Set value and trigger select manually
-            //                $input.val(match.code);
-            //                $input.trigger("autocompleteselect", { item: match });
-            //                $input.autocomplete("close");
-            //                //console.log("Match : "+match.code);
-            //            } else {
-            //                // Fallback to filtered autocomplete if no exact match
-            //                $input.autocomplete("search", code);
-            //                //console.log("not Match : " + code);
-            //            }
-            //        }
-            //    }, 200);
-            //}).
+            }).            
                 autocomplete("instance")._renderItem = function (ul, item) {
             return $("<li class='each'>")
                 .append("<div class='acItem'><span class='name'>" +
@@ -3245,6 +3224,33 @@ function setDate1(FieldID,Type) {
         var hasqty = parseFloat(document.getElementById("lblPTQty").getAttribute("lbltag"));
         $("#cmbPriceType").prop("disabled", hasqty > 0);
         setupArrowKeyNavigation();
+    }
+    function ReLoadProductAutolists() {
+        const ProdALInputs = document.querySelectorAll('#tblProductData tbody input[name=ProdName]');
+        ProdALInputs.forEach((input, index) => {
+            var FID = ProdALInputs[index].id;
+            $("#" + FID).autocomplete({
+                minLength: 0, autoFocus: true,
+                source: TempAL,
+                select: function (event, ui) {
+                    //showErrorSnackbar("Select trigger, Code : " + ui.item.code);
+                    $("#" + FID).val(ui.item.code);
+                    $("#clrdivs").html("");
+                    var CustID = $("#txtVendorID").val() != "" ? $("#txtVendorID").val() : 0;
+                    setTimeout(() => {
+                        GetData(4, ui.item.code, CustID, null, $("#cmbPriceType").val());
+                    }, 0)
+                    //showErrorSnackbar("prod row index : " + EditRowID);
+                    return false;
+                },
+            }).autocomplete("instance")._renderItem = function (ul, item) {
+                return $("<li class='each'>")
+                    .append("<div class='acItem'><span class='name'>" +
+                        item.label + "</span><br><span class='desc'>" +
+                        item.line2 + "</span></div>")
+                    .appendTo(ul);
+            };
+        });
     }
     GetPrintProfile(6);
     function GetPrintProfile(nTransID) {
@@ -3468,7 +3474,7 @@ function setDate1(FieldID,Type) {
                             items.SalesTaxID,
                             items.GSTPern,
                             baseprice,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>',//<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product" hidden></span>&ensp;<br/>',
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/><span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
                             '<p style="font-size:14px;">' + (SelRowIndex +1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID + '" value="' + items.Name + '" title="' + items.Name + '"/><br/>' + items.Code,
                             '<input type="number" txttag ="' + MRP + '" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(MRP).toFixed(2) + '" title="' + MRP +'" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)"oninput = "sanitizeNumericOnly(this, null)"/>',
@@ -3491,7 +3497,8 @@ function setDate1(FieldID,Type) {
                         ];
                         var temprid = ProductRID;
                         $('#dgvUOM' + ProductRID).val(TempProd.SalesUomID);
-                        ProductTable.row(SelRowIndex).data(dgvdata).draw();
+                        //ProductTable.row(SelRowIndex).data(dgvdata).draw();
+                        editingRow.data(dgvdata).draw();
                         ProductTable.columns.adjust().draw(false);
                         //$("#dgvProdQty" + ProductRID).select()
                         ProductPriceQtyChange(1);
@@ -3647,7 +3654,7 @@ function setDate1(FieldID,Type) {
                             itemsProd.TaxID,
                             itemsProd.TaxPern,
                             itemsProd.UomSalePrice,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>',//<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/><span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
                             '<input type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(2) + '" title="' + itemsProd.MRP + '"' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
@@ -4438,6 +4445,7 @@ function setDate1(FieldID,Type) {
                     });
                     ProductRID = 0;
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
+                    var visbfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
                     var dataSet = items.lstProdInfo.map(function (itemsProd, nRowIndex) {
 
                         var sel = "<select name= 'UOM' class='gdInput' " + disbfields + " id='dgvUOM'" + nRowIndex + " >";
@@ -4455,7 +4463,7 @@ function setDate1(FieldID,Type) {
                             itemsProd.TaxID,
                             itemsProd.TaxPern,
                             itemsProd.UomSalePrice,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>',//<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/><span style="font-size:16px;" ' + visbfields + ' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
                             '<input type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(2) + '" title="' + itemsProd.MRP + '"' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',

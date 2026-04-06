@@ -27,9 +27,10 @@
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_Grid/js/gridui.js"></script>
-
+<script src="~/dropdown/script.js"></script>
+@*<link href="~/dropdown/styles.css" rel="stylesheet" />*@
 <style>
- 
+
     /* Status Badge with Circle */
     .status-badge {
         display: inline-flex;
@@ -48,6 +49,7 @@
         0%, 100% {
             opacity: 1;
         }
+
         50% {
             opacity: 0.85;
         }
@@ -74,6 +76,7 @@
         0%, 100% {
             opacity: 1;
         }
+
         50% {
             opacity: 0.5;
         }
@@ -193,7 +196,6 @@
         pointer-events: none;
         font-family: sans-serif;
     }
-    
 </style>
 <body>
 
@@ -204,7 +206,7 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransType" })
-   
+
     <div class="d-flex align-items-center gap-2">
         <!-- Larger heading -->
         <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
@@ -219,7 +221,8 @@
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
     <div id="dvMainTable">
-        <div id="my-grid" style="height: 600px; width: 100%;"></div>        
+        <div hidden id="storeDropdown" class="multiselect-container"></div>
+        <div id="my-grid" style="height: 600px; width: 100%;"></div>
     </div>
     <!--<div class="modalBatch" id="myModalfg">
         <div class="modal-dialog" style="width:auto;">
@@ -350,7 +353,7 @@
                 $("#chkActive").prop("checked", Active == "True");
                 $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", true);
                 $(".clrdiv").html("");
-                 modal.show();
+                modal.show();
             }
         },
         {
@@ -385,11 +388,11 @@
                 $("#chkActive,#btnSave,#txtName").prop("disabled", false);
                 $("#btnClear").prop("disabled", true);
                 $(".clrdiv").html("");
-                 modal.show();
+                modal.show();
             }
         }]
     var columns = [
-        
+
     ];
     const singleIconAction = allGridActions.filter(a => a.displayType === 'single_icon');
     const menuActions = [];// allGrid3dotActions.filter(a => a.displayType === 'menu_item');
@@ -406,7 +409,7 @@
     };
 </script>
 <script type="text/javascript">
-    
+
     var Aurl = '@Session["APIurl"]';
 
     if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
@@ -439,6 +442,7 @@
                 }
                 SingleMasterData = data;
                 //Table.draw().clear(); Table.draw().clear();
+                var tempddd = [];
                 arrData = [];
                 $.each(data, function (i, items) {
                     var al = {
@@ -447,8 +451,13 @@
                         "id": items.ID,
                     }
                     arrData.push(al);
+                    var mdd = {
+                        "ID": items.ID,
+                        "Name": items.Name,
+                    }
+                    tempddd.push(mdd);
                 });
-
+                Loadmultidropdowndata(tempddd);
                 var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
                 grid = new GKBSDynamicGrid('#my-grid', columns, SingleMasterData, {
                     enablePagination: true,
@@ -486,7 +495,7 @@
                             text: 'Settings',
                             title: 'Settings',
                             visible: true,
-                            onClick: (gridInstance, event) => {                                
+                            onClick: (gridInstance, event) => {
                                 //modalGenColumnSettings.style.display = "block";
                                 modalGenColumnSettings.show();
                                 GendralColumnSettings(1, 1, 1, 0);
@@ -497,7 +506,7 @@
                             text: 'Add New',
                             title: 'Add New',
                             visible: $("#txtAddID").val() == 1,
-                            onClick: (gridInstance, event) => {                                
+                            onClick: (gridInstance, event) => {
                                 nMode = 1;
                                 $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
                                 $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
@@ -507,24 +516,10 @@
                         },
                     ],
                     onCellClick: (rowData, fieldName, cellValue, column) => {
-                        //let message = `Clicked Cell:\n`;
-                        //message += `• Field: ${fieldName}\n`;
-                        //message += `• Value: ${cellValue}\n\n`;
-                        //message += `Row Data:\n`;
-                        //for (const key in rowData) {
-                        //    if (key !== '_gridId') {
-                        //        message += `• ${key}: ${rowData[key]}\n`;
-                        //    }
-                        //}
-                        //alert(message);
+                        
                     },
                     onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                        //// Double-click handler - shows JSON format
-                        //let message = `Double-Clicked Cell:\n`;
-                        //message += `• Field: ${fieldName}\n`;
-                        //message += `• Value: ${cellValue}\n\n`;
-                        //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
-                        //alert(message);
+                       
                     },
                     onColumnResize: (colIndex, field, header, newWidth) => {
                         UpdateColumnWidth(1, 1, 0, colIndex, field, newWidth)
@@ -553,7 +548,24 @@
             }
         });
     }
-    
+    let storeDropdown;
+    function Loadmultidropdowndata(listdata) {
+        // Initialize the dropdown
+        storeDropdown = new MultiSelectDropdown({
+            containerId: 'storeDropdown',
+            data: listdata,
+            idField: 'ID',
+            nameField: 'Name',
+            placeholder: '🔍 Search or select stores...',
+            maxHeight: '350px'
+        });
+        assignSelectedStores(['1', '3', '8']);
+
+    }
+    function assignSelectedStores(storeIds) {
+        // storeIds should be array like ['356', '21', '744']
+        storeDropdown.setSelected(storeIds);
+    }
     function GetColumnSettingsData(nMode,nFormID,nTableID) {
         $.ajax({
             url: Aurl + "columnsettings/getcolumnsettings",
@@ -568,7 +580,7 @@
             success: function (data) {
                 if (data.length > 0) {
                     columns = (data);
-                    console.log("columns : ", columns);                    
+                    console.log("columns : ", columns);
                     columns.push(actions);
                 } else {
                     showErrorSnackbar("No column data found");
@@ -670,7 +682,7 @@
                             window.opener.$('#txtReason').val(name)
                             window.opener.$('#txtReasonID').val(items.ID)
                             window.close();
-                        }                        
+                        }
                     }
                     else {
                         $("#dvErrorName").html(items.Message);
@@ -710,5 +722,5 @@
                 modal.hide();
             }
         }
-    }    
+    }
 </script>
