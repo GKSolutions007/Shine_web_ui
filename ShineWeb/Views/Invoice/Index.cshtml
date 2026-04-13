@@ -1880,7 +1880,7 @@
 
                         </td>
                         <td class="text-end">
-                            <label id="lblTaxAmount" class="fw-bold fs-5">0.00</label>
+                            <label id="lblTaxAmount" class="lblPT lblsettag fw-bold fs-5">0.00</label>
                         </td>
                     </tr>
                     <tr class="bgclrfortr taxDetails" style="display:none;">
@@ -2663,6 +2663,7 @@
  var RoleID = '@Session["RoleID"]';
  var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
+    var batchhidetrigger = false;
     if ($("#txtEnablePaid").val() == 1) {
         $(".container.text-center").show();
     } else {
@@ -2911,17 +2912,20 @@ if ($("#txtReurnPricePerm").val() == 0) {
             stopAutoDraftSave();
         }
     }
+    var ModalState = false;
     $(document).on('click', '#btnBatchClose', function (e) {
         e.stopPropagation();
         document.getElementById('myModalfg').style.display = 'none';
+        ModalState = false;
     });
-
     var modal = {
         show: function () {
             document.getElementById('myModalfg').style.display = 'block';
+            ModalState = true;
         },
         hide: function () {
             document.getElementById('myModalfg').style.display = 'none';
+            ModalState = false;
         }
     };
     //var span = document.getElementsByClassName("closefg")[0];
@@ -3996,6 +4000,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 ProductPriceQtyChange(Qty);
             }
         });
+    });
+
+    $('#tblProductData tbody').on('keyup', '.dgvProdName', function () {
+            modal.hide();
     });
     $('#tblProductData tbody').on('change', '.dgvqty', function (e) {
         var qty = e.target.value != "" ? parseFloat(e.target.value) : 0;
@@ -5089,6 +5097,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     });
 
     $('#tblProductData tbody').on('click', '.clsbatchprod', function () {
+        //batchhidetrigger = false;
         SelRowIndex = $(this).closest('tr').index();
         editingRow = ProductTable.row($(this).closest('tr'));
         //showSuccessSnackbar("Edit Row : "+ SelRowIndex);
@@ -5167,6 +5176,78 @@ if ($("#txtReurnPricePerm").val() == 0) {
             classList.add('selected');
         }
     });
+    $(document).on('keydown', function (e) {
+        //if (!modal || !modal._isShown) return; 
+        var isModalshow = document.getElementById('myModalfg').style.display == "block";
+        if (!isModalshow) return;
+        let $selected = $('#tblBatch tbody tr.selected');
+
+        // If no row selected → select first row
+        if ($selected.length === 0) {
+            let first = $('#tblBatch tbody tr:first');
+            first.addClass('selected');
+            return;
+        }
+
+        // 🔼 UP arrow
+        if (e.key === "ArrowUp") {
+            let prev = $selected.prev('tr');
+            if (prev.length) {
+                $selected.removeClass('selected');
+                prev.addClass('selected');
+                scrollToRow(prev);
+            } else {
+                scrollToRow($selected);
+            }
+            e.preventDefault();
+        }
+
+        // 🔽 DOWN arrow
+        else if (e.key === "ArrowDown") {
+            let next = $selected.next('tr');
+            if (next.length) {
+                $selected.removeClass('selected');
+                next.addClass('selected');
+                scrollToRow(next);
+            } else {
+                scrollToRow($selected);
+            }
+            e.preventDefault();
+        }
+
+        // ⏎ ENTER key → get row data
+        else if (e.key === "Enter") {
+            let rowData = TableBatch.row($('.selected')).data();
+            
+            console.log("Selected Row Data:", rowData);
+
+            // Example usage
+            //handleSelectedBatch(rowData);
+
+            e.preventDefault();
+        }
+    });
+    function scrollToRow($row) {
+        $row[0].scrollIntoView({
+            behavior: "auto",      // or "smooth"
+            block: "nearest"       // keeps it within view
+        });
+    }
+    function BatchTablescrollToRow($row) {
+
+        var $scrollBody = $(TableBatch.table().node()).parent();
+
+        var rowTop = $row.position().top;
+        var containerScroll = $scrollBody.scrollTop();
+        var containerHeight = $scrollBody.height();
+
+        if (rowTop < 0) {
+            $scrollBody.scrollTop(containerScroll + rowTop);
+        }
+        else if (rowTop > containerHeight - 30) {
+            $scrollBody.scrollTop(containerScroll + (rowTop - containerHeight + 30));
+        }
+    }
     $("#tblBatch tbody").on('dblclick', 'tr', function () {
         //Batch Selection
         var rowdata = TableBatch.row($(this)).data();
@@ -5183,10 +5264,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var Prodrowdata = ProductTable.row(editingRow).data();////ProductTable.row(SelRowIndex).data();
         var tpern = parseFloat(Prodrowdata[2]);
         var TaxPern = (tpern / 100) + 1;
-
-        //var prproddtl = Prodrowdata[14];
-        //var prodattr = $(prproddtl);
-        //showErrorSnackbar(prodattr);
         var ApponMRPCum = 0; //$(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = 0;// $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 1;  
         //mrp price update
@@ -5258,13 +5335,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
             '<label name="TaxAmt" lbltag="0" id="dgvProdTax' + ProductRID + '">' + "" + '</label><br/><label name="Tax">' + "" + '</label>',
             '<label name="NetAmt" lbltag="0" id="dgvProdNet' + ProductRID + '">' +0 + '</label>',0,"0.00",0,'',1
         ]).draw(false);
-            $("#" + pid).autocomplete({
+        $("#" + pid).autocomplete({
             minLength: 0, autoFocus: true,
             source: TempAL,
-            //focus: function (event, ui) {
-            //    $("#txtHProds").val(ui.item.name);
-            //    return false;
-            //},
+            focus: function (event, ui) {
+                //$("#txtHProds").val(ui.item.name);
+                modal.hide();
+                return false;
+            },
             select: function (event, ui) {
                 $("#" + pid).val(ui.item.code);
                 $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -5276,14 +5354,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 //alert("prod row index : " + EditRowID);
                 $("#btnBatch").focus();
                 return false;
-            },
+            }
         }).autocomplete("instance")._renderItem = function (ul, item) {
             return $("<li class='each'>")
                 .append("<div class='acItem'><span class='name'>" +
                     item.label + "</span><br><span class='desc'>" +
                     item.line2 + "</span></div>")
                 .appendTo(ul);
-        };
+            };
+        
         ProductRID++;
         var $scrollBody = $(ProductTable.table().node()).parent();
         $scrollBody.scrollTop($scrollBody.get(0).scrollHeight);
@@ -5297,7 +5376,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
               var FID = ProdALInputs[index].id;
                   $("#" + FID).autocomplete({
     minLength: 0, autoFocus: true,
-    source: TempAL,
+                      source: TempAL,
+                      focus: function (event, ui) {
+                          modal.hide();
+                          return false;
+                      },
     select: function (event, ui) {
         $("#" + FID).val(ui.item.code);
         $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -5335,12 +5418,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             }
                             else {
-                                ////console.log("Not Autolist field Down");
-                                const nextRow = currentRow.nextElementSibling;
-                                if (nextRow) {
-                                    const nextInputs = nextRow.querySelectorAll('input');
-                                    if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
-                                    e.preventDefault();
+                                if (!ModalState)
+                                {
+                                    const nextRow = currentRow.nextElementSibling;
+                                    if (nextRow) {
+                                        const nextInputs = nextRow.querySelectorAll('input');
+                                        if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
                                 }
                             }
                         }
@@ -5352,16 +5437,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             }
                             else {
-                                ////console.log("Not Autolist field Up");
-                                const prevRow = currentRow.previousElementSibling;
-                                if (prevRow) {
-                                    const prevInputs = prevRow.querySelectorAll('input');
-                                    if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
-                                    e.preventDefault();
+                                if (!ModalState)
+                                {
+                                    const prevRow = currentRow.previousElementSibling;
+                                    if (prevRow) {
+                                        const prevInputs = prevRow.querySelectorAll('input');
+                                        if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
                                 }
                             }
                         }
-                        if (e.key === 'Enter') {
+                        if (!e.shiftKey && e.key === 'Enter') {
                             var lencls = $('.ui-menu-item').length;
                             const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
                             const currentInputIndex = allInputsList.indexOf(input);
@@ -5379,6 +5466,31 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             } else {
                                 // Call your add row function here
                                 //Addprodgridline();
+                                setTimeout(() => {
+                                    const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                    if (newInputs[0]) newInputs[0].focus();
+                                }, 100);
+                            }
+                            e.preventDefault();
+                        }
+                        if (e.shiftKey && e.key === 'Enter') {
+                            const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
+                            const currentInputIndex = allInputsList.indexOf(input);
+                            const nextInput = allInputsList[currentInputIndex - 1];
+
+                            if (nextInput) {
+                                var nm = nextInput.name;
+                                if (nm == "ProdDiscPern") {
+                                    setTimeout(() => {
+                                        const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                        if (newInputs[0]) newInputs[0].focus();
+                                    }, 100);
+                                } else {
+                                    nextInput.focus();
+                                }
+                            } else {
+                                // Call your add row function here
+                                Addprodgridline();
                                 setTimeout(() => {
                                     const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
                                     if (newInputs[0]) newInputs[0].focus();
@@ -5744,6 +5856,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     });
                 }
                 else if (nMode == 4) {
+                    //batchhidetrigger = false;
                     arrSalesTaxDetails = [];
                     modal.show();
                     $('#cmbUOM').find("option").remove();
@@ -5884,6 +5997,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         $("#dgvProdName" + ProductRID).autocomplete({
                             minLength: 0, autoFocus: true,
                             source: TempAL,
+                            focus: function (event, ui) {
+                                modal.hide();
+                                return false;
+                            },
                             select: function (event, ui) {
                                 $("#dgvProdName" + ProductRID).val(ui.item.code);
                                 $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -5909,7 +6026,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         }
                         startAutoDraftSave();
                         ReorderSerialNo();
-                        $("#dgvProdQty" + temprid).select()
+                        $("#dgvProdQty" + temprid).select();
+                        //batchhidetrigger = true;
                         //modal.show();
                         setupArrowKeyNavigation1();
                     });
@@ -6565,6 +6683,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#" + fieldID).autocomplete({
                                 minLength: 0, autoFocus: true,
                                 source: TempAL,
+                                focus: function (event, ui) {
+                                    modal.hide();
+                                    return false;
+                                },
                                 select: function (event, ui) {
                                     $("#dgvProdName" + ProductRID).val(ui.item.code);
                                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -6862,7 +6984,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var ID = $("#txtID").val();
         InvoiceCollectionModalPopup(ID, 15);
     });
-    function ClearForm() {
+    function ClearForm_old() {
+        console.log("Start Time : ", new Date().toISOString());
+
         ProductRID = 0;
         $(".FormclrField").val("");
         $(".FormclrcmbField").val(0);
@@ -6888,8 +7012,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if (RetainDate == 0) {
             setDate("dtpDate", 0);
         }
-        SetFilterDate();
-        GetFilterData();
+        //SetFilterDate();
+        //GetFilterData();
         stopAutoDraftSave();
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles();
@@ -6899,31 +7023,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }, 500);
         }
         else {
-            //if (DefBranch != "") {
-            //    setTimeout(function () {
-            //        //GetFilterData();
-            //        //GetData(2, DefBranch, $("#dtpDate").val());
-            //        GetProductList();
-            //    }, 500);
-            //}
-            //else {}
-                setTimeout(function () {
-                    //GetFilterData();
-                    //GetData(2, 0, $("#dtpDate").val());
+                setTimeout(function () {                   
                     GetProductList();
-                }, 500);
+                }, 300);
         }
-
         nIsDraft = 0;
         BatchAcceptArray = [], TempProd = [], ProductArray = [], PaymodeArray = [];
         if (nTransMode != 1) {
             $("#dvMain").hide();
             $("#dvDocuments").show();
-        }
-        //setTimeout(function () {
-        //    GetData(3, DefCustCode);
-        //}, 800);
-
+        }      
         CreditLimValidate = false;
         $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
@@ -6937,7 +7046,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if ($("#txtEnableSaveButton").val() == 0) {
             $("#btnSave").hide();
         }
-        GetPrintProfile(4);
+        //GetPrintProfile(4);
         $("#txtSearch").focus();
         if (!$("#rdoMainTableData").is(":checked")) {
             $("#dvMain").hide();
@@ -6950,7 +7059,108 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#tblProductData tbody tr").find("label[name='TaxAmt']").attr("lbltag", 0).text("0.00");
 
         // Recalculate totals (CGST, SGST, Tax Amount, etc.)
-        calculateProdGrid();
+        //calculateProdGrid();
+        console.log("End Time : ", new Date().toISOString());
+
+    }
+    function ClearForm() {
+        console.log("Start Time : ", new Date().toISOString());
+        ProductRID = 0;
+
+        // Reset inputs & text
+        $(".FormclrField").val("");
+        $(".FormclrcmbField").val(0);
+        $(".clrdivs").html("");
+
+        $("#lblPT").text("0.00");
+        $("#txtRoundOff").val("0.00");
+        $("#lblRoundNet,#lblRoundNetFooter").text("0.00");
+        $("#lblPTCount").text("0");
+
+        $("#lblName,#lblProdCodeAS,#cmbRating,#lblMob1,#lblGSTIN").text("");
+
+        $("#txtNoofCopies").val("1");
+
+        // Hide & reset labels
+        $("#lblPartyCloseBal,#lblPartyACDRating")
+            .text("")
+            .hide();
+
+        $("#balanceContainer").hide();
+
+        // Reset styles
+        $("input").css("border-color", "");
+
+        // Clear tables
+        TableBatch.draw().clear();
+        ProductTable.draw().clear(); ProductTable.draw().clear();
+
+        // Load initial data
+        GetData(1, RoleID);
+        SetTagZero();
+
+        if (RetainDate == 0) setDate("dtpDate", 0);
+        //SetFilterDate();
+
+        stopAutoDraftSave();
+        LoadBranchByRoles();
+
+        // Load customer or product list
+        setTimeout(function () {
+            if (DefCustCode !== "") {
+                GetData(3, DefCustCode);
+            } else {
+                GetProductList();
+            }
+        }, DefCustCode !== "" ? 500 : 300);
+
+        // Reset flags & arrays
+        nIsDraft = 0;
+        BatchAcceptArray = [];
+        TempProd = [];
+        ProductArray = [];
+        PaymodeArray = [];
+        CreditLimValidate = false;
+
+        // Toggle UI sections
+        if (nTransMode != 1 || !$("#rdoMainTableData").is(":checked")) {
+            $("#dvMain").hide();
+            $("#dvDocuments").show();
+        }
+        if (!$("#rdoMainTableData").is(":checked")) {
+            GetFilterData();
+        }
+        // Enable/Disable controls
+        $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose")
+            .prop("disabled", false);
+
+        $("#btnPreview,#btnPDF,#btnPrint")
+            .prop("disabled", true)
+            .hide();
+
+        $("#btnEmail,#btnWhatsapp").hide();
+        $("#btnSave,#btnClear,#btnDraft").show();
+
+        $("#txtProdDiscAmt").prop("disabled", true);
+        $("#txtPMPTotal,#txtPMPRecdAmt,#txtPMPBalance,#txtPMPAdjAmt").prop("disabled", true);
+
+        $("#txtCustomerRemarks,#cmbUDN,#txtDiffExcl,#txtDiffIncl")
+            .prop("disabled", true);
+
+        // Conditional UI
+        if ($("#txtEnableSaveButton").val() == 0) $("#btnSave").hide();
+        if ($("#txtEnableBranch").val() == 1) $("#cmbBranch").prop("disabled", true);
+
+        // Reset heading & focus
+        $("#MainHeading").text("Invoice");
+        $("#txtSearch").focus();
+
+        // Reset tax labels
+        $("#tblProductData tbody tr")
+            .find("label[name='TaxAmt']")
+            .attr("lbltag", 0)
+            .text("0.00");
+        console.log("End Time : ", new Date().toISOString());
     }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
