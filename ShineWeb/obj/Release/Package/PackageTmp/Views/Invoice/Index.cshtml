@@ -10,7 +10,6 @@
 <link href="~/datatable/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet" />
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
-<link href="~/Content/fontawesome.6.0.0.css" rel="stylesheet" />
 <script src="~/Scripts/jquery-1.11.1.min.js"></script>
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
@@ -18,7 +17,6 @@
 <script src="~/Scripts/datatable.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
-<script src="~/Scripts/Validation.js"></script>
 <script src="~/GKBS_Grid/js/gridui.js"></script>
 <script src="~/Scripts/js/mrptaxcall.js"></script>
 <header>
@@ -2782,7 +2780,7 @@ var isEnable = InvoicePriceEdit == 0 ? "disabled" : "";
         scrollY: "250px",
         "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
     });
-
+    var editingRow = null; 
     //$("#VendInfo").hide();
     $("#VendInfo").click(function () {
         if ($("#txtCustomerID").val() != "") {
@@ -3207,15 +3205,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
     $('#tblProductData tbody').on('click', '.clsremoveprod', function () {
         //ProductTable.row($(this).parents('tr')).remove().draw();
-
         var row = ProductTable.row($(this).closest('tr'));
         if (row.node()) {
-            row.remove();
+            row.remove().draw(false);
         }
-        //ProductTable.row($(this).closest('tr')).remove().draw(false);
-        //ProductTable.row($(this).closest('tr')).remove().draw();
-        //var nvcount = ProductTable.rows().count()
-        //showErrorSnackbar("Product COunt : " + nvcount);
+        modal.hide();
         calculateProdGrid();
         ReorderSerialNo();
     });
@@ -3928,11 +3922,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         nCurrentRowIndex = ProductTable.row(this).index();
 
     });
-    $('#tblProductData tbody').on('focusin', 'tr', function () {
-        //alert('Row index: ' + ProductTable.row(this).index());
-        nCurrentRowIndex = ProductTable.row(this).index();
-
-    });
+    
     $('#tblProductData tbody').on('change', '.dgvexcl', function (e) {
         var currrowdata = ProductTable.row(nCurrentRowIndex).data();
         var ProdID = currrowdata[0];
@@ -5052,7 +5042,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         }
         else {
-            ProductTable.cell(SelRowIndex, 30).data(0);
+            ProductTable.cell(editingRow, 30).data(0);
             modalSchema.hide();
             $("#txtReason").val("");
             $("#txtReasonID").val(0);
@@ -5084,6 +5074,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var ID = rowdata[0];
         GetBranchwiseABSQty(ID)
     });
+    
     $('#tblProductData tbody').on('click', '.clsinfoprod', function () {
         rowdata = ProductTable.row($(this).parents('tr')).data();
         var ProdName = "";
@@ -5099,6 +5090,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
     $('#tblProductData tbody').on('click', '.clsbatchprod', function () {
         SelRowIndex = $(this).closest('tr').index();
+        editingRow = ProductTable.row($(this).closest('tr'));
+        //showSuccessSnackbar("Edit Row : "+ SelRowIndex);
         rowdata = ProductTable.row($(this).parents('tr')).data();
         var TrkInv = rowdata[8];
         var ProdID = rowdata[0];
@@ -5131,9 +5124,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
     var SelRowIndex = -1;
     $("#tblProductData tbody").on('focusin', 'tr', function () {
         SelRowIndex = $(this).closest('tr').index();
-        //showErrorSnackbar("RowIndex : " + SelRowIndex);
-        //alert('Row index: ' + $(this).closest('tr').index());
-
+        nCurrentRowIndex = ProductTable.row(this).index();
+        //rowdata = ProductTable.row($(this).closest('tr')).data();
+        editingRow = ProductTable.row($(this).closest('tr'));
     });
     //$('#tblProductData tbody').on('focusin', 'td>.dgvexcl', function (e) {
     //    var Prodrowdata = ProductTable.row(SelRowIndex).data();
@@ -5187,7 +5180,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var ShowPrice = rowdata[9];
         var ShownQty = rowdata[8];
         //alert("Price : " + Price + " ,  MRP : " + MRP);
-        var Prodrowdata = ProductTable.row(SelRowIndex).data();
+        var Prodrowdata = ProductTable.row(editingRow).data();////ProductTable.row(SelRowIndex).data();
         var tpern = parseFloat(Prodrowdata[2]);
         var TaxPern = (tpern / 100) + 1;
 
@@ -5223,13 +5216,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn(finclid, InclPrice);
 
         //batch price,mrp,batchno,pkd,expiry update
-        ProductTable.cell(SelRowIndex, 3).data(Price).draw();
+        ProductTable.cell(editingRow, 3).data(Price).draw();//SelRowIndex
         //ProductTable.cell(SelRowIndex, 4).data(MRP).draw();
-        ProductTable.cell(SelRowIndex, 5).data(BatchNo).draw();
-        ProductTable.cell(SelRowIndex, 6).data(PKD).draw();
-        ProductTable.cell(SelRowIndex, 7).data(Expiry).draw();
-        ProductTable.cell(SelRowIndex, 26).data(ShownQty).draw();
-        ProductTable.cell(SelRowIndex, 30).data(QtyType).draw();
+        ProductTable.cell(editingRow, 5).data(BatchNo).draw();
+        ProductTable.cell(editingRow, 6).data(PKD).draw();
+        ProductTable.cell(editingRow, 7).data(Expiry).draw();
+        ProductTable.cell(editingRow, 26).data(ShownQty).draw();
+        ProductTable.cell(editingRow, 30).data(QtyType).draw();
         //showErrorSnackbar("Batch Select : " + ShownQty);
         //get qty
         var prqty = Prodrowdata[17];
@@ -5247,9 +5240,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
             0,
             0,
             0,0,0,'','','',0,0,0,0,
-            '',//'<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod123" onclick="removeRow(this)" title="Remove Product" hidden></span>',
+            '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
             '<p style="font-size:14px;">' + (sno+ 1) + '</p>',
-            $('#txtHProdCode').val() + '<br/><input name = "ProName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID +'" value="" title=""/>',
+            $('#txtHProdCode').val() + '<br/><input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID +'" value="" title=""/>',
             //PName,
             //'<input min="0" type="number" step="any" class="gdInput" name="HSN" value=""txtsettag/>',
             '<input disabled min="0" type="number" txttag ="0" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="0"/>',//
@@ -5265,7 +5258,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
             '<label name="TaxAmt" lbltag="0" id="dgvProdTax' + ProductRID + '">' + "" + '</label><br/><label name="Tax">' + "" + '</label>',
             '<label name="NetAmt" lbltag="0" id="dgvProdNet' + ProductRID + '">' +0 + '</label>',0,"0.00",0,'',1
         ]).draw(false);
-        console.log(TempAL);
             $("#" + pid).autocomplete({
             minLength: 0, autoFocus: true,
             source: TempAL,
@@ -5298,6 +5290,32 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var hasqty = parseFloat(document.getElementById("lblPTQty").getAttribute("lbltag"));
         //$("#cmbPriceType").prop("disabled", hasqty > 0);
         setupArrowKeyNavigation1();
+    }
+    function ReLoadProductAutolists(){
+         const ProdALInputs = document.querySelectorAll('#tblProductData tbody input[name=ProdName]');
+          ProdALInputs.forEach((input, index) => {
+              var FID = ProdALInputs[index].id;
+                  $("#" + FID).autocomplete({
+    minLength: 0, autoFocus: true,
+    source: TempAL,
+    select: function (event, ui) {
+        $("#" + FID).val(ui.item.code);
+        $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
+        modal.show();
+        $("#clrdivs").html("");
+        var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+        GetData(4, ui.item.code, CustID);
+        $("#btnBatch").focus();
+        return false;
+    },
+}).autocomplete("instance")._renderItem = function (ul, item) {
+    return $("<li class='each'>")
+        .append("<div class='acItem'><span class='name'>" +
+            item.label + "</span><br><span class='desc'>" +
+            item.line2 + "</span></div>")
+        .appendTo(ul);
+};
+              });
     }
     // 👇 Function to apply keydown listener to all input elements in the table
     function setupArrowKeyNavigation1() {
@@ -5423,7 +5441,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
             success: function (data) {
                 $('#cmbPrintProfile').find("option").remove();
                 var lstdata = eval(data)
-                console.log("Print profiles ", lstdata);
                 var getdef = lstdata.filter(pr => pr.DefaultConfig == 1);
                 var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
                 //Auto Email
@@ -5744,7 +5761,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         //$('#txtHSN').val(items.HSNCode);
                         arrSalesTaxDetails = ReturnTaxDetails(items.SalesTaxID, 1);
                         var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
-                        
+
                         ProductRID++;
                         var Reasons = "<select name= 'Reasons' class='gdInput dgvcmbReasons' id='dgvReasons" + ProductRID + "'>" + strReasons + "</select>";
                         var sel = "<select name= 'UOM' class='gdInput dgvcmbUOM' id='dgvUOM" + ProductRID + "'>";
@@ -5761,7 +5778,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var trkinv = items.TrackInventory;
                         var trkbat = items.TrackBatch;
                         var trkpkd = items.TrackPKD;
-                        var btQty = 0, btPrice = 0, btmrp = 0, btTag = 1, BTbat = "", BTpkd = "", BTexp = "", orgPrice = 0,btBaseQty = 0;
+                        var btQty = 0, btPrice = 0, btmrp = 0, btTag = 1, BTbat = "", BTpkd = "", BTexp = "", orgPrice = 0, btBaseQty = 0;
                         //SalesCR
                         if (trkinv == "False") {
                             btQty = 0;
@@ -5825,14 +5842,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             items.ProdID,
                             items.SalesTaxID,
                             items.GSTPern, orgPrice, items.BaseUomID, BTbat, BTpkd, BTexp, trkivYN, batchYN, pkdYN, SerYN,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span>' +//&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" onclick="removeRow(this)" title="Remove Product" hidden></span>
-                            '<br/> <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/> <span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;' +
+                            '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
                             '<p style="font-size:14px;">' + (SelRowIndex + 1) + '</p>',
-                            '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID + '" value="' + items.Name + '" title="' + items.Name + '"/><br/>'+items.Code+" | " + $("#txtTempABS").val(),//<br/><label>MRP : ' + parseFloat(MRP).toFixed(2) +'</label>
+                            '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID + '" value="' + items.Name + '" title="' + items.Name + '"/><br/>' + items.Code + " | " + $("#txtTempABS").val(),//<br/><label>MRP : ' + parseFloat(MRP).toFixed(2) +'</label>
                             '<input disabled min="0" type="number" txttag ="' + MRP + '" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(MRP).toFixed(2) + '" title="' + MRP + '"/> ',
-                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + PPrice + '" step="any" id="dgvProdExl' + ProductRID + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(PPrice).toFixed(2) + '" title="' + PPrice + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/><br/>'+
+                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + PPrice + '" step="any" id="dgvProdExl' + ProductRID + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(PPrice).toFixed(2) + '" title="' + PPrice + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/><br/>' +
                             '<input ' + isEnable + ' min="0" type="number" txttag ="' + InclPPrice + '" step="any" id="dgvProdIncl' + ProductRID + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(InclPPrice).toFixed(2) + '" title="' + InclPPrice + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="' + DefQty+ '" step="any" id="dgvProdQty' + ProductRID + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + DefQty + ' " title="' + DefQty + '" autofocus ' +
+                            '<input min="0" type="number" txttag ="' + DefQty + '" step="any" id="dgvProdQty' + ProductRID + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + DefQty + ' " title="' + DefQty + '" autofocus ' +
                             'onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
                             sel,
                             '<label>%</label><input min="0" type="number" txttag ="' + parseFloat(items.ProductDiscPerc) + '" title="' + parseFloat(items.ProductDiscPerc) + '" step="any" id="dgvProdPDPern' + ProductRID + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(items.ProductDiscPerc).toFixed(2) + '" onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' + '<label>₹</label><input min="0" type="number" txttag ="0" step="any" id="dgvProdPDAmt' + ProductRID + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="0" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
@@ -5848,7 +5865,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             '<label name="DiffValue" lbltag="0" title="0" class="lblsettag" id="dgvProdDiffValue' + ProductRID + '">' + 0 + '</label><br/>' + Reasons,
                             items.ItemTransactionPrice, 0, btTag
                         ];
-                        ProductTable.row(SelRowIndex).data(dgvdata).draw();
+                        //showSuccessSnackbar("row : " + SelRowIndex);
+                        editingRow.data(dgvdata).draw();
+                        //ProductTable.row(SelRowIndex).data(dgvdata).draw();//(SelRowIndex)
                         var temprid = ProductRID;
                         $('#dgvUOM' + ProductRID).val(TempProd.SalesUomID);//BaseUomID
                         $("#dgvProdQty" + ProductRID).select()
@@ -5988,7 +6007,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         $(".modalBatch").css("width", "35%");
                     if (TableBatch.rows().count() > 0) {
                         modal.show();
-                        var Prodrowdata = ProductTable.row(SelRowIndex).data();
+                        var Prodrowdata = ProductTable.row(editingRow).data();//SelRowIndex
                         //5,6,7
                         var PID = Prodrowdata[0];
                         var Price = Prodrowdata[3];
@@ -6012,9 +6031,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 $(this).closest('tr').addClass("selected");
                                 //TableBatch.row($(this)).scrollTo();
                                 //TableBatch.scrollTo({ left: 0, top: 30, behavior: "smooth" });
-                                ProductTable.cell(SelRowIndex, 26).data(BTQty).draw();
+                                ProductTable.cell(editingRow, 26).data(BTQty).draw();
+                                //ScrolltoBatchRow($(this))
+                                // Scroll to the selected row
+                                var $scrollBody = $(TableBatch.table().node()).parent();
+                                var rowOffsetTop = $(this)[0].offsetTop;
+                                $scrollBody.scrollTop(rowOffsetTop);
                             }
                             else {
+                                //showErrorSnackbar("No match");
                                 $(this).closest('tr').remove("selected");
                             }
                         });
@@ -6104,13 +6129,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var actq = parseFloat(items.ActQty / dConvFact);//.toFixed(DecVal);
                         var shpri = parseFloat(items.SalesPrice * dConvFact);//.toFixed(DecVal);
                             //parseFloat(items.MRP).toFixed(DecVal)
-                        var Prodrowdata = ProductTable.row(nRIDx).data();
+                        var Prodrowdata = ProductTable.row(nRIDx).data();//nRIDx//editingRow
                         //console.log("Price Type change :" ,Prodrowdata);
                         //5,6,7
                         var TaxPern = parseFloat(Prodrowdata[2]);
                         var tx = 1 + (TaxPern / 100);
 
-                        ProductTable.cell(nRIDx, 3).data(orgpr);
+                        ProductTable.cell(nRIDx, 3).data(orgpr);//nRIDx
                         ProductTable.cell(nRIDx, 5).data(Btno);
                         ProductTable.cell(nRIDx, 6).data(Btpkd);
                         ProductTable.cell(nRIDx, 7).data(Btexp);
@@ -6146,7 +6171,19 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
+    function ScrolltoBatchRow(selectedRow) {
+        var container = $("#tblBatch").closest(".dataTables_scrollBody");
+        var rowTop = selectedRow.position().top;
+        var currentScroll = 20;// container.scrollTop();
+        var containerHeight = 100;// container.height();
 
+        // Only scroll if the row is outside the visible area
+        if (rowTop < 0 || rowTop > containerHeight) {
+            container.animate({
+                scrollTop: currentScroll + rowTop - (containerHeight / 2)
+            }, 300);
+        }
+    }
     $("#cmbBeat,#cmbSalesman").change(function (e) {
         var BeatID = $("#cmbBeat").val();
         var SalesmanID = $("#cmbSalesman").val();
@@ -6343,7 +6380,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 ProductTable.draw().clear(); ProductTable.draw().clear();
                 $("#lblPartyCloseBal,#lblPartyACDRating").text("");
                 $.each(data, function (i, items) {
-                    console.log("items : ", items);
                     var rdo1 = $("#rdoMainTableData").is(":checked");
                     if (rdo1) {
                         $("#txtID").val(items.ID);
@@ -6423,6 +6459,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     GetProductList();
                     ProductRID = 0;
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
+                    var visbfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
                     var dataSet = items.lstProdInfo.map(function (itemsProd, nRowIndex) {
                         var strUOMs = "";
                         for (var j = 0; j < itemsProd.UOMList.length; j++) {
@@ -6447,8 +6484,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             itemsProd.TaxID,
                             itemsProd.TaxPern, itemsProd.OrgPrice, itemsProd.UomID, itemsProd.BatchNo, itemsProd.PKD, itemsProd.Expiry,
                             itemsProd.InvYN, itemsProd.BatchYN, itemsProd.PKDYN, itemsProd.SerialYN,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span>' +//<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;
-                            '<br/> <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>&ensp;<span style="font-size:16px;" '+visbfields+' class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/><span style="font-size:16px;" '+visbfields+' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;'+
+                            ' <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
                             '<input disabled min="0" type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" title="' + itemsProd.MRP + '"' + disbfields + '/>',
@@ -6618,7 +6655,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 async: false,
                 success: function (data) {
                     var InvoicejsData = eval(data);
-                    console.log("InvoicejsData", InvoicejsData);
                     if (rdo1 == "1")
                     {
                         var index = columns.findIndex(col => col.field === "GrossAmt");
@@ -7619,9 +7655,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             const netAmtid = $(data[16])[2].id; // Net Amount (label)
             const netAmtStr = document.getElementById(netAmtid).getAttribute('txttag');// $(data[25]).text(); // Net Amount (label)
             const netAmt = parseFloat(netAmtStr) || 0;
-            console.log("Prodmap : ", prodMap[prodID]);
             if (prodMap[prodID]) {
-                console.log("Net Amt : " + netAmt);
                 prodMap[prodID].count++;
                 prodMap[prodID].netAmt += netAmt;
                 if (parseFloat(netAmt).toFixed(2) <= 1)
@@ -7635,7 +7669,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
             TempProdid = prodID;
         });
-        console.log("Duplicate Products:", prodMap);
         // Extract duplicates
         for (const prodID in prodMap) {
             if (prodMap[prodID].count > 1) {
@@ -7651,7 +7684,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
         // Output results
         if (duplicates.length > 0) {
-            console.log("🔁 Duplicate Products Found:");
             console.table(duplicates);
             //alert("Duplicate Products Found!\n" + JSON.stringify(duplicates, null, 2));
             $("#tblProductData tbody tr").each(function () {
@@ -7777,7 +7809,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     //if (SendAutoMail == 1)
                                     {
                                         //EmailDocument(items.ID, PrintTransID, PrintConfigID);
-                                        console.log("PrintTransID:", PrintTransID);
                                         AutoEmailDocument(items.ID, PrintTransID);
                                     }
                                 }
@@ -7886,7 +7917,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
             success: function (data) {
                 if (data.length > 0) {
                     columns = (data);
-                    console.log("columns : ", columns);
                     columns.push(actions);
                     columns.push(OtherActions);
 

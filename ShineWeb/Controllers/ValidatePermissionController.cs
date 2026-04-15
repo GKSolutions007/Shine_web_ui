@@ -8,6 +8,7 @@ using System.Web;
 using System.Web.Mvc;
 using Newtonsoft.Json;
 using ShineWeb.BuisnessLayer;
+using System.Net;
 namespace ShineWeb.Controllers
 {
     public class ValidatePermissionController : Controller
@@ -19,10 +20,31 @@ namespace ShineWeb.Controllers
         public ActionResult Index(string ID)
         {
             string APIurl = Session["APIurl"].ToString();
-            HttpClient _client = new HttpClient();
+            var handler = new HttpClientHandler()
+            {
+                UseCookies = true,
+                CookieContainer = new CookieContainer()
+            };
+            HttpClient _client = new HttpClient(handler);
             _client.BaseAddress = new Uri(APIurl);// APILink from app config
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-           
+            
+
+            var authCookie = Request.Cookies["AuthToken"]; // or your custom cookie name
+            var RefreshCookie = Request.Cookies["RefreshToken"]; // or your custom cookie name
+            var sessionidCookie = Request.Cookies["ASP.NET_SessionId"]; // or your custom cookie name
+            //ASP.NET_SessionId
+            CookieCollection cookieCollection = new CookieCollection();
+            cookieCollection.Add(new Cookie(authCookie.Name, authCookie.Value));
+            cookieCollection.Add(new Cookie(RefreshCookie.Name, RefreshCookie.Value));
+            cookieCollection.Add(new Cookie(sessionidCookie.Name, sessionidCookie.Value));
+            if (authCookie != null)
+            {
+                handler.CookieContainer.Add(
+                    new Uri(APIurl),
+                    cookieCollection
+                );
+            }
             HttpResponseMessage result = _client.GetAsync("validatepermissions?UID="+ ID).Result;
             if (result.IsSuccessStatusCode)
             {
