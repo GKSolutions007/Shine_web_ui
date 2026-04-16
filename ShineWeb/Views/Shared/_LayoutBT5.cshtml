@@ -1245,6 +1245,16 @@
                 transform: translateY(1px);
                 box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 4px;
             }
+        #btnYes:focus {
+            transform: scale(1.1);
+            border: 1px solid #4caf50;
+            box-shadow: inset 0 0 6px #4caf50, 0 0 10px #4caf50;
+        }
+        #btnNo:focus {
+            transform: scale(1.1);
+            border: 1px solid #f44336;
+            box-shadow: inset 0 0 6px #f44336, 0 0 10px #f44336;
+        }
     </style>
 </head>
 <body>
@@ -1483,7 +1493,7 @@
                         string ZeEnc = "jJOtHsRVwYECOhoiBc69dA==";
                         System.Data.DataRow[] dr = dtPermission.Select("MenuParentId=" + nParentID.ToString());
                         //System.Data.DataRow[] dr = dtPermission.Select("MenuTree=" + nParentID.ToString());
-                        if (dr.Count() > 0 && strManuName != "Web")
+                        if (dr.Count() > 0 && nTreeID != 8) //strManuName != "Web"
                         {
 
                             if (strManuName == "Reports")
@@ -2925,7 +2935,12 @@
                         var id = $(this).attr('id');
                         if (id) {
                             editedValues.selects[id] = $(this).val();
-
+                            var stylclr = $(this);
+                            editedValues.labels[id] = {
+                                value: $(this).val(),
+                                lbltag: $(this).attr('lbltag'),
+                                color: $(this)[0].style.color || "black"
+                            };
                         }
                     });
 
@@ -2971,9 +2986,9 @@
                             var $input = $newRow.find('#' + id);
                             if ($input.length) {
                                 $input.val(data.value);
-                                if (data.txttag) {
-                                    $input.attr('txttag', data.txttag);
-                                    $input[0].style.color = data.color;
+                                $input[0].style.color = data.color;
+                                if (data.txttag) {                                    
+                                    $input.attr('txttag', data.txttag);                                    
                                 }
                             }
                         });
@@ -2985,6 +3000,7 @@
                             var $select = $newRow.find('#' + id);
                             if ($select.length) {
                                 $select.val(value);
+                                $select[0].style.color = value.color;
                             }
                         });
 
@@ -3097,8 +3113,10 @@
         setTimeout(function () {
             if (cfFocus == 1) {
                 $("#btnYes").trigger("focus");
+                $("#btnYes").select();
             } else {
                 $("#btnNo").trigger("focus");
+                $("#btnNo").select();
             }
         }, 500);
         //ConfirmModal.show('save', () => SaveData(), () => { })
@@ -3376,10 +3394,35 @@ function CloseConfirmDialogMsg_old(message) {
                         }
                     }
 
-                    if (e.key === 'Enter') {
-                        const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input'));
+                    if (!e.shiftKey && e.key === 'Enter') {
+                        const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input input:not([disabled])'));
                         const currentInputIndex = allInputsList.indexOf(input);
                         const nextInput = allInputsList[currentInputIndex + 1];
+
+                        if (nextInput) {
+                            var nm = nextInput.name;
+                            if (nm == "ProdDiscPern") {
+                                setTimeout(() => {
+                                    const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                    if (newInputs[0]) newInputs[0].focus();
+                                }, 100);
+                            } else {
+                                nextInput.focus();
+                            }
+                        } else {
+                            // Call your add row function here
+                            Addprodgridline();
+                            setTimeout(() => {
+                                const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                if (newInputs[0]) newInputs[0].focus();
+                            }, 100);
+                        }
+                        e.preventDefault();
+                    }
+                    if (e.shiftKey && e.key === 'Enter') {
+                        const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
+                        const currentInputIndex = allInputsList.indexOf(input);
+                        const nextInput = allInputsList[currentInputIndex - 1];
 
                         if (nextInput) {
                             var nm = nextInput.name;

@@ -425,6 +425,17 @@
         .ui-dialog {
             z-index: 5001;
         }
+        #btnYes:focus {
+            transform: scale(1.1);
+            border: 1px solid #4caf50;
+            box-shadow: inset 0 0 6px #4caf50, 0 0 10px #4caf50;
+        }
+
+        #btnNo:focus {
+            transform: scale(1.1);
+            border: 1px solid #f44336;
+            box-shadow: inset 0 0 6px #f44336, 0 0 10px #f44336;
+        }
     </style>
 </head>
 <body>
@@ -550,6 +561,107 @@
                 <div class="modal-body">
                     <iframe src="" id="ifrSMG" style="width:100%;height:450px;"></iframe>
                 </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        /* Modern Header */
+        .modern-header {
+            background-color: #f8f9fa;
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+            .modern-header .modal-title {
+                font-weight: 600;
+                color: #343a40;
+            }
+
+        .modern-close {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            color: #6c757d;
+            cursor: pointer;
+        }
+
+        /* Modern Footer */
+        .modern-footer {
+            background-color: #f8f9fa;
+            border-top: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+            justify-content: flex-start;
+        }
+
+        /* Buttons */
+        .btn-modern {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+            .btn-modern:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
+
+        /* Optional: Icon Animation */
+        #modalIcon i {
+            color: #007bff;
+            animation: zoomInOut 1s infinite;
+        }
+
+        @@keyframes zoomInOut {
+            0%, 100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+        }
+    </style>
+    <div class="modal fade" id="confirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index:5002">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+
+                <!-- Modern Header -->
+                <div class="modern-header">
+                    <h4 class="modal-title" id="confirmHeading">
+                        <i class="fas fa-exclamation-circle me-2"></i> Confirm
+                    </h4>
+                    <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body text-start">
+                    <div id="modalContent" class="d-flex align-items-center">
+                        <!-- Icons on the left -->
+                        <div id="modalIcon" class="me-3 d-flex flex-column">
+                            <i class="fas fa-save fa-2x mb-2" id="savecfdicon"></i>
+                            <i class="fas fa-refresh fa-2x mb-2" id="clearcfdicon"></i>
+                            <i class="fas fa-times fa-2x" id="closecfdicon"></i>
+                        </div>
+                        <!-- Message on the right -->
+                        <div id="confirmMessageWrapper">
+                            <h5 id="confirmMessage">Are you sure you want to proceed?</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modern Footer -->
+                <div class="modern-footer d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-success btn-modern" id="btnYes">Yes</button>
+                    <button type="button" class="btn btn-danger btn-modern" id="btnNo">No</button>
+                </div>
+
             </div>
         </div>
     </div>
@@ -1028,8 +1140,59 @@
             document.querySelector(".clsYes")?.focus();
         }
     }
-        var cfFocus = '@Session["ConfirmFocus"]';
+    var cfFocus = '@Session["ConfirmFocus"]';
+        var ClearcfFocus = '@Session["ClearConfirmFocus"]';
+     var ClosecfFocus = '@Session["CloseConfirmFocus"]';
+    //For Save Confirm Dialog
     function ConfirmDialogMsg(message) {
+        $("#confirmMessage").text(message);
+        $("#confirmModal").modal("show");
+        $("#savecfdicon").show();
+        $("#clearcfdicon,#closecfdicon").hide();
+        $("#confirmHeading").text("Save Confirmation");
+        ConfirmTriggeredfor = "save";
+        setTimeout(function () {
+            if (cfFocus == 1) {
+                $("#btnYes").trigger("focus");
+            } else {
+                $("#btnNo").trigger("focus");
+            }
+        }, 500);
+        //ConfirmModal.show('save', () => SaveData(), () => { })
+    }
+    //For Close Confirm Dialog
+    function CloseConfirmDialogMsg(message) {
+        $("#confirmMessage").text(message);
+        $("#confirmModal").modal("show");
+        $("#closecfdicon").show();
+        $("#clearcfdicon,#savecfdicon").hide();
+        $("#confirmHeading").text("Close Confirmation");
+        ConfirmTriggeredfor = "close";
+        setTimeout(function () {
+            if (ClosecfFocus == 1) {
+                $("#btnYes").trigger("focus");
+            } else {
+                $("#btnNo").trigger("focus");
+            }
+        }, 500);
+    }
+    //For Clear Confirm Dialog
+    function ClearConfirmDialogMsg(message) {
+        $("#confirmMessage").text(message);
+        $("#confirmModal").modal("show");
+        $("#clearcfdicon").show();
+        $("#closecfdicon,#savecfdicon").hide();
+        $("#confirmHeading").text("Clear Confirmation");
+        ConfirmTriggeredfor = "clear";
+        setTimeout(function () {
+            if (ClearcfFocus == 1) {
+                $("#btnYes").trigger("focus");
+            } else {
+                $("#btnNo").trigger("focus");
+            }
+        }, 500);
+    }
+    function ConfirmDialogMsg_old(message) {
         var IsAccepted = false;
         $('<div></div>').appendTo('body')
             .html('<div><h6>' + message + '</h6></div>')
@@ -1080,9 +1243,7 @@
             $(".clsNo").focus();
         }
     };
-    var ClearcfFocus = '@Session["ClearConfirmFocus"]';
-    //$(".ui-dialog-titlebar-close").html('x');
-    function ClearConfirmDialogMsg(message) {
+    function ClearConfirmDialogMsg_old(message) {
         var IsAccepted = false;
         $('<div></div>').appendTo('body')
             .html('<div><h6>' + message + '</h6></div>')
@@ -1133,9 +1294,8 @@
             $(".clsNo").focus();
         }
     };
-    var ClosecfFocus = '@Session["CloseConfirmFocus"]';
-//$(".ui-dialog-titlebar-close").html('x');
-function CloseConfirmDialogMsg(message) {
+
+    function CloseConfirmDialogMsg_old(message) {
     var IsAccepted = false;
     $('<div></div>').appendTo('body')
         .html('<div><h6>' + message + '</h6></div>')

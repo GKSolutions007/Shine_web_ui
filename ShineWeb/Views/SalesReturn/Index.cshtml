@@ -1707,7 +1707,7 @@
                             <label>Tax Amount  <a href="javascript:void(0);" id="toggleTax"> [+] </a>:</label>                           
                         </td>
                         <td style="border:none;" align="right">
-                            <label id="lblTaxAmount" class="fw-bold fs-5">0.00</label>
+                            <label id="lblTaxAmount" class="lblPT lblsettag fw-bold fs-5">0.00</label>
                         </td>
                     </tr>
                     <tr class="bgclrfortr taxDetails" style="display:none;">
@@ -2765,20 +2765,20 @@ if ($("#txtAddID").val() == 0) {
                 }
             });
             if (ProdID > 0) {
-                //var prmrp = rowdata[15];
-                //var mrpattr = $(prmrp);
-                //var fmrpid = mrpattr[0].id;
-                //updateInputColumn(fmrpid, 0);
-                //var prexc = rowdata[16];
-                //var excattr = $(prexc);
-                //var fexclid = excattr[0].id;
-                //updateInputColumn(fexclid, 0);
-                //var princl = rowdata[17];
-                //var incattr = $(princl);
-                //var finclid = excattr[2].id;;// incattr[0].id;
-                //updateInputColumn(finclid, 0);
-                //var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
-                //GetData(23, ProdID, invid, null, uomval, RIndex);
+                var prmrp = rowdata[15];
+                var mrpattr = $(prmrp);
+                var fmrpid = mrpattr[0].id;
+                updateInputColumn(fmrpid, 0);
+                var prexc = rowdata[16];
+                var excattr = $(prexc);
+                var fexclid = excattr[0].id;
+                updateInputColumn(fexclid, 0);
+                var princl = rowdata[17];
+                var incattr = $(princl);
+                var finclid = excattr[2].id;;// incattr[0].id;
+                updateInputColumn(finclid, 0);
+                var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
+                GetData(23, ProdID, invid, null, uomval, RIndex);
             }
         });
 
@@ -3485,6 +3485,9 @@ if ($("#txtAddID").val() == 0) {
                 ProductPriceQtyChange(Qty);
             }
         });
+    });
+    $('#tblProductData tbody').on('keyup', '.dgvProdName', function () {
+        modal.hide();
     });
     $('#tblProductData tbody').on('change', '.dgvqty', function (e) {
         var qty = e.target.value != "" ? parseFloat(e.target.value) : 0;
@@ -4667,7 +4670,7 @@ if ($("#txtAddID").val() == 0) {
         var TaxPern = (tpern / 100) + 1;
         var rowdata = TableBatch.row($(this)).data();
         var Qty = rowdata[1];
-        var Price = nPricttype != 4 ? rowdata[2] : (parseFloat(rowdata[3]) / TaxPern);
+        var Price = rowdata[2];// nPricttype != 4 ? rowdata[2] : (parseFloat(rowdata[3]) / TaxPern);
         var MRP = rowdata[3];
         var BatchNo = rowdata[5];
         var PKD = rowdata[6];
@@ -4849,7 +4852,11 @@ if ($("#txtAddID").val() == 0) {
         ]).draw(false);
             $("#" + pid).autocomplete({
             minLength: 0, autoFocus: true,
-            source: TempAL,            
+                source: TempAL,            
+                focus: function (event, ui) {
+                    modal.hide();
+                    return false;
+                },
             select: function (event, ui) {
                 $("#" + pid).val(ui.item.code);
                 $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -4883,6 +4890,10 @@ if ($("#txtAddID").val() == 0) {
             $("#" + FID).autocomplete({
                 minLength: 0, autoFocus: true,
                 source: TempAL,
+                focus: function (event, ui) {
+                    modal.hide();
+                    return false;
+                },
                 select: function (event, ui) {
                     $("#" + FID).val(ui.item.code);
                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -4946,7 +4957,7 @@ if ($("#txtAddID").val() == 0) {
                                 }
                             }
                         }
-                        if (e.key === 'Enter') {
+                        if (!e.shiftKey &&e.key === 'Enter') {
                             var lencls = $('.ui-menu-item').length;
                             const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
                             const currentInputIndex = allInputsList.indexOf(input);
@@ -4964,6 +4975,31 @@ if ($("#txtAddID").val() == 0) {
                             } else {
                                 // Call your add row function here
                                 //Addprodgridline();
+                                setTimeout(() => {
+                                    const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                    if (newInputs[0]) newInputs[0].focus();
+                                }, 100);
+                            }
+                            e.preventDefault();
+                        }
+                        if (e.shiftKey && e.key === 'Enter') {
+                            const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
+                            const currentInputIndex = allInputsList.indexOf(input);
+                            const nextInput = allInputsList[currentInputIndex - 1];
+
+                            if (nextInput) {
+                                var nm = nextInput.name;
+                                if (nm == "ProdDiscPern") {
+                                    setTimeout(() => {
+                                        const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                        if (newInputs[0]) newInputs[0].focus();
+                                    }, 100);
+                                } else {
+                                    nextInput.focus();
+                                }
+                            } else {
+                                // Call your add row function here
+                                Addprodgridline();
                                 setTimeout(() => {
                                     const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
                                     if (newInputs[0]) newInputs[0].focus();
@@ -5508,6 +5544,10 @@ if ($("#txtAddID").val() == 0) {
                         $("#dgvProdName" + ProductRID).autocomplete({
                             minLength: 0, autoFocus: true,
                             source: TempAL,
+                            focus: function (event, ui) {
+                                modal.hide();
+                                return false;
+                            },
                             select: function (event, ui) {
                                 $("#dgvProdName" + ProductRID).val(ui.item.code);
                                 $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -5590,25 +5630,6 @@ if ($("#txtAddID").val() == 0) {
                     });
                     var bPriceType = $("#cmbPriceType").val();
 
-
-                    //var nbd = {
-                    //    "BatchType": 1,//New batch
-                    //    "ProdId": PID,
-                    //    "Batch": $("#txtNBBathNo").val(),
-                    //    "PKD": $("#dtpNBPKD").val(),
-                    //    "Expiry": $("#dtpNBExp").val(),
-                    //    "PPrice": PPrice,
-                    //    "SPrice": SalesPrice,
-                    //    "ECP": ECP,
-                    //    "MRP": MRP,
-                    //    "SPLPrice": SPL,
-                    //    "Return": RTN,
-                    //    "TaxId": txid,
-                    //    "TaxTypeId": 1,
-                    //    "InclusiveYesNo": 0,
-                    //}
-                    //NewTempBatch.push(nbd);
-                    //HiddenRowIndex
                     var doctype = nDocPrefix == 16 ? "SALE" : "DAMAGE";
                     var currentnewbatch = NewTempBatch.filter(prod => prod.ProdId == strName && prod.BatchType == 1);
                     if (currentnewbatch) {
@@ -5659,9 +5680,9 @@ if ($("#txtAddID").val() == 0) {
                         var fmrpid = mrpattr[0].id;
                         var mrpvall = parseFloat(document.getElementById(fmrpid).getAttribute('txttag'));
                         TableBatch.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
-                        if (bPriceType == 4) {
-                            Price = mrpvall
-                        }
+                        //if (bPriceType == 4) {
+                        //    Price = mrpvall
+                        //}
                         $("#tblBatch tbody tr").each(function (e) {
                             var Batchrowdata = TableBatch.row($(this)).data();
                             var OrgPrice = parseFloat(Batchrowdata[2]);// / dConvFact
@@ -5776,10 +5797,10 @@ if ($("#txtAddID").val() == 0) {
                             var TaxPern = parseFloat(Prodrowdata[2]);
                             var tx = 1 + (TaxPern / 100);
 
-                            ProductTable.cell(editingRow, 3).data(orgpr);
-                            ProductTable.cell(editingRow, 5).data(Btno);
-                            ProductTable.cell(editingRow, 6).data(Btpkd);
-                            ProductTable.cell(editingRow, 7).data(Btexp);
+                            ProductTable.cell(nRIDx, 3).data(orgpr);
+                            ProductTable.cell(nRIDx, 5).data(Btno);
+                            ProductTable.cell(nRIDx, 6).data(Btpkd);
+                            ProductTable.cell(nRIDx, 7).data(Btexp);
                             var prmrp = Prodrowdata[15];
                             var mrpattr = $(prmrp);
                             var fmrpid = mrpattr[0].id;
@@ -6131,6 +6152,10 @@ if ($("#txtAddID").val() == 0) {
                             $("#" + fieldID).autocomplete({
                                 minLength: 0, autoFocus: true,
                                 source: TempAL,
+                                focus: function (event, ui) {
+                                    modal.hide();
+                                    return false;
+                                },
                                 select: function (event, ui) {
                                     $("#dgvProdName" + ProductRID).val(ui.item.code);
                                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -6580,13 +6605,14 @@ if ($("#txtAddID").val() == 0) {
         TableBatch.draw().clear();
         ProductTable.draw().clear();
         ProductTable.draw().clear();
+        TableDocumentInfo.draw().clear(); TableDocumentInfo.draw().clear();
         GetData(1, RoleID);
         stopAutoDraftSave();
         //GetData(6);
         SetTagZero();
         setDate("dtpDate", 0);
-        SetFilterDate();
-        GetFilterData();
+        //SetFilterDate();
+        if (!$("#rdoMainTableData").is(":checked")) GetFilterData();
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles();
         setTimeout(function () {
@@ -6594,7 +6620,7 @@ if ($("#txtAddID").val() == 0) {
             $("#cmbPriceType").val(pt);
             //GetData(2, DefBranch, $("#dtpDate").val());
             GetProductList();
-        }, 600);
+        }, 300);
         nIsDraft = 0;
         BatchAcceptArray = [];
         TempProd = [];
@@ -6628,7 +6654,7 @@ if ($("#txtAddID").val() == 0) {
         $("#tblProductData tbody tr").find("label[name='TaxAmt']").attr("lbltag", 0).text("0.00");
 
         // Recalculate totals (CGST, SGST, Tax Amount, etc.)
-        calculateProdGrid();
+        //calculateProdGrid();
     }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
@@ -7264,6 +7290,10 @@ if ($("#txtAddID").val() == 0) {
                             $("#" + fieldID).autocomplete({
                                 minLength: 0, autoFocus: true,
                                 source: TempAL,
+                                focus: function (event, ui) {
+                                    modal.hide();
+                                    return false;
+                                },
                                 select: function (event, ui) {
                                     $("#dgvProdName" + ProductRID).val(ui.item.code);
                                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
