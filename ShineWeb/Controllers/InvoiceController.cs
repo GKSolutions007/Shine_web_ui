@@ -27,6 +27,7 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int nUID = Convert.ToInt32(Session["LoginUserID"]);
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
@@ -34,17 +35,17 @@ namespace ShineWeb.Controllers
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
-                string AddPerm = dtPermission.Select("MenuName = 'Create " + Name + "'", null).Length > 0 ? "1" : "0";
-                string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 ? "1" : "0";
-                string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";
-                string CanPerm = dtPermission.Select("MenuName = 'Cancel " + Name + "'", null).Length > 0 ? "1" : "0";
-                string VarPerm = dtPermission.Select("MenuName = 'Variant " + Name + "'", null).Length > 0 ? "1" : "0";
-                string EnbBranch = dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
-                string EnabSave = dtPermission.Select("MenuID = 256", null).Length > 0 ? "1" : "0";
-                string editprice = dtPermission.Select("MenuID = 321", null).Length > 0 ? "1" : "0";
-                string DrftMod = dtPermission.Select("MenuID = 388", null).Length > 0 ? "1" : "0";
-                string DrftCan = dtPermission.Select("MenuID = 389", null).Length > 0 ? "1" : "0";
-                string EnbPaid = dtPermission.Select("MenuID = 481", null).Length > 0 ? "1" : "0";
+                string AddPerm = dtPermission.Select("MenuName = 'Create " + Name + "'", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string CanPerm = dtPermission.Select("MenuName = 'Cancel " + Name + "'", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string VarPerm = dtPermission.Select("MenuName = 'Variant " + Name + "'", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string EnbBranch = dtPermission.Select("MenuID = 221", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string EnabSave = dtPermission.Select("MenuID = 256", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string editprice = dtPermission.Select("MenuID = 321", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string DrftMod = dtPermission.Select("MenuID = 388", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string DrftCan = dtPermission.Select("MenuID = 389", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string EnbPaid = dtPermission.Select("MenuID = 481", null).Length > 0 || nUID == 1 ? "1" : "0";
 
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;

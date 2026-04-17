@@ -9,6 +9,7 @@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
+
 <script src="~/Scripts/jquery-1.11.1.min.js"></script>
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
@@ -1707,7 +1708,7 @@
                             <label>Tax Amount  <a href="javascript:void(0);" id="toggleTax"> [+] </a>:</label>                           
                         </td>
                         <td style="border:none;" align="right">
-                            <label id="lblTaxAmount" class="fw-bold fs-5">0.00</label>
+                            <label id="lblTaxAmount" class="lblPT lblsettag fw-bold fs-5">0.00</label>
                         </td>
                     </tr>
                     <tr class="bgclrfortr taxDetails" style="display:none;">
@@ -2579,21 +2580,29 @@ if ($("#txtAddID").val() == 0) {
             stopAutoDraftSave();
         }
     }
+    var ModalState = false;
+    $(document).on('click', '#btnBatchClose', function (e) {
+        e.stopPropagation();
+        document.getElementById('myModalfg').style.display = 'none';
+        ModalState = false;
+    });
     var modal = {
         show: function () {
             document.getElementById('myModalfg').style.display = 'block';
+            ModalState = true;
         },
         hide: function () {
             document.getElementById('myModalfg').style.display = 'none';
+            ModalState = false;
         }
     };
     //var span = document.getElementsByClassName("closefg")[0];
     //span.onclick = function () {
     //    modal.hide();
     //}
-    $('#btnBatchClose').click(function (e) {
-        modal.hide();
-    });
+    //$('#btnBatchClose').click(function (e) {
+    //    modal.hide();
+    //});
     //modal.show();
     var modalPinfo = new bootstrap.Modal(document.getElementById("myModalPinfo"));// document.getElementById("myModalPinfo");
     //var spanpif = document.getElementsByClassName("closePinfo")[0];
@@ -3485,6 +3494,9 @@ if ($("#txtAddID").val() == 0) {
                 ProductPriceQtyChange(Qty);
             }
         });
+    });
+    $('#tblProductData tbody').on('keyup', '.dgvProdName', function () {
+        modal.hide();
     });
     $('#tblProductData tbody').on('change', '.dgvqty', function (e) {
         var qty = e.target.value != "" ? parseFloat(e.target.value) : 0;
@@ -4657,15 +4669,83 @@ if ($("#txtAddID").val() == 0) {
             classList.add('selected');
         }
     });
+    TableBatch.on('click', 'tbody tr', (e) => {
+        let classList = e.currentTarget.classList;
+        if (classList.contains('selected')) {
+            classList.remove('selected');
+        }
+        else {
+            TableBatch.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
+            classList.add('selected');
+        }
+    });
+    $(document).on('keydown', function (e) {
+        //if (!modal || !modal._isShown) return; 
+        var isModalshow = document.getElementById('myModalfg').style.display == "block";
+        
+        if (!isModalshow) return;
+        let $selected = $('#tblBatch tbody tr.selected');
+
+        // If no row selected → select first row
+        if ($selected.length === 0) {
+            let first = $('#tblBatch tbody tr:first');
+            first.addClass('selected');
+            return;
+        }
+
+        // 🔼 UP arrow
+        if (e.key === "ArrowUp") {
+            let prev = $selected.prev('tr');
+            if (prev.length) {
+                $selected.removeClass('selected');
+                prev.addClass('selected');
+                scrollToRow(prev);
+            } else {
+                scrollToRow($selected);
+            }
+            e.preventDefault();
+        }
+
+        // 🔽 DOWN arrow
+        else if (e.key === "ArrowDown") {
+            let next = $selected.next('tr');
+            if (next.length) {
+                $selected.removeClass('selected');
+                next.addClass('selected');
+                scrollToRow(next);
+            } else {
+                scrollToRow($selected);
+            }
+            e.preventDefault();
+        }
+
+        // ⏎ ENTER key → get row data
+        else if (e.key === "Enter") {
+            let rowData = TableBatch.row($('.selected')).data();
+            console.log("SR Selected Batch Row Data:", new Date().toISOString());
+            applyBatchdatatoItemrow(rowData);
+            e.preventDefault();
+        }
+    });
+    function scrollToRow($row) {
+        $row[0].scrollIntoView({
+            behavior: "auto",      // or "smooth"
+            block: "nearest"       // keeps it within view
+        });
+    }    
     $("#tblBatch tbody").on('dblclick', 'tr', function () {
         //Batch Selection
+        var rowdata = TableBatch.row($(this)).data();
+        applyBatchdatatoItemrow(rowdata);
+    });
+    function applyBatchdatatoItemrow(rowdata) {
+
         var nPricttype = $("#cmbPriceType").val();
         var Prodrowdata = ProductTable.row(editingRow).data();
         var nCurRowProdID = parseInt(Prodrowdata[0]);
         var tpern = parseFloat(Prodrowdata[2]);
         var currenthiddenrowid = parseInt(Prodrowdata[30]);
         var TaxPern = (tpern / 100) + 1;
-        var rowdata = TableBatch.row($(this)).data();
         var Qty = rowdata[1];
         var Price = rowdata[2];// nPricttype != 4 ? rowdata[2] : (parseFloat(rowdata[3]) / TaxPern);
         var MRP = rowdata[3];
@@ -4724,7 +4804,7 @@ if ($("#txtAddID").val() == 0) {
         var qty = parseFloat(document.getElementById(fqtyid).getAttribute('txttag'));
         ProductPriceQtyChange(qty);
         modal.hide();
-    });
+    }
     function getExistsSRBatchDetails(nProdID, nHiderowid, arBatchRowdata, TaxPern) {
         var nbranchid = $("#cmbBranch").val();
         var nPricttype = $("#cmbPriceType").val();
@@ -4849,13 +4929,18 @@ if ($("#txtAddID").val() == 0) {
         ]).draw(false);
             $("#" + pid).autocomplete({
             minLength: 0, autoFocus: true,
-            source: TempAL,            
+                source: TempAL,            
+                focus: function (event, ui) {
+                    modal.hide();
+                    return false;
+                },
             select: function (event, ui) {
                 $("#" + pid).val(ui.item.code);
                 $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
                 modal.show();
                 $("#clrdivs").html("");
                 var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                console.log("Item select from  list", new Date().toISOString());
                 GetData(4, ui.item.code, CustID);
 
                 //alert("prod row index : " + EditRowID);
@@ -4883,6 +4968,10 @@ if ($("#txtAddID").val() == 0) {
             $("#" + FID).autocomplete({
                 minLength: 0, autoFocus: true,
                 source: TempAL,
+                focus: function (event, ui) {
+                    modal.hide();
+                    return false;
+                },
                 select: function (event, ui) {
                     $("#" + FID).val(ui.item.code);
                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -4920,12 +5009,13 @@ if ($("#txtAddID").val() == 0) {
                                 }
                             }
                             else {
-                                ////console.log("Not Autolist field Down");
-                                const nextRow = currentRow.nextElementSibling;
-                                if (nextRow) {
-                                    const nextInputs = nextRow.querySelectorAll('input');
-                                    if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
-                                    e.preventDefault();
+                                if (!ModalState) {
+                                    const nextRow = currentRow.nextElementSibling;
+                                    if (nextRow) {
+                                        const nextInputs = nextRow.querySelectorAll('input');
+                                        if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
                                 }
                             }
                         }
@@ -4937,20 +5027,49 @@ if ($("#txtAddID").val() == 0) {
                                 }
                             }
                             else {
-                                ////console.log("Not Autolist field Up");
-                                const prevRow = currentRow.previousElementSibling;
-                                if (prevRow) {
-                                    const prevInputs = prevRow.querySelectorAll('input');
-                                    if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
-                                    e.preventDefault();
+                                if (!ModalState) {
+                                    const prevRow = currentRow.previousElementSibling;
+                                    if (prevRow) {
+                                        const prevInputs = prevRow.querySelectorAll('input');
+                                        if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
                                 }
                             }
                         }
-                        if (e.key === 'Enter') {
+                        if (!e.shiftKey && e.key === 'Enter') {
+                            console.log("SR Item row select enter 0");
                             var lencls = $('.ui-menu-item').length;
                             const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
                             const currentInputIndex = allInputsList.indexOf(input);
                             const nextInput = allInputsList[currentInputIndex + 1];
+                            if (nextInput) {
+                                console.log("SR Item row select enter 1");
+                                var nm = nextInput.name;
+                                if (nm == "ProdDiscPern") {
+                                    setTimeout(() => {
+                                        const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                        if (newInputs[0]) newInputs[0].focus();
+                                    }, 100);
+                                } else {
+                                    nextInput.focus();
+                                }
+                            } else {
+                                console.log("SR Item row select enter 2");
+                                // Call your add row function here
+                                //Addprodgridline();
+                                setTimeout(() => {
+                                    const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
+                                    if (newInputs[0]) newInputs[0].focus();
+                                }, 100);
+                            }
+                            e.preventDefault();
+                        }
+                        if (e.shiftKey && e.key === 'Enter') {
+                            const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
+                            const currentInputIndex = allInputsList.indexOf(input);
+                            const nextInput = allInputsList[currentInputIndex - 1];
+
                             if (nextInput) {
                                 var nm = nextInput.name;
                                 if (nm == "ProdDiscPern") {
@@ -4963,7 +5082,7 @@ if ($("#txtAddID").val() == 0) {
                                 }
                             } else {
                                 // Call your add row function here
-                                //Addprodgridline();
+                                Addprodgridline();
                                 setTimeout(() => {
                                     const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
                                     if (newInputs[0]) newInputs[0].focus();
@@ -5349,6 +5468,7 @@ if ($("#txtAddID").val() == 0) {
                     });
                 }
                 else if (nMode == 4) {
+                    console.log("SR Item gett", new Date().toISOString());
                     modal.show();
                     arrSalesTaxDetails = [];
                     $('#cmbUOM').find("option").remove();
@@ -5452,7 +5572,9 @@ if ($("#txtAddID").val() == 0) {
                         $(".modalBatch").css("width", "30%");
                         if (trkpkd == "True")
                             $(".modalBatch").css("width", "35%");
+                        console.log("SR First Batch Select", new Date().toISOString());
                         if (items.lstInvPopup.length <= 1) {
+                            $("#tblBatch>tbody>tr:first").trigger('click');
                             //modal.hide();
                         } else {
                             modal.show();
@@ -5508,6 +5630,10 @@ if ($("#txtAddID").val() == 0) {
                         $("#dgvProdName" + ProductRID).autocomplete({
                             minLength: 0, autoFocus: true,
                             source: TempAL,
+                            focus: function (event, ui) {
+                                modal.hide();
+                                return false;
+                            },
                             select: function (event, ui) {
                                 $("#dgvProdName" + ProductRID).val(ui.item.code);
                                 $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -5528,6 +5654,7 @@ if ($("#txtAddID").val() == 0) {
                         };
                         ProductRID++;
                         startAutoDraftSave();
+                        console.log("SR New Line add", new Date().toISOString());
                         var ItemCount = parseInt(ProductTable.rows().count());
                         if (ItemCount == (SelRowIndex + 1)) {
                             Addprodgridline();
@@ -6112,6 +6239,10 @@ if ($("#txtAddID").val() == 0) {
                             $("#" + fieldID).autocomplete({
                                 minLength: 0, autoFocus: true,
                                 source: TempAL,
+                                focus: function (event, ui) {
+                                    modal.hide();
+                                    return false;
+                                },
                                 select: function (event, ui) {
                                     $("#dgvProdName" + ProductRID).val(ui.item.code);
                                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
@@ -6561,13 +6692,14 @@ if ($("#txtAddID").val() == 0) {
         TableBatch.draw().clear();
         ProductTable.draw().clear();
         ProductTable.draw().clear();
+        TableDocumentInfo.draw().clear(); TableDocumentInfo.draw().clear();
         GetData(1, RoleID);
         stopAutoDraftSave();
         //GetData(6);
         SetTagZero();
         setDate("dtpDate", 0);
-        SetFilterDate();
-        GetFilterData();
+        //SetFilterDate();
+        if (!$("#rdoMainTableData").is(":checked")) GetFilterData();
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles();
         setTimeout(function () {
@@ -6575,7 +6707,7 @@ if ($("#txtAddID").val() == 0) {
             $("#cmbPriceType").val(pt);
             //GetData(2, DefBranch, $("#dtpDate").val());
             GetProductList();
-        }, 600);
+        }, 300);
         nIsDraft = 0;
         BatchAcceptArray = [];
         TempProd = [];
@@ -6609,7 +6741,7 @@ if ($("#txtAddID").val() == 0) {
         $("#tblProductData tbody tr").find("label[name='TaxAmt']").attr("lbltag", 0).text("0.00");
 
         // Recalculate totals (CGST, SGST, Tax Amount, etc.)
-        calculateProdGrid();
+        //calculateProdGrid();
     }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
@@ -7245,6 +7377,10 @@ if ($("#txtAddID").val() == 0) {
                             $("#" + fieldID).autocomplete({
                                 minLength: 0, autoFocus: true,
                                 source: TempAL,
+                                focus: function (event, ui) {
+                                    modal.hide();
+                                    return false;
+                                },
                                 select: function (event, ui) {
                                     $("#dgvProdName" + ProductRID).val(ui.item.code);
                                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
