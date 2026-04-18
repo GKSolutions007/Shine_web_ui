@@ -24,7 +24,7 @@ function refreshAccessToken(callback) {
             //console.log("Refresh token expired, redirecting to login.");
             window.location.href = UIURL;// "/";
         }
-    });
+    }); 
 }
 
 // Automatically refresh token before making API calls

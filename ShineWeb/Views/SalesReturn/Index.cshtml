@@ -2484,6 +2484,8 @@
     var BatchMode = 0; // 0 - New product, 1 - Edit Product
     var nTransMode = 1, nIsDraft = 0;
     var enableBranch = '@(Model.EnableBranch ?? "0")';
+    var ItemALEnterClicked = false;
+
     console.log("EnableBranch:", enableBranch);
     setDate("dtpDate", 0);
     setDate("dtpFFrom", 0);
@@ -4525,6 +4527,7 @@ if ($("#txtAddID").val() == 0) {
         }
     });
     $('#tblProductData tbody').on('click', '.clsbatchprod', function () {
+        ItemALEnterClicked = false;
         SelRowIndex = $(this).closest('tr').index();
         editingRow = ProductTable.row($(this).closest('tr'));
         rowdata = ProductTable.row($(this).parents('tr')).data();
@@ -4661,6 +4664,8 @@ if ($("#txtAddID").val() == 0) {
     //});
     TableBatch.on('click', 'tbody tr', (e) => {
         let classList = e.currentTarget.classList;
+        //ItemALEnterClicked = false;
+        console.log("Batch row click ItemALEnterClicked : ", ItemALEnterClicked);
         if (classList.contains('selected')) {
             classList.remove('selected');
         }
@@ -4668,24 +4673,14 @@ if ($("#txtAddID").val() == 0) {
             TableBatch.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
             classList.add('selected');
         }
-    });
-    TableBatch.on('click', 'tbody tr', (e) => {
-        let classList = e.currentTarget.classList;
-        if (classList.contains('selected')) {
-            classList.remove('selected');
-        }
-        else {
-            TableBatch.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
-            classList.add('selected');
-        }
-    });
-    $(document).on('keydown', function (e) {
+    });    
+        $(document).on('keydown', function (e) {//$(document)
         //if (!modal || !modal._isShown) return; 
         var isModalshow = document.getElementById('myModalfg').style.display == "block";
         
         if (!isModalshow) return;
         let $selected = $('#tblBatch tbody tr.selected');
-
+        console.log("SR Batch Keydown Triggered", new Date().toISOString());
         // If no row selected → select first row
         if ($selected.length === 0) {
             let first = $('#tblBatch tbody tr:first');
@@ -4694,7 +4689,8 @@ if ($("#txtAddID").val() == 0) {
         }
 
         // 🔼 UP arrow
-        if (e.key === "ArrowUp") {
+            if (e.key === "ArrowUp") {
+                ItemALEnterClicked = false;
             let prev = $selected.prev('tr');
             if (prev.length) {
                 $selected.removeClass('selected');
@@ -4708,6 +4704,7 @@ if ($("#txtAddID").val() == 0) {
 
         // 🔽 DOWN arrow
         else if (e.key === "ArrowDown") {
+            ItemALEnterClicked = false;
             let next = $selected.next('tr');
             if (next.length) {
                 $selected.removeClass('selected');
@@ -4720,10 +4717,11 @@ if ($("#txtAddID").val() == 0) {
         }
 
         // ⏎ ENTER key → get row data
-        else if (e.key === "Enter") {
+            else if (e.key === "Enter") {//e.key === "Enter"//e.key === " " || e.code === "Space"
             let rowData = TableBatch.row($('.selected')).data();
             console.log("SR Selected Batch Row Data:", new Date().toISOString());
-            applyBatchdatatoItemrow(rowData);
+                if (!ItemALEnterClicked)
+                applyBatchdatatoItemrow(rowData);
             e.preventDefault();
         }
     });
@@ -4934,13 +4932,14 @@ if ($("#txtAddID").val() == 0) {
                     modal.hide();
                     return false;
                 },
-            select: function (event, ui) {
+                select: function (event, ui) {
+                    ItemALEnterClicked = true;
                 $("#" + pid).val(ui.item.code);
                 $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
                 modal.show();
                 $("#clrdivs").html("");
                 var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                console.log("Item select from  list", new Date().toISOString());
+                    console.log("Item select from  list", new Date().toISOString(), "ItemALEnterClicked : ", ItemALEnterClicked);
                 GetData(4, ui.item.code, CustID);
 
                 //alert("prod row index : " + EditRowID);
@@ -4973,6 +4972,7 @@ if ($("#txtAddID").val() == 0) {
                     return false;
                 },
                 select: function (event, ui) {
+                    ItemALEnterClicked = true;
                     $("#" + FID).val(ui.item.code);
                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
                     modal.show();
@@ -5635,6 +5635,7 @@ if ($("#txtAddID").val() == 0) {
                                 return false;
                             },
                             select: function (event, ui) {
+                                ItemALEnterClicked = true;
                                 $("#dgvProdName" + ProductRID).val(ui.item.code);
                                 $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
                                 $("#clrdivs").html("");
@@ -5660,7 +5661,7 @@ if ($("#txtAddID").val() == 0) {
                             Addprodgridline();
                         }
                         $("#dgvProdQty" + temprid).select()
-                        setupArrowKeyNavigation1();
+                        setupArrowKeyNavigation1();                        
                         //modal.show();
 
                     });
@@ -6244,6 +6245,7 @@ if ($("#txtAddID").val() == 0) {
                                     return false;
                                 },
                                 select: function (event, ui) {
+                                    ItemALEnterClicked = true;
                                     $("#dgvProdName" + ProductRID).val(ui.item.code);
                                     $("#txtTempABS").val(ui.item.ABS + ui.item.Location);
                                     modal.show();
@@ -6739,7 +6741,7 @@ if ($("#txtAddID").val() == 0) {
         }
 
         $("#tblProductData tbody tr").find("label[name='TaxAmt']").attr("lbltag", 0).text("0.00");
-
+        ItemALEnterClicked = false;
         // Recalculate totals (CGST, SGST, Tax Amount, etc.)
         //calculateProdGrid();
     }
