@@ -49,6 +49,8 @@ namespace ShineWeb.Controllers
             DateTime Date = DateTime.Now;
             DateTime dtFinancialdate = Convert.ToDateTime(Session["F_SD"]).Date;
             DateTime dtpF_ED = Convert.ToDateTime(Session["F_ED"]).Date;
+
+            
             if (TypeID == 0)//set ServerDate
             {
                 dtMin = dtFinancialdate;
@@ -114,6 +116,102 @@ namespace ShineWeb.Controllers
                 DateTime dtDate = dtpF_ED > Date ? Date : dtpF_ED;
                 DateTime MonFstDt = new DateTime(dtDate.Year, dtDate.Month, 1);
                 dtValue = dtMin > MonFstDt ? dtMin : MonFstDt;//  new DateTime(dtDate.Year, dtDate.Month, 1);
+            }
+            else if(TypeID == 9)
+            {
+                dtMin = dtFinancialdate;
+                dtMax = dtpF_ED > Date ? Date : dtpF_ED;
+                int thismonthno = dtMax.Month;
+                DateTime dtfsd= new DateTime(dtMax.Year, 1, 1);
+                if (thismonthno >= 0 && thismonthno <= 3)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 1, 1);
+                }
+                else if (thismonthno > 3 && thismonthno <= 6)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 4, 1);
+                }
+                else if (thismonthno > 6 && thismonthno <= 9)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 7, 1);
+                }
+                else if (thismonthno > 9 && thismonthno <= 12)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 10, 1);
+                }
+                dtValue = dtMin > dtfsd ? dtMin : dtfsd;
+            }
+            else if (TypeID == 10)
+            {
+                dtMin = dtFinancialdate;
+                dtMax = dtpF_ED > Date ? Date : dtpF_ED;
+                int thismonthno = dtMax.Month;
+                DateTime dtfsd = new DateTime(dtMax.Year, 1, 1);
+                if (thismonthno >= 0 && thismonthno <= 3)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 3, 31);
+                }
+                else if (thismonthno > 3 && thismonthno <= 6)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 6, 30);
+                }
+                else if (thismonthno > 6 && thismonthno <= 9)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 9, 30);
+                }
+                else if (thismonthno > 9 && thismonthno <= 12)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 12, 31);
+                }
+                dtValue = dtfsd > dtMax ? dtMax : dtfsd;
+            }
+            else if (TypeID == 11)
+            {
+                dtMin = dtFinancialdate;
+                dtMax = dtpF_ED > Date ? Date : dtpF_ED;
+                int thismonthno = dtMax.Month;
+                DateTime dtfsd = new DateTime(dtMax.Year, 1, 1);
+                if (thismonthno >= 0 && thismonthno <= 3)
+                {
+                    dtfsd = new DateTime(dtMax.Year - 1, 10, 1);
+                }
+                else if (thismonthno > 3 && thismonthno <= 6)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 1, 1);
+                }
+                else if (thismonthno > 6 && thismonthno <= 9)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 4, 1);
+                }
+                else if (thismonthno > 9 && thismonthno <= 12)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 7, 1);
+                }
+                dtValue = dtMin > dtfsd ? dtMin : dtfsd;
+            }
+            else if (TypeID == 12)
+            {
+                dtMin = dtFinancialdate;
+                dtMax = dtpF_ED > Date ? Date : dtpF_ED;
+                int thismonthno = dtMax.Month;
+                DateTime dtfsd = new DateTime(dtMax.Year, 1, 1);
+                if (thismonthno >= 0 && thismonthno <= 3)
+                {
+                    dtfsd = new DateTime(dtMax.Year - 1, 12, 31);
+                }
+                else if (thismonthno > 3 && thismonthno <= 6)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 3, 31);
+                }
+                else if (thismonthno > 6 && thismonthno <= 9)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 6, 30);
+                }
+                else if (thismonthno > 9 && thismonthno <= 12)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 9, 30);
+                }
+                dtValue = dtfsd > dtMax ? dtMax : dtfsd;
             }
             List<getsetdates> listdt = new List<getsetdates>();
             listdt.Add(new getsetdates

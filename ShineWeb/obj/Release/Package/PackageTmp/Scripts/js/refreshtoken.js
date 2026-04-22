@@ -37,3 +37,16 @@ $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
         });
     }
 });
+
+// Show snackbar + overlay on any AJAX start
+$(document).ajaxStart(function () {
+    console.log("Loader Start");
+    $("#RepLoadersnackbar").addClass("show");
+    $("#RepLoaderOverlay").addClass("show");
+});
+// Hide snackbar + overlay when all AJAX calls complete
+$(document).ajaxStop(function () {
+    console.log("Loader stop");
+    $("#RepLoadersnackbar").removeClass("show");
+    $("#RepLoaderOverlay").removeClass("show");
+});
