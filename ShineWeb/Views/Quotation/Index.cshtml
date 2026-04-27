@@ -17,6 +17,7 @@
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_Grid/js/gridui.js"></script>
 <script src="~/Scripts/js/mrptaxcall.js"></script>
+<script src="~/Autocomplete/GKBSautocomplete.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
 </header>
@@ -3173,7 +3174,7 @@ function setDate1(FieldID,Type) {
             0,
             '<span style="font-size:0px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
             '<p style="font-size:14px;">' + (sno+ 1) + '</p>',
-            $('#txtHProdCode').val() + '<br/><input name = "ProdName" class="gdInput dgvProdName" id="dgvProdName' + ProductRID +'" value="" title=""/>',
+            $('#txtHProdCode').val() + '<br/><input name = "ProdName" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + ProductRID +'" value="" title=""/>',
             //PName,
             //'<input type="number" step="any" class="gdInput" name="HSN" value=""txtsettag/>',
             '<input type="number" txttag ="0" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="0"/>',
@@ -3195,29 +3196,42 @@ function setDate1(FieldID,Type) {
         ]).draw(false);
         let scanTimer;
 
-            $("#" + pid).autocomplete({
-            minLength: 0, autoFocus: true,
-            source: TempAL,
-                select: function (event, ui) {
-                //showErrorSnackbar("Select trigger, Code : " + ui.item.code);
-                $("#" + pid).val(ui.item.code);
-                $("#clrdivs").html("");
-                var CustID = $("#txtVendorID").val() != "" ? $("#txtVendorID").val() : 0;
-                setTimeout(() => {
-                    GetData(4, ui.item.code, CustID, null, $("#cmbPriceType").val());
-                }, 0)
-                //showErrorSnackbar("prod row index : " + EditRowID);
+            //$("#" + pid).autocomplete({
+            //minLength: 0, autoFocus: true,
+            //source: TempAL,
+            //    select: function (event, ui) {
+            //    //showErrorSnackbar("Select trigger, Code : " + ui.item.code);
+            //    $("#" + pid).val(ui.item.code);
+            //    $("#clrdivs").html("");
+            //    var CustID = $("#txtVendorID").val() != "" ? $("#txtVendorID").val() : 0;
+            //    setTimeout(() => {
+            //        GetData(4, ui.item.code, CustID, null, $("#cmbPriceType").val());
+            //    }, 0)
+            //    //showErrorSnackbar("prod row index : " + EditRowID);
+            //    return false;
+            //    },
+            //}).
+            //    autocomplete("instance")._renderItem = function (ul, item) {
+            //return $("<li class='each'>")
+            //    .append("<div class='acItem'><span class='name'>" +
+            //        item.label + "</span><br><span class='desc'>" +
+            //        item.line2 + "</span></div>")
+            //    .appendTo(ul);
+            //};
+        PaginatedAutocomplete({
+            inputId: pid,
+            data: TempAL,
+            pageSize: 50,
+            onSelect: function (item) {
+                $("#" + pid).val(item.code);
+                    $("#clrdivs").html("");
+                    var CustID = $("#txtVendorID").val() != "" ? $("#txtVendorID").val() : 0;
+                    setTimeout(() => {
+                        GetData(4, item.code, CustID, null, $("#cmbPriceType").val());
+                    }, 0)
                 return false;
-                },
-            }).            
-                autocomplete("instance")._renderItem = function (ul, item) {
-            return $("<li class='each'>")
-                .append("<div class='acItem'><span class='name'>" +
-                    item.label + "</span><br><span class='desc'>" +
-                    item.line2 + "</span></div>")
-                .appendTo(ul);
-            };
-
+            }
+        });
         ProductRID++;
         var $scrollBody = $(ProductTable.table().node()).parent();
         $scrollBody.scrollTop($scrollBody.get(0).scrollHeight);
