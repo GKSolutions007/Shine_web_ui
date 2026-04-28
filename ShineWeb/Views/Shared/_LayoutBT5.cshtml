@@ -22,6 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700&family=Epilogue:wght@400;500&display=swap" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="~/Scripts/Validation.js"></script>
+    <script src="~/Autocomplete/GKBSautocomplete.js"></script>
 
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-base/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-grids/styles/bootstrap5.css" rel="stylesheet">
@@ -1009,7 +1010,7 @@
             align-items: center;
             gap: 12px;
             font-size: 14px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.25);            
+            box-shadow: 0 4px 8px rgba(0,0,0,0.25);
         }
         /* Overlay to block background interaction */
         .RepLoader-overlay {
@@ -1022,14 +1023,15 @@
             background-color: rgba(0, 0, 0, 0.4); /* semi-transparent dark backdrop */
             z-index: 9998; /* just below the snackbar */
         }
+
             .RepLoader-overlay.show {
                 display: block;
             }
-            /* Show animation */
-            .RepLoadersnackbar.show {
-                visibility: visible;
-                animation: slideDown 0.3s, fadeout 0.3s 3s;
-            }
+        /* Show animation */
+        .RepLoadersnackbar.show {
+            visibility: visible;
+            animation: slideDown 0.3s, fadeout 0.3s 3s;
+        }
 
         /* Slide from top */
         @@keyframes slideDown {
@@ -2182,7 +2184,7 @@
         </div>
     </div>
     <script>
-        
+
         var RID = '@Session["RoleID"]';
         var ItemsperPage =  parseInt('@Session["ItemsperPage"]', 10) < 0 ? 'All' :parseInt('@Session["ItemsperPage"]', 10)  || 10;
         var SendAutoMail = 0;
@@ -2214,8 +2216,59 @@
             autoDraftInterval = null;
         }
         function formatIndianCurrency(num) {
-            return '&#8377; ' + parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return parseFloat(num).toLocaleString('en-IN', {
+                minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency',
+                currency: 'INR'
+            });
         }
+
+        function GetColumnSettingsData(nMode, nFormID, nTableID) {
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                //async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        columns = (data);
+                        columns.push(actions);
+                    } else {
+                        showErrorSnackbar("No column data found");
+                    }
+                }
+            });
+        }
+            function LoadBranchByRoles(FieldIDs) {
+    var RID = '@Session["RoleID"]';
+    $.ajax({
+        url: Aurl + "BranchMapping/getByRole",
+        type: 'GET',
+        dataType: 'json',
+        data: { RoleID: RID },
+        xhrFields: { withCredentials: true },
+        success: function (data) {
+            $(FieldIDs).empty();
+            $(FieldIDs).append($('<option/>', { value: 0, text: "-- Select --" }));
+            var defaultBranch = 0;
+            $.each(data, function (i, item) {
+                $(FieldIDs).append($('<option/>', {
+                    value: item.BranchID,
+                    text: item['Branch Name']
+                }));
+                if (item.SetAsDefault) {
+                    defaultBranch = item.BranchID;
+                }
+            });
+            if (defaultBranch != 0) {
+                $(FieldIDs).val(defaultBranch);//.trigger("change");
+            }
+        }
+    });
+}
     </script>
     <link href="~/Content/dialogbox/confirmdialog.css" rel="stylesheet" />
     <canvas id="cmCanvas"></canvas>
@@ -4788,7 +4841,7 @@ function CloseConfirmDialogMsg_old(message) {
     //    input.classList.remove("form-control");
     //    input.classList.add("clsdtpfield");
     //});
-
+    
 </script>
 <script>
     //cfFocus, ClearcfFocus, ClosecfFocus
