@@ -552,7 +552,6 @@ function showInfoSnackbar(message) {
 function setDate(FieldID, Type) {
     var FilterDates = localStorage.getItem("FilterDatelist");
     var DateDatas = JSON.parse(FilterDates);
-    console.log(DateDatas);
     var DateFilterData = DateDatas.filter(fd => fd.ID == (Type == 6 || Type == 7 ? 3 : Type == 2 ? 2 : 1));//Current Date
     if (DateFilterData) {
         $.each(DateFilterData, function (i, items) {
@@ -623,7 +622,6 @@ function SetFilterDate() {
 function AssignDates(FromFieldID, ToFieldID, Type) {
     var FilterDates = localStorage.getItem("FilterDatelist");
     var DateDatas = JSON.parse(FilterDates);
-        console.log(DateDatas);
     var DateFilterData = DateDatas.filter(fd => fd.ID == Type);
     if (DateFilterData) {
         $.each(DateFilterData, function (i, items) {

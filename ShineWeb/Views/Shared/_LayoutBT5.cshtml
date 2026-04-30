@@ -2184,7 +2184,7 @@
         </div>
     </div>
     <script>
-
+        var Aurl = '@Session["APIurl"]';
         var RID = '@Session["RoleID"]';
         var ItemsperPage =  parseInt('@Session["ItemsperPage"]', 10) < 0 ? 'All' :parseInt('@Session["ItemsperPage"]', 10)  || 10;
         var SendAutoMail = 0;
@@ -2222,7 +2222,7 @@
             });
         }
 
-        function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        function GetColumnSettingsData(nMode, nFormID, nTableID,Threedoticon = false) {
             $.ajax({
                 url: Aurl + "columnsettings/getcolumnsettings",
                 type: 'get',
@@ -2236,6 +2236,10 @@
                     if (data.length > 0) {
                         columns = (data);
                         columns.push(actions);
+                        if (Threedoticon)
+                            columns.push(OtherActions);
+
+                        console.log("Column Settings ", columns);
                     } else {
                         showErrorSnackbar("No column data found");
                     }
@@ -2268,7 +2272,37 @@
             }
         }
     });
-}
+        }
+        function GetPrintProfile(nTransID) {
+            $.ajax({
+                url: Aurl + "printprofileconfig/getprofile",
+                type: 'get',
+                contentType: 'json',
+                data: { TransID: nTransID },
+                xhrFields: {
+                    withCredentials: true
+                },
+                async: false,
+                success: function (data) {
+                    $('#cmbPrintProfile').find("option").remove();
+                    $('#cmbPrintProfile').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    var lstdata = eval(data)
+                    var getdef = lstdata.filter(pr => pr.DefaultConfig == 1);
+                    var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                    $.each(lstdata, function (i, items) {
+                        $('#cmbPrintProfile').append($('<option/>', {
+                            value: items.ConfigID,
+                            text: items.ConfigName, 'data-automail': items.AutoMail
+                        }));
+                        $('#cmbPrintProfile').val(defid);
+                        PrintConfigID = defid;
+                    });
+                }
+            });
+        }
     </script>
     <link href="~/Content/dialogbox/confirmdialog.css" rel="stylesheet" />
     <canvas id="cmCanvas"></canvas>
@@ -2328,6 +2362,7 @@
 @*<script src="~/Scripts/jquery-3.7.1.min.js"></script>*@
 <script src="~/Scripts/redirectform.js"></script>
 <script type="text/javascript">
+    
     var UserImgData = '@Session["UserImgData"]';
     if (UserImgData != null && UserImgData != ""){
         $("#imgUserProfilePicture").attr("src", "data:image/png;base64," + UserImgData);
@@ -2432,7 +2467,6 @@
         "columnDefs": [{ "targets": [0, 6], "class": "text-center" }, { "targets": [0,1], "visible": false }],
     });
 
-    var Aurl = '@Session["APIurl"]';
     var TableGenColumnSettings = $('#tblGenColumnSettings').DataTable({
         paging: false,
         searching: true,
