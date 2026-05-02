@@ -13,13 +13,14 @@
 
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+@*<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>*@
+<script src="~/Scripts/jquery-3.6.4.min.js"></script>
 <script src="~/Scripts/bootstrap-typeahead.min.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_GRID_2.0/js/gridui.js"></script>
-
+<script src="~/Scripts/multiselect/GKBSmultiselectiondropdown.js"></script>
 <script src="~/Scripts/xlsx.bundle.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <style>
@@ -114,7 +115,7 @@
             margin: 1% auto; /* 15% from the top and centered */
             padding: 0px;
             border: 1px solid #888;
-            border-radius:10px;
+            border-radius: 10px;
             width: 85%; /* Could be more or less, depending on screen size */
             max-height: 60% !important;
             top: 2% !important;
@@ -568,9 +569,11 @@
         font-size: 11px !important;
         border: 0px solid transparent !important;
     }
+
     table.dataTable.table-bordered > :not(caption) > * > * {
         border-width: 1px !important;
     }
+
     button:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
@@ -765,7 +768,7 @@
     var CompanyName = '@Session["CompanyName"]';
     var RID = '@Session["RoleID"]';
     var ItemsperPage =  parseInt('@Session["ItemsperPage"]', 10) < 0 ? 'All' :parseInt('@Session["ItemsperPage"]', 10)  || 10;
-    
+
     var tblReportSettings = $('#tblReportSettings').DataTable({
         "bFilter": false,
         "bSearchable": false,
@@ -1257,6 +1260,8 @@
                                 var isoddoreven = i % 2 == 0 ? "odd" : "even";
                                 if (ParamType == "Autolist") {
                                     ParVal = '<input isMandatory =' + IsMand +' type="text" class="form-control" name=' + items.AutolistName + ' id=' + (items.AutolistName + i) + ' />';
+                                } else if (ParamType == "Multiselect") {
+                                    ParVal = '<input isMultiselection = "1" isMandatory ="' + IsMand + '" type="text" class="form-control" name="' + items.AutolistName + '" id="' + (items.AutolistName + i) + '" />';
                                 }
                                 else if (ParamType == "Dropdown") {
                                     ParVal = '<select class="form-control" name=' + items.AutolistName + ' id=Combo' + (i) + '></select>'
@@ -1276,7 +1281,7 @@
                                     ParVal = '<input isMandatory =' + IsMand +' type="text" class="form-control" name="text' + items.AutolistName + '" id="txt' + (items.AutolistName + i) + '" value ="' + items.AutolistName + '" />';
                                 }
                                 Table.row.add([
-                                    '<label id="lblparamName' + i + '"><b>' + items.ParameterName + '</b></label>',
+                                    '<label id="lblparamName' + i + '"><b>' + items.ParameterName + '</b>' + (IsMand == 1 ? ' <label style="color:red"> * </label>' : '') + '</label>',
                                     ParVal
                                 ]).draw(false);
                             });
@@ -1325,7 +1330,9 @@ function setDate(FieldID,Type) {
             //isGridEmpty++;
             var strALName = items.name;
             var id = items.id
+            var isMultiSelection = $("#" + id).attr('isMultiselection') == "1";
             var arrData = [];
+            var arrMultiSelData = [];
             $.ajax({
                 url: Aurl + "reportparameters/get",
                 type: 'get',
@@ -1346,29 +1353,27 @@ function setDate(FieldID,Type) {
                                     "id": items.ID,
                                 }
                                 arrData.push(al);
+                                arrMultiSelData.push({ "label": items.Name, "value": items.ID });
                             });
-                            //~AutoList
-                            PaginatedAutocomplete({
-                                inputId: id,
-                                data: arrData,
-                                onSelect: function (item) {
-                                    $('#' + id + '').val(item.label);
-                                    return false;
-                                }
-                            });
-                            //$('#' + id + '').autocomplete({
-                            //    minLength: 0,
-                            //    source: arrData,
-                            //    select: function (event, ui) {
-                            //        $('#' + id + '').val(ui.item.label);
-                            //        return false;
-                            //    },
-                            //}).autocomplete("instance")._renderItem = function (ul, item) {
-                            //    return $("<li class='each'>")
-                            //        .append("<div class='acItem'><span class='name'>" +
-                            //            item.label + "</span></div>")
-                            //        .appendTo(ul);
-                            //};
+                            if (isMultiSelection) {
+                                //~Multiselect
+                                GKBSPaginatedMultiSelect({
+                                    inputId: id,//'txtProducts',
+                                    data: arrMultiSelData,
+                                    onSelect: function (items) { /* optional live hook */ }
+                                });
+                            }
+                            else {
+                                //~AutoList
+                                PaginatedAutocomplete({
+                                    inputId: id,
+                                    data: arrData,
+                                    onSelect: function (item) {
+                                        $('#' + id + '').val(item.label);
+                                        return false;
+                                    }
+                                });
+                            }
                         }
                         else if (items.tagName == "SELECT") {
                             $.each(data, function (i, items) {
@@ -1393,10 +1398,22 @@ function setDate(FieldID,Type) {
             $(this).css("border-color", "");
             if (FieldType == "text" || FieldType == "number" || FieldType == "date") {
                 var IsMand = document.getElementById(this.id).getAttribute('ismandatory');
-                if (IsMand == 1 && FieldValue == "") {
-                    $(this).css("border-color", "red");
-                    IsValid = false;
-                    showErrorSnackbar("Mandatory fields should not empty");
+                var IsMultiSelection = $("#" + FieldID).attr('isMultiselection') == "1";
+                if (!IsMultiSelection) {
+                    if (IsMand == 1 && FieldValue == "") {
+                        $(this).css("border-color", "red");
+                        IsValid = false;
+                        showErrorSnackbar("Mandatory fields should not empty");
+                    }
+                }
+                else {
+                    //var hid = $(this).data('hid');
+                    var selected = getMultiSelectValues(FieldID);
+                    if (IsMand == '1' && (!selected || selected.length === 0)) {
+                        $(this).css("border-color", "red");
+                        IsValid = false;
+                        showErrorSnackbar("Mandatory fields should not be empty");
+                    }
                 }
             }
             ////console.log("Input Fields", this, "Type : ", this.type, "ID : ", this.id, "IsMand : ", );
@@ -1415,6 +1432,13 @@ function setDate(FieldID,Type) {
                     var input = items.firstChild.id;
                     var inputtype = items.firstChild.type;
                     var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
+                    var IsMultiSelection = $("#" + input).attr('isMultiselection') == "1";
+                    var multiselvalues = "";
+                    if (IsMultiSelection) {
+                        multiselvalues = getMultiSelectValues(input).map(function (i) {
+                            return i.value;
+                        }).join(',');
+                    }
                     if (s == null) {
                         //alert("No Value");
                     }
@@ -1422,7 +1446,7 @@ function setDate(FieldID,Type) {
                         //alert("Values " + s);
                         var strpv = "Param" + ParamIndex;
                         var PV = {
-                            "Param1": s
+                            "Param1": IsMultiSelection ? multiselvalues : s
                         }
                         arrParams.push(PV);
                         ParamIndex++;
@@ -1443,7 +1467,7 @@ function setDate(FieldID,Type) {
         var Excelfilter = [];
         var Col2Data = "";
         $('#tblFilterData tr td').each(function (i, items) {
-            var insert = false;
+            var insert = false;            
             if (i % 2 == 0) {
                 var lbl = items.firstChild.id;
                 Col1Data = $("#" + lbl).text();
@@ -1453,8 +1477,16 @@ function setDate(FieldID,Type) {
             else if (i % 2 == 1) {
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
+                var IsMultiSelection = $("#" + input).attr('isMultiselection') == "1";
+
                 var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                var multiselvalues = "";
+                if (IsMultiSelection) {
+                    multiselvalues = getMultiSelectValues(input).map(function (i) {
+                        return i.label;
+                    }).join(',');
+                }
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 1 : 0 : inputtype == "select-one" ? ifselval : IsMultiSelection ? multiselvalues : $("#" + input).val();
                 insert = true;
             }
             if (insert) {
@@ -1595,6 +1627,13 @@ function setDate(FieldID,Type) {
                             if (i % 2 == 1) {
                                 var input = items.firstChild.id;
                                 var inputtype = items.firstChild.type;
+                                var IsMultiSelection = $("#" + input).attr('isMultiselection') == "1";
+                                var multiselvalues = "";
+                                if (IsMultiSelection) {
+                                    multiselvalues = getMultiSelectValues(input).map(function (i) {
+                                        return i.value;
+                                    }).join(',');
+                                }
                                 var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
                                 if (s == null) {
                                     //alert("No Value");
@@ -1603,7 +1642,7 @@ function setDate(FieldID,Type) {
                                     //alert("Values " + s);
                                     var strpv = "Param" + ParamIndex;
                                     var PV = {
-                                        "Param1": s
+                                        "Param1": IsMultiSelection ? multiselvalues : s
                                     }
                                     arrParams.push(PV);
                                     ParamIndex++;
@@ -1674,6 +1713,7 @@ function setDate(FieldID,Type) {
         var Col2Data = "";
         $('#tblFilterData tr td').each(function (i, items) {
             var insert = false;
+            
             if (i % 2 == 0) {
                 var lbl = items.firstChild.id;
                 Col1Data = $("#" + lbl).text();
@@ -1683,8 +1723,15 @@ function setDate(FieldID,Type) {
             else if (i % 2 == 1) {
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
+                var IsMultiSelection = $("#" + input).attr('isMultiselection') == "1";
+                var multiselvalues = "";
+                if (IsMultiSelection) {
+                    multiselvalues = getMultiSelectValues(input).map(function (i) {
+                        return i.value;
+                    }).join(',');
+                }
                 var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") : inputtype == "select-one" ? ifselval : IsMultiSelection ? multiselvalues : $("#" + input).val();
                 insert = true;
             }
             if (insert) {
@@ -1882,6 +1929,13 @@ function setDate(FieldID,Type) {
                             if (i % 2 == 1) {
                                 var input = items.firstChild.id;
                                 var inputtype = items.firstChild.type;
+                                var IsMultiSelection = $("#" + input).attr('isMultiselection') == "1";
+                                var multiselvalues = "";
+                                if (IsMultiSelection) {
+                                    multiselvalues = getMultiSelectValues(input).map(function (i) {
+                                        return i.value;
+                                    }).join(',');
+                                }
                                 var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
                                 if (s == null) {
                                     //alert("No Value");
@@ -1890,7 +1944,7 @@ function setDate(FieldID,Type) {
                                     //alert("Values " + s);
                                     var strpv = "Param" + ParamIndex;
                                     var PV = {
-                                        "Param1": s
+                                        "Param1": IsMultiSelection ? multiselvalues : s
                                     }
                                     arrParams.push(PV);
                                     ParamIndex++;
@@ -2031,7 +2085,7 @@ function setDate(FieldID,Type) {
                     if (fieldName == "EnableUnique") {
                         aEnableUnique = this.checked ? "1" : "0";
                     }
-                   
+
                     if (fieldName == "ShowinColumnOption") {
                         aShowinColumnOption = this.checked ? "1" : "0";
                     }
@@ -2184,8 +2238,15 @@ function setDate(FieldID,Type) {
             else if (i % 2 == 1) {
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
+                var IsMultiSelection = $("#" + input).attr('isMultiselection') == "1";
+                var multiselvalues = "";
+                if (IsMultiSelection) {
+                    multiselvalues = getMultiSelectValues(input).map(function (i) {
+                        return i.label;
+                    }).join(',');
+                }
                 var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") : inputtype == "select-one" ? ifselval : IsMultiSelection ? multiselvalues : $("#" + input).val();
                 insert = true;
             }
             if (insert) {
@@ -2809,8 +2870,17 @@ function setDate(FieldID,Type) {
             else if (i % 2 == 1) {
                 var input = items.firstChild.id;
                 var inputtype = items.firstChild.type;
+                var IsMultiSelection = $("#" + input).attr('isMultiselection') == "1";
+
+                var multiselvalues = "";
+                if (IsMultiSelection) {
+                    multiselvalues = getMultiSelectValues(input).map(function (i) {
+                        return i.label;
+                    }).join(',');
+                }
                 var ifselval = inputtype == "select-one" && $("#" + input).val() > 0 ? $("#" + input + " option:selected").text() : "";
-                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 'True' : 'False' : inputtype == "select-one" ? ifselval : $("#" + input).val();
+                Col2Data = inputtype == "checkbox" ? $("#" + input).is(":checked") ? 'True' : 'False' : inputtype == "select-one" ? ifselval :
+                    IsMultiSelection ? multiselvalues :  $("#" + input).val();
                 insert = true;
             }
             if (insert) {
@@ -3235,7 +3305,15 @@ function setDate(FieldID,Type) {
                         //console.log("Field Type : ", items.firstChild);
                         var input = items.firstChild.id;
                         var inputtype = items.firstChild.type;
-                        var s = inputtype == "checkbox" ? $("#" + input).is(":checked") : $("#" + input).val();
+                        var IsMultiSelection = $("#" + input).attr('isMultiselection') == "1";                        
+
+                        var multiselvalues = "";
+                        if (IsMultiSelection) {
+                            multiselvalues = getMultiSelectValues(input).map(function (i) {
+                                return i.value;
+                            }).join(',');
+                        }
+                        var s = inputtype == "checkbox" ? $("#" + input).is(":checked") :  $("#" + input).val();
                         if (s == null) {
                             //alert("No Value");
                         }
@@ -3243,7 +3321,7 @@ function setDate(FieldID,Type) {
                             //alert("Values " + s);
                             var strpv = "Param" + ParamIndex;
                             var PV = {
-                                "Param1": s
+                                "Param1": IsMultiSelection ? IsMultiSelection : s
                             }
                             arrParams.push(PV);
                             ParamIndex++;
