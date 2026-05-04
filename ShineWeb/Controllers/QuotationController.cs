@@ -26,6 +26,7 @@ namespace ShineWeb.Controllers
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string AddPerm = dtPermission.Select("MenuName = 'Create " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 ? "1" : "0";
@@ -34,7 +35,7 @@ namespace ShineWeb.Controllers
                 string VarPerm = dtPermission.Select("MenuName = 'Variant " + Name + "'", null).Length > 0 ? "1" : "0";
                 string DrftMod = dtPermission.Select("MenuID = 386", null).Length > 0 ? "1" : "0";
                 string DrftCan = dtPermission.Select("MenuID = 387", null).Length > 0 ? "1" : "0";
-                string EnbBranch = dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
+                string EnbBranch = UID == 1 ? "0" : dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
 
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;

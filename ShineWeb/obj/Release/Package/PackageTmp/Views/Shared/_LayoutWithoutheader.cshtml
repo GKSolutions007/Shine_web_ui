@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="~/Content/jquery-ui.css">
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="~/Scripts/Validation.js"></script>
+    <script src="~/Autocomplete/GKBSautocomplete.js"></script>
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-base/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-grids/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-buttons/styles/bootstrap5.css" rel="stylesheet">
@@ -425,6 +426,7 @@
         .ui-dialog {
             z-index: 5001;
         }
+
         #btnYes:focus {
             transform: scale(1.1);
             border: 1px solid #4caf50;
@@ -696,9 +698,60 @@
             clearInterval(autoDraftInterval);
             autoDraftInterval = null;
         }
-        function formatIndianCurrency(num) {
-            return '₹ ' + parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                function formatIndianCurrency(num) {
+            return parseFloat(num).toLocaleString('en-IN', {
+                minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency',
+                currency: 'INR'
+            });
         }
+
+        function GetColumnSettingsData(nMode, nFormID, nTableID) {
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                //async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        columns = (data);
+                        columns.push(actions);
+                    } else {
+                        showErrorSnackbar("No column data found");
+                    }
+                }
+            });
+        }
+            function LoadBranchByRoles(FieldIDs) {
+    var RID = '@Session["RoleID"]';
+    $.ajax({
+        url: Aurl + "BranchMapping/getByRole",
+        type: 'GET',
+        dataType: 'json',
+        data: { RoleID: RID },
+        xhrFields: { withCredentials: true },
+        success: function (data) {
+            $(FieldIDs).empty();
+            $(FieldIDs).append($('<option/>', { value: 0, text: "-- Select --" }));
+            var defaultBranch = 0;
+            $.each(data, function (i, item) {
+                $(FieldIDs).append($('<option/>', {
+                    value: item.BranchID,
+                    text: item['Branch Name']
+                }));
+                if (item.SetAsDefault) {
+                    defaultBranch = item.BranchID;
+                }
+            });
+            if (defaultBranch != 0) {
+                $(FieldIDs).val(defaultBranch);//.trigger("change");
+            }
+        }
+    });
+}
     </script>
     <div style="padding-left: 15px; padding-top: 40px;padding-bottom: 30px;" class="main">
         <div id="actionPopup" class="action-popup">
@@ -2693,5 +2746,11 @@ function addModuleIcons() {
             }
         });
 
+    });
+    // Hide snackbar + overlay when all AJAX calls complete
+    $(document).ajaxStop(function () {
+        console.log("Loader stop");
+        $("#RepLoadersnackbar").removeClass("show");
+        $("#RepLoaderOverlay").removeClass("show");
     });
 </script>

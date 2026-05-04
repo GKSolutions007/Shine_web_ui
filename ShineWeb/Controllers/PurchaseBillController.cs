@@ -23,6 +23,7 @@ namespace ShineWeb.Controllers
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
@@ -32,8 +33,7 @@ namespace ShineWeb.Controllers
                 string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";
                 string CanPerm = dtPermission.Select("MenuName = 'Cancel " + Name + "'", null).Length > 0 ? "1" : "0";
                 string VarPerm = dtPermission.Select("MenuName = 'Variant " + Name + "'", null).Length > 0 ? "1" : "0";
-                //string EnbBranch = dtPermission.Select("MenuName = 'Enable Branch in Transactions'", null).Length > 0 ? "1" : "0";
-                string EnbBranch = dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
+                string EnbBranch = UID == 1 ? "0" : dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
                 string EnabSave = dtPermission.Select("MenuID = 254", null).Length > 0 ? "1" : "0";
                 string editprice = dtPermission.Select("MenuID = 319", null).Length > 0 ? "1" : "0";
                 string DrftMod = dtPermission.Select("MenuID = 382", null).Length > 0 ? "1" : "0";

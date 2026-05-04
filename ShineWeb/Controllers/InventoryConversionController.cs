@@ -23,13 +23,14 @@ namespace ShineWeb.Controllers
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string AddPerm = dtPermission.Select("MenuName = 'Create " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";
-                string EnbBranch = dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
+                string EnbBranch = UID == 1 ? "0" : dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 dam.ID = TranID;

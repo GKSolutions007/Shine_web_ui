@@ -30,21 +30,21 @@ namespace ShineWeb.Controllers
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             
 
-            var authCookie = Request.Cookies["AuthToken"]; // or your custom cookie name
-            var RefreshCookie = Request.Cookies["RefreshToken"]; // or your custom cookie name
-            var sessionidCookie = Request.Cookies["ASP.NET_SessionId"]; // or your custom cookie name
-            //ASP.NET_SessionId
-            CookieCollection cookieCollection = new CookieCollection();
-            cookieCollection.Add(new Cookie(authCookie.Name, authCookie.Value));
-            cookieCollection.Add(new Cookie(RefreshCookie.Name, RefreshCookie.Value));
-            cookieCollection.Add(new Cookie(sessionidCookie.Name, sessionidCookie.Value));
-            if (authCookie != null)
-            {
-                handler.CookieContainer.Add(
-                    new Uri(APIurl),
-                    cookieCollection
-                );
-            }
+            //var authCookie = Request.Cookies["AuthToken"]; // or your custom cookie name
+            //var RefreshCookie = Request.Cookies["RefreshToken"]; // or your custom cookie name
+            //var sessionidCookie = Request.Cookies["ASP.NET_SessionId"]; // or your custom cookie name
+            ////ASP.NET_SessionId
+            //CookieCollection cookieCollection = new CookieCollection();
+            //cookieCollection.Add(new Cookie(authCookie.Name, authCookie.Value));
+            //cookieCollection.Add(new Cookie(RefreshCookie.Name, RefreshCookie.Value));
+            //cookieCollection.Add(new Cookie(sessionidCookie.Name, sessionidCookie.Value));
+            //if (authCookie != null)
+            //{
+            //    handler.CookieContainer.Add(
+            //        new Uri(APIurl),
+            //        cookieCollection
+            //    );
+            //}
             HttpResponseMessage result = _client.GetAsync("validatepermissions?UID="+ ID).Result;
             if (result.IsSuccessStatusCode)
             {

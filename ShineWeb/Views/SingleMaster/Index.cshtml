@@ -16,19 +16,16 @@
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 <link href="~/Content/Snackbar.css" rel="stylesheet" />
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
-
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
-<script src="~/Scripts/jquery-1.10.2.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_Grid/js/gridui.js"></script>
 <script src="~/dropdown/script.js"></script>
-@*<link href="~/dropdown/styles.css" rel="stylesheet" />*@
 <style>
 
     /* Status Badge with Circle */
@@ -214,24 +211,17 @@
     <label id="lblIsDepend" hidden>@ViewData["isDepend"]</label>
     <label id="lblParentMenuID" hidden>@ViewData["ParentMenuID"]</label>
     <label id="lblParentFormFieldID" hidden>@ViewData["ParentFormFieldID"]</label>
-
     <hr />
     <div class="toastBox"></div>
     <div style="padding-bottom:10px" hidden>
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
     <div id="dvMainTable">
-        <div hidden id="storeDropdown" class="multiselect-container"></div>
-        <button hidden class="trigger save" onclick="ConfirmModal.show('save',  ()=>alert('✅ Saved!'),   ()=>{})">💾 Save</button>
-        <button hidden class="trigger clear" onclick="ConfirmModal.show('clear', ()=>alert('🗑 Cleared!'), ()=>{})">🗑 Clear</button>
-        <button hidden class="trigger close" onclick="ConfirmModal.show('close', ()=>alert('✕ Closed!'),  ()=>{})">✕ Close</button>
-
         <div id="my-grid" style="height: 600px; width: 100%;"></div>
     </div>    
     <div class="modal fade" id="myModalfg" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
-
                 <!-- Modal Header -->
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold" id="lblPopupheading">
@@ -239,11 +229,9 @@
                     </h5>
                     <span class="btn-close" id="modelcloseX"></span>
                 </div>
-
                 <!-- Modal Body -->
                 <div class="modal-body">
                     <div style="padding-top:2px">
-
                         <table class="table w-100">
                             <tr>
                                 <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
@@ -254,7 +242,6 @@
                                     <div class="clrdiv text-danger" id="dvErrorName"></div>
                                 </td>
                             </tr>
-
                             <tr>
                                 <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
                                     <label for="chkActive">Active :</label>
@@ -266,47 +253,37 @@
                         </table>
                     </div>
                 </div>
-
                 <!-- Modal Footer -->
                 <div class="modal-footer" style="background-color:skyblue">
                     <button type="button" class="btn btn-danger" id="btnClear">
                         <span class="glyphicon glyphicon-refresh"> Clear</span>
                     </button>
-
                     <button type="button" class="btn btn-success" id="btnSave">
                         <span class="glyphicon glyphicon-saved"> Save</span>
                     </button>
-
                     <button type="button" class="btn btn-warning" id="btnClose">
                         <i class="bi bi-x-circle"></i> Close
                     </button>
                 </div>
-
             </div>
         </div>
     </div>
 </body>
 <script>
+    //~Filter Action Buttons
     const allGridActions = [
         {
             icon: '👁️',
             title: 'View Data',
             className: 'dg-action-view',
-            // 💡 NEW TAG: This action will be rendered as a single icon
             displayType: 'single_icon',
             visible: $("#txtViewID").val() == 1,
-            handler: (rowData) => {
-                //let display = 'Row Data:\n';
-                //for (const key in rowData) {
-                //    if (key !== '_gridId') { display += `${key}: ${rowData[key]}\n`; }
-                //}
-                //alert("View : " + display);
+            handler: (rowData) => {                
                 var ID = rowData.ID;//[0];
                 var Name = rowData.Name;//[1];
                 var Active = rowData.Active;//[2];
                 nMode = 3;
                 $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
-                //showSuccessSnackbar("View " + $("#MainHeading").text())
                 $("#txtID").val(ID);
                 $("#txtName").val(Name);
                 $("#chkActive").prop("checked", Active == "True");
@@ -318,24 +295,10 @@
         {
             icon: '✏️',
             title: 'Edit Data',
-            className: 'dg-action-edit',
-            // 💡 CONDITIONAL VISIBILITY: Hide delete action for code "C001"
-            //visible: (rowData) => {
-            //    console.log("Action rowData : ", rowData);
-            //    // Hide delete action if code is "C001"
-            //    if (rowData['Active'] === 'No') {
-            //        return false;
-            //    }
-            //    // Show for all other codes (including "C002")
-            //    return true;
-            //},
+            className: 'dg-action-edit',            
             visible: $("#txtModifyID").val() == 1,
-            // 💡 NEW TAG: This action will be rendered in the 3-dot menu
             displayType: 'single_icon',
             handler: (rowData, gridInstance) => {
-                //if (confirm(`Are you sure you want to delete the row for ${rowData['First Name']}?`)) {
-                //    gridInstance.deleteRow(rowData._gridId);
-                //}
                 var ID = rowData.ID;//[0];
                 var Name = rowData.Name;//[1];
                 var Active = rowData.Active;//[2];
@@ -370,10 +333,6 @@
 <script type="text/javascript">
 
     var Aurl = '@Session["APIurl"]';
-
-    if ($("#txtModifyID").val() == 0 && $("#txtViewID").val() == 0 && $("#txtAddID").val() == 1) {
-        $("#dvMainTable").hide();
-    }
     var UID = '@Session["LoginUserID"]';
     var RID = '@Session["RoleID"]';
     var nMode = 1;
@@ -383,25 +342,23 @@
         GetData();
     }, 500);
     var grid;
-    var arrData = [],SingleMasterData;
+    var arrData = [], SingleMasterData;
+    //~Grid Data
     function GetData() {
         $.ajax({
-            url: Aurl + "singlemaster/get",
-            /*url: "http://localhost:44396/api/singlemaster/get",*/
+            url: Aurl + "singlemaster/get",            
             type: 'get',
             contentType: 'json',
             data: { FormID: FID, Mode: 3, Name: "" },
             xhrFields: {
                 withCredentials: true
             },
-            async : false,
+            //async : false,
             success: function (data) {
                 if (data.length == 0) {
                     showErrorSnackbar("No Records Found");
                 }
                 SingleMasterData = data;
-                //Table.draw().clear(); Table.draw().clear();
-                var tempddd = [];
                 arrData = [];
                 $.each(data, function (i, items) {
                     var al = {
@@ -410,13 +367,7 @@
                         "id": items.ID,
                     }
                     arrData.push(al);
-                    var mdd = {
-                        "ID": items.ID,
-                        "Name": items.Name,
-                    }
-                    tempddd.push(mdd);
                 });
-                Loadmultidropdowndata(tempddd);
                 var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
                 grid = new GKBSDynamicGrid('#my-grid', columns, SingleMasterData, {
                     enablePagination: true,
@@ -429,10 +380,8 @@
                     enableAddRow: false,
                     enableRemoveRow: false,
                     enableSorting: true,
-
-                    searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
-                    rowActionsMenu: menuActions,       // Pass the Delete/Print actions
-                    //onCellChange: handleCellUpdate,
+                    searchTerm: currentSearchValue, singleIconAction: singleIconAction, 
+                    rowActionsMenu: menuActions,
                     customCellRenderer: (el, col, rowData) => {
                         if (col.field === 'Active') {
                             const val = rowData[col.field];
@@ -484,20 +433,29 @@
                         UpdateColumnWidth(1, 1, 0, colIndex, field, newWidth)
                     },
                 });
-                $("#txtName").autocomplete({
-                    minLength: 0,
-                    source: arrData,
-                    select: function (event, ui) {
-                        $("#txtName").val(ui.item.label);
-                        //$("#txtRemarks").val(ui.item.id);
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtName",
+                    data: arrData,
+                    onSelect: function (item) {
+                        $("#txtName").val(item.label);
                         return false;
-                    },
-                }).autocomplete("instance")._renderItem = function (ul, item) {
-                    return $("<li class='each'>")
-                        .append("<div class='acItem'><span class='name'>" +
-                            item.label + "</span></div>")
-                        .appendTo(ul);
-                };
+                    }
+                });
+                //$("#txtName").autocomplete({
+                //    minLength: 0,
+                //    source: arrData,
+                //    select: function (event, ui) {
+                //        $("#txtName").val(ui.item.label);
+                //        //$("#txtRemarks").val(ui.item.id);
+                //        return false;
+                //    },
+                //}).autocomplete("instance")._renderItem = function (ul, item) {
+                //    return $("<li class='each'>")
+                //        .append("<div class='acItem'><span class='name'>" +
+                //            item.label + "</span></div>")
+                //        .appendTo(ul);
+                //};
             }
             , error: function (data) {
                 if (data.status == "401") {
@@ -506,68 +464,17 @@
                 }
             }
         });
-    }
-    let storeDropdown;
-    function Loadmultidropdowndata(listdata) {
-        // Initialize the dropdown
-        storeDropdown = new MultiSelectDropdown({
-            containerId: 'storeDropdown',
-            data: listdata,
-            idField: 'ID',
-            nameField: 'Name',
-            placeholder: '🔍 Search or select stores...',
-            maxHeight: '350px'
-        });
-        assignSelectedStores(['1', '3', '8']);
-
-    }
-    function assignSelectedStores(storeIds) {
-        // storeIds should be array like ['356', '21', '744']
-        storeDropdown.setSelected(storeIds);
-    }
-    function GetColumnSettingsData(nMode,nFormID,nTableID) {
-        $.ajax({
-            url: Aurl + "columnsettings/getcolumnsettings",
-            /*url: "http://localhost:44396/api/singlemaster/get",*/
-            type: 'get',
-            contentType: 'json',
-            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
-            xhrFields: {
-                withCredentials: true
-            },
-            async: false,
-            success: function (data) {
-                if (data.length > 0) {
-                    columns = (data);
-                    console.log("columns : ", columns);
-                    columns.push(actions);
-                } else {
-                    showErrorSnackbar("No column data found");
-                }
-            }
-        });
-    }
-    function displayResult(item) {
-        $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
-    }
+    }   
+    
     var modal = new bootstrap.Modal(document.getElementById('myModalfg'));// document.getElementById("myModalfg");
-    //var span = document.getElementsByClassName("closefg")[0];
-    //span.onclick = function () {
-    //    modal.hide();
-    //}
+    //~Close
     $('#btnClose,#modelcloseX').click(function (e) {
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
         modal.hide();
     }
-    $("#btnAdd").click(function () {
-        nMode = 1;
-        $("#chkActive,#btnSave,#txtName,#btnClear").prop("disabled", false);
-        $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
-         modal.show();
-        ClearForm();
-    });
+    //~Clear
     $('#btnClear').click(function (e) {
         if (ClearcfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
@@ -581,8 +488,10 @@
             //modal.hide();
             modal.hide();
     }
+    //~Save
     $("#btnSave").click(function () {
         $(".clrdiv").html("");
+        //~Validation
         var IsValid = true;
         if ($("#txtName").val() == "") {
             IsValid = false;
@@ -659,6 +568,7 @@
             }
         });
     }
+    //~Depend Master Load
     if ($("#txtTransType").val() == "2") {
         console.log("ID", $("#txtID").val());
         if ($("#txtID").val() > 0) {

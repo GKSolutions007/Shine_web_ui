@@ -3,15 +3,12 @@
     ViewBag.Title = ViewData["FormName"];
     Layout = "~/Views/Shared/_LayoutBT5.cshtml";
 }
-@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
 <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
-@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
-@*<script src="~/Scripts/bootstrap.min.js"></script>*@
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
@@ -132,28 +129,7 @@
         cursor: text;
         pointer-events: none;
         font-family: sans-serif;
-    }
-    /*each {
-        border-bottom: 1px solid #555;
-        padding: 3px 0;
-    }
-
-    .acItem .name {
-        font-size: 14px;
-        font-family: Arial, Helvetica, sans-serif;
-    }
-
-    .acItem .desc {
-        font-size: 10px;
-        font-family: Arial, Helvetica, sans-serif;
-        color: #555;
-    }
-
-    .ui-autocomplete {
-        max-height: 245px;
-        overflow-y: auto;
-        overflow-x: hidden;
-    }*/
+    }   
 </style>
 <body>
 
@@ -504,6 +480,7 @@
 </body>
 
 <script>
+    //~Filter Action Buttons
     var nTransMode = 1;
     const allGridActions = [
         {
@@ -585,7 +562,7 @@
     setTimeout(() => {
         InitiateData();
     }, 500);
-
+    //~Grid Data and Preload Data
     function InitiateData() {
         $.ajax({
             url: Aurl + "taxmaster/get",
@@ -687,20 +664,28 @@
                             UpdateColumnWidth(2, 1, 0, colIndex, field, newWidth)
                         },
                     });
-
-                    $("#txtName").autocomplete({
-                        minLength: 0,
-                        source: arrData,
-                        select: function (event, ui) {
-                            $("#txtName").val(ui.item.label);
-                            return false;
-                        },
-                    }).autocomplete("instance")._renderItem = function (ul, item) {
-                        return $("<li class='each'>")
-                            .append("<div class='acItem'><span class='name'>" +
-                                item.label + "</span></div>")
-                            .appendTo(ul);
-                    };
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtName",
+                    data: arrData,
+                    onSelect: function (item) {
+                        $("#txtName").val(item.label);
+                        return false;
+                    }
+                });
+                    //$("#txtName").autocomplete({
+                    //    minLength: 0,
+                    //    source: arrData,
+                    //    select: function (event, ui) {
+                    //        $("#txtName").val(ui.item.label);
+                    //        return false;
+                    //    },
+                    //}).autocomplete("instance")._renderItem = function (ul, item) {
+                    //    return $("<li class='each'>")
+                    //        .append("<div class='acItem'><span class='name'>" +
+                    //            item.label + "</span></div>")
+                    //        .appendTo(ul);
+                    //};
                     setTimeout(function () {
                         $("#txtName").val("");
                         $('input#txtName').autocomplete("search");
@@ -752,6 +737,7 @@
             }
         });
     }
+    //~Assign Data
     function getTaxData(TaxID) {
         $.ajax({
             url: Aurl + "taxmaster/get",
@@ -855,16 +841,7 @@
     }
 
     var modal = new bootstrap.Modal(document.getElementById('myModalfg')); //document.getElementById("myModalfg");
-    //var span = document.getElementsByClassName("closefg")[0];
-    //span.onclick = function () {
-    //    modal.hide();
-    //}
-    $('#btnClose,#modelcloseX').click(function (e) {
-        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
-    });
-    function CloseForm() {
-        modal.hide();
-    }
+    
     function isNullOrEmpty(val) {
         return val === null || val === undefined || val === "" || val == 0;
     }
@@ -1063,6 +1040,14 @@
         fillApponDropdown(TaxTypeID, TaxCompID);
         $(this).parents('tr').addClass("selected");
     });
+    //~Close
+    $('#btnClose,#modelcloseX').click(function (e) {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    function CloseForm() {
+        modal.hide();
+    }
+    //~Clear
     $('#btnClear').click(function (e) {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
@@ -1080,8 +1065,10 @@
         if (nTransMode != 1)
             modal.hide();
     }
+    //~Save
     $("#btnSave").click(function () {
         $(".clrdivs").html("");
+        //~Validation
         var IsValid = true;
         if($("#txtName").val() == "") {
             $("#dvErrorName").html("Name should not be empty");
@@ -1183,27 +1170,5 @@
                     }
                 }
             });
-    }
-
-    function GetColumnSettingsData(nMode, nFormID, nTableID) {
-        $.ajax({
-            url: Aurl + "columnsettings/getcolumnsettings",
-            type: 'get',
-            contentType: 'json',
-            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
-            xhrFields: {
-                withCredentials: true
-            },
-            async: false,
-            success: function (data) {
-                if (data.length > 0) {
-                    columns = (data);
-                    console.log("columns : ", columns);
-                    columns.push(actions);
-                } else {
-                    showErrorSnackbar("No column data found");
-                }
-            }
-        });
     }
 </script>

@@ -3,19 +3,15 @@
     ViewBag.Title = ViewData["FormName"];
     Layout = "~/Views/Shared/_LayoutBT5.cshtml";
 }
-@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
 <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 <link href="~/Content/Snackbar.css" rel="stylesheet" />
-@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
 
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-@*<script src="~/Scripts/bootstrap.min.js"></script>
-<script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
@@ -208,9 +204,9 @@
         <div id="dvAssign">
 
             <!-- Branch + Period -->
-            <div class="row g-2 modal-fields-grid">
+            <div class="row g-2">
 
-                <div class="col-md-6">
+                <div class="col-12 col-md-3">
                     <input id="txtID" hidden />
 
                     <span class="form-label">
@@ -223,8 +219,7 @@
                     <div id="divErrBranch" class="error-msg clrdiv"></div>
                 </div>
 
-                <div class="col-md-6">
-
+                <div class="col-12 col-md-3">
                     <span class="form-label">
                         <select class="form-control form-control-compact FormclrcmbField" id="cmbPeriod">
                             <option value="0">Select Period</option>
@@ -240,17 +235,14 @@
 
             <!-- Table -->
             <div style="border-top:1px solid #f3f4f6;padding-top:5px;">
-
                 <div class="row">
-
-                    <div class="col-md-1"></div>
-
-                    <div class="col-md-9">
-
+                    <div class="col-12">
                         <table class="table table-bordered" id="tblMasterData" width="100%">
                             <thead>
                                 <tr class="trclrforcolheader">
                                     <th style="width:0%;" class="trclrforcolheader">ID</th>
+                                    <th style="width:0%;" class="trclrforcolheader">Org Opening Value</th>
+                                    <th style="width:0%;" class="trclrforcolheader">Org FA Type</th>
                                     <th style="width:3%;" class="trclrforcolheader">#</th>
                                     <th style="width:35%;" class="trclrforcolheader">Account Name</th>
                                     <th style="width:20%;" class="trclrforcolheader">Account Group</th>
@@ -289,6 +281,7 @@
 </body>
 
 <script>
+    //~Filter Action Buttons
     const allGridActions = [
         {
             icon: '👁️',
@@ -351,7 +344,7 @@
         scrollY: "400px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
+        "columnDefs": [{ "targets": [0,1,2], "visible": false, searchable: false }],
     });
 
     var Aurl = '@Session["APIurl"]';
@@ -377,14 +370,14 @@
             },
             success: function (data) {
                 if (dMode == 1) {
-                    //Table.draw().clear(); Table.draw().clear();
+                    Table.draw().clear(); Table.draw().clear();
                     if (data.length > 0) {
                         var docdata = JSON.parse(data);
                         $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                            scrollY: "450px",
+                            scrollY: "475px",
                             scrollX: true,
                             scrollCollapse: true,
-                            paging: false,
+                            paging: true,
                             destroy: true,
                             data: docdata,
                             fixedColumns: false,
@@ -393,6 +386,8 @@
                             sorting: false,
                             columns: [
                                 { "data": "FAID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "orgOpeningBalance", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "orgFAType", "autoWidth": true, "visible": false, className: "dt-body-left" },
                                 {
                                     className: "dt-body-center", width: "5%",
                                     "mRender": function (data, type, value, meta) {
@@ -413,7 +408,7 @@
                                     }
                                 },
                                 {
-                                    className: "dt-body-center", width: "15%",
+                                    className: "dt-body-center pe-5", width: "15%",
                                     "mRender": function (data, type, value, meta) {
                                         var rowIndex = meta.row;
                                         var _action = '<input name= "OpeningValue" type="number" class="form-control .clsOpeningValue" value="0" id="txtOpeningValue' + rowIndex +'" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)">';
@@ -423,7 +418,7 @@
                             ],
                             initComplete: function () {
                                 this.api().columns().every(function (index) {
-                                    if (index !== 0 && index !== 1 && index !== this.columns().indexes().length - 1
+                                    if (index !== 0 && index !== 1 && index !== 2 && index !== 3 && index !== this.columns().indexes().length - 1
                                         && index !== this.columns().indexes().length - 2) {
                                         var column = this;
                                         const columnName = $(column.header()).text().trim();
@@ -457,10 +452,10 @@
                         $("#txtID").val(dsdata[0].ID)
                         $('#tblMasterData').DataTable({
                             pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                            scrollY: "450px",
+                            scrollY: "475px",
                             scrollX: true,
                             scrollCollapse: true,
-                            paging: false,
+                            paging: true,
                             destroy: true,
                             data: dsdata,
                             fixedColumns: false,
@@ -469,6 +464,8 @@
                             sorting: false,
                             columns: [
                                 { "data": "FAID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "orgOpeningBalance", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "orgFAType", "autoWidth": true, "visible": false, className: "dt-body-left" },
                                 {
                                     className: "dt-body-center", width: "5%",
                                     "mRender": function (data, type, value, meta) {
@@ -503,7 +500,7 @@
                             ],
                             initComplete: function () {
                                 this.api().columns().every(function (index) {
-                                    if (index !== 0 && index !== 1 && index !== this.columns().indexes().length - 1
+                                    if (index !== 0 && index !== 1 && index !== 2 && index !== 3 && index !== this.columns().indexes().length - 1
                                         && index !== this.columns().indexes().length - 2) {
                                         var column = this;
                                         const columnName = $(column.header()).text().trim();
@@ -536,14 +533,12 @@
                         stickyToWindow: true,
                         enableExport: false,
                         enablePrint: false,
-                        enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
-                        enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
-                        enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                        enableColumnsBtn: false,
+                        enableAddRow: false,
+                        enableRemoveRow: false,
                         enableSorting: true,
-
-                        searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
-                        rowActionsMenu: menuActions,       // Pass the Delete/Print actions
-                        //onCellChange: handleCellUpdate,
+                        searchTerm: currentSearchValue, singleIconAction: singleIconAction,
+                        rowActionsMenu: menuActions,
                         customCellRenderer: (el, col, rowData) => {
                         },
                         customButtons: [
@@ -553,9 +548,6 @@
                                 title: 'Settings',
                                 visible: true,
                                 onClick: (gridInstance, event) => {
-                                    //console.log("gridInstance : ", gridInstance);
-                                    //console.log("event : ", event);
-                                    //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
                                     modalGenColumnSettings.show();
                                     GendralColumnSettings(1, 35, 1, 0);
                                 }
@@ -631,7 +623,12 @@
         if (Period == 0 || Period == "") {
             showErrorSnackbar("Select valid period");
             e.target.value = "0";
-        }        
+        }
+        else {
+            var rowdata = this.data();
+            rowdata.OpeningBalance = e.target.value;
+            this.data(rowdata);
+        }
     });
     $("#cmbBranch").change(function (e) {
         $(".clrdiv").html("");
@@ -678,7 +675,7 @@
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
-
+        
         var Period = $("#cmbPeriod").val();
         var BranchID = $("#cmbBranch").val();
         if (BranchID == 0 || BranchID == "") {
@@ -695,20 +692,50 @@
         }        
         var listdoc = [];
         var isValid = true;
-        $("#tblMasterData tbody tr").each(function () {
-            var strFAType = "", strOpenValue = "";
-            rowdata = Table.row($(this)).data();
-            var nFAID = rowdata.FAID;//[0];            
-            strOpenValue = $(this).find("input[name=OpeningValue]").val();
-            strFAType = $(this).find("select[name=FAType]").val();
+        //$("#tblMasterData tbody tr").each(function () {
+        //    var strFAType = "", strOpenValue = "";
+        //    rowdata = Table.row($(this)).data();
+        //    var nFAID = rowdata.FAID;//[0];
+        //    var OrgOpenBalance = rowdata.orgOpeningBalance;
+        //    strOpenValue = $(this).find("input[name=OpeningValue]").val();
+        //    strFAType = $(this).find("select[name=FAType]").val();
 
-            var lst = {
-                "FAID": parseInt(nFAID),
-                "OpeningValue": strOpenValue != "" ? parseFloat(strOpenValue) : parseFloat(0),
-                "FAType": parseInt(strFAType)
+        //    var lst = {
+        //        "FAID": parseInt(nFAID),
+        //        "OpeningValue": strOpenValue != "" ? parseFloat(strOpenValue) : parseFloat(0),
+        //        "FAType": parseInt(strFAType)
+        //    }
+        //    listdoc.push(lst);
+        //});        
+        
+        $("#tblMasterData tbody tr").each(function () {
+            var row = Table.row($(this));
+            var rowdata = row.data();
+            if (!rowdata) return;
+            var opb = $(this).find("input[name=OpeningValue]").val();
+            rowdata.OpeningBalance = opb;
+            rowdata.FAType = $(this).find("select[name=FAType]").val();
+            row.data(rowdata);
+        });
+        console.log("Total Rows : ", Table.rows().count());
+        Table.rows().every(function () {
+            var rowdata = this.data();
+            if (!rowdata) return;            
+            var nFAID = rowdata.FAID;
+            var orgOpeningValue = rowdata.orgOpeningBalance;          // Original OpeningValue (hidden)
+            var orgFAType = rowdata.orgFAType;          // Original FAType (hidden)
+            var nOpeningValue = rowdata.OpeningBalance; // Synced selected value
+            var nFAType = rowdata.FAType; // Synced selected value
+            if ((nOpeningValue != orgOpeningValue) || (nFAType != orgFAType)) {
+                    var lst = {
+                        "FAID": parseInt(nFAID),
+                        "OpeningValue": nOpeningValue != "" ? parseFloat(nOpeningValue) : parseFloat(0),
+                        "FAType": parseInt(nFAType)
+                    }
+                    listdoc.push(lst);
             }
-            listdoc.push(lst);
         });        
+        console.log("acc data ", listdoc);
         if (!isValid) {
             $("#btnSave").prop("disabled", false);
             return;
