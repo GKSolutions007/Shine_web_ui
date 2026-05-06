@@ -1,7 +1,15 @@
 ﻿@model ShineWeb.Models.SingleMasterModel
 @{
     ViewBag.Title = ViewData["FormName"];
-    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+    //Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+    if (ViewData["TransType"].ToString() == "2")
+    {
+        Layout = "~/Views/Shared/_LayoutWithoutheader.cshtml";
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+    }
 }
 <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
@@ -150,6 +158,8 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control", @id = "txtID" })
     @Html.HiddenFor(model => model.ChildURL1, new { @autocomplete = "off", @class = "form-control", @id = "txtChildSMGrpURL" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.DependFrom, new { @autocomplete = "off", @class = "form-control", @id = "txtDependFrom" })
 
     <div class="d-flex align-items-center gap-2">
         <!-- Larger heading -->
@@ -157,7 +167,7 @@
     </div>
     <hr />
     <div class="toastBox"></div>
-   
+
     <div id="dvMainTable">
         <div id="my-grid" style="height: 600px; width: 100%;"></div>
     </div>
@@ -414,7 +424,9 @@
     var UID = '@Session["LoginUserID"]';
     var nMode = 1;
     var FID = $("#txtFormID").val();
-    GetData(3);
+    setTimeout(() => {
+        GetData(3);
+    }, 500);
     GetData(5);
     //~Grid Data
     function GetData(dMode,SelID = 0) {
@@ -520,20 +532,7 @@
                             $("#txtName").val(item.label);
                             return false;
                         }
-                    });
-                        //$("#txtName").autocomplete({
-                        //    minLength: 0,
-                        //    source: arrData,                            
-                        //    select: function (event, ui) {
-                        //        $("#txtName").val(ui.item.label);
-                        //        return false;
-                        //    },
-                        //}).autocomplete("instance")._renderItem = function (ul, item) {
-                        //    return $("<li class='each'>")
-                        //        .append("<div class='acItem'><span class='name'>" +
-                        //            item.label + "</span></div>")
-                        //        .appendTo(ul);
-                        //};
+                    });                        
                 }
                     //~Assign Data
                     else if (dMode == 4) {                       
@@ -615,7 +614,11 @@
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        modal.hide();
+        if ($("#txtTransType").val() == "2") {
+            this.close();
+        } else {
+            modal.hide();
+        }
     }
     //~Clear
     $('#btnClear').click(function (e) {
@@ -691,9 +694,22 @@
                 $.each(data, function (i, items) {
                     if (items.MsgID == 0) {
                         showSuccessSnackbar(items.Message);
-                        ClearForm();
-                        GetData(3);
-                        modal.hide();
+                        var depfrom = $("#txtDependFrom").val();
+                        if (window.opener && !window.opener.closed) {
+                            if (depfrom == "0") {// invoice
+                                window.opener.postMessage({
+                                    source: "SalesmanMaster",
+                                    salesmanid: items.ID,   // adjust to your actual field names                                    
+                                    salesmanname: name
+                                }, "*");
+                            }
+                            window.close();
+                        }
+                        else {
+                            ClearForm();
+                            GetData(3);
+                            modal.hide();
+                        }
                     }
                     else if (items.Message == "OSPending") {
                         //$("#divErrorOnName").html("Outstanding Amount Pending. Cannot Deactivate");
@@ -712,5 +728,26 @@
                 }
             }
         });
+    }
+    console.log("txtTransType ", $("#txtTransType").val());
+    //~Depend Master Load
+    if ($("#txtTransType").val() == "2") {        
+        if ($("#txtID").val() > 0) {
+            setTimeout(() => {
+                nMode = 2;
+                $(".clrdiv").html("");
+                var ID = $("#txtID").val();
+                $(".modal-title#lblPopupheading").text("Edit Salesman");
+                GetData(4, ID);
+                $(".FormclrField").prop("disabled", false);
+                $("#chkActive,#btnSave,#cmbSMGroup").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                modal.show();
+            }, 1000);
+        }
+        else {
+            $(".modal-title#lblPopupheading").text($("#MainHeading").text());
+            modal.hide();
+        }
     }
 </script>

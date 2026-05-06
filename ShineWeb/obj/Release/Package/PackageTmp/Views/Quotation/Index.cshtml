@@ -377,6 +377,28 @@
     select.form-control {
         padding-right: 20px !important;
     }
+    .clsnewitem {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 5px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #0C447C;
+        background: #E6F1FB;
+        border: 0.5px solid #85B7EB;
+        border-radius: 8px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        white-space: nowrap;
+        user-select: none;
+    }
+
+        .clsnewitem:hover {
+            background: #B5D4F4;
+            transform: scale(1.05)
+        }
 </style>
 <body>
 
@@ -654,7 +676,7 @@
                                 <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TaxPern</th>
                                 <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">OrgPrice</th>
                                 <th style="text-align:center;width:2%;" class="trclrforcolheader">
-                                    <button class="btn-primary" style="color:white" id="btnNewProd" title="Add Product"><span class="glyphicon glyphicon-plus-sign"></span></button>
+                                    <button class="btn-primary" style="color:white" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>
                                 </th>
                                 <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
                                 <th style="text-align:center;font-size: 12px;width:30%;padding-right:100px;" class="trclrforcolheader">Item Names</th>
@@ -681,7 +703,12 @@
                                 <td>
                                     <label id="lblPTCount" class="lblPT">0</label>
                                 </td>
-                                <td colspan="4">
+                                <td style="padding: 8px;" align="left">
+                                    <a href="javascript:void(0)" id="btnAddNewProduct" class="clsnewitem">
+                                        ➕ New Product
+                                    </a>
+                                </td>
+                                <td colspan="3">
                                 </td>
                                 <td align="right"><label id="lblPTQty" style="text-align:right" class="lblPT lblsettag" lbltag="0">0.00</label></td>
                                 <td></td>
@@ -997,7 +1024,7 @@
                     $("#btnPreview,#btnPDF,#btnPrint").show();
                     $("#btnEmail,#btnWhatsapp").show();
                     $("#dvMain").show();
-                    $("#dvDocuments").hide();
+                    $("#dvDocuments,#btnAddNewProduct").hide();
                     $("#MainHeading").text("View Quotation" + "_" + Sts);
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
@@ -1044,7 +1071,7 @@
                         $("#btnSave,#btnClose").prop("disabled", false);
                         $("#btnSave,#btnClose").show();
                         $("#btnDraft").prop("disabled", !rdo2);
-                        $("#dvMain").show();
+                        $("#dvMain,#btnAddNewProduct").show();
                         $("#btnEmail,#btnWhatsapp").hide();
                         $("#dvDocuments").hide();
                         if ($("#txtEnableBranch").val() == 1) {
@@ -1072,7 +1099,7 @@
                     nTransMode = 3;
                     GetData(1);
                     GetProductViewData(7, ID);
-                    $("#dvMain").show();
+                    $("#dvMain,#btnAddNewProduct").show();
                     $("#dvDocuments").hide();
                     $("#btnEmail,#btnWhatsapp").hide();
                     $("#btnPreview,#btnPDF").prop("disabled", true);
@@ -1134,7 +1161,7 @@
                             $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
                             $("#btnSave,#btnClose").show();
                             $("#dvMain").show();
-                            $("#dvDocuments").hide();
+                            $("#dvDocuments,#btnAddNewProduct").hide();
                             $("#btnEmail,#btnWhatsapp").hide();
                             if ($("#txtEnableBranch").val() == 1) {
                                 $("#cmbBranch").prop("disabled", true);
@@ -2614,8 +2641,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var FID = ProdALInputs[index].id;
             PaginatedAutocomplete({
                 inputId: FID,
-                data: TempAL,
-                pageSize: 50,
+                data: TempAL,                
                 onSelect: function (item) {
                     $("#" + FID).val(item.code);
                     $("#clrdivs").html("");
@@ -2631,6 +2657,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     GetPrintProfile(6);
 
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempAL = [];
+    var arrVendor = [], arrVendorName = [], nIndexarrVendor = 0;
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
     var prodids = 0;
 
@@ -2655,6 +2682,36 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var isedit = nTransMode == 2;
         GetDocumentID(DocDate, Branch, 14, prefix, isedit, id);
     });
+    function LoadVendorAutolistdata() {
+        arrVendor = [], arrVendorName = [], nIndexarrVendor = 0;
+        $.ajax({
+            url: Aurl + "quotation/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: 1, CodeName: null, ID: null, PriceID: 0, Date: $("#dtpDate").val() },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.FType == 1) {
+                        var ven = {
+                            "label": items.Code + " | " + items.Name,
+                            "name": items.Name,
+                            "code": items.Code,
+                            "id": items.ID,
+                            "add1": items.Billadd1,
+                        }
+                        arrVendor.push(ven);
+                        arrVendorName[nIndexarrVendor] = items.Name;
+                        nIndexarrVendor++;
+                    }
+                });
+                SetAutlistforFields();
+            }
+        });
+    }
     var arrSalesTaxDetails = [];
     //~Preload Data
     function GetData(nMode, strName = null, strID = null, dtpDt = null, nPriceID = "2") {
@@ -2695,8 +2752,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         value: 0,
                         text: "-- Select --",
                     }));
-                    arrVendor = [], arrVendorCode = [], arrVendorName = [], arrProd = [];
-                    nIndexarrVendor = 0, nIndexarrProd = 0;
+                    arrVendor = [], arrVendorName = [], nIndexarrVendor = 0;
                     $.each(data, function (i, items) {
                         if (items.FType == 1) {
                             var ven = {
@@ -2706,8 +2762,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 "id": items.ID,
                                 "add1": items.Billadd1,
                             }
-                            arrVendor.push(ven);
-                            arrVendorCode[nIndexarrVendor] = items.Code;
+                            arrVendor.push(ven);                            
                             arrVendorName[nIndexarrVendor] = items.Name;
                             nIndexarrVendor++;
                         }
@@ -2746,8 +2801,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         if (pricetypeval == 0 || hasqty == 0) {
                             $("#cmbPriceType").val(items.PriceTypeID);
                             GetData(2, bran, $("#dtpDate").val(), null, items.PriceTypeID);
-                            ProductTable.draw().clear();
-                            ProductTable.draw().clear();
+                            //ProductTable.draw().clear();
+                            //ProductTable.draw().clear();
                             setTimeout(function () {
                                 Addprodgridline();
                             }, 750);
@@ -2995,12 +3050,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             }));
                         }
                         sel += "</select>";
+                        var rmvhdn = (nTransMode == 4 || nTransMode == 5) ? "hidden" : "";
                         return [
                             itemsProd.ProdID,
                             itemsProd.TaxID,
                             itemsProd.TaxPern,
                             itemsProd.UomSalePrice,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/><span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
+                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/><span style="font-size:16px;" ' + rmvhdn +' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
                             '<input name = "ProdName" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
                             '<input type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(2) + '" title="' + itemsProd.MRP + '"' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
@@ -3042,7 +3098,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             { title: "TaxID", visible: false, className: "dt-body-left" },
                             { title: "TaxPern", visible: false, className: "dt-body-left" },
                             { title: "OrgPrice", visible: false, className: "dt-body-left" },
-                            { title: '<button class="btn-primary" id="btnNewProd" title="Add Product"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-center" },
+                            { title: '<button class="btn-primary" id="btnNewProd" title="Add Product"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-center btn-primary" },
                             { title: "#", className: "dt-body-left", width: "3%" },
                             { title: "Item Names", className: "dt-body-left", width: "30%" },
                             { title: "MRP", className: "dt-body-right", width: "0%" },
@@ -3091,7 +3147,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                     ProductRID = ProductTable.rows().count() + 1;
                     calculateProdGrid();
-                    Addprodgridline();
+                    if (nTransMode == 1 || nTransMode == 2 || nTransMode == 3) {
+                        Addprodgridline();
+                    }
                     setupArrowKeyNavigation();
                     if ($("#txtEnableBranch").val() == "1") {
                         $("#cmbBranch").prop("disabled", true);
@@ -3204,7 +3262,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
                                     //dvDocuments,
                                     nTransMode = 1;
-                                    $("#dvMain").show();
+                                    $("#dvMain,#btnAddNewProduct").show();
                                     $("#dvDocuments").hide();
                                     ClearForm();
                                     //  ProductRID++;
@@ -3829,7 +3887,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             { title: "TaxID", visible: false, className: "dt-body-left" },
                             { title: "TaxPern", visible: false, className: "dt-body-left" },
                             { title: "OrgPrice", visible: false, className: "dt-body-left" },
-                            { title: '<button class="btn-primary" id="btnNewProd" title="Add Product"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-center" },
+                            { title: '<button class="btn-primary" id="btnNewProd" title="Add Product"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-center btn-primary" },
                             { title: "#", className: "dt-body-left", width: "3%" },
                             { title: "Item Names", className: "dt-body-left", width: "30%" },
                             { title: "MRP", className: "dt-body-right", width: "0%" },
@@ -3896,4 +3954,39 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
         window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
     });    
+    $("#btnAddNewProduct").click(function (e) {        
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        var ProdUrl = Url + "ProductMaster?name=dFLU9MS0CpfVS5wW5G17EQ%3D%3D&strFormID=RjZMX%2BX6NiPSRFI2WDoZJA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=0";
+        window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+    });    
+    
+    // Add this once on page load in your invoice JS
+    window.addEventListener("message", function (event) {
+        var data = event.data;
+        console.log("depend data", data);
+        if (data && data.source === "CustomerMaster") {
+            var customerID = data.customerid;
+            var code = data.customercode;
+            var name = data.customername;
+
+            // ✅ Use the returned values — example:
+            $("#txtVendorID").val(customerID);
+            GetData(3, code);
+            LoadVendorAutolistdata();
+        }
+        else if (data && data.source === "ProductMaster") {
+            var ProductID = data.productid;
+            var code = data.productcode;
+            var name = data.productname;
+
+            var PriceID = $("#cmbPriceType").val();
+            var dt = $("#dtpDate").val();
+            var branchdi = $("#cmbBranch").val()
+            GetData(2, branchdi, dt, null, PriceID);
+            setTimeout(() => {
+                ReLoadProductAutolists();
+            }, 1000);
+        }
+    });
 </script>

@@ -202,7 +202,7 @@
     @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
-    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
 
     <div class="d-flex align-items-center gap-2">
         <!-- Larger heading -->
@@ -338,11 +338,12 @@
     var nMode = 1;
     var FID = $("#txtFormID").val();
     GetColumnSettingsData(2, 1, 1);
+    var arrData = [], SingleMasterData;
     setTimeout(() => {
         GetData();
     }, 500);
     var grid;
-    var arrData = [], SingleMasterData;
+    
     //~Grid Data
     function GetData() {
         $.ajax({
@@ -539,17 +540,24 @@
             success: function (data) {
                 $("#btnSave").prop("disabled", false);
                 $.each(data, function (i, items) {
-                    if (items.MsgID == 0) {
-                        ClearForm();
-                        GetData();
+                    if (items.MsgID == 0) {                        
                         //alert(items.Message);
-                        showSuccessSnackbar(items.Message);
-                        modal.hide();
+                        showSuccessSnackbar(items.Message);                        
                         if (window.opener && !window.opener.closed) {
-                            window.opener.GetData(1);
-                            window.opener.$('#txtReason').val(name)
-                            window.opener.$('#txtReasonID').val(items.ID)
+                            //window.opener.GetData(1);
+                            //window.opener.$('#txtReason').val(name)
+                            //window.opener.$('#txtReasonID').val(items.ID)
+                            window.opener.postMessage({
+                                source: $("#txtFormName").val(),// "CustomerMaster",
+                                id: items.ID,   // adjust to your actual field names                                
+                                name: name
+                            }, "*");
                             window.close();
+                        }
+                        else{
+                            ClearForm();
+                            GetData();
+                            modal.hide();
                         }
                     }
                     else {
@@ -576,20 +584,22 @@
             nMode = 2;
             $(".clrdiv").html("");
             var ID = $("#txtID").val();
-            var arr = arrData.filter(sm => sm.id == ID);
-            if (arr.length > 0) {
-                 modal.show();
-                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
-                $("#txtName").val(arr[0].label);
-                $("#chkActive").prop("checked", arr[0].active == "True");
-                $("#chkActive,#btnSave,#txtName").prop("disabled", false);
-                $("#btnClear").prop("disabled", true);
-                $(".clrdiv").html("");
-            }
-            else {
-                $(".modal-title#lblPopupheading").text($("#MainHeading").text());
-                modal.hide();
-            }
+            setTimeout(() => {
+                var arr = arrData.filter(sm => sm.id == ID);
+                if (arr.length > 0) {
+                    modal.show();
+                    $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                    $("#txtName").val(arr[0].label);
+                    $("#chkActive").prop("checked", arr[0].active == "True");
+                    $("#chkActive,#btnSave,#txtName").prop("disabled", false);
+                    $("#btnClear").prop("disabled", true);
+                    $(".clrdiv").html("");
+                }
+                else {
+                    $(".modal-title#lblPopupheading").text($("#MainHeading").text());
+                    modal.hide();
+                }
+            }, 1000);
         }
     }
 </script>
