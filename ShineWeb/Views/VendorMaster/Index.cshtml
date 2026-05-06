@@ -648,8 +648,9 @@
                                             </tr>
                                             <tr class="bgclrfortr">
                                                 <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
-                                                    <div>
-                                                        <span class="form-label">
+                                                    <div class="input-group">
+                                                        <span id="opencreditterm" class="input-group-text" title="New Credit Term"><span class="fas fa-arrow-up-right-from-square"></span></span>
+                                                        <span class="form-label flex-fill">
                                                             <select id="cmbCreditTerm" class="form-control FormclrcmbField"><option value="0">Select Credit Term</option></select>
                                                             <label class="labelup">Credit Term</label>
                                                         </span>
@@ -806,7 +807,7 @@
     </script>
 
     <script type="text/javascript">
-       
+
         function openTabs(evt, TabName,opentype = 0) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");
@@ -825,7 +826,7 @@
             }
         }
         var Aurl = '@Session["APIurl"]';
-       
+
         var grid, Vendor;
         GetColumnSettingsData(2, 13, 1);
         var UID = '@Session["LoginUserID"]';
@@ -887,7 +888,7 @@
                                 text: 'Settings',
                                 title: 'Settings',
                                 visible: true,
-                                onClick: (gridInstance, event) => {                                    
+                                onClick: (gridInstance, event) => {
                                     modalGenColumnSettings.show();
                                     GendralColumnSettings(1, 13, 1, 0);
                                 }
@@ -908,17 +909,44 @@
                                 }
                             },
                         ],
-                        onCellClick: (rowData, fieldName, cellValue, column) => {                           
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
                         },
-                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {                            
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(13, 1, 0, colIndex, field, newWidth)
                         },
-                    });                    
+                    });
                 }
             });
 
+        }
+        function LoadCreditTerms(selID) {
+            $.ajax({
+                url: Aurl + "vendormaster/get",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: 5, Name: null },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $('#cmbCreditTerm').find("option").remove();
+                    $('#cmbCreditTerm').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        if (items.FType == 3) {
+                            $('#cmbCreditTerm').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
+                    });
+                    $('#cmbCreditTerm').val(selID);
+                }
+            });
         }
         GetData(3);
         GetData(5);
@@ -948,7 +976,7 @@
                                     "label": items.Name,
                                     "id": items.ID,
                                 }
-                                arrNameData.push(al);                               
+                                arrNameData.push(al);
                             });
                             //~AutoList Vendor Code
                             PaginatedAutocomplete({
@@ -970,7 +998,7 @@
                             });
                             //$("#txtCode").autocomplete({
                             //    minLength: 0,
-                            //    source: arrCodeData,                                
+                            //    source: arrCodeData,
                             //    select: function (event, ui) {
                             //        $("#txtCode").val(ui.item.label);
                             //        return false;
@@ -983,7 +1011,7 @@
                             //};
                             //$("#txtName").autocomplete({
                             //    minLength: 0,
-                            //    source: arrNameData,                                
+                            //    source: arrNameData,
                             //    select: function (event, ui) {
                             //        $("#txtName").val(ui.item.label);
                             //        return false;
@@ -1121,7 +1149,7 @@
             var id = e.target.id;
             updateInputColumn(id, val);
         });
-        
+
         var modal = new bootstrap.Modal(document.getElementById('myModalfg')); //document.getElementById("myModalfg");
         $("#chkIfSame").click(function () {
             var ischk = $("#chkIfSame").is(":checked");
@@ -1361,11 +1389,17 @@
                                 var depfrom = $("#txtDependFrom").val();
                                 if (window.opener && !window.opener.closed) {
                                     if (depfrom == "0") {// PB
-                                        window.opener.GetData(1);
+                                        //window.opener.GetData(1);
                                         //setTimeout(() => {
-                                            window.opener.GetData(3, code, 0);
+                                            //window.opener.GetData(3, code, 0);
                                         //}, 500);
                                         //window.opener.$('#txtHProds').val(name)
+                                        window.opener.postMessage({
+                                            source: "VendorMaster",
+                                            vendorid: items.ID,   // adjust to your actual field names
+                                            vendorcode: code,
+                                            vendorname: name
+                                        }, "*");
                                     }
                                     window.close();
                                 }
@@ -1421,4 +1455,21 @@
                 $("#lblSaveError").html("");
             }
         }
+        var Url = '@Session["url"].ToString()';
+        $("#opencreditterm").click(function (e) {
+            var ncrtermID = $("#cmbCreditTerm").val() != "" ? $("#cmbCreditTerm").val() : 0;
+    vw = window.innerWidth;
+    vh = window.innerHeight;
+            var ProdUrl = Url + "TaxCompGift?name=egOIy11IfurSCf1xP3tHhcsrFfMn%2F3jcr%2BHSpUEIF0Q%3D&strFormID=Tg3R3dzL5d8qh2W0SyphdQ%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + ncrtermID;
+    window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+});
+
+window.addEventListener("message", function (event) {
+    var data = event.data;
+    if (data && data.source === "Credit Term") {
+        var CrTID = data.id;
+        LoadCreditTerms(CrTID);
+    }
+
+});
     </script>

@@ -37,14 +37,7 @@
     $("body").append($GKBSdropdown);
 
     // ── Position dropdown using getBoundingClientRect (works inside tables) ─
-    function positionDropdown_old() {
-        var rect = $input[0].getBoundingClientRect();
-        $GKBSdropdown.css({
-            top: rect.bottom + window.scrollY + "px",   // below the input
-            left: rect.left + window.scrollX + "px",   // aligned to input left
-            width: rect.width + "px"                     // match input width
-        });
-    }
+
     function positionDropdown() {
         var rect = $input[0].getBoundingClientRect();
 
