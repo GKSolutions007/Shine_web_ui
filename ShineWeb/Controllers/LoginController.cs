@@ -24,14 +24,14 @@ namespace ShineWeb.Controllers
         public ActionResult Index(string Msg=null)
         {
             //272,273,274,275,276
-            //string plain = "454,455,456,457,458,459,460";
-            //string[] strplain = plain.Split(',');
-            //string EncVal = "";
-            //for (int i = 0; strplain.Length > i; i++)
-            //{
-            //    string val = strplain[i].ToString();
-            //    EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
-            //}
+            string plain = "Delivery,Create Delivery,Modify Delivery,Return Delivery,View Delivery";
+            string[] strplain = plain.Split(',');
+            string EncVal = "";
+            for (int i = 0; strplain.Length > i; i++)
+            {
+                string val = strplain[i].ToString();
+                EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
+            }
 
             string nv = Convert.ToString(Session["NavBarVisible"]);
             string userAgent = Request.UserAgent;

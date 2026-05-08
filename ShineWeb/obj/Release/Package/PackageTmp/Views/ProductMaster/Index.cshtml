@@ -230,7 +230,7 @@
 
     .labelup {
         position: absolute;
-        top: -6px; /* Moved up to sit on border */
+        top: -10px; /* Moved up to sit on border */
         left: 10px;
         background: #ffffff;
         color: #6b7280;
@@ -486,6 +486,12 @@
                             <button class="tablinks" onclick="openTabs(event, 'OtherDetails')"><span class="glyphicon glyphicon-info-sign"></span> Other Details</button>
                             <button class="tablinks" id="btnTransPrices" onclick="openTabs(event, 'TransactionPrice')"><span class="glyphicon glyphicon-transfer"></span> Transaction Price</button>
                             <button class="tablinks" onclick="openTabs(event, 'LocationMapping')"><span class="glyphicon glyphicon-map-marker"></span> Location Mapping</button>
+                            <!--Product ABS Qty-->
+                            <div style="padding-left:8rem">
+                                <div class="dg-status-badge dg-status-active" title="Available Qty" style="font-size:14px;cursor:pointer" id="dvABSQty">
+                                    <span class="glyphicon glyphicon-shopping-cart"></span> <label style="font-size:16px;cursor:pointer" id="lblABSQty">0.00</label>
+                                </div>
+                            </div>
                         </div>
                         <div id="ProductDetails" class="tabcontent">
                             <div class="row" style="padding-bottom:10px;">
@@ -532,26 +538,7 @@
                                         </tr>
                                     </table>
                                 </div>
-                                <style>
-
-                                    .input-group {
-                                        position: relative;
-                                    }
-                                    .labelupfordep {
-                                        position: absolute;
-                                        left: 45px; /* space for icon */
-                                        top: 50%;
-                                        transform: translateY(-50%);
-                                        pointer-events: none;
-                                        transition: 0.2s ease;
-                                    }
-
-                                    .form-control:focus + .labelupfordep,
-                                    .form-control:not(:placeholder-shown) + .labelupfordep {
-                                        top: -8px;
-                                        font-size: 12px;
-                                    }
-                                </style>
+                               
                                 <div class="col-12 col-md-4">
                                     <table class="table" style="width:100%">
                                         <tr class="bgclrfortr">
@@ -1351,6 +1338,7 @@
                 modal.show();
                 $(".clrdivs").html("");
                 $("#dvErrorDetail").hide();
+                $("#dvABSQty").show();
                 $("#lblSaveError").html("");
                 $("#txtBaseCR").prop("disabled", true);
                 setTimeout(() => {
@@ -1378,6 +1366,7 @@
                 modal.show();
                 $(".clrdivs").html("");
                 $("#dvErrorDetail").hide();
+                $("#dvABSQty").show();
                 $("#lblSaveError").html("");
                 $("#txtBaseCR").prop("disabled", true);
             }
@@ -1402,7 +1391,7 @@
                 $("input[type=checkbox],#chkActive,#btnSave,#btnClear").prop("disabled", false);
                 $("#txtCode,#txtName,#txtEAN").val("");
                 $(".clrdivs").html("");
-                $("#dvErrorDetail").hide();
+                $("#dvErrorDetail,#dvABSQty").hide();
                 $("#lblSaveError").html("");
                 $("#txtBaseCR").prop("disabled", true);
 
@@ -1549,6 +1538,7 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                                 $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
                                 modal.show();
                                 openTabs(null, 'ProductDetails', 1);
+                                $("#dvABSQty").hide();
                                 ClearForm();
                             }
                         },
@@ -1641,6 +1631,8 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                                 $("#txtName").val(items.Name),
                                 $("#txtEAN").val(items.EAN);
                         }
+                                                
+                        $("#lblABSQty").text(parseFloat(items.ABSQty).toFixed(DecVal)),
                             $("#txtMfr").val(items.MfrID),
                             $("#txtBrand").val(items.BrandID),
                             $("#txtCategory").val(items.CategoryID),
@@ -1843,7 +1835,12 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
 
         });
     }
-
+    $("#dvABSQty").click(function () {
+        var ID = $("#txtID").val();
+        if (ID != "") {
+            GetBranchwiseABSQty(ID);
+        }
+    });
     function LoadDependData(DependModeID, AssignValue) {
         //arrManuf = [], arrBrand = [], arrCategory = [], arrVendor = [], arrLoc = [],
         //    nIndexarrManuf = 0, nIndexarrBrand = 0, nIndexarrCategory = 0, nIndexarrVendor = 0, nIndexarrLoc = 0;

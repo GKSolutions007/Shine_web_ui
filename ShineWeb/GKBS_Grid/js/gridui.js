@@ -2324,8 +2324,10 @@ class GKBSDynamicGrid {
         currentElement.blur();
     }
     // Inside DynamicGrid class:
-
     updateCalculatedFields(updatedRow) {
+        this.renderStatusBarAfterChange();
+        }
+    updateCalculatedFields_try(updatedRow) {
         // 1. Recalculate netsalary based on the updated numerical fields
         const salary = updatedRow.salary || 0;
         const hra = updatedRow.hra || 0;

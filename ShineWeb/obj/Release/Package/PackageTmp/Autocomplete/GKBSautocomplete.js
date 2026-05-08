@@ -152,7 +152,7 @@
 
             slice.forEach(function (item) {
                 var $li = $("<li>").css({
-                    padding: "8px 12px",
+                    padding: "2px 5px",
                     cursor: "pointer",
                     borderBottom: "1px solid #f0f0f0",
                     fontSize: "11px"
