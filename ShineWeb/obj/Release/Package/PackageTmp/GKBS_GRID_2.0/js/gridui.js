@@ -561,14 +561,7 @@ class GKBSDynamicGrid {
         }
     }
     // --- 2. Render Orchestrator ---
-    render_old() {
-        this.container.innerHTML = '';
-        this.renderToolbar();
-        this.renderHeader();
-        this.renderBody();
-        this.renderStatusBar(); // <--- NEW: Add this call
-        this.renderFooter();
-    }
+
     render() {
         // 1. Clear the container
         // 0. 💡 FIX: Save current scroll position before clearing
@@ -707,16 +700,7 @@ class GKBSDynamicGrid {
     }
     // Inside DynamicGrid class:
 
-    updateStatusAndFooter_old() {
-        const existingStatus = this.container.querySelector('.dg-status-bar');
-        if (existingStatus) existingStatus.remove();
 
-        const footer = this.container.querySelector('.dg-footer');
-        if (footer) footer.remove();
-
-        this.renderStatusBar();
-        if (this.options.enablePagination) this.renderFooter();
-    }
     updateStatusAndFooter() {
         // 1. Locate the scroll wrapper to ensure the status bar is appended correctly.
         const scrollWrapper = this.container.querySelector('.dg-scroll-wrapper');
@@ -2317,9 +2301,14 @@ class GKBSDynamicGrid {
                 checkbox.addEventListener('change', (e) => {
                     const newValue = e.target.checked;
                     rowData[col.field] = newValue; // Store boolean
-                    console.log("Select Checkbox New Value:", rowData[col.field]);
+                    rowData[col.field + '_label'] = newValue ? "Checked" : "NotChecked";
+                    // Execute Custom Cell Change Callback 
+                    if (this.options.onCellChange && typeof this.options.onCellChange === 'function') {
+                        this.options.onCellChange(col.field, newValue, rowData);
+                    }
 
-                    //this.handleControlChange(col.field, newValue, rowData);
+                    this.updateCalculatedFields(rowData);
+                    this.renderStatusBarAfterChange();
                 });
                 el.appendChild(checkbox);
 
@@ -2464,7 +2453,7 @@ class GKBSDynamicGrid {
         el.addEventListener('change', (e) => {
             let val = e.target.value;
             if (col.type === 'number') val = parseFloat(val);
-            if (col.type === 'checkbox') { }
+            if (col.type === 'checkbox') { val = e.target.checked }
             else {
                 // Update Data Source
                 if (!col.autocomplete)
@@ -2583,8 +2572,11 @@ class GKBSDynamicGrid {
         currentElement.blur();
     }
     // Inside DynamicGrid class:
-
     updateCalculatedFields(updatedRow) {
+        // 3. Update the footer/status bar which calculates totals (optional)
+        this.renderStatusBarAfterChange();
+        }
+    updateCalculatedFields_try(updatedRow) {
         // 1. Recalculate netsalary based on the updated numerical fields
         const salary = updatedRow.salary || 0;
         const hra = updatedRow.hra || 0;
@@ -2635,7 +2627,7 @@ class GKBSDynamicGrid {
         if (footer) footer.remove();
 
         // Render status bar and re-insert footer
-        this.renderStatusBar();
+        this.renderStatusBar(existingStatus);
         if (this.options.enablePagination) this.renderFooter();
     }
     // Inside DynamicGrid class

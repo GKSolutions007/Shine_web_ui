@@ -1206,7 +1206,7 @@
                     <button type="button" class="btn clrforpdf" id="btnPDF">
                         <i class='fa-regular fa-file-pdf' style='color:white'></i> PDF
                     </button>
-                    <button type="button" class="btn btn-primary" id="btnPreview">
+                    <button type="button" class="btn clrforpreview" id="btnPreview">
                         <span class="glyphicon glyphicon-print"></span> Preview
                     </button>
                     <button type="button" class="btn clrforpreview" id="btnPrint">
@@ -4557,7 +4557,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     ProductTable = $('#tblProductData').DataTable();
                     ProductRID = ProductTable.rows().count() + 1;
                     BatchAcceptArray = items.lstBatchInfo;
-                    calculateProdGrid();
+                    if (nTransMode != 5 && nTransMode != 4)
+                        CalculateDiffPrice();
+
+                    setTimeout(() => {
+                        calculateProdGrid();
+                    }, 1000)
                     setupArrowKeyNavigation();
                     //$('#cmbUOM').prop("disabled", true);
                 });
@@ -4569,7 +4574,30 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
+    function CalculateDiffPrice() {
+        var Q1 = 0, Q2 = 0, Q3 = 0, gross = 0, TAmt = 0, NAmt = 0;
+        $("#tblProductData tbody tr").each(function () {
+            Q1 = 0, Q2 = 0, Q3 = 0, gross = 0, TAmt = 0, NAmt = 0;
+            rowdata = ProductTable.row($(this)).data();
+            var TBillPrice = parseFloat(rowdata[21] || 0);
+            Q1 = $(this).find("input[name=Qty]").attr("txttag");
+            Q2 = $(this).find("input[name=FreeQty]").attr("txttag");
+            Q3 = $(this).find("input[name=DmgQty]").attr("txttag");
 
+            gross = $(this).find("label[name=Gross]").attr("lbltag");
+            TAmt = $(this).find("label[name=TaxAmt]").attr("lbltag");
+            NAmt = $(this).find("label[name=NetAmt]").attr("lbltag");
+
+            var difffieldid = $(this).find("label[name=DiffValue]").attr("id");
+
+            var val = parseFloat(gross) / (parseFloat(Q1) + parseFloat(Q3));
+            var Diff = val - TBillPrice;           
+            var AbsDiff = Diff;// Math.abs(Diff);
+            updateLabelColumn(difffieldid, AbsDiff);
+            var clrcolor = Diff >= 0 ? "green" : "red";
+            $("#" + difffieldid).css("color", clrcolor);
+        });
+    }
     $('#btnFilter').click(function (e) {
         GetFilterData(1);
     });

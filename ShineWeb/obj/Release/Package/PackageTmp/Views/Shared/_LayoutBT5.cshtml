@@ -11,11 +11,10 @@
     <link rel="SHORTCUT ICON" href="~/images/G_large_Transparent.png" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,100,300,500" rel="stylesheet">
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
-    @*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
-    @*<link href="~/Content/5.2.3/bootstrap.min.css" rel="stylesheet" />*@
     <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
     <link href="~/Content/font-awesome.min.css" rel="stylesheet" />
     <link href="~/Content/Snackbar.css" rel="stylesheet" />
+    @*<link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />*@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="~/Content/jquery-ui.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -23,6 +22,7 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="~/Scripts/Validation.js"></script>
     <script src="~/Autocomplete/GKBSautocomplete.js"></script>
+    @*<script src="~/GKBS_GRID_2.0/js/gridui.js"></script>*@
 
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-base/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-grids/styles/bootstrap5.css" rel="stylesheet">
@@ -41,6 +41,10 @@
     @*<link href="~/Content/Site.css" rel="stylesheet" />
         <link href="~/Content/navbar.css" rel="stylesheet" />*@
     <style>
+        table tr th {
+            background-color: var(--gridheaderbackground) !important;
+            color: var(--gridheadertextcolor) !important;
+        }
         /* Default (above 800px) */
         .textforblw800 {
             display: none;
@@ -66,7 +70,7 @@
             padding: 7px 10px !important;
             font-size: 13px !important;
             font-weight: 600 !important;
-            color: white !important;
+            color: var(--ButtonTextColor) !important;
         }
 
         .form-control {
@@ -1898,7 +1902,7 @@
          tabindex="-1"
          aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
 
-        <div class="modal-dialog modal-lg" style="width:auto;">
+        <div class="modal-dialog modal-xl" style="width:auto;">
             <div class="modal-content modalDocFilter-content">
 
                 <!-- Modal Header -->
@@ -2000,7 +2004,9 @@
 
                     <div style="height:320px">
                         <div id="DocumetFiltersGrid"></div>
+                        <!--Documet Filters Grid -->
                     </div>
+                    <div hidden id="commondocumentfiltergrid" style="height:600px; width:100%;"></div>
 
                 </div>
 
@@ -2040,6 +2046,7 @@
                 <!-- Modal Body -->
                 <div class="modal-body p-2">
                     <div id="dvAssign" class="w-100 pb-2">
+                        <input id="txtGenSetSubmitApplygridname" hidden/>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped align-middle"
                                    id="tblGenColumnSettings" style="width:100%">
@@ -2215,6 +2222,11 @@
             clearInterval(autoDraftInterval);
             autoDraftInterval = null;
         }
+        function Valuewithcomma(num) {
+            return parseFloat(num).toLocaleString('en-IN', {
+                minimumFractionDigits: 2, maximumFractionDigits: 2
+            });
+        }
         function formatIndianCurrency(num) {
             return parseFloat(num).toLocaleString('en-IN', {
                 minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency',
@@ -2234,8 +2246,10 @@
                 //async: false,
                 success: function (data) {
                     if (data.length > 0) {
-                        columns = (data);
-                        columns.push(actions);
+                        columns = (data);                        
+                        if (typeof actions !== "undefined" && actions) {
+                            columns.push(actions);
+                        }
                         if (Threedoticon)
                             columns.push(OtherActions);
 
@@ -2243,6 +2257,69 @@
                     } else {
                         showErrorSnackbar("No column data found");
                     }
+                }
+            });
+        }
+        function ReturnColumnSettingsData(nMode, nFormID, nTableID) {    
+            var coldata = [];
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        console.log("Column Settings ", data);
+                        coldata = data;
+                    } else {                        
+                        showErrorSnackbar("No column data found");
+                        coldata = [];
+                    }
+                }, error: function (data) { coldata = []; }
+            });
+            return coldata;
+        }
+        function CommonDocFilterColumnSettingsData(nMode, nFormID, nTableID, Threedoticon = false) {
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                //async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        gkbscustomfiltercolumnsettings = (data);
+                        var selchk = {
+                            "field": "Select",
+                            "header": "Select",
+                            "type": "checkbox",
+                            "checked":true,
+                            "width": 50,
+                            "align": "center",
+                            "visible": true,
+                            "EnableColumnMenu": true,
+                            "ShowinColumnOption": true,
+                            "Total": false,
+                            "TotalYN": "1",
+                            "EnableSum": false,
+                            "EnableAvg": false,
+                            "EnableCount": false,
+                            "EnableUnique": false,
+                            "precision": "2",
+                            "ClickPopup": false,
+                            "Printwidth": 94,
+                            "PrintYN": false,
+                            "PrintColumnName": "Select"
+                        }
+                        gkbscustomfiltercolumnsettings.push(selchk);
+                    } 
                 }
             });
         }
@@ -2834,8 +2911,8 @@
         var DocID = rowdata[1];
         OpenTransactionDocument(dTransID, DocID);
     });
-    GetColorData(1, '@Session["ThemeID"]');
-
+    //GetColorData(1, '@Session["ThemeID"]');
+    GetColorData();
     GetFilterComboData();
     function GetFilterComboData() {
         var FDT = '@Session["FilterDateType"]';
@@ -3657,7 +3734,7 @@ function CloseConfirmDialogMsg_old(message) {
             document.documentElement.style.setProperty('--header-bg', items.GridHeaderBackGround);
             document.documentElement.style.setProperty('--header-text', items.GridHeaderTextColor);
             document.documentElement.style.setProperty('--primary-color', items.GridHeaderBackGround);
-
+            
             document.documentElement.style.setProperty('--dynamic-bg', items.AutocompleteBG);
             document.documentElement.style.setProperty('--submenuborderleft', items.MenuHeader);
             //$(".acItem .name").css("color", items.AutocompleteLine1);
@@ -3665,6 +3742,9 @@ function CloseConfirmDialogMsg_old(message) {
             //$(".acItem .desc").css("color", items.AutocompleteLine2);
             document.documentElement.style.setProperty('--acitemdesc', items.AutocompleteLine2);
             document.documentElement.style.setProperty('--CompanyNameColor', items.CompanyNameColor);
+            document.documentElement.style.setProperty('--ButtonTextColor', items.ButtonTextColor);
+            document.documentElement.style.setProperty('--gridheaderbackground', items.GridHeaderBackGround);
+            document.documentElement.style.setProperty('--gridheadertextcolor', items.GridHeaderTextColor);
         });
     }
     function GetColorData_old(nMode, strName = null) {
@@ -4263,16 +4343,77 @@ function CloseConfirmDialogMsg_old(message) {
             });
         }
     });
-    var customfiltercolumnsettings = [];
-    var commonfiltergrid;
+    var customfiltercolumnsettings = [], gkbscustomfiltercolumnsettings = [];
+    var commonfiltergrid, gkbscommonfiltergrid;
     ColumnDetails(2, 1003, 1);
 
+    CommonDocFilterColumnSettingsData(2, 38, 1, false);
+    
     ej.grids.Grid.Inject(ej.grids.Page, ej.grids.ExcelExport, ej.grids.Toolbar, ej.grids.Aggregate, ej.grids.Group, ej.grids.Sort, ej.grids.Filter, ej.grids.ColumnMenu, ej.grids.ColumnChooser);
     function CustomFilterbindDataTable(data) {
         if (data.length === 0) {
             return; // No data to display
         }
+        //-----------------//
+        //New common filter//
+        //-----------------//
+        //gkbscommonfiltergrid = new GKBSDynamicGrid('#commondocumentfiltergrid', gkbscustomfiltercolumnsettings, data, {
 
+        //    enablePagination: true,
+        //    pageSize: ItemsperPage,
+        //    height: "300px",
+        //    enableSearch: true,
+        //    stickyToWindow: true,
+        //    enableExport: false,
+        //    enablePrint: false,
+        //    enableColumnsBtn: true,
+        //    enableAddRow: false,
+        //    enableRemoveRow: false,
+        //    enableSorting: true,
+        //    searchTerm: "",
+        //    CompanyName: "",
+        //    ReportName: "",
+        //    fitersdata: [],
+        //    singleIconAction: [],
+        //    rowActionsMenu: [],
+        //    onCellChange: handleCellUpdate,
+        //    customCellRenderer: (el, col, rowData) => {
+
+        //    },
+        //    customButtons: [
+        //        {
+        //            icon: '⚙️',
+        //            text: 'Settings',
+        //            title: 'Settings',
+        //            visible: true,
+        //            onClick: (gridInstance, event) => {
+        //                modalGenColumnSettings.show();
+        //                GendralColumnSettings(1, 38, 1, 0);
+        //            }
+        //        },
+        //        {
+        //            icon: '➕',
+        //            text: 'Get',
+        //            title: 'Get',
+        //            visible: true,
+        //            onClick: (gridInstance, event) => {
+        //                console.log("ColData ", gridInstance.originalData);
+        //            }
+        //        },
+        //    ],
+        //    onCellClick: (rowData, fieldName, cellValue, column) => {
+
+        //    },
+        //    onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+
+        //    },
+        //    onColumnResize: (colIndex, field, header, newWidth) => {
+        //        UpdateColumnWidth(38, 1, 0, colIndex, field, newWidth)
+        //    },
+        //});
+        //-----------------//
+        //Old common filter//
+        //-----------------//
         commonfiltergrid = new ej.grids.Grid({
             dataSource: data,
             allowPaging: false,
@@ -4315,13 +4456,7 @@ function CloseConfirmDialogMsg_old(message) {
         commonfiltergrid.appendTo('#DocumetFiltersGrid');
 
         function onRowSelected(args) {
-            var rowData = args.data;
-            //showErrorSnackbar("Doc ID " + rowData["Doc ID"])//.
-            ////console.log("Selected Row Data:", rowData);
-            //$("#DocumentGrid").html("");
-            //$("#ProductInfo").show();
-            //GetProductDocuments(rowData["ID"]);
-            //$("#lblProductName").text(rowData["Name"]);
+            var rowData = args.data;            
         }
         function getCheckedRows() {
             // Get grid instance
@@ -4335,7 +4470,10 @@ function CloseConfirmDialogMsg_old(message) {
             //console.log("Checked Rows:", checkedRows);
             return checkedRows;
         }
-
+        function handleCellUpdate(field, newValue, rowData) {
+            console.log(`Cell changed! Field: ${field}, New Value: ${newValue}, Row Data:`, rowData);
+            gkbscommonfiltergrid.updateStatusAndFooter();
+        }
     }
     $("#btnAcceptDocFilterModal").click(function () {
         if (commonfiltergrid) {
@@ -4531,7 +4669,7 @@ function CloseConfirmDialogMsg_old(message) {
             }
         });
     }
-    function GendralColumnSettings(nMode, nReportID, nTableID,nFormorReport) {
+    function GendralColumnSettings(nMode, nReportID, nTableID, nFormorReport) {
         $.ajax({
             url: Aurl + "columnsettings/getcolumnsettings",
             type: 'get',
@@ -4665,8 +4803,10 @@ function CloseConfirmDialogMsg_old(message) {
         });
     }
     var ColumnSettingData = [];
+    
     $("#btnSubmitmodalGenColumnSettings").click(function () {
         ColumnSettingData = [];
+        var applygridname = $("#txtGenSetSubmitApplygridname").val();
         $("#tblGenColumnSettings tbody tr").each(function () {
             var allValues = {};
             rowdata =  TableGenColumnSettings.row($(this)).data();
@@ -4759,8 +4899,26 @@ function CloseConfirmDialogMsg_old(message) {
                         if (typeof OtherActions !== "undefined" && OtherActions) {
                             ColumnsData.push(OtherActions);
                         }
-                        grid.columns = ColumnsData;
-                        grid.refreshColumns();
+                        if (typeof grid !== "undefined" && grid) {
+                            grid.columns = ColumnsData;
+                            grid.refreshColumns();
+                        }
+                        if (typeof commonfiltergrid !== "undefined" && commonfiltergrid) {
+                            commonfiltergrid.columns = ColumnsData;
+                            commonfiltergrid.refreshColumns();
+                        }
+                        if (typeof Grid2 !== "undefined" && Grid2 && applygridname == "Grid2") {
+                            Grid2.columns = ColumnsData;
+                            Grid2.refreshColumns();
+                        }
+                        if (typeof Grid1 !== "undefined" && Grid1 && applygridname == "Grid1") {
+                            Grid1.columns = ColumnsData;
+                            Grid1.refreshColumns();
+                        }
+                        if (typeof Grid3 !== "undefined" && Grid3 && applygridname == "Grid3") {
+                            Grid3.columns = ColumnsData;
+                            Grid3.refreshColumns();
+                        }
                         //ColumnDetails(2, 1002, SelectTableID);
                         //setTimeout(() => {
                         //    if (SelectTableID == 1) {

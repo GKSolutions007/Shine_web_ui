@@ -16,13 +16,13 @@
     var $GKBSdropdown = $([
         '<div class="gkbsautocomplete" id="' + dropId + '" style="',
         'display:none;position:fixed;z-index:99999;',   /* ← fixed, not absolute */
-        'background:#fff;border:1px solid #ccc;',
+        'background-color:var(--dynamic-bg);border:1px solid #ccc;',
         'border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);',
         'min-width:300px;width:350px;',                                  /* set a sensible fixed width */
         'max-height:340px;overflow:hidden;">',
         '<ul id="' + listId + '" style="',
         'list-style:none;margin:0;padding:0;',
-        'max-height:295px;overflow-y:auto;"></ul>',
+        'max-height:280px;overflow-y:auto;color:var(--acitemname)"></ul>',
         '<div style="',
         'padding:6px 12px;font-size:12px;color:#888;',
         'border-top:1px solid #eee;background:#fafafa;',
@@ -154,11 +154,11 @@
                 var $li = $("<li>").css({
                     padding: "2px 5px",
                     cursor: "pointer",
-                    borderBottom: "1px solid #f0f0f0",
+                    borderBottom: "1px solid #666565",
                     fontSize: "11px"
                 }).html(
                     '<div style="font-weight:500;">' + highlight(item.label, state.query) + '</div>' +
-                    '<div style="font-size:12px;color:#888;margin-top:2px;">' + (item.line2 || '') + '</div>'
+                    '<div style="font-size:12px;color:var(--acitemdesc);margin-top:2px;">' + (item.line2 || '') + '</div>'
                 );
 
                 $li.on("mousemove", function () {

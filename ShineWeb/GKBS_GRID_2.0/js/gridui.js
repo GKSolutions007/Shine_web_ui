@@ -1,60 +1,4 @@
 class GKBSDynamicGrid {
-    constructor_older(selector, columns, data, options = {}) {
-        this.container = document.querySelector(selector);
-        this.columns = columns; // Stores config including current width
-        this.originalData = data;
-        // Global click listener to close popups
-        document.addEventListener('click', this.closeAllPopups.bind(this));
-        // Options with defaults
-        this.options = Object.assign({
-            enablePagination: false,
-            pageSize: 10,
-            enableSearch: true,
-            stickyToWindow: true, // NEW: If true, sticks to top of browser
-            height: '500px',        // NEW: specific height for internal scroll
-            rowActions: [], // Set default empty array
-        }, options);
-
-        // State
-        this.state = {
-            currentPage: 1,
-            searchTerm: '',
-            filters: {}, // { field: 'value' }
-            colFilters: {},
-            sortConfig: null, // { field: '', direction: 'asc' }
-            currentSort: { field: null, direction: 'asc' },
-            processedData: [], // Data after search/filter/sort
-            selectedRows: new Set(), // NEW: Stores unique identifiers of selected rows
-            activeAutocompletePopup: null, // NEW: Track the currently open autocomplete popup
-            filterOrder: [],
-            textFilters: {},
-            columnVisibility: columns.reduce((acc, col) => {
-                acc[col.field] = col.visible !== false; // True by default
-                return acc;
-
-            }, {}),
-        };
-        // Ensure every row has a unique ID for tracking
-        this.originalData = data.map((row, index) => ({
-            ...row,
-            _gridId: row._gridId || Symbol(index)
-        }));
-        // Update the global click handler to manage ALL popups
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.dg-filter-popup')) {
-                return; // DO NOTHING if the click originated inside the popup.
-            }
-            // Closes column filters if click is outside the header
-            if (!e.target.closest('.dg-header-cell')) {
-                this.closeAllPopups();
-            }
-            // Closes autocomplete if click is outside the input or the list
-            if (!e.target.closest('.dg-input') && !e.target.closest('.dg-autocomplete-list')) {
-                this.closeAllPopups(); // Will handle both, see utility update below
-            }
-        });
-        this.init();
-    }
     constructor(selector, columns, data, options = {}) {
         this.container = document.querySelector(selector);
         if (!this.container) return;
@@ -313,55 +257,6 @@ class GKBSDynamicGrid {
         this.render();
     }
 
-    // --- 1. The Data Pipeline ---
-    processData_old() {
-        let result = [...this.originalData];
-        // 2. 💡 APPLY COLUMN FILTERS
-        Object.keys(this.state.colFilters).forEach(field => {
-            const filters = this.state.colFilters[field];
-            const { operator, value } = filters;
-            // Only apply filter if the array is defined and NOT empty
-            if (filters && filters.length > 0) {
-                result = result.filter(item => {
-                    // Ensure the item's value is converted to a string for strict comparison
-                    const itemValue = String(item[field]);
-
-                    // Return TRUE if the item's value is IN the list of selected filters
-                    return filters.includes(itemValue);
-                });
-            }
-            // If filters is an empty array (meaning the user deselected everything), 
-            // the filter should result in an empty dataset.
-            else if (filters && filters.length === 0) {
-                result = [];
-            }
-        });
-        // A. Global Search
-        if (this.state.searchTerm) {
-            const term = this.state.searchTerm.toLowerCase();
-            result = result.filter(row => {
-                return Object.values(row).some(val =>
-                    String(val).toLowerCase().includes(term)
-                );
-            });
-        }
-
-        // B. Column Sorting
-        if (this.state.currentSort) {
-            const { field, direction } = this.state.currentSort;
-            result.sort((a, b) => {
-                if (a[field] < b[field]) return direction === 'asc' ? -1 : 1;
-                if (a[field] > b[field]) return direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
-
-        this.state.processedData = result;
-
-        // Reset page if data changes significantly reduces count
-        const maxPage = Math.ceil(this.state.processedData.length / this.options.pageSize) || 1;
-        if (this.state.currentPage > maxPage) this.state.currentPage = 1;
-    }
 
     // Helper to strip HTML tags for export and tooltips
     stripHtml(html) {
@@ -385,6 +280,7 @@ class GKBSDynamicGrid {
         // Default (emojis or plain text)
         return icon;
     }
+    // --- 1. The Data Pipeline ---
     processData() {
         let result = [...this.originalData]; // Start with the original data
 
@@ -696,7 +592,8 @@ class GKBSDynamicGrid {
         }
 
         //this.container.appendChild(statusBar);
-        parentContainer.appendChild(statusBar);
+        if (parentContainer)
+            parentContainer.appendChild(statusBar);
     }
     // Inside DynamicGrid class:
 
@@ -729,141 +626,6 @@ class GKBSDynamicGrid {
         }
     }
     // --- 3. Global Search Toolbar ---
-    renderToolbar_old() {
-        if (!this.options.enableSearch && !this.options.enableExport && !this.options.enableEditing) return;
-
-        const toolbar = document.createElement('div');
-        toolbar.className = 'dg-toolbar';
-
-        const input = document.createElement('input');
-        input.className = 'dg-search-input';
-        input.placeholder = 'Search grid...';
-        input.value = this.state.searchTerm;
-
-        input.addEventListener('input', (e) => {
-            this.state.searchTerm = e.target.value;
-            this.state.currentPage = 1; // Reset to page 1 on search
-            this.processData();
-            this.render(); // Re-render everything
-        });
-        toolbar.appendChild(input);
-
-        // NEW: Export Button
-        if (this.options.enableExport !== false) {
-            const exportBtn = document.createElement('button');
-            exportBtn.className = 'dg-btn';
-            exportBtn.innerText = 'Export';
-            exportBtn.style.marginLeft = '10px';
-            exportBtn.onclick = () => this.exportToCSV();
-            toolbar.appendChild(exportBtn);
-        }
-
-        // --- Add/Remove Buttons (NEW) ---
-        const addRowBtn = document.createElement('button');
-        addRowBtn.className = 'dg-action-btn';
-        addRowBtn.innerText = '➕ Add Row';
-        addRowBtn.onclick = () => this.addRow();
-
-        const removeRowBtn = document.createElement('button');
-        removeRowBtn.className = 'dg-action-btn';
-        removeRowBtn.innerText = '➖ Remove Selected';
-        removeRowBtn.onclick = () => this.removeSelectedRows();
-
-        // Create a container for the edit actions
-        const actionGroup = document.createElement('div');
-        actionGroup.style.display = 'inline-block';
-        actionGroup.style.marginLeft = '20px';
-        actionGroup.append(addRowBtn, removeRowBtn);
-        toolbar.appendChild(actionGroup);
-
-        this.container.appendChild(toolbar);
-    }
-    renderToolbar_old() {
-        // Return if no features are enabled
-        if (!this.options.enableSearch && !this.options.enableExport && !this.options.enableEditing && !this.options.enableColumnVisibility) return;
-
-        const toolbar = document.createElement('div');
-        toolbar.className = 'dg-toolbar';
-        // Use Flexbox to separate left-aligned search/input from right-aligned buttons
-        toolbar.style.display = 'flex';
-        toolbar.style.justifyContent = 'space-between';
-        toolbar.style.alignItems = 'center';
-        toolbar.style.padding = '10px 0'; // Add some vertical padding
-
-        // --- 1. Left Section: Global Search Input ---
-        const leftSection = document.createElement('div');
-        leftSection.className = 'dg-toolbar-left';
-
-        const input = document.createElement('input');
-        input.className = 'dg-search-input';
-        input.placeholder = 'Search grid...';
-        input.value = this.state.searchTerm;
-
-        input.addEventListener('input', (e) => {
-            this.state.searchTerm = e.target.value;
-            this.state.currentPage = 1; // Reset to page 1 on search
-            this.processData();
-            this.render(); // Re-render everything
-        });
-        leftSection.appendChild(input);
-        toolbar.appendChild(leftSection);
-
-
-        // --- 2. Right Section: Action Buttons (Export, Add/Remove, Columns) ---
-        const rightSection = document.createElement('div');
-        rightSection.className = 'dg-toolbar-right';
-        rightSection.style.display = 'flex';
-        rightSection.style.alignItems = 'center';
-        rightSection.style.gap = '10px'; // Space between groups of buttons
-
-
-        // A. Export Button (Existing Logic)
-        if (this.options.enableExport !== false) {
-            const exportBtn = document.createElement('button');
-            exportBtn.className = 'dg-btn';
-            exportBtn.innerText = 'Export';
-            exportBtn.onclick = () => this.exportToCSV();
-            rightSection.appendChild(exportBtn);
-        }
-
-        // B. Columns Visibility Button (NEW LOGIC) 
-        // Assuming you have this.options.enableColumnVisibility set to true
-        // Note: The click handler will call the previously defined showColumnSelectionPopup method.
-        const columnsBtn = document.createElement('button');
-        columnsBtn.className = 'dg-btn dg-columns-btn';
-        columnsBtn.innerText = '⚙️ Columns';
-
-        columnsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.showColumnSelectionPopup(e.target);
-        });
-        rightSection.appendChild(columnsBtn);
-
-
-        // C. Add/Remove Buttons (Existing Logic)
-        if (this.options.enableEditing !== false) {
-            const actionGroup = document.createElement('div');
-            actionGroup.className = 'dg-action-group';
-            actionGroup.style.display = 'flex';
-            actionGroup.style.gap = '5px'; // Space between Add/Remove buttons
-
-            const addRowBtn = document.createElement('button');
-            addRowBtn.className = 'dg-action-btn';
-            addRowBtn.innerText = '➕ Add Row';
-            addRowBtn.onclick = () => this.addRow();
-
-            const removeRowBtn = document.createElement('button');
-            removeRowBtn.className = 'dg-action-btn';
-            removeRowBtn.innerText = '➖ Remove Selected';
-            removeRowBtn.onclick = () => this.removeSelectedRows();
-
-            actionGroup.append(addRowBtn, removeRowBtn);
-            rightSection.appendChild(actionGroup);
-        }
-
-        toolbar.appendChild(rightSection);
-        this.container.appendChild(toolbar);
-    }
     renderToolbar() {
         // Check if any feature that requires the toolbar is enabled.
         if (!this.options.enableSearch && !this.options.enableExport &&
@@ -885,7 +647,7 @@ class GKBSDynamicGrid {
         leftSection.className = 'dg-toolbar-left';
         leftSection.style.display = 'flex';
         leftSection.style.alignItems = 'center';
-        leftSection.style.gap = '15px'; // Increased gap to accommodate report name
+        leftSection.style.gap = '3px'; // Increased gap to accommodate report name
 
         // 💡 NEW: Report Name Display
         if (this.options.ReportName) {
@@ -1893,85 +1655,83 @@ class GKBSDynamicGrid {
         // 💡 CHANGE: Append the body to the provided parent container (scrollWrapper)
         parentContainer.appendChild(body);
     }
-    // Inside DynamicGrid class:
 
-    showRowActionsMenu_old(buttonElement, rowData) {
-        // 1. Close any currently open filter/action popups
-        this.closeAllPopups();
-
-        // 2. Create the popup container
-        const popup = document.createElement('div');
-        popup.className = 'dg-action-menu-popup dg-filter-popup';
-        popup.style.minWidth = '120px';
-        popup.style.padding = '5px 0';
-        // Temporarily set position to fixed/absolute for sizing calculation
-        popup.style.position = 'absolute';
-        popup.style.visibility = 'hidden';
-
-        // 3. Populate the menu items
-        const ul = document.createElement('ul');
-        ul.style.listStyle = 'none';
-        ul.style.padding = '0';
-        ul.style.margin = '0';
-
-        this.options.rowActions.forEach(action => {
-            const li = document.createElement('li');
-            li.className = 'dg-action-menu-item';
-            // 💡 NEW: Inline styles for padding and hover effect
-            li.style.padding = '5px 15px 5px 10px';
-            li.style.cursor = 'pointer';
-            li.style.whiteSpace = 'nowrap';
-            li.style.transition = 'background-color 0.1s';
-            li.innerHTML = `${action.icon} ${action.title}`;
-
-            // 💡 NEW: Hover effect (using mouseenter/mouseleave)
-            li.onmouseenter = () => {
-                li.style.backgroundColor = '#f0f0f0'; // Light grey hover background
-            };
-            li.onmouseleave = () => {
-                li.style.backgroundColor = 'transparent';
-            };
-
-            li.onclick = (e) => {
-                e.stopPropagation();
-                action.handler(rowData, this);
-                this.closeAllPopups();
-            };
-
-            ul.appendChild(li);
+    // --- Select All Rows ---
+    /**
+     * Selects every row in the current processed (filtered/sorted) data.
+     * Updates the selectedRows Set and syncs all visible row checkboxes in the DOM.
+     */
+    selectAllRows() {
+        // Add every processed row's _gridId to the selected set
+        this.state.processedData.forEach(row => {
+            this.state.selectedRows.add(row._gridId);
+            row.Select = true;
+            row.Select_label = "Checked";
         });
 
-        popup.appendChild(ul);
-
-        // 4. Position the popup near the button (FIXED LOGIC)
-
-        // A. Temporarily append to DOM to calculate its width
-        document.body.appendChild(popup);
-
-        const rect = buttonElement.getBoundingClientRect();
-
-        // B. Calculate the correct position: Aligns the left edge of the popup with the left edge of the button
-        let leftPosition = rect.left + window.scrollX;
-
-        // C. Boundary Check (Optional but recommended): If the popup would go off the right edge of the screen,
-        // align its right edge with the button's right edge instead.
-        const viewportWidth = window.innerWidth;
-        const popupWidth = popup.offsetWidth;
-        const buttonRight = rect.right + window.scrollX;
-
-        if (leftPosition + popupWidth > viewportWidth) {
-            // If it overflows the right edge, align it to the right of the button
-            leftPosition = (buttonRight - popupWidth) - 20;
+        // Sync DOM checkboxes so the UI reflects the new state immediately
+        const body = this.container.querySelector('.dg-body');
+        if (body) {
+            body.querySelectorAll('.dg-row').forEach(rowEl => {
+                const cb = rowEl.querySelector('input[type="checkbox"]');
+                if (cb) cb.checked = true;
+                rowEl.classList.add('dg-row-selected');
+            });
         }
 
-        // D. Apply the calculated position and make it visible
-        popup.style.top = `${rect.bottom + window.scrollY + -12}px`;
-        popup.style.left = `${leftPosition}px`;
-        popup.style.visibility = 'visible';
-
-        // 5. Store reference for closing
-        this.state.activeRowActionPopup = popup;
+        console.log(`[GKBSGrid] selectAllRows: ${this.state.selectedRows.size} row(s) selected.`);
     }
+
+    // --- Deselect All Rows ---
+    /**
+     * Clears all row selections.
+     * Empties the selectedRows Set and unchecks every visible row checkbox in the DOM.
+     */
+    deselectAllRows() {
+        this.state.processedData.forEach(row => {
+            row.Select = false;
+            row.Select_label = "NotChecked";
+        });
+
+        // Clear the entire selection set
+        this.state.selectedRows.clear();
+
+        // Sync DOM checkboxes so the UI reflects the new state immediately
+        const body = this.container.querySelector('.dg-body');
+        if (body) {
+            body.querySelectorAll('.dg-row').forEach(rowEl => {
+                const cb = rowEl.querySelector('input[type="checkbox"]');
+                if (cb) cb.checked = false;
+                rowEl.classList.remove('dg-row-selected');
+            });
+        }
+
+        console.log('[GKBSGrid] deselectAllRows: All selections cleared.');
+    }
+
+    // --- Get Selected Rows ---
+    /**
+     * Returns an array of row data objects where Select === true.
+     * Uses the selectedRows Set as the source of truth so it works
+     * correctly even when individual checkboxes are ticked manually
+     * (without calling selectAllRows).
+     *
+     * @returns {Array} Array of row data objects that are currently selected.
+     *
+     * @example
+     * const rows = grid.getSelectedRows();
+     * console.log(rows); // [{ id: 1, name: 'Alice', Select: true, ... }, ...]
+     */
+    getSelectedRows() {
+        // Filter originalData by membership in the selectedRows Set.
+        // Also ensure Select flag stays in sync on each matched row.
+        const selected = this.originalData.filter(row => row.Select == true);
+
+        console.log(`[GKBSGrid] getSelectedRows: ${selected.length} row(s) selected.`);
+        return selected;
+    }
+
+    // Inside DynamicGrid class:
     showRowActionsMenu(buttonElement, rowData) {
         // 1. Close any currently open filter/action popups
         this.closeAllPopups();
@@ -2294,14 +2054,14 @@ class GKBSDynamicGrid {
             if (col.type === 'checkbox') {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
-                checkbox.checked = !!currentValue; // Convert value to boolean
+                checkbox.checked = col.checked || false;// !!currentValue; // Convert value to boolean
                 checkbox.className = 'dg-control-input';
                 checkbox.value = 'true'; // Set a standard value
-                rowData[col.field] = !!currentValue;
+                rowData[col.field] = col.checked || false;// !!currentValue;
                 checkbox.addEventListener('change', (e) => {
                     const newValue = e.target.checked;
                     rowData[col.field] = newValue; // Store boolean
-                    rowData[col.field + '_label'] = newLabel;
+                    rowData[col.field + '_label'] = newValue ? "Checked" : "NotChecked";
                     // Execute Custom Cell Change Callback 
                     if (this.options.onCellChange && typeof this.options.onCellChange === 'function') {
                         this.options.onCellChange(col.field, newValue, rowData);
@@ -2453,7 +2213,7 @@ class GKBSDynamicGrid {
         el.addEventListener('change', (e) => {
             let val = e.target.value;
             if (col.type === 'number') val = parseFloat(val);
-            if (col.type === 'checkbox') { val = e.target.checkbox }
+            if (col.type === 'checkbox') { val = e.target.checked }
             else {
                 // Update Data Source
                 if (!col.autocomplete)
@@ -2575,7 +2335,7 @@ class GKBSDynamicGrid {
     updateCalculatedFields(updatedRow) {
         // 3. Update the footer/status bar which calculates totals (optional)
         this.renderStatusBarAfterChange();
-        }
+    }
     updateCalculatedFields_try(updatedRow) {
         // 1. Recalculate netsalary based on the updated numerical fields
         const salary = updatedRow.salary || 0;
@@ -3032,44 +2792,6 @@ class GKBSDynamicGrid {
         this.updateAutocompleteList(inputEl, col, inputEl.value);
     }
     // Inside DynamicGrid class, add this new method:
-
-    updateAutocompleteList_old(inputEl, col, filterText = '') {
-        // If the popup container hasn't been created yet, create it now (edge case)
-        if (!this.activeAutocompletePopup) {
-            this.showAutocompleteList(inputEl, col);
-            return; // The showAutocompleteList call will handle the initial rendering
-        }
-
-        const list = this.activeAutocompletePopup;
-
-        // 1. Determine source options (user-provided or generated)
-        let sourceOptions = col.options || this.getUniqueValues(col.field);
-
-        // 2. Filter the options based on the input text
-        const filteredOptions = sourceOptions.filter(value =>
-            String(value).toLowerCase().includes(filterText.toLowerCase())
-        );
-
-        list.innerHTML = ''; // Clear existing list items
-
-        // 3. Regenerate and append filtered items
-        if (filteredOptions.length > 0) {
-            filteredOptions.forEach(value => {
-                const item = document.createElement('li');
-                item.innerText = value;
-
-                // Re-attach click listener for item selection
-                item.addEventListener('click', () => {
-                    inputEl.value = value;
-                    inputEl.dispatchEvent(new Event('change'));
-                    this.closeAllPopups();
-                });
-                list.appendChild(item);
-            });
-        } else {
-            list.innerHTML = '<li>No matches found</li>';
-        }
-    }
     updateAutocompleteList(inputEl, col, filterText = '') {
         if (!this.activeAutocompletePopup) {
             // Assuming showAutocompleteList calls this function after setting up the popup

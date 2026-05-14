@@ -1946,8 +1946,14 @@
 
         <div class="modalBatch-content">          
             <div class="modal-body">
+                
                 <table class="table table-bordered row-border order-column" id="tblBatch" style="width:100%">
                     <thead>
+                        <tr>
+                            <td colspan="12">
+                                <label style="font-weight:500" id="lblBatchItemName">Surf-excel matic super 1L</label>
+                            </td>
+                        </tr>
                         <tr>
                             <th class="trclrforcolheader" style="min-width:0px;">QtyTag</th>
                             <th class="trclrforcolheader" style="min-width:0px;">OrgQty</th>
@@ -2137,16 +2143,17 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <!-- Modal body -->
-                <div class="modal-body w-100" style="padding-top:2px;padding-bottom:100px;">
-                    <input id="txtReasonID" class="d-none FormclrField" />
-                    <div class="input-group">
-                        <span id="openSCDScheme" class="input-group-text" title="Reason"><i class="fas fa-arrow-up-right-from-square"></i></span>
-                        <span class="form-label">
-                            <input type="text" txttag="0" class="form-control FormclrField" id="txtReason" />
-                            <label class="labelup">Reason</label>
-                        </span>
-                    </div>
-
+                <div class="modal-body">
+                    <div style="padding-top:2px;padding-bottom:100px;" align="center">
+                        <input id="txtReasonID" class="d-none FormclrField" />
+                        <div class="input-group">
+                            <span id="openSCDScheme" class="input-group-text" title="Reason"><i class="fas fa-arrow-up-right-from-square"></i></span>
+                            <span class="form-label" style="flex:1;">
+                                <input type="text" txttag="0" class="form-control FormclrField" id="txtReason" />
+                                <label class="labelup">Reason</label>
+                            </span>
+                        </div>
+                    </div>                    
                 </div>
                 <!-- Modal footer -->
                 <div class="modal-footer" style="background-color:skyblue">
@@ -2964,6 +2971,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var RIndex = ProductTable.row($(this)).index();
             var ProdID = rowdata[0];
             var uomval = 1;
+            var itmMRP = 0
             $(this).find("select").each(function (index) {
                 const fieldName = $(this).attr("name");
                 const fieldID = $(this).attr("id");
@@ -2971,9 +2979,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     uomval = $("#" + fieldID + " option:selected").attr('name');
                 }
             });
+            $(this).find("input[name=MRP]").each(function (index) {
+                const fieldName = $(this).attr("name");
+                const fieldID = $(this).attr("id");
+                itmMRP = $(this).attr("txttag");                
+            });
             if (ProdID > 0) {
                 var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
-                GetData(23, ProdID, invid, null, uomval, RIndex);
+                GetData(23, ProdID, invid, null, uomval, RIndex, itmMRP);
             }
         });
 
@@ -4869,6 +4882,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var seluomid = UOMField[0].id;
         var sumn = $("#" + seluomid + " option:selected").text();
         var uomval = $("#" + seluomid + " option:selected").attr('name');
+        var Prodnamefieldid = $(rowdata[14])[0].id;;
+        var prodname = document.getElementById(Prodnamefieldid).value;
+        $("#lblBatchItemName").text(prodname);
         if (TrkInv == 1) {
             var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
             GetData(20, ProdID, invid, null, uomval);
@@ -5036,7 +5052,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             0,0,0,'','','',0,0,0,0,
             '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
             '<p style="font-size:14px;">' + (sno+ 1) + '</p>',
-            $('#txtHProdCode').val() + '<br/><input name = "ProdName" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + ProductRID +'" value="" title=""/>',
+            $('#txtHProdCode').val() + '<br/><input name = "ProdName" autocomplete="off" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + ProductRID +'" value="" title=""/>',
             //PName,
             //'<input min="0" type="number" step="any" class="gdInput" name="HSN" value=""txtsettag/>',
             '<input disabled min="0" type="number" txttag ="0" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="0"/>',//
@@ -5290,7 +5306,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     });
     var arrSalesTaxDetails = [];
     //~Preload Data
-    function GetData(nMode, strName = null, strID = null, dtpDt = null,dConvFact = 1,nRIDx = -1) {
+    function GetData(nMode, strName = null, strID = null, dtpDt = null,dConvFact = 1,nRIDx = -1,ItemMRP = 0) {
         $.ajax({
             url: Aurl + "invoice/get",
             type: 'get',
@@ -5316,16 +5332,17 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     $.each(data, function (i, items) {
                         if (items.FType == 1) {
                             var ven = {
-                                "label": items.Code + " | " + items.Name,
+                                "label": items.Code + " | " + items.Name,// + "<br/>" + items.Billadd1,
                                 "name": items.Name,
                                 "code": items.Code,
                                 "id": items.ID,
                                 "add1": items.Billadd1,
+                                "line2": items.Billadd1,
                             }
                             if (items.ID == DefCustID) {
                                 DefCustCode = items.Code;
                             }
-                            arrVendor.push(ven);                            
+                            arrVendor.push(ven);
                             arrVendorName[nIndexarrVendor] = items.Name;
                             nIndexarrVendor++;
                         }
@@ -5520,7 +5537,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     }));
 
                     TableBatch.draw().clear(); TableBatch.draw().clear();
-                    $.each(data, function (i, items) {                       
+                    $.each(data, function (i, items) {
                         arrSalesTaxDetails = ReturnTaxDetails(items.SalesTaxID, 1);
                         var dApponMRPCum = arrSalesTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
 
@@ -5586,14 +5603,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         if (trkpkd == "True")
                             $(".modalBatch").css("width", "35%");
                         //console.log("First Batch Select", new Date().toISOString());
-                        
+
                         //setTimeout(() => {
                         if (items.lstInvPopup.length == 0) {
                             modal.hide();
-                            } else {
-                                modal.show();
-                                $("#tblBatch>tbody>tr:first").trigger('click');
-                            }
+                        } else {
+                            modal.show();
+                            $("#tblBatch>tbody>tr:first").trigger('click');
+                        }
                         //}, 100);
                         var trkivYN = items.TrackInventory == "True" ? 1 : 0;
                         var batchYN = items.TrackBatch == "True" ? 1 : 0;
@@ -5605,6 +5622,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var BatchCount = parseInt(TableBatch.rows().count());
                         var DefQty = BatchCount > 0 ? 1 : trkivYN == 1 ? 0 : 1;
                         //ProductTable.cell(SelRowIndex, 0).data(items.ProdID); ProductTable.cell(SelRowIndex, 1).data(items.SalesTaxID);
+                        $("#lblBatchItemName").text(items.Name);
                         var dgvdata = [
                             items.ProdID,
                             items.SalesTaxID,
@@ -5612,7 +5630,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/> <span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;' +
                             '<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
                             '<p style="font-size:14px;">' + (SelRowIndex + 1) + '</p>',
-                            '<input name = "ProdName" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + ProductRID + '" value="' + items.Name + '" title="' + items.Name + '"/><br/>' + items.Code + " | " + $("#txtTempABS").val(),//<br/><label>MRP : ' + parseFloat(MRP).toFixed(2) +'</label>
+                            '<input name = "ProdName" autocomplete="off" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + ProductRID + '" value="' + items.Name + '" title="' + items.Name + '"/><br/>' + items.Code + " | " + $("#txtTempABS").val(),//<br/><label>MRP : ' + parseFloat(MRP).toFixed(2) +'</label>
                             '<input disabled min="0" type="number" txttag ="' + MRP + '" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(MRP).toFixed(2) + '" title="' + MRP + '"/> ',
                             '<input ' + isEnable + ' min="0" type="number" txttag ="' + PPrice + '" step="any" id="dgvProdExl' + ProductRID + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(PPrice).toFixed(2) + '" title="' + PPrice + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/><br/>' +
                             '<input ' + isEnable + ' min="0" type="number" txttag ="' + InclPPrice + '" step="any" id="dgvProdIncl' + ProductRID + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(InclPPrice).toFixed(2) + '" title="' + InclPPrice + '" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
@@ -5665,7 +5683,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             //    modal.hide();
                             //    return false;
                             //},
-                        });                        
+                        });
                         ProductRID++;
                         startAutoDraftSave();
                         //console.log("New Line add", new Date().toISOString());
@@ -5676,7 +5694,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         $("#dgvProdQty" + temprid).select();
                         setupArrowKeyNavigation1();
                     });
-                }                
+                }
                 else if (nMode == 14) {
                     TableProductInfo.draw().clear(); TableProductInfo.draw().clear();
                     if (data.length > 0) {
@@ -5773,7 +5791,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         });
                     } else {
                         modal.hide();
-                            showErrorSnackbar("No batch found");
+                        showErrorSnackbar("No batch found");
                     }
                 }
                 else if (nMode == 33) {
@@ -5785,6 +5803,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             "code": items.Code,
                             "id": items.ID,
                             "add1": items.Billadd1,
+                            "line2": items.Billadd1,
                         }
                         if (items.ID == DefCustID) {
                             DefCustCode = items.Code;
@@ -5808,7 +5827,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     modal.hide();
                     var trkbat = "False", trkpkd = "False";
                     //showErrorSnackbar("Track Inv : "+trkInv);
-                    $.each(data, function (i, items) {
+                    console.log("all Product Batch : ", data);
+                    var arrMRPbatch = [];
+                    var batchdata = data.filter(bt => bt.MRP == ItemMRP);
+                    if (batchdata.length > 0) {
+                        var tb = batchdata[0];
+                        arrMRPbatch.push(tb);
+                    } else {
+                        var tb = data[0];
+                        arrMRPbatch.push(tb);
+                    }
+                    console.log("Filter Product Batch : ", arrMRPbatch);
+                    $.each(arrMRPbatch, function (i, items) {//data
                         var Actq = items.ActQty;
                         var orgpr = items.SalesPrice;
                         var mrps = items.MRP;
@@ -6213,7 +6243,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>&ensp;<span style="font-size:16px;" '+visbfields+' class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/><span style="font-size:16px;" '+visbfields+' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;'+
                             ' <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-shopping-cart clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
-                            '<input name = "ProdName" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
+                            '<input name = "ProdName"  autocomplete="off" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
                             '<input disabled min="0" type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" title="' + itemsProd.MRP + '"' + disbfields + '/>',
                             '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePrice + '" step="any" id="dgvProdExl' + nRowIndex + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(itemsProd.UomSalePrice).toFixed(DecVal) + '" title="' + itemsProd.UomSalePrice + '"' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/><br/>' +
                             '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePriceIncl + '" step="any" id="dgvProdIncl' + nRowIndex + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(itemsProd.UomSalePriceIncl).toFixed(DecVal) + '" title="' + itemsProd.UomSalePriceIncl + '"' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
@@ -6303,7 +6333,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             });                            
                         });
-                        if (nMode == 21)//for Order taken
+                        
+                        if (nTransMode != 5 && nTransMode != 4)//nMode == 21 || //not view & cancel
                         {
                             var drrowdata = ProductTable.row($(this)).data();
                             var drRowIndex = ProductTable.row($(this)).index();
@@ -6427,7 +6458,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 icon: '➕',
                                 text: 'Add New',
                                 title: 'Add New',
-                                visible: $("#txtAddID").val() == 1,
+                                visible: $("#txtAddID").val() == 1,                                
                                 onClick: (gridInstance, event) => {
                                     nTransMode = 1;
                                     $("#dvMain,#btnAddNewProduct").show();
