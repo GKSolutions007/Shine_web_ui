@@ -770,18 +770,21 @@
             <div class="row align-items-center g-3">
 
                 <!-- Toggle Section -->
-                <div class="col-12 col-md-3 col-lg-3">
+                <div class="col-12 col-md-4 col-lg-4">
                     <div class="toggle d-flex flex-wrap">
                         <input type="radio" name="sizeBy" id="rdoMainTableData" checked />
                         <label for="rdoMainTableData"><i class="fas fa-file-invoice me-1"></i>@ViewData["FormName"]</label>
 
                         <input type="radio" name="sizeBy" id="rdoDraftTableData" />
                         <label for="rdoDraftTableData"><i class="fas fa-pencil me-1"></i>Draft Data</label>
+
+                        <input type="radio" name="sizeBy" id="rdoWebReturnTableData" />
+                        <label for="rdoWebReturnTableData"><i class="fas fa-arrow-rotate-back me-1"></i>Web Return</label>
                     </div>
                 </div>
 
                 <!-- Filters -->
-                <div class="col-12 col-md-9 col-lg-9">
+                <div class="col-12 col-md-8 col-lg-8">
                     <div class="row g-1">
                         <!-- Branch -->
                         <div class="col-12 col-sm-6 col-md-2 col-lg-2">
@@ -1717,7 +1720,7 @@
 
     function LoadPermissions() {
         var Permrdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : "3";
-        var cancelperm = !mapusersRole.canCancel ? false : Permrdo1 == "1" ? true : Permrdo1 == "2" ? true : false;
+        var cancelperm = !mapusersRole.canCancel ? false : Permrdo1 == "1" ? true : Permrdo1 == "2" ? true : Permrdo1 == "3" ? true : false;
         var ViewPerm = mapusersRole.canView && Permrdo1 == "1" ? true : false;
         allGridActions = [
             {
@@ -1780,7 +1783,7 @@
                         nTransMode = 2;
                         var rdo1 = $("#rdoMainTableData").is(":checked");
                         var rdo2 = $("#rdoDraftTableData").is(":checked");
-                        var rdo3 = $("#rdoPOTableData").is(":checked");
+                        var rdo3 = $("#rdoWebReturnTableData").is(":checked");
                         //setTimeout(() => {
                         GetProductViewData(rdo1 ? 7 : rdo2 ? 11 : 17, ID);
                         //}, 300);
@@ -1870,7 +1873,7 @@
                                 isVisible = false;
                         }
                         else {
-                            if (mapusersRole.canCancel && Permrdo1 == "1")
+                            if (mapusersRole.canCancel && Permrdo1 == "1" || Permrdo1 == "3")
                                 isVisible = true;
                             else
                                 isVisible = false;
@@ -1908,8 +1911,10 @@
                         }
                         else {
                             var conf = confirm("Do you want to remove draft data?");
+                            var FSelID = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" :"3";
+
                             if (conf) {
-                                GetData(15, ID);
+                                GetData(15, ID, FSelID);
                             }
                         }
                     }
@@ -5821,7 +5826,7 @@ if ($("#txtAddID").val() == 0) {
 
         }
     }
-    $("#rdoMainTableData,#rdoDraftTableData").click(function () {
+    $("#rdoMainTableData,#rdoDraftTableData,#rdoWebReturnTableData").click(function () {
         //GetFilterData(1);
         LoadPermissions();
         GetColumnSettingsData(2, 29, 1, true);
@@ -5894,7 +5899,7 @@ if ($("#txtAddID").val() == 0) {
         BatchAcceptArray = [];
         TempProd = [];
         NewTempBatch = [];
-        if (nTransMode != 1) {
+        if (nTransMode != 1 || !$("#rdoMainTableData").is(":checked")) {
             $("#dvMain").hide();
             $("#dvDocuments").show();
         }
@@ -6251,6 +6256,8 @@ if ($("#txtAddID").val() == 0) {
                 "Remarks": $("#txtRemarks").val(),
                 "Narration": $("#txtNarration").val(),
                 "DraftID": $("#txtDraftID").val() == "" ? 0 : $("#txtDraftID").val(),
+                "FilterTypeID": $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : "3",
+
                 "lstProdInfo": ProductArray,
                 "lstTempBatch": NewTempBatch
             }

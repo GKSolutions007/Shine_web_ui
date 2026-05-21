@@ -24,7 +24,7 @@ namespace ShineWeb.Controllers
         public ActionResult Index(string Msg=null)
         {
             //272,273,274,275,276
-            string plain = "Delivery,Create Delivery,Modify Delivery,Return Delivery,View Delivery";
+            string plain = "";
             string[] strplain = plain.Split(',');
             string EncVal = "";
             for (int i = 0; strplain.Length > i; i++)

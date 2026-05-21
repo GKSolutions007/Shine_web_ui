@@ -639,7 +639,7 @@ class GKBSDynamicGrid {
         toolbar.style.display = 'flex';
         toolbar.style.justifyContent = 'space-between';
         toolbar.style.alignItems = 'center';
-        toolbar.style.padding = '10px 0';
+        toolbar.style.padding = '3px 0';
 
 
         // --- 1. Left Section: Action Buttons (Export, Columns, Add/Remove) ---
