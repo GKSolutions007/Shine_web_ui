@@ -7,7 +7,7 @@ function getMultiSelectValues(inputId) {
 
 function GKBSPaginatedMultiSelect(options) {
 
-    var inputId = options.inputId;
+    var inputId = options.inputId;    
     var fullData = options.data || [];
     var pageSize = 20;
     var onSelect = options.onSelect || function () { };

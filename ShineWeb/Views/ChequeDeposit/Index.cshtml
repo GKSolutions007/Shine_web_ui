@@ -223,7 +223,6 @@
             display: none;
         }
 
-
 </style>
 <body>
 
@@ -432,7 +431,7 @@
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ColID</th>
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">DepID</th>
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ChqStatus</th>
-                            <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader"><input id="chkSelectAll" type="checkbox" /></th>
+                            <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader"><input id="chkSelectAll" type="checkbox"/></th>
                             <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Party Name</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Cheque/DD No</th>
@@ -446,13 +445,14 @@
                     </thead>
 
                     <tfoot>                        
-                        <tr>
+                        <tr>                            
                             <td align="left" colspan="9">
+                                Selected Cheques : <label id="lblChqCountValue" style="font-size:16px;font-weight:500;padding-right:30px">0.00 / 0</label>
                                 <input style="height:15px;width:15px;background-color:white" disabled /> <label> : Today Cheques</label>&emsp;
                                 <input style="height: 15px; width: 15px; background-color: #ffcccc" disabled /> <label> : Upto 3 days old</label>&emsp;
                                 <input style="height: 15px; width: 15px; background-color: #ff776d" disabled /> <label> : More than 3 days old</label>
                             </td>
-                            <td align="right"><label id="lblTotAmt" style="text-align:right;text-align:right" class="lblPT">0.00</label></td>
+                            <td align="right"><label id="lblTotAmt" style="text-align:right;text-align:right;font-size:14px;font-weight:500" class="lblPT">0.00</label></td>
                             <td colspan="5"></td>
                         </tr>
                     </tfoot>
@@ -765,6 +765,7 @@
                             ]).draw(false);
                         });
                         $("#lblTotAmt").text(parseFloat(Amount).toFixed(DecVal));
+                        $("#lblChqCountValue").text("0.00 / 0");
                     }
                     else {
                         showErrorSnackbar("No records found");
@@ -830,7 +831,26 @@
         $('#tblDocumentData tr td input').each(function (i, items) {
             items.checked = IsChk;
         });
+        CalulateSelectedCheques();
     });
+    //$('#tblPayment tbody').on('change', '.dgvPMPayAmt,.dgvPMVisaPern', function (e) {
+    $('#tblDocumentData tbody').on('change', 'input[type=checkbox]', function (e) {
+        CalulateSelectedCheques();
+    });
+    function CalulateSelectedCheques() {
+        var Checkedrows = 0, Value = 0;
+        $('#tblDocumentData tbody tr').each(function (i, items) {
+            var rowdata = DocumentData.row($(this)).data();
+            var CheqAmt = rowdata[9];
+            var isChk = $(this).find("input[type=checkbox]").is(":checked");
+            if (isChk) {
+                Value += parseFloat(CheqAmt);
+                Checkedrows++;
+            }
+        });
+        //showSuccessSnackbar("Cheques : " + Checkedrows + " & Values : " + Value);
+        $("#lblChqCountValue").text(parseFloat(Value).toFixed(DecVal) + " / " + Checkedrows);
+    }    
     $('#dtpDate,#cmbBranch').on('focus', function () {
         $(this).data("oldvalue", $(this).val());
     });
@@ -974,7 +994,7 @@
                             UpdateColumnWidth(31, 1, 0, colIndex, field, newWidth)
                         },
                     });
-                    if (!billjsdata) {
+                    if (billjsdata.length == 0) {
                         if (ClickType == 1)
                             showErrorSnackbar("No records found");
                     }
@@ -993,39 +1013,7 @@
         if (charCode > 31 && (charCode < 48 || charCode > 57))
             return false;
         return true;
-    }
-    $("#tblProductData").change(function (e) {
-        var value = e.target.value;
-        calculateProdGrid();
-    });
-    function calculateProdGrid() {
-        $(".lblPT").text(0.00);
-        var dPTQty = 0, dPTNet = 0, Price = 0;
-        $("#tblProductData tbody tr").each(function () {
-            var allValues = {};
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                if (fieldName == "Price") {
-                    Price = parseFloat($(this).text());
-                }
-                //allValues[fieldName] = $(this).val();
-            });
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-
-                if (fieldName == "Qty") {
-                    Value = $(this).val() != "" ? parseFloat($(this).val()) : 0;
-                    dPTQty += Value;
-                    dPTNet += (Price * Value)
-                }
-            });
-
-        });
-        $("#lblRoundNet").text(dPTNet.toFixed(2));
-        $("#lblPTQty").text(dPTQty.toFixed(2));
-        //$("#lblPTCount").text(parseInt(DocumentData.rows().count()));
-    }
-
+    }    
     $('#tblMasterData tbody').on('click', '.clsCancel', function (e) {
         var rdo1 = $("#rdoMainTableData").is(":checked");
         $(".clrdivs").html("");
@@ -1055,6 +1043,7 @@
         $(".FormclrField").val("");
         $(".FormclrcmbField").val(0);
         $(".clrdivs").html("");
+        $("#lblChqCountValue").text("0.00 / 0");
         $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
         $("#btnPreview,#btnPDF").prop("disabled", true);
         DocumentData.draw().clear();

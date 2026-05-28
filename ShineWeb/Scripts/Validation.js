@@ -288,6 +288,59 @@ function sanitizeAlphaNumeric(input, errordiv) {
     }
 }
 
+////
+function NumericWithHyphenSlashBeforeInput(e, input, errordiv) {
+    $(errordiv).html('');
+    input.style.borderColor = '';
+
+    // Allow delete, navigation, undo, redo
+    if (!e.data) return true;
+
+    // Allow paste & autofill
+    if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+        return true;
+    }
+
+    // Invalid chars
+    var regex = /[^0-9\-\/]/;
+
+    // If invalid character found
+    if (regex.test(e.data)) {
+        $(errordiv).html('*Only numbers, (-) and (/) are allowed');
+
+        if (errordiv) {
+            input.style.borderColor = 'red';
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+// Fallback sanitizer (paste, autofill, IME)
+function sanitizeNumericWithHyphenSlash(input, errordiv) {
+
+    var sanitizeRegex = /[^0-9\-\/]/g;
+    var oldValue = input.value;
+
+    $(errordiv).html('');
+
+    input.value = input.value.replace(sanitizeRegex, '');
+
+    input.style.borderColor = '';
+
+    if (oldValue !== input.value) {
+
+        if (errordiv) {
+            input.style.borderColor = 'red';
+        }
+
+        $(errordiv).html('*Only numbers, (-) and (/) are allowed');
+    }
+}
+
+////
 function NumericPercentageBeforeInput(e, input, errordiv) {
     if (errordiv) $(errordiv).html('');
     input.style.borderColor = ''; // reset
@@ -552,7 +605,7 @@ function showInfoSnackbar(message) {
 function setDate(FieldID, Type) {
     var FilterDates = localStorage.getItem("FilterDatelist");
     var DateDatas = JSON.parse(FilterDates);
-    var DateFilterData = DateDatas.filter(fd => fd.ID == (Type == 6 || Type == 7 ? 3 : Type == 2 ? 2 : 1));//Current Date
+    var DateFilterData = DateDatas.filter(fd => fd.ID == (Type == 6 || Type == 7 ? 3 : Type == 2 ? 2 : Type == 4 ? 4 : 1));//Current Date
     if (DateFilterData) {
         $.each(DateFilterData, function (i, items) {
             $("#" + FieldID).attr("max", items.MaxDate.substring(0, 10));
