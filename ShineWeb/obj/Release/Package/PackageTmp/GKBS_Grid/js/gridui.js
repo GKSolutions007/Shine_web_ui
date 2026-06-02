@@ -4,13 +4,14 @@ class GKBSDynamicGrid {
         this.columns = columns; // Stores config including current width
         this.originalData = data;
         var ItemsperPage = 10;
+        var gridheight = options.height || this.container.style.height || '400px';
         // --- 1. Options with Defaults ---
         this.options = Object.assign({
             enablePagination: false,
             pageSize: ItemsperPage,
             enableSearch: true,
             stickyToWindow: true,
-            height: '200px',
+            height: gridheight,// '500px',
             rowActions: [],
             enableExport: false, // Defaulting new options explicitly
             enableColumnsBtn: false,
@@ -430,7 +431,10 @@ class GKBSDynamicGrid {
         // 2. Create the scrolling wrapper
         const scrollWrapper = document.createElement('div');
         scrollWrapper.className = 'dg-scroll-wrapper';
-
+        if (this.options.height) {
+            scrollWrapper.style.height = this.options.height;
+            scrollWrapper.style.overflowY = 'auto';
+        }
         // 3. Render Toolbar (fixed at the top)
         this.renderToolbar();
 
@@ -626,7 +630,7 @@ class GKBSDynamicGrid {
         toolbar.style.display = 'flex';
         toolbar.style.justifyContent = 'space-between';
         toolbar.style.alignItems = 'center';
-        toolbar.style.padding = '10px 0'; // Add some vertical padding
+        toolbar.style.padding = '2px 0'; // Add some vertical padding
 
         // --- 1. Left Section: Global Search Input ---
         const leftSection = document.createElement('div');
@@ -715,7 +719,7 @@ class GKBSDynamicGrid {
         toolbar.style.display = 'flex';
         toolbar.style.justifyContent = 'space-between';
         toolbar.style.alignItems = 'center';
-        toolbar.style.padding = '10px 0';
+        toolbar.style.padding = '5px';
 
 
         // --- 1. Left Section: Action Buttons (Export, Columns, Add/Remove) ---
@@ -723,7 +727,7 @@ class GKBSDynamicGrid {
         leftSection.className = 'dg-toolbar-left';
         leftSection.style.display = 'flex';
         leftSection.style.alignItems = 'center';
-        leftSection.style.gap = '10px';
+        leftSection.style.gap = '3px';
 
 
         // A. Export Button (Excel)
@@ -1365,7 +1369,7 @@ class GKBSDynamicGrid {
         const pageData = this.getPaginatedData();
 
         if (pageData.length === 0) {
-            body.innerHTML = '<div style="padding:20px; text-align:center; color:#999">No records found</div>';
+            body.innerHTML = '<div style="padding:10px; text-align:center; color:#e32424"> <i class="fas fa-folder-open" style="font-size:15px;padding:5px"></i>No records found</div>';
             this.container.appendChild(body);
             return;
         }

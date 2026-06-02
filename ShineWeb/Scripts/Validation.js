@@ -637,6 +637,23 @@ function setDate(FieldID, Type) {
     //    }
     //})
 }
+function setDateforCusRep(FieldID, Type,FromorTo) {
+    var FilterDates = localStorage.getItem("FilterDatelist");
+    var DateDatas = JSON.parse(FilterDates);
+    var DateFilterData = DateDatas.filter(fd => fd.ID == (Type == 6 || Type == 7 ? 3 : Type == 2 ? 2 : Type == 4 ? 4 : 1));//Current Date
+    if (DateFilterData) {
+        $.each(DateFilterData, function (i, items) {
+            $("#" + FieldID).attr("max", items.MaxDate.substring(0, 10));
+            $("#" + FieldID).attr("min", items.MinDate.substring(0, 10));
+            if (FromorTo == 1) {
+                $("#" + FieldID).val(items.FromDate.substring(0, 10));
+            } else {
+                $("#" + FieldID).val(items.ToDate.substring(0, 10));
+            }
+        });
+    }
+    
+}
 function SetFilterDate() {
     var sel = $("#cmbFilterDatetype").val();// e.target.value;
     AssignDates("dtpFFrom", "dtpFTo", sel);

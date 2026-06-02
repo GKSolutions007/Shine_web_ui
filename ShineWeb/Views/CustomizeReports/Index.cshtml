@@ -598,8 +598,7 @@
             <h4 id="MainHeading">Customize Reports</h4>
             <p>Select a report and configure its filters before exporting</p>
         </div>
-    </div>
-
+    </div>    
     <!-- ── Report Selection Card ── -->
     <div class="modern-card fade-in mb-3">
         <div class="card-header-band">
@@ -668,6 +667,7 @@
                         <i class="bi bi-code-slash"></i> Script
                     </button>
                 </div>
+                
             </div>
 
             <!-- Hidden DataTable (keeps original AJAX logic working) -->
@@ -776,9 +776,8 @@
                             else if (ParamType == "Dropdown") {
                                 ParVal = '<select class="form-control" name="' + items.AutolistName + '" id="Combo' + i + '"></select>';
                             } else if (ParamType == "Date") {
-                                ParVal = '<input isMandatory=' + IsMand + ' type="date" class="form-control" name="' + items.AutolistName + '" id="dtp' + (items.AutolistName + i) + '" />';
-                                var Datetype = items.AutolistName == "CD" ? 0 : items.AutolistName == "MF" ? 8 : 0;
-                                setDate("dtp" + (items.AutolistName + i), Datetype);
+                                ParVal = '<input isMandatory=' + IsMand + ' type="date" class="form-control" name="' + items.AutolistName + '" id="vis_dtp' + (items.AutolistName + i) + '" />';
+                                var Datetype = items.AutolistName == "CD" ? 0 : items.AutolistName == "MF" ? 8 : 0;                              
                             } else if (ParamType == "Checkbox") {
                                 ParVal = '<input type="checkbox" name="' + items.AutolistName + '" id=chk"' + (items.AutolistName + i) + '" ' + defval + ' />';
                             } else if (ParamType == "Number") {
@@ -801,10 +800,12 @@
                                 visibleInput +
                                 '</div>';
                             $('#filtersGrid').append(cardHtml);
+                            
                         });
 
                         LoadDataforAL();
                         bindVisibleToHidden();
+                        setVisibleDates();
                     } else {
                         $('#filtersArea').removeClass('visible');
                         $('#emptyState').addClass('visible').find('p').text('No filters configured for this report.');
@@ -837,11 +838,16 @@
                    'name="' + items.AutolistName + '" id="vis_Combo' + i + '"></select>';
         } else if (ParamType == "Date") {
             var Datetype = items.AutolistName == "CD" ? 0 : items.AutolistName == "MF" ? 8 : 0;
-            setDate("vis_dtp" + (items.AutolistName + i), Datetype);
-
-            return '<input isMandatory=' + IsMand + ' type="date" class="form-control vis-ctrl" ' +
-                   'data-hid="dtp' + (items.AutolistName + i) + '" ' +
-                'name="' + items.AutolistName + '" id="vis_dtp' + (items.AutolistName + i) + '" />';
+            //<input isMandatory=0 type="date" class="form-control vis-ctrl" data-hid="dtpCD6" name="CD" id="vis_dtpCD6" onload='setDate("vis_dtpCD6",0)' />
+            var datefields = `
+<input isMandatory=${IsMand}
+       type="date"
+       class="form-control vis-ctrl"
+       data-hid="dtp${items.AutolistName + i}"
+       name="${items.AutolistName}"
+       id="vis_dtp${items.AutolistName + i}"
+        />`;
+            return datefields;
 
         } else if (ParamType == "Checkbox") {
             return '<input type="checkbox" class="vis-ctrl" ' +
@@ -875,10 +881,13 @@
 
     // Set dates on visible date inputs too
     function setVisibleDates() {
+        var fid = 1;
         $('.vis-ctrl[type="date"]').each(function () {
-            var hid = $(this).data('hid');
-            var hidVal = $('#' + hid).val();
-            if (hidVal) $(this).val(hidVal);
+            var hid = $(this).attr('id');
+            var Datetype = $(this).attr("name");
+            var Datetypeid = Datetype == "CD" ? 0 : Datetype == "MF" ? 2 : 0;
+            setDateforCusRep(hid, Datetypeid, fid);
+            fid++;
         });
     }
 
@@ -938,13 +947,12 @@
                             $('#' + id + '').on('change', function () {
                                 $('#' + hid).val($(this).val());
                             });
-                        }
+                        }                        
                     }
                 }
             });
         });
-
-        setVisibleDates();
+        //setVisibleDates();
     }
 
     function showFiltersLoader(show) {

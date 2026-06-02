@@ -1409,7 +1409,7 @@ class GKBSDynamicGrid {
         const pageData = this.getPaginatedData();
 
         if (pageData.length === 0) {
-            body.innerHTML = '<div style="padding:20px; text-align:center; color:#999">No records found</div>';
+            body.innerHTML = '<div style="padding:30px; text-align:center; color:#999"> <i class="fas fa-folder-open" style="font-size:15px;padding:5px"></i>No records found</div>';
             this.container.appendChild(body);
             return;
         }

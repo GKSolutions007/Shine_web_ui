@@ -17,6 +17,7 @@
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/Scripts/Validation.js"></script>
 <script src="~/Scripts/multiselect/GKBSmultiselectiondropdown.js"></script>
+<script src="~/Scripts/xlsx.bundle.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
 </header>
@@ -876,6 +877,7 @@
                                     <option value="2">Sales Return</option>
                                     <option value="3">Damage Return</option>
                                     <option value="4">Collection</option>
+                                    <option value="5">Outstandings</option>
                                 </select>
                             </div>
                         </div>
@@ -1004,8 +1006,11 @@
             <div class="results-header">
                 <div class="results-title">
                     <i class="fas fa-table"></i>
-                    Details - <span class="badge-modern badge-info" id="recordCount">0 Records</span>
+                    <label id="lblresulttext">Sales Details - </label> <span class="badge-modern badge-info" id="recordCount">0 Records</span>
                 </div>
+                <button id="btnExportExcel" class="btn btn-success">
+                   <i class="fa fa-file-excel"></i> Export Excel
+                </button>
             </div>
 
             <div class="table-scrollable-container">
@@ -1116,11 +1121,13 @@ var DefBranch = '@Session["DefaultBranch"]';
             });
             $('#cmbTransaction').change(function (e) {
                 var selval = e.target.value;
-                if (selval == 4) {
+                if (selval == 4 || selval == 5) {
                     $(".dvprodfilterfield").hide()
                 } else {
                     $(".dvprodfilterfield").show()
                 }
+                $('#lblresulttext').text($('#cmbTransaction option:selected').text() + ' Details - ');
+                
             });
 
             // Search button click
@@ -1302,7 +1309,7 @@ var DefBranch = '@Session["DefaultBranch"]';
                 //
                 var nTransactionType = $('#cmbTransaction').val();
                 // Render table
-                if (nTransactionType == 4)//Collection
+                if (nTransactionType == 4 || nTransactionType == 5)//Collection
                 {
                     renderTableforCollection(paginatedData, currentBuckets);
                 } else {
@@ -1334,9 +1341,244 @@ var DefBranch = '@Session["DefaultBranch"]';
                     renderCurrentPage();
                 }
             });
+            var columnKeys;
+            $("#btnExportExcel").click(function () {
 
+                if (!currentTableData || currentTableData.length === 0) {
+                    alert("No data available");
+                    return;
+                }
 
+                // Filters
+                var nTransactionType = $('#cmbTransaction option:selected').text(),
+                    strPartyFilterTypeID = $('#cmbPartyFilterType option:selected').text(),
+                    strSelectPartyfilterIDs = getMultiSelectValues('txtPartyFilter').map(x => x.label).join(',');
 
+                var strProductFilterTypeID = $('#cmbProductFilterType option:selected').text(),
+                    strSelectProductfilterIDs = getMultiSelectValues('txtProductFilter').map(x => x.label).join(',');
+
+                var strValueTypeID = $('#cmbValueType option:selected').text(),
+                    strFrom = $('#dtpFrom').val(),
+                    strTo = $('#dtpTo').val();
+
+                // Visible columns only
+                var exportColumns = columnKeys.filter(x => x !== "Grp1ID" && x !== "Grp2ID");
+
+                // Sheet data
+                var sheetData = [];
+
+                // Report Filters
+                sheetData.push(["MONTHWISE SALES ANALYTICS"]);               
+                sheetData.push(["Transaction", nTransactionType]);
+                sheetData.push(["Party Filter", strPartyFilterTypeID]);
+                sheetData.push([strPartyFilterTypeID, strSelectPartyfilterIDs]);
+                sheetData.push(["Product Filter", strProductFilterTypeID]);
+                sheetData.push([strProductFilterTypeID, strSelectProductfilterIDs]);
+                sheetData.push(["Value Type", strValueTypeID]);
+                sheetData.push(["From Date", strFrom]);
+                sheetData.push(["To Date", strTo]);
+                sheetData.push([]);
+
+                // Header Row
+                sheetData.push(exportColumns);
+
+                // Totals object
+                var totals = {};
+
+                exportColumns.forEach(function (col) {
+                    totals[col] = 0;
+                });
+
+                // Data Rows
+                currentTableData.forEach(function (row) {
+
+                    var excelRow = [];
+
+                    exportColumns.forEach(function (col) {
+
+                        var value = row[col];
+
+                        excelRow.push(value);
+
+                        if (typeof value === "number") {
+                            totals[col] += value;
+                        }
+                    });
+
+                    sheetData.push(excelRow);
+                });
+
+                // Total Row
+                var totalRow = [];
+
+                exportColumns.forEach(function (col, index) {
+
+                    if (index === 0) {
+                        totalRow.push("TOTAL");
+                    }
+                    else if (typeof totals[col] === "number" && totals[col] !== 0) {
+                        totalRow.push(totals[col]);
+                    }
+                    else {
+                        totalRow.push("");
+                    }
+                });
+
+                sheetData.push(totalRow);
+
+                // Create worksheet
+                var ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+                // Merge title row
+
+                // ===== TITLE STYLE =====
+                if (ws["A1"]) {
+                    ws["A1"].s = {
+                        fill: {
+                            patternType: "solid",
+                            fgColor: { rgb: "1F4E78" }
+                        },
+                        font: {
+                            bold: true,
+                            sz: 14,
+                            color: { rgb: "FFFFFF" }
+                        },
+                        alignment: {
+                            horizontal: "center",
+                            vertical: "center"
+                        }
+                    };
+                }
+
+                // ===== FILTER ROWS STYLE =====
+                // Rows 3 to 10 in Excel (indexes 2 to 9)
+
+                for (var row = 1; row <= 9; row++) {
+
+                    // Column A (Label)
+                    var labelCell = XLSX.utils.encode_cell({
+                        r: row,
+                        c: 0
+                    });
+
+                    if (ws[labelCell]) {
+                        ws[labelCell].s = {
+                            fill: {
+                                patternType: "solid",
+                                fgColor: { rgb: "D9EAD3" }
+                            },
+                            font: {
+                                bold: true,
+                                color: { rgb: "000000" }
+                            }
+                        };
+                    }
+
+                    // Column B (Value)
+                    var valueCell = XLSX.utils.encode_cell({
+                        r: row,
+                        c: 1
+                    });
+
+                    if (ws[valueCell]) {
+                        ws[valueCell].s = {
+                            fill: {
+                                patternType: "solid",
+                                fgColor: { rgb: "FFF2CC" }
+                            },
+                            font: {
+                                color: { rgb: "000000" }
+                            }
+                        };
+                    }
+                }
+
+                // Merge title row
+                ws["!merges"] = [{
+                    s: { r: 0, c: 0 },
+                    e: { r: 0, c: 2 }
+                }];
+                //ws["!merges"] = [{
+                //    s: { r: 0, c: 0, },
+                //    e: { r: 0, c: 2 }
+                //}];
+
+                // Header row index
+                var headerRowIndex = 10;
+
+                // Style header
+                for (var c = 0; c < exportColumns.length; c++) {
+
+                    var cellRef = XLSX.utils.encode_cell({
+                        r: headerRowIndex,
+                        c: c
+                    });
+
+                    if (ws[cellRef]) {
+                        ws[cellRef].s = {
+                            fill: {
+                                patternType: "solid",
+                                fgColor: { rgb: "4472C4" }
+                            },
+                            font: {
+                                bold: true,
+                                color: { rgb: "FFFFFF" }
+                            }
+                        };
+                    }
+                }
+
+                // Total row style
+                var totalRowIndex = sheetData.length - 1;
+
+                for (var c = 0; c < exportColumns.length; c++) {
+
+                    var cellRef = XLSX.utils.encode_cell({
+                        r: totalRowIndex,
+                        c: c
+                    });
+
+                    if (ws[cellRef]) {
+                        ws[cellRef].s = {
+                            fill: {
+                                patternType: "solid",
+                                fgColor: { rgb: "D9EAD3" }
+                            },
+                            font: {
+                                bold: true
+                            }
+                        };
+                    }
+                }
+
+                // Auto column width
+                ws["!cols"] = exportColumns.map(function (col) {
+                    return { wch: Math.max(col.length + 5, 15) };
+                });
+
+                var wb = XLSX.utils.book_new();
+
+                XLSX.utils.book_append_sheet(
+                    wb,
+                    ws,
+                    "Monthwise Sales Analtics"
+                );
+                var now = new Date();
+                var timestamp =
+                    now.getFullYear().toString() +
+                    String(now.getMonth() + 1).padStart(2, '0') +
+                    String(now.getDate()).padStart(2, '0') +
+                    String(now.getHours()).padStart(2, '0') +
+                    String(now.getMinutes()).padStart(2, '0') +
+                    String(now.getSeconds()).padStart(2, '0') +
+                    String(now.getMilliseconds()).padStart(3, '0');
+                XLSX.writeFile(
+                    wb,
+                    "Monthwise_Sales_Analtics_" +
+                    timestamp +
+                    ".xlsx"
+                );
+            });
             // Render table with dynamic columns from API data (renamed from populateModernTable)
             function renderTable(gridData, buckets) {
                 var table = $('#tblMainHeader');
@@ -1349,7 +1591,7 @@ var DefBranch = '@Session["DefaultBranch"]';
                 }
 
                 // Get column names from first row
-                var columnKeys = Object.keys(gridData[0]);
+                columnKeys = Object.keys(gridData[0]);
                 var customerIDKey = columnKeys[0]; // First column is ID (hidden)
                 
                 console.log("columnKeys ", columnKeys);
@@ -1661,7 +1903,7 @@ var DefBranch = '@Session["DefaultBranch"]';
                 }
 
                 // Get column names from first row
-                var columnKeys = Object.keys(gridData[0]);
+                columnKeys = Object.keys(gridData[0]);
                 var customerIDKey = columnKeys[0]; // First column is ID (hidden)
 
                 console.log("columnKeys ", columnKeys);
