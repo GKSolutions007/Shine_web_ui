@@ -3268,7 +3268,7 @@ var Url = '@Session["url"].ToString()';
         $("#tblProductData tbody tr").each(function () {
             var allValues = {};
             var rowdata = ProductTable.row($(this)).data();
-
+            var GridProdID = parseInt(rowdata[0] || 0);
             var TInvoicePrice = parseFloat(rowdata[20] || 0);//$(this).find("td").eq(20).text()
             var TaxPern = parseFloat(rowdata[3] || 0);
 
@@ -3342,10 +3342,15 @@ var Url = '@Session["url"].ToString()';
                     dNet = parseFloat(Value);
                 }
                 if (fieldName == "DiffValue") {
+                    var forItemUOM = BatchAcceptArray.filter(bt => bt.ProdID == GridProdID);
+                    var CFValue = 1;
+                    if (forItemUOM.length > 0) {
+                        CFValue = parseFloat(forItemUOM[0].ConversionRate) || 1;
+                    }
                     if (dQty > 0) {
                         var tp = parseFloat(1 + (TaxPern / 100));
                         var val = dGross / (dQty + dDmgQty);
-                        var Diff = TInvoicePrice - val;
+                        var Diff = (TInvoicePrice * CFValue) - val;
                         var AbsDiff = Diff;// Math.abs(Diff);
                         DiffExcl += (AbsDiff * dQty);
                         DiffIncl += ((AbsDiff * dQty) * tp);
@@ -5330,9 +5335,11 @@ var Url = '@Session["url"].ToString()';
     }
     function CalculateDiffPrice() {
         var Q1 = 0, Q2 = 0, Q3 = 0, gross = 0, TAmt = 0, NAmt = 0;
+        
         $("#tblProductData tbody tr").each(function () {
             Q1 = 0, Q2 = 0, Q3 = 0, gross = 0, TAmt = 0, NAmt = 0;
             rowdata = ProductTable.row($(this)).data();
+            var GridProdID = parseInt(rowdata[0] || 0);
             var TBillPrice = parseFloat(rowdata[20] || 0);
             Q1 = $(this).find("input[name=Qty]").attr("txttag");
             Q2 = $(this).find("input[name=FreeQty]").attr("txttag");
@@ -5343,9 +5350,13 @@ var Url = '@Session["url"].ToString()';
             NAmt = $(this).find("label[name=NetAmt]").attr("lbltag");
 
             var difffieldid = $(this).find("label[name=DiffValue]").attr("id");
-
+            var forItemUOM = BatchAcceptArray.filter(bt => bt.ProdID == GridProdID);
+            var CFValue = 1;
+            if (forItemUOM.length > 0) {
+                CFValue = parseFloat(forItemUOM[0].ConversionRate) || 1;
+            }
             var val = parseFloat(gross) / (parseFloat(Q1) + parseFloat(Q3));
-            var Diff = TBillPrice - val;
+            var Diff = (TBillPrice * CFValue)  - val;
             var AbsDiff = Diff;// Math.abs(Diff);
             updateLabelColumn(difffieldid, AbsDiff);
             var clrcolor = Diff >= 0 ? "green" : "red";

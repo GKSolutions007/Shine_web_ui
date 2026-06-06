@@ -978,6 +978,7 @@
                                 </div>
                                 <div class="text-danger ps-1 clrdivs" id="divErrSearch"></div>
                             </div>
+                            
                             <div class="col-12 d-flex align-items-center gap-2 flex-wrap">
                                 <label id="lblPartyCloseBal" style="font-size:11px;font-weight:600;"></label><span style="font-size:10px;color:#bbb;">|</span>
                                 <label id="lblPartyACDRating" class="fw-bold" title="Average Collection Days &amp; Ratings"></label><span style="font-size:10px;color:#bbb;">|</span>
@@ -1051,7 +1052,7 @@
                         </div>
 
                         <!-- Inline Tabs: Remarks / E-Way / E-Inv -->
-                        <div class="inv-tabs-wrap" style="margin-top:4px;">
+                        <div class="inv-tabs-wrap " style="margin-top:4px;">
                             <div class="inv-tab-bar" role="tablist" style="display:flex;gap:0;border-bottom:1.5px solid #ccc;">
                                 <button class="inv-tab-btn active" onclick="invSwitchTab(0,this)" role="tab">
                                     <svg width="12" height="10" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
@@ -2096,6 +2097,7 @@
                     GetProductList();
                     nTransMode = 3;
                     GetData(1, RoleID);
+                    GetCustomerList();
                     //GetProductViewData(7, ID);
                     setTimeout(() => {
                         GetProductViewData(7, ID);
@@ -5030,6 +5032,83 @@ if ($("#txtReurnPricePerm").val() == 0) {
             });
         }
     }
+    var customersalllist = [];
+    GetCustomerList();
+    function GetCustomerList() {
+        $.ajax({
+            url: Aurl + "invoice/getcustomerlist",
+            type: 'get',
+            contentType: 'json',
+            data: { },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                customersalllist = data;
+                CustomerAutolist(customersalllist);
+            }
+        });
+    }    
+    $("#cmbBeat,#cmbSalesman").change(function () {
+        const beatID = Number($("#cmbBeat").val());
+        const salesmanID = Number($("#cmbSalesman").val());
+        const allSalesman = Number('@Session["AllSalesmanInvoice"]');
+
+        const filtcusts = customersalllist.filter(customer =>
+            customer.BeatDetails.some(detail =>
+                (beatID === 0 || detail.BeatID === beatID) &&
+                (
+                    allSalesman === 1 ||
+                    salesmanID === 0 ||
+                    detail.SalesmanID === salesmanID
+                )
+            ) ||
+            (
+                beatID === 0 &&
+                (salesmanID === 0 || allSalesman === 1)
+            )
+        );
+        console.log(filtcusts);
+        CustomerAutolist(filtcusts);
+        $("#txtCustomerID,#txtSearch").val(""), $("#lblName,#lblPartyCloseBal,#lblPartyACDRating").text("");
+        $("#lblCustomerScheme").hide();        
+    });
+    function CustomerAutolist(listdata) {
+        arrVendor = [], arrVendorName = [], nIndexarrVendor = 0;
+        $.each(listdata, function (i, items) {
+            var ven = {
+                "label": items.Code + " | " + items.Name,
+                "name": items.Name,
+                "code": items.Code,
+                "id": items.ID,
+                "add1": items.Billadd1,
+                "line2": items.Billadd1,
+            }
+            if (items.ID == DefCustID) {
+                DefCustCode = items.Code;
+            }
+            arrVendor.push(ven);
+            arrVendorName[nIndexarrVendor] = items.Name;
+            nIndexarrVendor++;
+        });
+        //~AutoList Customer
+        PaginatedAutocomplete({
+            inputId: "txtSearch",
+            data: arrVendor,
+            onSelect: function (item) {
+                $("#txtSearch").val(item.name);
+                GetData(3, item.code);
+                return false;
+            }
+        });
+    }
+    //$("#cmbBeat,#cmbSalesman").change(function (e) {
+    //    var BeatID = $("#cmbBeat").val();
+    //    var SalesmanID = $("#cmbSalesman").val();
+    //    $("#txtCustomerID").val(""), $("#txtSearch").val(""), $("#lblName").text("");
+    //    GetData(33, BeatID, SalesmanID);
+    //});
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempAL = [], arrBankAcc = [], arrCreditTerm = [], arrAllPaymode = [],arrReasons = [];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
     var prodids = 0, strBankAcc = "", strCreditTerm = "", strTransmode = "", strBanks = "", strReasons = "";
@@ -5320,6 +5399,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#txtSAdd3").val(items.Shipadd3),
                             $("#txtPincode").val(items.Pincode);
                         $("#txtCustomerScheme").val(items.CustomerScheme);
+                        
                         if (items.CustomerScheme == "1")
                             $("#lblCustomerScheme").show();
                         else
@@ -5729,14 +5809,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         }
     });
 
-    $("#cmbBeat,#cmbSalesman").change(function (e) {
-        var BeatID = $("#cmbBeat").val();
-        var SalesmanID = $("#cmbSalesman").val();
-        $("#txtCustomerID").val(""),
-            $("#txtSearch").val(""),
-            $("#lblName").text("");
-        GetData(33, BeatID, SalesmanID);
-    });
+
     //~UOm change
     $('#tblProductData tbody').on('change', '.dgvcmbUOM', function (e) {
         var currrowdata = ProductTable.row(nCurrentRowIndex).data();
@@ -6427,6 +6500,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
         // Load initial data
         GetData(1, RoleID);
+        GetCustomerList();
         SetTagZero();
 
         if (RetainDate == 0) setDate("dtpDate", 0);

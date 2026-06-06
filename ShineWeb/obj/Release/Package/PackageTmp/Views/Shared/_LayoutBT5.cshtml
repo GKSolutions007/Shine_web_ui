@@ -1446,30 +1446,32 @@
                                         {
                                             FavMenuID = Convert.ToInt32(drFav[0]["MenuId"]);
                                         }
-                                        // Filter favorites
-                                        System.Data.DataRow[] drFavorites = dtPermission.Select("MenuParentId = " + FavMenuID + " and Favourites = 1 and IsMenu = 1", "MenuName");
-                                        if (drFavorites.Length > 0)
+                                        if (dtPermission.Rows.Count > 0)
                                         {
-                                            for (int f = 0; f < drFavorites.Length && f < 3; f++)
+                                            // Filter favorites
+                                            System.Data.DataRow[] drFavorites = dtPermission.Select("MenuParentId = " + FavMenuID + " and Favourites = 1 and IsMenu = 1", "MenuName");
+                                            if (drFavorites.Length > 0)
                                             {
-                                                string favMenuName = drFavorites[f]["MenuName"].ToString();
-                                                string favController = drFavorites[f]["LocationName"].ToString();
-                                                string favEncDispName = drFavorites[f]["EncMenuName"].ToString();
-                                                string favEncFID = drFavorites[f]["EncFormID"].ToString();
-                                                string favEncTypeID = "jJOtHsRVwYECOhoiBc69dA==";
-                                                string favEncTranID = "jJOtHsRVwYECOhoiBc69dA==";
-                                                string favIsMenu = drFavorites[f]["IsMenu"].ToString();
-
-                                                if (favIsMenu == "1")
+                                                for (int f = 0; f < drFavorites.Length && f < 3; f++)
                                                 {
-                                                    // Generate URL for the menu
-                                                    string favUrl = Url.Action("Index", favController, new
+                                                    string favMenuName = drFavorites[f]["MenuName"].ToString();
+                                                    string favController = drFavorites[f]["LocationName"].ToString();
+                                                    string favEncDispName = drFavorites[f]["EncMenuName"].ToString();
+                                                    string favEncFID = drFavorites[f]["EncFormID"].ToString();
+                                                    string favEncTypeID = "jJOtHsRVwYECOhoiBc69dA==";
+                                                    string favEncTranID = "jJOtHsRVwYECOhoiBc69dA==";
+                                                    string favIsMenu = drFavorites[f]["IsMenu"].ToString();
+
+                                                    if (favIsMenu == "1")
                                                     {
-                                                        name = favEncDispName,
-                                                        strFormID = favEncFID,
-                                                        TypeID = favEncTypeID,
-                                                        TranID = favEncTranID
-                                                    });
+                                                        // Generate URL for the menu
+                                                        string favUrl = Url.Action("Index", favController, new
+                                                        {
+                                                            name = favEncDispName,
+                                                            strFormID = favEncFID,
+                                                            TypeID = favEncTypeID,
+                                                            TranID = favEncTranID
+                                                        });
 
                                                     <a href="@favUrl" target="_blank"
                                                        class="btn btn-sm"
@@ -1491,10 +1493,11 @@
                                                         <i class="fa-solid fa-arrow-up-right-from-square" style="margin-right: 4px; font-size: 10px;"></i>
                                                         @favMenuName
                                                     </a>
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
                                 </div>
                             </td>
 
@@ -1505,7 +1508,7 @@
 
 
                 <div class="sideallmenus" style="padding-bottom: 75px;">
-                    @for (int iRow = 0; iRow < dtParent.Rows.Count; iRow++)
+                    @for (int iRow = 0; iRow < dtParent.Rows.Count && dtPermission.Rows.Count > 0; iRow++)
                     {
                         int nParentID = Convert.ToInt32(dtParent.Rows[iRow]["MenuId"]);
                         int nTreeID = Convert.ToInt32(dtParent.Rows[iRow]["MenuTree"]);
@@ -1575,7 +1578,7 @@
                     @*<div style="padding-left:15px">
                             @Html.ActionLink("LogOut - " + User, "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold", @title = User, @id = "algot" })
 
-                        </div>*@
+                        </div>*@                    
                     <div class="dvmainmenuheader" id="sidenavfooter" style="bottom: 0; position: fixed; width: 15%;padding:5px;font-size:16px;z-index:10000 ">
                         <div class="account-link-container" style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 5px;">
                             <a href="@Url.Action("Index", "UpdateUser", new { name = "ONuKr1oIASSV+koj5n/Zz0ymu1AOgX8YlbLqAg8l8rQ=", strFormID = "BOII5FUynjpl5RZJJ8nW1g==" })" title="User Profile" class="dropdown linkforecolor" style="display: flex; align-items: center; text-decoration: none; color: var(--CompanyNameColor); font-weight: bold;">
@@ -1585,7 +1588,7 @@
                         </div>
                         <i class="fa fa-sign-out" style="font-size: 18px; font-weight: bold; color: var(--CompanyNameColor); padding: 5px "></i>
                         @*@Html.ActionLink("Test Level Rep", "Index", "TestLevelReport", new { name = "ONuKr1oIASSV+koj5n/Zz0ymu1AOgX8YlbLqAg8l8rQ=", strFormID = "BOII5FUynjpl5RZJJ8nW1g==" }, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot" })<br />*@
-                        @Html.ActionLink("LogOut", "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot" })
+                        @Html.ActionLink("LogOut", "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot", onclick = "localStorage.removeItem('FilterDatelist');localStorage.removeItem('ThemeData'); sessionStorage.clear();" })
                     </div>
                 </div>
             </div>
@@ -1611,7 +1614,7 @@
             <div class="list-container" id="listContainer" style="padding-top:3px;">
 
                 @{
-                    if (Session["dtPermission"] != null)
+                    if (Session["dtPermission"] != null && dtPermission.Rows.Count > 0)
                     {
                         System.Data.DataRow[] drrr = dtPermission.Select("MenuChildLevel = 2", "MenuName");
                         if (drrr.Count() > 0)
@@ -1669,7 +1672,7 @@
                         <div class="list-container" id="listContainer" style="padding-top:3px;">
 
                             @{
-                                if (Session["dtPermission"] != null)
+                                if (Session["dtPermission"] != null&& dtPermission.Rows.Count > 0)
                                 {
                                     System.Data.DataRow[] drrr = dtPermission.Select("MenuChildLevel = 2", "MenuName");
                                     if (drrr.Count() > 0)

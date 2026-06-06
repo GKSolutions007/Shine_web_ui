@@ -22,24 +22,40 @@ namespace ShineWeb.Controllers
             else
             {
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
-                string ColldtlEnable = dtPermission.Select("MenuID = 303", null).Length > 0 ? "1" : "0";
-                string ChqdtlEnable = dtPermission.Select("MenuID = 304", null).Length > 0 ? "1" : "0";
-                string tranvariantEnable = dtPermission.Select("MenuID = 309", null).Length > 0 ? "1" : "0";
+                if (dtPermission.Rows.Count > 0)
+                {
+                    string ColldtlEnable = dtPermission.Select("MenuID = 303", null).Length > 0 ? "1" : "0";
+                    string ChqdtlEnable = dtPermission.Select("MenuID = 304", null).Length > 0 ? "1" : "0";
+                    string tranvariantEnable = dtPermission.Select("MenuID = 309", null).Length > 0 ? "1" : "0";
 
-                string BalanceEnable = dtPermission.Select("MenuID = 397", null).Length > 0 ? "1" : "0";
-                string QAEnable = dtPermission.Select("MenuID = 398", null).Length > 0 ? "1" : "0";
-                string PendDraftEnable = dtPermission.Select("MenuID = 399", null).Length > 0 ? "1" : "0";
-                string TranSummaryEnable = dtPermission.Select("MenuID = 400", null).Length > 0 ? "1" : "0";
-                Homescreen dam = new Homescreen();
-                dam.CollectionDetailEnable = ColldtlEnable;
-                dam.ChequeDetailEnable = ChqdtlEnable;
-                dam.TransVariantEnable = tranvariantEnable;
+                    string BalanceEnable = dtPermission.Select("MenuID = 397", null).Length > 0 ? "1" : "0";
+                    string QAEnable = dtPermission.Select("MenuID = 398", null).Length > 0 ? "1" : "0";
+                    string PendDraftEnable = dtPermission.Select("MenuID = 399", null).Length > 0 ? "1" : "0";
+                    string TranSummaryEnable = dtPermission.Select("MenuID = 400", null).Length > 0 ? "1" : "0";
+                    Homescreen dam = new Homescreen();
+                    dam.CollectionDetailEnable = ColldtlEnable;
+                    dam.ChequeDetailEnable = ChqdtlEnable;
+                    dam.TransVariantEnable = tranvariantEnable;
 
-                dam.Balances = BalanceEnable;
-                dam.QuickAccess = QAEnable;
-                dam.PendingDraft = PendDraftEnable;
-                dam.TransactionSummary = TranSummaryEnable;
-                return View(dam);
+                    dam.Balances = BalanceEnable;
+                    dam.QuickAccess = QAEnable;
+                    dam.PendingDraft = PendDraftEnable;
+                    dam.TransactionSummary = TranSummaryEnable;
+                    return View(dam);
+                }
+                else
+                {
+                    Homescreen dam = new Homescreen();
+                    dam.CollectionDetailEnable = "0";
+                    dam.ChequeDetailEnable = "0";
+                    dam.TransVariantEnable = "0";
+
+                    dam.Balances = "0";
+                    dam.QuickAccess = "0";
+                    dam.PendingDraft = "0";
+                    dam.TransactionSummary = "0";
+                    return View(dam);
+                }
             }
         }
         [HttpGet]
