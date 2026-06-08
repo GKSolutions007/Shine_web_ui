@@ -288,6 +288,59 @@ function sanitizeAlphaNumeric(input, errordiv) {
     }
 }
 
+////
+function NumericWithHyphenSlashBeforeInput(e, input, errordiv) {
+    $(errordiv).html('');
+    input.style.borderColor = '';
+
+    // Allow delete, navigation, undo, redo
+    if (!e.data) return true;
+
+    // Allow paste & autofill
+    if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+        return true;
+    }
+
+    // Invalid chars
+    var regex = /[^0-9\-\/]/;
+
+    // If invalid character found
+    if (regex.test(e.data)) {
+        $(errordiv).html('*Only numbers, (-) and (/) are allowed');
+
+        if (errordiv) {
+            input.style.borderColor = 'red';
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+// Fallback sanitizer (paste, autofill, IME)
+function sanitizeNumericWithHyphenSlash(input, errordiv) {
+
+    var sanitizeRegex = /[^0-9\-\/]/g;
+    var oldValue = input.value;
+
+    $(errordiv).html('');
+
+    input.value = input.value.replace(sanitizeRegex, '');
+
+    input.style.borderColor = '';
+
+    if (oldValue !== input.value) {
+
+        if (errordiv) {
+            input.style.borderColor = 'red';
+        }
+
+        $(errordiv).html('*Only numbers, (-) and (/) are allowed');
+    }
+}
+
+////
 function NumericPercentageBeforeInput(e, input, errordiv) {
     if (errordiv) $(errordiv).html('');
     input.style.borderColor = ''; // reset
@@ -550,47 +603,105 @@ function showInfoSnackbar(message) {
     }, 3000);
 }
 function setDate(FieldID, Type) {
-    $.ajax({
-        //url: Url.Action("setdate", "Home"),
-        url: "Home/setdate",
-        type: 'get',
-        contentType: 'json',
-        data: { TypeID: Type },
-        success: function (data) {
-            $.each(data, function (i, items) {
-                $("#" + FieldID).attr("max", items.MaxDate);
-                $("#" + FieldID).attr("min", items.MinDate);
-                $("#" + FieldID).val(items.Value);
-            });
-        }, error: function (data) {
-            if (data.status == "401") {
-                var msg = data.responseJSON.Message;
-                //showErrorSnackbar(msg + " Logout and Login again.");
+    var FilterDates = localStorage.getItem("FilterDatelist");
+    var DateDatas = JSON.parse(FilterDates);
+    var DateFilterData = DateDatas.filter(fd => fd.ID == (Type == 6 || Type == 7 ? 3 : Type == 2 ? 2 : Type == 4 ? 4 : 1));//Current Date
+    if (DateFilterData) {
+        $.each(DateFilterData, function (i, items) {
+            $("#" + FieldID).attr("max", items.MaxDate.substring(0, 10));
+            $("#" + FieldID).attr("min", items.MinDate.substring(0, 10));
+            if (FieldID.includes("From")) {
+                $("#" + FieldID).val(items.FromDate.substring(0, 10));
+            } else {
+                $("#" + FieldID).val(items.ToDate.substring(0, 10));
             }
-        }
-    })
+        });
+    }
+    //$.ajax({
+    //    //url: Url.Action("setdate", "Home"),
+    //    url: "Home/setdate",
+    //    type: 'get',
+    //    contentType: 'json',
+    //    data: { TypeID: Type },
+    //    success: function (data) {
+    //        $.each(data, function (i, items) {
+    //            $("#" + FieldID).attr("max", items.MaxDate);
+    //            $("#" + FieldID).attr("min", items.MinDate);
+    //            $("#" + FieldID).val(items.Value);
+    //        });
+    //    }, error: function (data) {
+    //        if (data.status == "401") {
+    //            var msg = data.responseJSON.Message;
+    //            //showErrorSnackbar(msg + " Logout and Login again.");
+    //        }
+    //    }
+    //})
+}
+function setDateforCusRep(FieldID, Type,FromorTo) {
+    var FilterDates = localStorage.getItem("FilterDatelist");
+    var DateDatas = JSON.parse(FilterDates);
+    var DateFilterData = DateDatas.filter(fd => fd.ID == (Type == 6 || Type == 7 ? 3 : Type == 2 ? 2 : Type == 4 ? 4 : 1));//Current Date
+    if (DateFilterData) {
+        $.each(DateFilterData, function (i, items) {
+            $("#" + FieldID).attr("max", items.MaxDate.substring(0, 10));
+            $("#" + FieldID).attr("min", items.MinDate.substring(0, 10));
+            if (FromorTo == 1) {
+                $("#" + FieldID).val(items.FromDate.substring(0, 10));
+            } else {
+                $("#" + FieldID).val(items.ToDate.substring(0, 10));
+            }
+        });
+    }
+    
 }
 function SetFilterDate() {
     var sel = $("#cmbFilterDatetype").val();// e.target.value;
-    if (sel == 1)//CD
-    {
-        setDate("dtpFFrom", 0);
-        setDate("dtpFTo", 0);
-    }
-    else if (sel == 2)//PMFD
-    {
-        setDate("dtpFFrom", 2);
-        setDate("dtpFTo", 0);
-    }
-    else if (sel == 3)//PMFD
-    {
-        setDate("dtpFFrom", 6);
-        setDate("dtpFTo", 7);
-    }
-    else if (sel == 4)//FSC
-    {
-        setDate("dtpFFrom", 1);
-        setDate("dtpFTo", 0);
+    AssignDates("dtpFFrom", "dtpFTo", sel);
+    return;
+    //if (sel == 1)//CD
+    //{
+    //    setDate("dtpFFrom", 0);
+    //    setDate("dtpFTo", 0);
+    //}
+    //else if (sel == 2)//PMFD
+    //{
+    //    setDate("dtpFFrom", 2);
+    //    setDate("dtpFTo", 0);
+    //}
+    //else if (sel == 3)//PMFD
+    //{
+    //    setDate("dtpFFrom", 6);
+    //    setDate("dtpFTo", 7);
+    //}
+    //else if (sel == 4)//FSC
+    //{
+    //    setDate("dtpFFrom", 1);
+    //    setDate("dtpFTo", 0);
+    //}
+    //else if (sel == 5)//TQ
+    //{
+    //    setDate("dtpFFrom", 9);
+    //    setDate("dtpFTo", 10);
+    //}
+    // else if (sel == 6)//PQ
+    //{
+    //    setDate("dtpFFrom", 11);
+    //    setDate("dtpFTo", 12);
+    //}
+}
+function AssignDates(FromFieldID, ToFieldID, Type) {
+    var FilterDates = localStorage.getItem("FilterDatelist");
+    var DateDatas = JSON.parse(FilterDates);
+    var DateFilterData = DateDatas.filter(fd => fd.ID == Type);
+    if (DateFilterData) {
+        $.each(DateFilterData, function (i, items) {
+            $("#" + FromFieldID).attr("max", items.MaxDate.substring(0,10));
+            $("#" + FromFieldID).attr("min", items.MinDate.substring(0, 10));
+            $("#" + FromFieldID).val(items.FromDate.substring(0, 10));
+            $("#" + ToFieldID).attr("max", items.MaxDate.substring(0, 10));
+            $("#" + ToFieldID).attr("min", items.MinDate.substring(0, 10));
+            $("#" + ToFieldID).val(items.ToDate.substring(0, 10));
+        });
     }
 }
 document.addEventListener("keydown", function (event) {

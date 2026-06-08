@@ -11,19 +11,20 @@
     <link rel="SHORTCUT ICON" href="~/images/G_large_Transparent.png" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,100,300,500" rel="stylesheet">
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
-    @*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
-    @*<link href="~/Content/5.2.3/bootstrap.min.css" rel="stylesheet" />*@
     <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
     <link href="~/Content/font-awesome.min.css" rel="stylesheet" />
     <link href="~/Content/Snackbar.css" rel="stylesheet" />
+    @*<link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />*@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="~/Content/jquery-ui.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700&family=Epilogue:wght@400;500&display=swap" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="~/Scripts/Validation.js"></script>
+    <script src="~/Autocomplete/GKBSautocomplete.js"></script>
+    @*<script src="~/GKBS_GRID_2.0/js/gridui.js"></script>*@
 
-    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-base/styles/bootstrap5.css" rel="stylesheet">
+    @*<link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-base/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-grids/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-buttons/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-popups/styles/bootstrap5.css" rel="stylesheet">
@@ -36,10 +37,14 @@
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-notifications/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-splitbuttons/styles/bootstrap5.css" rel="stylesheet">
     <script src="https://cdn.syncfusion.com/ej2/31.2.2/dist/ej2.min.js" type="text/javascript"></script>
-    <script src="https://cdn.syncfusion.com/ej2/syncfusion-helper.js" type="text/javascript"></script>
-    @*<link href="~/Content/Site.css" rel="stylesheet" />
-        <link href="~/Content/navbar.css" rel="stylesheet" />*@
+    <script src="https://cdn.syncfusion.com/ej2/syncfusion-helper.js" type="text/javascript"></script>*@
+
     <style>
+        
+            table tr th {
+            background-color: var(--gridheaderbackground) !important;
+            color: var(--gridheadertextcolor) !important;
+        }
         /* Default (above 800px) */
         .textforblw800 {
             display: none;
@@ -65,7 +70,7 @@
             padding: 7px 10px !important;
             font-size: 13px !important;
             font-weight: 600 !important;
-            color: white !important;
+            color: var(--ButtonTextColor) !important;
         }
 
         .form-control {
@@ -815,7 +820,7 @@
         @@media only screen and (min-width: 600px) {
             .modalDocFilter-content {
                 background-color: #ffffff;
-                margin: 3% auto; /* 15% from the top and centered */
+                margin: auto; /* 15% from the top and centered */
                 padding: 1px;
                 border: 1px solid #888;
                 width: 70%; /* Could be more or less, depending on screen size */
@@ -830,7 +835,7 @@
         @@media only screen and (max-width: 600px) {
             .modalDocFilter-content {
                 background-color: #ffffff;
-                margin: 10% auto; /* 15% from the top and centered */
+                margin: 5% auto; /* 15% from the top and centered */
                 padding: 25px;
                 border: 1px solid #888;
                 width: 95%; /* Could be more or less, depending on screen size */
@@ -1011,12 +1016,26 @@
             font-size: 14px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.25);
         }
+        /* Overlay to block background interaction */
+        .RepLoader-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* semi-transparent dark backdrop */
+            z-index: 9998; /* just below the snackbar */
+        }
 
-            /* Show animation */
-            .RepLoadersnackbar.show {
-                visibility: visible;
-                animation: slideDown 0.3s, fadeout 0.3s 3s;
+            .RepLoader-overlay.show {
+                display: block;
             }
+        /* Show animation */
+        .RepLoadersnackbar.show {
+            visibility: visible;
+            animation: slideDown 0.3s, fadeout 0.3s 3s;
+        }
 
         /* Slide from top */
         @@keyframes slideDown {
@@ -1245,11 +1264,13 @@
                 transform: translateY(1px);
                 box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 4px;
             }
+
         #btnYes:focus {
             transform: scale(1.1);
             border: 1px solid #4caf50;
             box-shadow: inset 0 0 6px #4caf50, 0 0 10px #4caf50;
         }
+
         #btnNo:focus {
             transform: scale(1.1);
             border: 1px solid #f44336;
@@ -1258,6 +1279,7 @@
     </style>
 </head>
 <body>
+    <div id="RepLoaderOverlay" class="RepLoader-overlay"></div>
     <div id="RepLoadersnackbar" class="RepLoadersnackbar">
         <table>
             <tr>
@@ -1424,30 +1446,32 @@
                                         {
                                             FavMenuID = Convert.ToInt32(drFav[0]["MenuId"]);
                                         }
-                                        // Filter favorites
-                                        System.Data.DataRow[] drFavorites = dtPermission.Select("MenuParentId = " + FavMenuID + " and Favourites = 1 and IsMenu = 1", "MenuName");
-                                        if (drFavorites.Length > 0)
+                                        if (dtPermission.Rows.Count > 0)
                                         {
-                                            for (int f = 0; f < drFavorites.Length && f < 3; f++)
+                                            // Filter favorites
+                                            System.Data.DataRow[] drFavorites = dtPermission.Select("MenuParentId = " + FavMenuID + " and Favourites = 1 and IsMenu = 1", "MenuName");
+                                            if (drFavorites.Length > 0)
                                             {
-                                                string favMenuName = drFavorites[f]["MenuName"].ToString();
-                                                string favController = drFavorites[f]["LocationName"].ToString();
-                                                string favEncDispName = drFavorites[f]["EncMenuName"].ToString();
-                                                string favEncFID = drFavorites[f]["EncFormID"].ToString();
-                                                string favEncTypeID = "jJOtHsRVwYECOhoiBc69dA==";
-                                                string favEncTranID = "jJOtHsRVwYECOhoiBc69dA==";
-                                                string favIsMenu = drFavorites[f]["IsMenu"].ToString();
-
-                                                if (favIsMenu == "1")
+                                                for (int f = 0; f < drFavorites.Length && f < 3; f++)
                                                 {
-                                                    // Generate URL for the menu
-                                                    string favUrl = Url.Action("Index", favController, new
+                                                    string favMenuName = drFavorites[f]["MenuName"].ToString();
+                                                    string favController = drFavorites[f]["LocationName"].ToString();
+                                                    string favEncDispName = drFavorites[f]["EncMenuName"].ToString();
+                                                    string favEncFID = drFavorites[f]["EncFormID"].ToString();
+                                                    string favEncTypeID = "jJOtHsRVwYECOhoiBc69dA==";
+                                                    string favEncTranID = "jJOtHsRVwYECOhoiBc69dA==";
+                                                    string favIsMenu = drFavorites[f]["IsMenu"].ToString();
+
+                                                    if (favIsMenu == "1")
                                                     {
-                                                        name = favEncDispName,
-                                                        strFormID = favEncFID,
-                                                        TypeID = favEncTypeID,
-                                                        TranID = favEncTranID
-                                                    });
+                                                        // Generate URL for the menu
+                                                        string favUrl = Url.Action("Index", favController, new
+                                                        {
+                                                            name = favEncDispName,
+                                                            strFormID = favEncFID,
+                                                            TypeID = favEncTypeID,
+                                                            TranID = favEncTranID
+                                                        });
 
                                                     <a href="@favUrl" target="_blank"
                                                        class="btn btn-sm"
@@ -1469,10 +1493,11 @@
                                                         <i class="fa-solid fa-arrow-up-right-from-square" style="margin-right: 4px; font-size: 10px;"></i>
                                                         @favMenuName
                                                     </a>
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
                                 </div>
                             </td>
 
@@ -1483,7 +1508,7 @@
 
 
                 <div class="sideallmenus" style="padding-bottom: 75px;">
-                    @for (int iRow = 0; iRow < dtParent.Rows.Count; iRow++)
+                    @for (int iRow = 0; iRow < dtParent.Rows.Count && dtPermission.Rows.Count > 0; iRow++)
                     {
                         int nParentID = Convert.ToInt32(dtParent.Rows[iRow]["MenuId"]);
                         int nTreeID = Convert.ToInt32(dtParent.Rows[iRow]["MenuTree"]);
@@ -1498,14 +1523,14 @@
 
                             if (strManuName == "Reports")
                             {
-                                @*@Html.ActionLink("Reports", "index", "Reports", new { name = MainMenuEnc, strFormID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px;padding-bottom:50px", @title = User, @target = "_black" })*@
-                                @Html.ActionLink("Reports", "index", "ReportsUpgraded", new { name = MainMenuEnc, strFormID = ZeEnc, TypeID = ZeEnc, TranID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px", @target = "_black" })
+                                @*@Html.ActionLink("Reports", "index", "Reports", new { name = MainMenuEnc, strFormID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px;padding-bottom:50px", @title = User, @target = "_blank" })*@
+                                @Html.ActionLink("Reports", "index", "ReportsUpgraded", new { name = MainMenuEnc, strFormID = ZeEnc, TypeID = ZeEnc, TranID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px", @target = "_blank" })
                                 continue;
                             }
                             else if (nTreeID == 11)
                             {
-                                @*@Html.ActionLink("Reports", "index", "Reports", new { name = MainMenuEnc, strFormID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px;padding-bottom:50px", @title = User, @target = "_black" })*@
-                                @Html.ActionLink("Financial Reports", "index", "FinancialReports", new { name = MainMenuEnc, strFormID = ZeEnc, TypeID = ZeEnc, TranID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px", @target = "_black" })
+                                @*@Html.ActionLink("Reports", "index", "Reports", new { name = MainMenuEnc, strFormID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px;padding-bottom:50px", @title = User, @target = "_blank" })*@
+                                @Html.ActionLink("Financial Reports", "index", "FinancialReports", new { name = MainMenuEnc, strFormID = ZeEnc, TypeID = ZeEnc, TranID = ZeEnc }, new { @class = "dropdown-btn linkforecolor", @style = "font-weight:bold;color:white;padding-left:15px", @target = "_blank" })
                                 continue;
                             }
                             else
@@ -1553,7 +1578,7 @@
                     @*<div style="padding-left:15px">
                             @Html.ActionLink("LogOut - " + User, "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold", @title = User, @id = "algot" })
 
-                        </div>*@
+                        </div>*@                    
                     <div class="dvmainmenuheader" id="sidenavfooter" style="bottom: 0; position: fixed; width: 15%;padding:5px;font-size:16px;z-index:10000 ">
                         <div class="account-link-container" style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 5px;">
                             <a href="@Url.Action("Index", "UpdateUser", new { name = "ONuKr1oIASSV+koj5n/Zz0ymu1AOgX8YlbLqAg8l8rQ=", strFormID = "BOII5FUynjpl5RZJJ8nW1g==" })" title="User Profile" class="dropdown linkforecolor" style="display: flex; align-items: center; text-decoration: none; color: var(--CompanyNameColor); font-weight: bold;">
@@ -1563,7 +1588,7 @@
                         </div>
                         <i class="fa fa-sign-out" style="font-size: 18px; font-weight: bold; color: var(--CompanyNameColor); padding: 5px "></i>
                         @*@Html.ActionLink("Test Level Rep", "Index", "TestLevelReport", new { name = "ONuKr1oIASSV+koj5n/Zz0ymu1AOgX8YlbLqAg8l8rQ=", strFormID = "BOII5FUynjpl5RZJJ8nW1g==" }, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot" })<br />*@
-                        @Html.ActionLink("LogOut", "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot" })
+                        @Html.ActionLink("LogOut", "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot", onclick = "localStorage.removeItem('FilterDatelist');localStorage.removeItem('ThemeData'); sessionStorage.clear();" })
                     </div>
                 </div>
             </div>
@@ -1589,7 +1614,7 @@
             <div class="list-container" id="listContainer" style="padding-top:3px;">
 
                 @{
-                    if (Session["dtPermission"] != null)
+                    if (Session["dtPermission"] != null && dtPermission.Rows.Count > 0)
                     {
                         System.Data.DataRow[] drrr = dtPermission.Select("MenuChildLevel = 2", "MenuName");
                         if (drrr.Count() > 0)
@@ -1624,7 +1649,9 @@
             </div>
         </div>-->
         <div class="modal fade modalQuickSearch" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+            o
             <div class="modal-dialog">
+                o
                 <div class="modal-content modalQuickSearch-content">
 
                     <!-- Modal Header -->
@@ -1645,7 +1672,7 @@
                         <div class="list-container" id="listContainer" style="padding-top:3px;">
 
                             @{
-                                if (Session["dtPermission"] != null)
+                                if (Session["dtPermission"] != null&& dtPermission.Rows.Count > 0)
                                 {
                                     System.Data.DataRow[] drrr = dtPermission.Select("MenuChildLevel = 2", "MenuName");
                                     if (drrr.Count() > 0)
@@ -1878,7 +1905,7 @@
          tabindex="-1"
          aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
 
-        <div class="modal-dialog modal-lg" style="width:auto;">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="width:auto;">
             <div class="modal-content modalDocFilter-content">
 
                 <!-- Modal Header -->
@@ -1899,7 +1926,9 @@
 
                     <input hidden id="txtcommonfilterapplyfieldid" />
                     <input hidden id="txtcommonfilterapplytransid" />
-
+                    <input hidden id="txtcommonfilterapplytransname" />
+                    <input hidden id="txtcommonfilterapplytransmode" />
+                    <input hidden id="txtcommonfilterapplydocidentid" />
                     <div class="table-responsive">
                         <table class="w-100">
                             <tr class="bgclrfortr">
@@ -1912,13 +1941,18 @@
                                                id="txtCommonDocFilterPartyName"
                                                placeholder="Party Name">
 
-                                        <div class="text-danger pt-1 ps-1 clrdivs"
-                                             id="divErrCommonDocFilterPartyName"></div>
+                                        <div class="text-danger pt-1 ps-1 clrdivs" id="divErrCommonDocFilterPartyName"></div>
                                     </div>
                                 </td>
-
+                                <!-- Branch -->
+                                <td width="25%">
+                                    <div>
+                                        <select class="form-control" id="cmbCommonDocFilterBranch"></select>
+                                        <div class="text-danger pt-1 ps-1 clrdivs" id="divErrCommonDocFilterBranch"></div>
+                                    </div>
+                                </td>
                                 <!-- Range -->
-                                <td>
+                                <td width="30%">
                                     <div>
                                         <input type="text"
                                                class="form-control"
@@ -1931,7 +1965,7 @@
                                 </td>
 
                                 <!-- From -->
-                                <td>
+                                <td width="10%">
                                     <input class="form-control FormfilterclrField"
                                            type="date"
                                            id="dtpCommonDocFilterFrom"
@@ -1940,9 +1974,9 @@
                                     <div class="text-danger pt-1 ps-1 clrdivs"
                                          id="divErrCommonDocFilterFrom"></div>
                                 </td>
-
+                                
                                 <!-- To -->
-                                <td>
+                                <td width="10%">
                                     <input class="form-control FormfilterclrField"
                                            type="date"
                                            id="dtpCommonDocFilterTo"
@@ -1953,7 +1987,7 @@
                                 </td>
 
                                 <!-- Filter Type -->
-                                <td>
+                                <td width="5%">
                                     <select class="form-select"
                                             id="dtpCommonDocFilterType">
                                         <option value="1">All</option>
@@ -1966,11 +2000,11 @@
                                 </td>
 
                                 <!-- Filter Button -->
-                                <td class="ps-2">
+                                <td width="20%" class="ps-2">
                                     <button id="btnCommonDocumentFilter"
                                             class="btn btn-primary">
                                         <i class="bi bi-funnel-fill me-1"></i>
-                                        Filter
+                                        <span class="textforabv800"> Filter</span>
                                     </button>
                                 </td>
 
@@ -1978,15 +2012,17 @@
                         </table>
                     </div>
 
-                    <div style="height:320px">
+                    <div hidden style="height:320px">
                         <div id="DocumetFiltersGrid"></div>
+                        <!--Documet Filters Grid -->
                     </div>
+                    <div id="commondocumentfiltergrid" style="height:420px; width:100%;"></div>
 
                 </div>
 
                 <!-- Modal Footer -->
                 <div class="modal-footer"
-                     style="background-color:skyblue;padding:3px">
+                     style="background-color: skyblue; padding: 3px; z-index: 1055; position: sticky; bottom: 0; ">
 
                     <button type="button"
                             class="btn btn-success"
@@ -2020,6 +2056,7 @@
                 <!-- Modal Body -->
                 <div class="modal-body p-2">
                     <div id="dvAssign" class="w-100 pb-2">
+                        <input id="txtGenSetSubmitApplygridname" hidden/>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped align-middle"
                                    id="tblGenColumnSettings" style="width:100%">
@@ -2063,64 +2100,69 @@
         </div>
     </div>
     <style>
-/* Modern Header */
-.modern-header {
-    background-color: #f8f9fa;
-    border-bottom: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-radius: 0.5rem 0.5rem 0 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+        /* Modern Header */
+        .modern-header {
+            background-color: #f8f9fa;
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
 
-.modern-header .modal-title {
-    font-weight: 600;
-    color: #343a40;
-}
+            .modern-header .modal-title {
+                font-weight: 600;
+                color: #343a40;
+            }
 
-.modern-close {
-    background: transparent;
-    border: none;
-    font-size: 1.2rem;
-    color: #6c757d;
-    cursor: pointer;
-}
+        .modern-close {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            color: #6c757d;
+            cursor: pointer;
+        }
 
-/* Modern Footer */
-.modern-footer {
-    background-color: #f8f9fa;
-    border-top: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0 0 0.5rem 0.5rem;
-    justify-content:flex-start;
-}
+        /* Modern Footer */
+        .modern-footer {
+            background-color: #f8f9fa;
+            border-top: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+            justify-content: flex-start;
+        }
 
-/* Buttons */
-.btn-modern {
-    border-radius: 0.5rem;
-    padding: 0.5rem 1.2rem;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: all 0.2s;
-}
+        /* Buttons */
+        .btn-modern {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
 
-.btn-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
+            .btn-modern:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
 
-/* Optional: Icon Animation */
-#modalIcon i {
-    color: #007bff;
-    animation: zoomInOut 1s infinite;
-}
+        /* Optional: Icon Animation */
+        #modalIcon i {
+            color: #007bff;
+            animation: zoomInOut 1s infinite;
+        }
 
-@@keyframes zoomInOut {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.3); }
-}
+        @@keyframes zoomInOut {
+            0%, 100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+        }
     </style>
     <div class="modal fade" id="confirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index:5002">
         <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -2159,6 +2201,7 @@
         </div>
     </div>
     <script>
+        var Aurl = '@Session["APIurl"]';
         var RID = '@Session["RoleID"]';
         var ItemsperPage =  parseInt('@Session["ItemsperPage"]', 10) < 0 ? 'All' :parseInt('@Session["ItemsperPage"]', 10)  || 10;
         var SendAutoMail = 0;
@@ -2189,15 +2232,173 @@
             clearInterval(autoDraftInterval);
             autoDraftInterval = null;
         }
+        function Valuewithcomma(num) {
+            return parseFloat(num).toLocaleString('en-IN', {
+                minimumFractionDigits: 2, maximumFractionDigits: 2
+            });
+        }
         function formatIndianCurrency(num) {
-            return '&#8377; ' + parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return parseFloat(num).toLocaleString('en-IN', {
+                minimumFractionDigits: 2, maximumFractionDigits: 2, style: 'currency',
+                currency: 'INR'
+            });
+        }
+
+        function GetColumnSettingsData(nMode, nFormID, nTableID,Threedoticon = false) {
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                //async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        columns = (data);                        
+                        if (typeof actions !== "undefined" && actions) {
+                            columns.push(actions);
+                        }
+                        if (Threedoticon)
+                            columns.push(OtherActions);
+
+                        console.log("Column Settings ", columns);
+                    } else {
+                        showErrorSnackbar("No column data found");
+                    }
+                }
+            });
+        }
+        function ReturnColumnSettingsData(nMode, nFormID, nTableID) {    
+            var coldata = [];
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        console.log("Column Settings ", data);
+                        coldata = data;
+                    } else {                        
+                        showErrorSnackbar("No column data found");
+                        coldata = [];
+                    }
+                }, error: function (data) { coldata = []; }
+            });
+            return coldata;
+        }
+        function CommonDocFilterColumnSettingsData(nMode, nFormID, nTableID, Threedoticon = false) {
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                //async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        console.log("data ", data);                       
+                        var selchk = {
+                            "field": "Select",
+                            "header": "Select",
+                            "type": "checkbox",
+                            "checked": true,
+                            "width": 50,
+                            "align": "center",
+                            "visible": true,
+                            "EnableColumnMenu": true,
+                            "ShowinColumnOption": false,
+                            "Total": false,
+                            "TotalYN": "1",
+                            "EnableSum": false,
+                            "EnableAvg": false,
+                            "EnableCount": false,
+                            "EnableUnique": false,
+                            "precision": "2",
+                            "ClickPopup": false,
+                            "Printwidth": 94,
+                            "PrintYN": false,
+                            "PrintColumnName": "Select"
+                        }
+                        //gkbscustomfiltercolumnsettings.push(selchk);
+                        //gkbscustomfiltercolumnsettings = (data);
+                        gkbscustomfiltercolumnsettings = [selchk, ...data];
+                    } 
+                }
+            });
+        }
+        LoadBranchByRoles('#cmbCommonDocFilterBranch');
+        function LoadBranchByRoles(FieldIDs) {
+            $.ajax({
+                url: Aurl + "BranchMapping/getByRole",
+                type: 'GET',
+                dataType: 'json',
+                data: { RoleID: RID },
+                xhrFields: { withCredentials: true },
+                success: function (data) {
+                    $(FieldIDs).empty();
+                    $(FieldIDs).append($('<option/>', { value: 0, text: "-- Select --" }));
+                    var defaultBranch = 0;
+                    $.each(data, function (i, item) {
+                        $(FieldIDs).append($('<option/>', {
+                            value: item.BranchID,
+                            text: item['Branch Name']
+                        }));
+                        if (item.SetAsDefault) {
+                            defaultBranch = item.BranchID;
+                        }
+                    });
+                    if (defaultBranch != 0) {
+                        $(FieldIDs).val(defaultBranch);//.trigger("change");
+                    }
+                }
+            });
+        }
+        
+        function GetPrintProfile(nTransID) {
+            $.ajax({
+                url: Aurl + "printprofileconfig/getprofile",
+                type: 'get',
+                contentType: 'json',
+                data: { TransID: nTransID },
+                xhrFields: {
+                    withCredentials: true
+                },
+                async: false,
+                success: function (data) {
+                    $('#cmbPrintProfile').find("option").remove();
+                    $('#cmbPrintProfile').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    var lstdata = eval(data)
+                    var getdef = lstdata.filter(pr => pr.DefaultConfig == 1);
+                    var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                    $.each(lstdata, function (i, items) {
+                        $('#cmbPrintProfile').append($('<option/>', {
+                            value: items.ConfigID,
+                            text: items.ConfigName, 'data-automail': items.AutoMail
+                        }));
+                        $('#cmbPrintProfile').val(defid);
+                        PrintConfigID = defid;
+                    });
+                }
+            });
         }
     </script>
     <link href="~/Content/dialogbox/confirmdialog.css" rel="stylesheet" />
     <canvas id="cmCanvas"></canvas>
     <div id="cmOverlay" style="z-index:5002" tabindex="-1"></div>
 
-    <div  id="cmDialog">
+    <div id="cmDialog">
         <div class="cm-bar"></div>
         <div class="cm-handle" id="cmHandle">
             <div class="cm-icon-ring">
@@ -2231,7 +2432,7 @@
         </div>
     </div>
 
-    <div style="padding-left: 15px; padding-top: 40px;padding-bottom: 30px;width:100%">
+    <div style="padding-left: 10px; padding-top: 40px;padding-bottom: 20px;width:100%">
         <div id="actionPopup" class="action-popup">
             <div class="popup-header">
                 <span>Actions</span>
@@ -2251,6 +2452,7 @@
 @*<script src="~/Scripts/jquery-3.7.1.min.js"></script>*@
 <script src="~/Scripts/redirectform.js"></script>
 <script type="text/javascript">
+    
     var UserImgData = '@Session["UserImgData"]';
     if (UserImgData != null && UserImgData != ""){
         $("#imgUserProfilePicture").attr("src", "data:image/png;base64," + UserImgData);
@@ -2355,7 +2557,6 @@
         "columnDefs": [{ "targets": [0, 6], "class": "text-center" }, { "targets": [0,1], "visible": false }],
     });
 
-    var Aurl = '@Session["APIurl"]';
     var TableGenColumnSettings = $('#tblGenColumnSettings').DataTable({
         paging: false,
         searching: true,
@@ -2383,7 +2584,7 @@
     $(".main").css("margin-left", "0");
 
     $(".sidenav").mouseleave(function () {//
-        console.log("Mouse leave trigger");
+        //console.log("Mouse leave trigger");
         $(".sidenav,#sidenavfooter").css("width", "0%");
         $(".main,.footerAction").css("width", "99%");
         $(".main").css("margin-left", "0");
@@ -2392,7 +2593,7 @@
         $("#sidedivcollapsed").hide();
     });
     $("#sidedivexpand,.sideallmenus,#tdSideMenuIcon,#sidenav").mouseenter(function () {
-        console.log("Mouse enter triiger");
+        //console.log("Mouse enter triiger");
         let screenWidth = $(window).width();
         let sideNavWidth = "17%";
         let mainWidth = "83%";
@@ -2475,11 +2676,11 @@
                     firstelement = a[i];
                 ElementTaken = true;
                 //a[0].style.color = 'green';
-                console.log("1");
+                //console.log("1");
             }
             else
             {
-                console.log("2");
+                //console.log("2");
                 a[i].style.display = "none";
 
             }
@@ -2719,12 +2920,12 @@
     $('#tblInvoiceCollectionData tbody').on('click', '.clsInvoiceCollectionPopup', function (e) {
         rowdata = TableInvoiceCollection.row($(this).parents('tr')).data();
         var dTransID = (rowdata[0] == 15 || rowdata[0] == 16) ? 19 : 18;
-        console.log("rowdata", rowdata);
+        //console.log("rowdata", rowdata);
         var DocID = rowdata[1];
         OpenTransactionDocument(dTransID, DocID);
     });
-    GetColorData(1, '@Session["ThemeID"]');
-
+    //GetColorData(1, '@Session["ThemeID"]');
+    GetColorData();
     GetFilterComboData();
     function GetFilterComboData() {
         var FDT = '@Session["FilterDateType"]';
@@ -2780,7 +2981,7 @@
             },
             success: function (data) {
                 $("#loadingDiv").remove();
-                console.log("data", data);
+                //console.log("data", data);
                 $.each(data, function (i, items) {
                     if (items.MsgID == "0") {
                         showSuccessSnackbar(items.Message);
@@ -2800,11 +3001,11 @@
         if (e.key === "Enter") {
 
             if (e.target.localName != "button") {
-                console.log("Enter Clicked")
+                console.log("Enter Clicked", new Date().toISOString())
                 e.preventDefault(); // Prevent default behavior
                 var nextinp = $('input:not([type=hidden]):not([readonly]):not([disabled]),select:not([disabled]),button, textarea').eq($('input:not([type=hidden]):not([readonly]):not([disabled]),select,button, textarea').index(this) + 1);
-                //console.log(nextinp);
-                console.log("Field ID ", $(this)[0].id);
+                ////console.log(nextinp);
+                //console.log("Field ID ", $(this)[0].id);
                 var Field = $(this)[0];
                 var FieldID = "";
                 if (Field) {
@@ -2817,7 +3018,7 @@
                     {
                         var lencls = $('.ui-menu-item').length;
                         var vbl = $('.ui-menu-item').is(":visible");
-                        //console.log("Visble : ", vbl, " ui-menu-item Count : " + lencls);
+                        ////console.log("Visble : ", vbl, " ui-menu-item Count : " + lencls);
                         if (!vbl) {
                             if (nextinp.length) {
                                 var strType = nextinp[0].localName;
@@ -2907,7 +3108,7 @@
                 $('#tblProductData tbody tr').each(function() {
                     var $oldRow = $(this);
                     var dtRowData = ProductTable.row(this).data();
-                    console.log("old row data : ", $oldRow, "Prod field : ", dtRowData[14], "css prop : ", $oldRow[0].style.cssText);
+                    //console.log("old row data : ", $oldRow, "Prod field : ", dtRowData[14], "css prop : ", $oldRow[0].style.cssText);
                     rowcssprop = $oldRow[0].style.cssText;
                     // Capture all current input values from the DOM
                     var editedValues = {
@@ -2987,8 +3188,8 @@
                             if ($input.length) {
                                 $input.val(data.value);
                                 $input[0].style.color = data.color;
-                                if (data.txttag) {                                    
-                                    $input.attr('txttag', data.txttag);                                    
+                                if (data.txttag) {
+                                    $input.attr('txttag', data.txttag);
                                 }
                             }
                         });
@@ -3000,7 +3201,8 @@
                             var $select = $newRow.find('#' + id);
                             if ($select.length) {
                                 $select.val(value);
-                                $select[0].style.color = value.color;
+                                if (value.color)
+                                    $select[0].style.color = value.color;
                             }
                         });
 
@@ -3021,15 +3223,15 @@
                 // Step 4: Update serial numbers
                 ReorderSerialNo();
 
-                //console.log("Rows interchanged, indices synced, values preserved!");
+                ////console.log("Rows interchanged, indices synced, values preserved!");
             }
         });
     }
-    $('#tblProductData tbody').on('click', 'tr', function () {
-        //alert('Row index: ' + ProductTable.row(this).index());
-        var tttselrid = ProductTable.row(this).index()
-        console.log("Click row index : ", tttselrid);
-    });
+    //$('#tblProductData tbody').on('click', 'tr', function () {
+    //    //alert('Row index: ' + ProductTable.row(this).index());
+    //    var tttselrid = ProductTable.row(this).index()
+    //    //console.log("Click row index : ", tttselrid);
+    //});
     function arrowKeyHandlersave(e) {
         if (e.key === "ArrowRight") {
             e.preventDefault();
@@ -3063,10 +3265,10 @@
                         .find(".ui-dialog-titlebar-close")
                         .removeClass("ui-dialog-titlebar-close")
                         .html("x");
-                    console.log("modal open");
+                    //console.log("modal open");
                     setTimeout(function () {
                     if (cfFocus == 1) {
-                        console.log("modal yes focus");
+                        //console.log("modal yes focus");
                         $(".clsYes").focus();
                         $(".clsYes").select();
                     }
@@ -3343,12 +3545,13 @@ function CloseConfirmDialogMsg_old(message) {
                     const currentRow = input.closest('tr');
                     const inputsInRow = Array.from(currentRow.querySelectorAll('input'));
                     const inputIndex = inputsInRow.indexOf(input);
-                    var hasclass = $(this).hasClass('ui-autocomplete-input');
+                    console.log(input.className);
+                    var hasclass = $(this).is('.gkbsautocomplete, .ui-autocomplete-input');//$(this).hasClass('gkbsautocomplete') || $(this).hasClass('ui-autocomplete-input');
                     if (e.key === 'ArrowDown') {
                         if (hasclass) {
                             var vbl = $('.ui-menu-item').is(":visible");
                             if (vbl) {
-                                //console.log("Autolist field Down");
+                                ////console.log("Autolist field Down");
                             }
                         }
                         else {
@@ -3365,7 +3568,7 @@ function CloseConfirmDialogMsg_old(message) {
                         if (hasclass) {
                             var vbl = $('.ui-menu-item').is(":visible");
                             if (vbl) {
-                                //console.log("Autolist field Down");
+                                ////console.log("Autolist field Down");
                             }
                         }
                         else {
@@ -3394,35 +3597,10 @@ function CloseConfirmDialogMsg_old(message) {
                         }
                     }
 
-                    if (!e.shiftKey && e.key === 'Enter') {
-                        const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input input:not([disabled])'));
+                    if (e.key === 'Enter') {
+                        const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input'));
                         const currentInputIndex = allInputsList.indexOf(input);
                         const nextInput = allInputsList[currentInputIndex + 1];
-
-                        if (nextInput) {
-                            var nm = nextInput.name;
-                            if (nm == "ProdDiscPern") {
-                                setTimeout(() => {
-                                    const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
-                                    if (newInputs[0]) newInputs[0].focus();
-                                }, 100);
-                            } else {
-                                nextInput.focus();
-                            }
-                        } else {
-                            // Call your add row function here
-                            Addprodgridline();
-                            setTimeout(() => {
-                                const newInputs = document.querySelectorAll('#tblProductData tbody tr:last-child input');
-                                if (newInputs[0]) newInputs[0].focus();
-                            }, 100);
-                        }
-                        e.preventDefault();
-                    }
-                    if (e.shiftKey && e.key === 'Enter') {
-                        const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
-                        const currentInputIndex = allInputsList.indexOf(input);
-                        const nextInput = allInputsList[currentInputIndex - 1];
 
                         if (nextInput) {
                             var nm = nextInput.name;
@@ -3535,11 +3713,11 @@ function CloseConfirmDialogMsg_old(message) {
     var albgc = "";
     function GetColorData() {
         var themedata = localStorage.getItem("ThemeData");
-        //console.log("themedata ", JSON.parse(themedata));
+        ////console.log("themedata ", JSON.parse(themedata));
         $.each(JSON.parse(themedata), function (i, items) {
             $(".navbar-fixed-top,.sidenav,.dropdown-container,.dvmainmenuheader").css("background-color", items.MenuHeader);
             $("#acompname").css("color", items.CompanyNameColor);
-            console.log("dvmainmenuheader ", items.MenuHeader)
+            //console.log("dvmainmenuheader ", items.MenuHeader)
             $(".btn-info").css("background-color", items.AddButton);
 
             $(".btn-primary").css("background-color", items.DraftButton);
@@ -3570,7 +3748,7 @@ function CloseConfirmDialogMsg_old(message) {
             document.documentElement.style.setProperty('--header-bg', items.GridHeaderBackGround);
             document.documentElement.style.setProperty('--header-text', items.GridHeaderTextColor);
             document.documentElement.style.setProperty('--primary-color', items.GridHeaderBackGround);
-
+            
             document.documentElement.style.setProperty('--dynamic-bg', items.AutocompleteBG);
             document.documentElement.style.setProperty('--submenuborderleft', items.MenuHeader);
             //$(".acItem .name").css("color", items.AutocompleteLine1);
@@ -3578,6 +3756,9 @@ function CloseConfirmDialogMsg_old(message) {
             //$(".acItem .desc").css("color", items.AutocompleteLine2);
             document.documentElement.style.setProperty('--acitemdesc', items.AutocompleteLine2);
             document.documentElement.style.setProperty('--CompanyNameColor', items.CompanyNameColor);
+            document.documentElement.style.setProperty('--ButtonTextColor', items.ButtonTextColor);
+            document.documentElement.style.setProperty('--gridheaderbackground', items.GridHeaderBackGround);
+            document.documentElement.style.setProperty('--gridheadertextcolor', items.GridHeaderTextColor);
         });
     }
     function GetColorData_old(nMode, strName = null) {
@@ -3594,7 +3775,7 @@ function CloseConfirmDialogMsg_old(message) {
                     $.each(data, function (i, items) {
                         $(".navbar-fixed-top,.sidenav,.dropdown-container,.dvmainmenuheader").css("background-color", items.MenuHeader);
                         $("#acompname").css("color", items.CompanyNameColor);
-                        console.log("dvmainmenuheader ", items.MenuHeader)
+                        //console.log("dvmainmenuheader ", items.MenuHeader)
                         $(".btn-info").css("background-color", items.AddButton);
 
                         $(".btn-primary").css("background-color", items.DraftButton);
@@ -4003,7 +4184,7 @@ function CloseConfirmDialogMsg_old(message) {
                                 var phone = items.RowID
                                 var message = items.Message;
                                 var url = "https://api.whatsapp.com/send?phone=" + phone + "&text=" + encodeURIComponent(message);
-                                console.log("url : ", url);
+                                //console.log("url : ", url);
                                 window.open(url, "_blank");
                             }
                             else if (items.MsgID == 1) {
@@ -4026,13 +4207,13 @@ function CloseConfirmDialogMsg_old(message) {
     function printEmbedDocument(testlink) {
         var ismoborwin = '@Session["DeviceOS"]';//"Windows","macOS","Android","iOS","Linux"
         // Fetch the remote file
-        console.log("testlink", testlink);
+        //console.log("testlink", testlink);
         if (['Windows', 'macOS'].includes(ismoborwin)) {
             fetch(testlink)
                 .then(response => response.blob())
                 .then(pdfBlob => {
                     const pdfURL = URL.createObjectURL(pdfBlob);
-                    console.log("pdfURL", pdfURL);
+                    //console.log("pdfURL", pdfURL);
                     let ifr = document.createElement("iframe");
                     ifr.style.position = 'absolute';
                     ifr.style.width = "0px";
@@ -4069,7 +4250,7 @@ function CloseConfirmDialogMsg_old(message) {
     function printEmbedDocument_TEST(testlink) {
     var ismoborwin = '@Session["DeviceOS"]';
 
-    console.log("testlink", testlink);
+    //console.log("testlink", testlink);
 
     if (['Windows', 'macOS'].includes(ismoborwin)) {
         fetch(testlink)
@@ -4113,7 +4294,7 @@ function CloseConfirmDialogMsg_old(message) {
     }
 }
     function previewiframe(link) {
-        console.log(link);
+        //console.log(link);
         const options = "#toolbar=0&navpanes=0&scrollbar=0&zoom=80";
         document.getElementById("iframepreview").src = link + options;
         //modaliframePreview.style.display = "block";
@@ -4131,7 +4312,10 @@ function CloseConfirmDialogMsg_old(message) {
         $("#DocumetFiltersGrid").html("");
         var IsValid = true;
         $(".clrdivs").html("");
-
+        if ($("#cmbCommonDocFilterBranch").val() == 0) {
+            IsValid = false;
+            $("#divErrCommonDocFilterBranch").html("Select Branch");
+        }
         if ($("#dtpCommonDocFilterFrom").val() == "") {
             IsValid = false;
             $("#divErrCommonDocFilterFrom").html("From date should not be empty");
@@ -4153,7 +4337,11 @@ function CloseConfirmDialogMsg_old(message) {
                 "DocRange": $("#txtCommonDocFilterRange").val(),
                 "Party": $("#txtCommonDocFilterPartyName").val(),
                 "FilterType": $("#dtpCommonDocFilterType").val(),
-                //dtpCommonDocFilterType
+                "Branch": $("#cmbCommonDocFilterBranch").val(), 
+                "TransName": $("#txtcommonfilterapplytransname").val(), 
+                "TransMode": $("#txtcommonfilterapplytransmode").val(),
+                "TransIdentID": $("#txtcommonfilterapplydocidentid").val(),
+                //,
             }
             //FilterData.push(lst)
             $.ajax({
@@ -4167,95 +4355,176 @@ function CloseConfirmDialogMsg_old(message) {
                     withCredentials: true
                 },
                 success: function (data) {
-                    if (eval(data).length > 0) {
-                        CustomFilterbindDataTable(eval(data))
-                    } else {
-                        showErrorSnackbar("No records found")
-                    }
+                    CustomFilterbindDataTable(eval(data))
                 }
             });
         }
     });
-    var customfiltercolumnsettings = [];
-    var commonfiltergrid;
-    ColumnDetails(2, 1003, 1);
+    var customfiltercolumnsettings = [], gkbscustomfiltercolumnsettings = [];
+    var commonfiltergrid, gkbscommonfiltergrid;
+    //ColumnDetails(2, 1003, 1);
 
-    ej.grids.Grid.Inject(ej.grids.Page, ej.grids.ExcelExport, ej.grids.Toolbar, ej.grids.Aggregate, ej.grids.Group, ej.grids.Sort, ej.grids.Filter, ej.grids.ColumnMenu, ej.grids.ColumnChooser);
+    CommonDocFilterColumnSettingsData(2, 38, 1, false);
+    
+    //ej.grids.Grid.Inject(ej.grids.Page, ej.grids.ExcelExport, ej.grids.Toolbar, ej.grids.Aggregate, ej.grids.Group, ej.grids.Sort, ej.grids.Filter, ej.grids.ColumnMenu, ej.grids.ColumnChooser);
     function CustomFilterbindDataTable(data) {
         if (data.length === 0) {
-            return; // No data to display
+            showErrorSnackbar("No records found");
         }
+        //-----------------//
+        //New common filter//
+        //-----------------//
+        gkbscommonfiltergrid = new GKBSDynamicGrid('#commondocumentfiltergrid', gkbscustomfiltercolumnsettings, data, {
+            enablePagination: true,
+            pageSize: 100,
+            height: "450px",
+            enableSearch: true,
+            stickyToWindow: true,
+            enableExport: false,
+            enablePrint: false,
+            enableColumnsBtn: false,
+            enableAddRow: false,
+            enableRemoveRow: false,
+            enableSorting: true,
+            enableDarkMode: true,
+            searchTerm: "",
+            CompanyName: "",
+            ReportName: "",
+            fitersdata: [],
+            singleIconAction: [],
+            rowActionsMenu: [],
+            customCellRenderer: (el, col, rowData) => {
 
-        commonfiltergrid = new ej.grids.Grid({
-            dataSource: data,
-            allowPaging: false,
-            //pageSettings: { pageSize: 25 },
-            allowSorting: true,
-            allowFiltering: true,
-            allowResizing: true,
-            filterSettings: { type: 'Excel' },
-            toolbar: ['Search'],//, { tooltipText: 'Customize Columns', id: 'CommonFiltercustomizeBtn', prefixIcon: 'e-icons e-settings' }
-            allowExcelExport: true,
-            height: 250,
-            enableColumnVirtualization: true,
-            allowReordering: true,
-            showColumnChooser: true, // ✅ Must be true
-            showColumnMenu: true,
-            rowSelected: onRowSelected,
-            columns: customfiltercolumnsettings,
-            toolbarClick: function (args) {
-                if (args.item.id === 'CommonFiltercustomizeBtn') {
-                    SelectTableID = 1;
-                    //modalReportColumnsetting.style.display = "block";
-                    modalReportColumnsetting.show();
-                    ColumnSettings(1, 1003, SelectTableID);
-                }
             },
-            resizeStop: function (args) {
-                const field = args.column.field;
-                const fieldIndex = args.column.index;
-                const newWidth = args.column.width;
-                //showErrorSnackbar("Column resized: " + field + " → New width: " + newWidth);
-                // You can store or use the new width as needed
+            customButtons: [
+                {
+                    icon: '\u{2699}\u{FE0F}',
+                    text: 'Settings',
+                    title: 'Settings',
+                    visible: true,
+                    onClick: (gridInstance, event) => {
+                        modalGenColumnSettings.show();
+                        GendralColumnSettings(1, 38, 1, 0);
+                    }
+                },                
+                {
+                    icon: '\u{2714}\u{FE0F}',
+                    text: 'Select All',
+                    title: 'Select All',
+                    visible: true,
+                    onClick: (gridInstance, event) => {
+                        console.log("ColData ", gridInstance.originalData);
+                        gridInstance.selectAllRows();
+                    }
+                },
+                {
+                    icon: '\u{274C}',
+                    text: 'Remove All',
+                    title: 'Remove All',
+                    visible: true,
+                    onClick: (gridInstance, event) => {
+                        console.log("ColData ", gridInstance.originalData);
+                        gridInstance.deselectAllRows();
+                    }
+                },
+            ],
+            onCellClick: (rowData, fieldName, cellValue, column) => {
+
             },
-            columnVisibilityChanged: function (args) {
-                console.log("Column visibility changed:");
-                console.log("Field:", args.column.field);
-                console.log("Now Visible:", args.visible);
+            onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+
+            },
+            onColumnResize: (colIndex, field, header, newWidth) => {
+                UpdateColumnWidth(38, 1, 0, colIndex, field, newWidth)
             },
         });
+        //-----------------//
+        //Old common filter//
+        //-----------------//
+        //commonfiltergrid = new ej.grids.Grid({
+        //    dataSource: data,
+        //    allowPaging: false,
+        //    //pageSettings: { pageSize: 25 },
+        //    allowSorting: true,
+        //    allowFiltering: true,
+        //    allowResizing: true,
+        //    filterSettings: { type: 'Excel' },
+        //    toolbar: ['Search'],//, { tooltipText: 'Customize Columns', id: 'CommonFiltercustomizeBtn', prefixIcon: 'e-icons e-settings' }
+        //    allowExcelExport: true,
+        //    height: 250,
+        //    enableColumnVirtualization: true,
+        //    allowReordering: true,
+        //    showColumnChooser: true, // ✅ Must be true
+        //    showColumnMenu: true,
+        //    rowSelected: onRowSelected,
+        //    columns: customfiltercolumnsettings,
+        //    toolbarClick: function (args) {
+        //        if (args.item.id === 'CommonFiltercustomizeBtn') {
+        //            SelectTableID = 1;
+        //            //modalReportColumnsetting.style.display = "block";
+        //            modalReportColumnsetting.show();
+        //            ColumnSettings(1, 1003, SelectTableID);
+        //        }
+        //    },
+        //    resizeStop: function (args) {
+        //        const field = args.column.field;
+        //        const fieldIndex = args.column.index;
+        //        const newWidth = args.column.width;
+        //        //showErrorSnackbar("Column resized: " + field + " → New width: " + newWidth);
+        //        // You can store or use the new width as needed
+        //    },
+        //    columnVisibilityChanged: function (args) {
+        //        //console.log("Column visibility changed:");
+        //        //console.log("Field:", args.column.field);
+        //        //console.log("Now Visible:", args.visible);
+        //    },
+        //});
 
-        commonfiltergrid.appendTo('#DocumetFiltersGrid');
+        //commonfiltergrid.appendTo('#DocumetFiltersGrid');
 
         function onRowSelected(args) {
-            var rowData = args.data;
-            //showErrorSnackbar("Doc ID " + rowData["Doc ID"])//.
-            //console.log("Selected Row Data:", rowData);
-            //$("#DocumentGrid").html("");
-            //$("#ProductInfo").show();
-            //GetProductDocuments(rowData["ID"]);
-            //$("#lblProductName").text(rowData["Name"]);
+            var rowData = args.data;            
         }
         function getCheckedRows() {
             // Get grid instance
             var gridObj = document.getElementById('DocumetFiltersGrid').ej2_instances[0];
-            console.log("gridObj:", gridObj);
+            //console.log("gridObj:", gridObj);
             // Filter rows where checkbox is true
             var checkedRows = gridObj.getCurrentViewRecords().filter(function (row) {
                 return row.Chk === true;
             });
 
-            console.log("Checked Rows:", checkedRows);
+            //console.log("Checked Rows:", checkedRows);
             return checkedRows;
         }
-
+        
     }
     $("#btnAcceptDocFilterModal").click(function () {
-        if (commonfiltergrid) {
-            var selectedRows = commonfiltergrid.getSelectedRecords();
+        //if (commonfiltergrid) {
+        //    var selectedRows = commonfiltergrid.getSelectedRecords();
+        //    if (selectedRows.length > 0) {
+        //        var commfieldid = $("#txtcommonfilterapplyfieldid").val();
+        //        ////console.log(selectedRows);
+        //        var selectedDocs = "";
+        //        for (var i = 0; i < selectedRows.length; i++) {
+        //            selectedDocs += selectedRows[i].DocValue + (((selectedRows.length - 1) == i) ? "" : ",");
+        //        }
+        //        $("#" + commfieldid).val(selectedDocs);
+        //        //modalFilterModal.style.display = "none";
+        //        modalFilterModal.hide();
+        //        $("#txtcommonfilterapplyfieldid,#txtcommonfilterapplytransid").val("");
+        //    } else {
+        //        showErrorSnackbar("Select atleast one document");
+        //    }
+        //} else {
+        //    showErrorSnackbar("No Documents Found");
+        //}
+
+        if (gkbscommonfiltergrid) {
+            var selectedRows = gkbscommonfiltergrid.getSelectedRows();
             if (selectedRows.length > 0) {
                 var commfieldid = $("#txtcommonfilterapplyfieldid").val();
-                //console.log(selectedRows);
+                ////console.log(selectedRows);
                 var selectedDocs = "";
                 for (var i = 0; i < selectedRows.length; i++) {
                     selectedDocs += selectedRows[i].DocValue + (((selectedRows.length - 1) == i) ? "" : ",");
@@ -4264,10 +4533,14 @@ function CloseConfirmDialogMsg_old(message) {
                 //modalFilterModal.style.display = "none";
                 modalFilterModal.hide();
                 $("#txtcommonfilterapplyfieldid,#txtcommonfilterapplytransid").val("");
+                $("#txtcommonfilterapplytransmode").val("");
+                $("#txtcommonfilterapplydocidentid").val("");
+                $("#txtcommonfilterapplytransname").val("");
             } else {
                 showErrorSnackbar("Select atleast one document");
             }
-        } else {
+        }
+        else {
             showErrorSnackbar("No Documents Found");
         }
     });
@@ -4284,7 +4557,7 @@ function CloseConfirmDialogMsg_old(message) {
             },
             success: function (data) {
                 var jsData = eval(data);
-                console.log(jsData);
+                //console.log(jsData);
                 if (nTableID == 1) {
                     var chkfield = { field: 'Chk', headerText: '#', width: "5", textAlign: 'left', type: "checkbox", showInColumnChooser: false };
                     //jsData.push(chkfield);
@@ -4444,7 +4717,7 @@ function CloseConfirmDialogMsg_old(message) {
             }
         });
     }
-    function GendralColumnSettings(nMode, nReportID, nTableID,nFormorReport) {
+    function GendralColumnSettings(nMode, nReportID, nTableID, nFormorReport) {
         $.ajax({
             url: Aurl + "columnsettings/getcolumnsettings",
             type: 'get',
@@ -4578,12 +4851,14 @@ function CloseConfirmDialogMsg_old(message) {
         });
     }
     var ColumnSettingData = [];
+    
     $("#btnSubmitmodalGenColumnSettings").click(function () {
         ColumnSettingData = [];
+        var applygridname = $("#txtGenSetSubmitApplygridname").val();
         $("#tblGenColumnSettings tbody tr").each(function () {
             var allValues = {};
             rowdata =  TableGenColumnSettings.row($(this)).data();
-            console.log("Row Data : ", rowdata);
+            //console.log("Row Data : ", rowdata);
             var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
                 aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
                 aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
@@ -4647,7 +4922,7 @@ function CloseConfirmDialogMsg_old(message) {
             };
             ColumnSettingData.push(coldata);
         });
-        console.log("ColumnSettingData : ", ColumnSettingData);
+        //console.log("ColumnSettingData : ", ColumnSettingData);
         $.ajax({
             url: Aurl + "columnsettings/Savecolumnsettings",
             type: 'POST',
@@ -4672,8 +4947,26 @@ function CloseConfirmDialogMsg_old(message) {
                         if (typeof OtherActions !== "undefined" && OtherActions) {
                             ColumnsData.push(OtherActions);
                         }
-                        grid.columns = ColumnsData;
-                        grid.refreshColumns();
+                        if (typeof grid !== "undefined" && grid) {
+                            grid.columns = ColumnsData;
+                            grid.refreshColumns();
+                        }
+                        if (typeof commonfiltergrid !== "undefined" && commonfiltergrid) {
+                            commonfiltergrid.columns = ColumnsData;
+                            commonfiltergrid.refreshColumns();
+                        }
+                        if (typeof Grid2 !== "undefined" && Grid2 && applygridname == "Grid2") {
+                            Grid2.columns = ColumnsData;
+                            Grid2.refreshColumns();
+                        }
+                        if (typeof Grid1 !== "undefined" && Grid1 && applygridname == "Grid1") {
+                            Grid1.columns = ColumnsData;
+                            Grid1.refreshColumns();
+                        }
+                        if (typeof Grid3 !== "undefined" && Grid3 && applygridname == "Grid3") {
+                            Grid3.columns = ColumnsData;
+                            Grid3.refreshColumns();
+                        }
                         //ColumnDetails(2, 1002, SelectTableID);
                         //setTimeout(() => {
                         //    if (SelectTableID == 1) {
@@ -4698,7 +4991,7 @@ function CloseConfirmDialogMsg_old(message) {
                 }
             }
         });
-        //console.log("Column Setting Data ", ColumnSettingData);
+        ////console.log("Column Setting Data ", ColumnSettingData);
     });
     function UpdateColumnWidth(nFormID, nTableID, nFormorReport, nColumnID, strColumnName, dWidth) {
         $.ajax({
@@ -4715,7 +5008,7 @@ function CloseConfirmDialogMsg_old(message) {
             success: function (data) {
                 //showSuccessSnackbar("Width Updated successfully");
             },error: function (data) {
-                console.log(data)
+                //console.log(data)
                 //showErrorSnackbar("Error when Width Update");
             }
         });
@@ -4788,7 +5081,7 @@ function CloseConfirmDialogMsg_old(message) {
     //    input.classList.remove("form-control");
     //    input.classList.add("clsdtpfield");
     //});
-
+    
 </script>
 <script>
     //cfFocus, ClearcfFocus, ClosecfFocus
@@ -4802,7 +5095,7 @@ function CloseConfirmDialogMsg_old(message) {
                 icon: '\u{1F4BE}', tag: 'Save Action',
                 title: '',
                 message: 'Do you want to save data?',
-                details: [                   
+                details: [
                 ],
                 yesLabel: 'Yes, Save',
                 focustype: Savefocustype
@@ -4823,7 +5116,7 @@ function CloseConfirmDialogMsg_old(message) {
                 icon: '\u2715', tag: 'Close Action',
                 title: '',
                 message: 'Do you want to close?',
-                details: [                    
+                details: [
                 ],
                 yesLabel: 'Yes, close',
                 focustype: Closefocustype
@@ -4876,12 +5169,12 @@ function CloseConfirmDialogMsg_old(message) {
             document.getElementById('cmTitle').textContent = c.title;
             document.getElementById('cmMessage').textContent = c.message;
             btnYes.textContent = c.yesLabel;
-            setTimeout(()=>{
-            if (c.focustype == 1)
-                btnYes.focus(); // Focus the confirm button for better UX
-            else if (c.focustype == 2)
-                btnNo.focus(); // Focus the cancel button for better UX
-    //btnYes.focus(); // Focus the confirm button for better UX
+            setTimeout(() => {
+                if (c.focustype == 1)
+                    btnYes.focus(); // Focus the confirm button for better UX
+                else if (c.focustype == 2)
+                    btnNo.focus(); // Focus the cancel button for better UX
+                //btnYes.focus(); // Focus the confirm button for better UX
             }, 1000);
             const det = document.getElementById('cmDetail');
             det.innerHTML = '';
@@ -5085,4 +5378,12 @@ function CloseConfirmDialogMsg_old(message) {
 
         return { show, hide };
     })();
+   
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const inputs = document.querySelectorAll('input[type="text"]');
+        inputs.forEach(input => {
+            input.setAttribute("autocomplete", "off");
+        });
+    });
 </script>

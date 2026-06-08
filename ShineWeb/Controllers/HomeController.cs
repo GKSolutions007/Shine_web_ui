@@ -22,24 +22,40 @@ namespace ShineWeb.Controllers
             else
             {
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
-                string ColldtlEnable = dtPermission.Select("MenuID = 303", null).Length > 0 ? "1" : "0";
-                string ChqdtlEnable = dtPermission.Select("MenuID = 304", null).Length > 0 ? "1" : "0";
-                string tranvariantEnable = dtPermission.Select("MenuID = 309", null).Length > 0 ? "1" : "0";
+                if (dtPermission.Rows.Count > 0)
+                {
+                    string ColldtlEnable = dtPermission.Select("MenuID = 303", null).Length > 0 ? "1" : "0";
+                    string ChqdtlEnable = dtPermission.Select("MenuID = 304", null).Length > 0 ? "1" : "0";
+                    string tranvariantEnable = dtPermission.Select("MenuID = 309", null).Length > 0 ? "1" : "0";
 
-                string BalanceEnable = dtPermission.Select("MenuID = 397", null).Length > 0 ? "1" : "0";
-                string QAEnable = dtPermission.Select("MenuID = 398", null).Length > 0 ? "1" : "0";
-                string PendDraftEnable = dtPermission.Select("MenuID = 399", null).Length > 0 ? "1" : "0";
-                string TranSummaryEnable = dtPermission.Select("MenuID = 400", null).Length > 0 ? "1" : "0";
-                Homescreen dam = new Homescreen();
-                dam.CollectionDetailEnable = ColldtlEnable;
-                dam.ChequeDetailEnable = ChqdtlEnable;
-                dam.TransVariantEnable = tranvariantEnable;
+                    string BalanceEnable = dtPermission.Select("MenuID = 397", null).Length > 0 ? "1" : "0";
+                    string QAEnable = dtPermission.Select("MenuID = 398", null).Length > 0 ? "1" : "0";
+                    string PendDraftEnable = dtPermission.Select("MenuID = 399", null).Length > 0 ? "1" : "0";
+                    string TranSummaryEnable = dtPermission.Select("MenuID = 400", null).Length > 0 ? "1" : "0";
+                    Homescreen dam = new Homescreen();
+                    dam.CollectionDetailEnable = ColldtlEnable;
+                    dam.ChequeDetailEnable = ChqdtlEnable;
+                    dam.TransVariantEnable = tranvariantEnable;
 
-                dam.Balances = BalanceEnable;
-                dam.QuickAccess = QAEnable;
-                dam.PendingDraft = PendDraftEnable;
-                dam.TransactionSummary = TranSummaryEnable;
-                return View(dam);
+                    dam.Balances = BalanceEnable;
+                    dam.QuickAccess = QAEnable;
+                    dam.PendingDraft = PendDraftEnable;
+                    dam.TransactionSummary = TranSummaryEnable;
+                    return View(dam);
+                }
+                else
+                {
+                    Homescreen dam = new Homescreen();
+                    dam.CollectionDetailEnable = "0";
+                    dam.ChequeDetailEnable = "0";
+                    dam.TransVariantEnable = "0";
+
+                    dam.Balances = "0";
+                    dam.QuickAccess = "0";
+                    dam.PendingDraft = "0";
+                    dam.TransactionSummary = "0";
+                    return View(dam);
+                }
             }
         }
         [HttpGet]
@@ -49,6 +65,8 @@ namespace ShineWeb.Controllers
             DateTime Date = DateTime.Now;
             DateTime dtFinancialdate = Convert.ToDateTime(Session["F_SD"]).Date;
             DateTime dtpF_ED = Convert.ToDateTime(Session["F_ED"]).Date;
+
+            
             if (TypeID == 0)//set ServerDate
             {
                 dtMin = dtFinancialdate;
@@ -114,6 +132,102 @@ namespace ShineWeb.Controllers
                 DateTime dtDate = dtpF_ED > Date ? Date : dtpF_ED;
                 DateTime MonFstDt = new DateTime(dtDate.Year, dtDate.Month, 1);
                 dtValue = dtMin > MonFstDt ? dtMin : MonFstDt;//  new DateTime(dtDate.Year, dtDate.Month, 1);
+            }
+            else if(TypeID == 9)
+            {
+                dtMin = dtFinancialdate;
+                dtMax = dtpF_ED > Date ? Date : dtpF_ED;
+                int thismonthno = dtMax.Month;
+                DateTime dtfsd= new DateTime(dtMax.Year, 1, 1);
+                if (thismonthno >= 0 && thismonthno <= 3)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 1, 1);
+                }
+                else if (thismonthno > 3 && thismonthno <= 6)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 4, 1);
+                }
+                else if (thismonthno > 6 && thismonthno <= 9)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 7, 1);
+                }
+                else if (thismonthno > 9 && thismonthno <= 12)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 10, 1);
+                }
+                dtValue = dtMin > dtfsd ? dtMin : dtfsd;
+            }
+            else if (TypeID == 10)
+            {
+                dtMin = dtFinancialdate;
+                dtMax = dtpF_ED > Date ? Date : dtpF_ED;
+                int thismonthno = dtMax.Month;
+                DateTime dtfsd = new DateTime(dtMax.Year, 1, 1);
+                if (thismonthno >= 0 && thismonthno <= 3)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 3, 31);
+                }
+                else if (thismonthno > 3 && thismonthno <= 6)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 6, 30);
+                }
+                else if (thismonthno > 6 && thismonthno <= 9)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 9, 30);
+                }
+                else if (thismonthno > 9 && thismonthno <= 12)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 12, 31);
+                }
+                dtValue = dtfsd > dtMax ? dtMax : dtfsd;
+            }
+            else if (TypeID == 11)
+            {
+                dtMin = dtFinancialdate;
+                dtMax = dtpF_ED > Date ? Date : dtpF_ED;
+                int thismonthno = dtMax.Month;
+                DateTime dtfsd = new DateTime(dtMax.Year, 1, 1);
+                if (thismonthno >= 0 && thismonthno <= 3)
+                {
+                    dtfsd = new DateTime(dtMax.Year - 1, 10, 1);
+                }
+                else if (thismonthno > 3 && thismonthno <= 6)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 1, 1);
+                }
+                else if (thismonthno > 6 && thismonthno <= 9)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 4, 1);
+                }
+                else if (thismonthno > 9 && thismonthno <= 12)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 7, 1);
+                }
+                dtValue = dtMin > dtfsd ? dtMin : dtfsd;
+            }
+            else if (TypeID == 12)
+            {
+                dtMin = dtFinancialdate;
+                dtMax = dtpF_ED > Date ? Date : dtpF_ED;
+                int thismonthno = dtMax.Month;
+                DateTime dtfsd = new DateTime(dtMax.Year, 1, 1);
+                if (thismonthno >= 0 && thismonthno <= 3)
+                {
+                    dtfsd = new DateTime(dtMax.Year - 1, 12, 31);
+                }
+                else if (thismonthno > 3 && thismonthno <= 6)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 3, 31);
+                }
+                else if (thismonthno > 6 && thismonthno <= 9)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 6, 30);
+                }
+                else if (thismonthno > 9 && thismonthno <= 12)
+                {
+                    dtfsd = new DateTime(dtMax.Year, 9, 30);
+                }
+                dtValue = dtfsd > dtMax ? dtMax : dtfsd;
             }
             List<getsetdates> listdt = new List<getsetdates>();
             listdt.Add(new getsetdates

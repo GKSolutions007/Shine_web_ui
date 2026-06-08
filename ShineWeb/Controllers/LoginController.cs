@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Security;
 using static System.Net.WebRequestMethods;
 
 namespace ShineWeb.Controllers
@@ -24,14 +25,14 @@ namespace ShineWeb.Controllers
         public ActionResult Index(string Msg=null)
         {
             //272,273,274,275,276
-            //string plain = "454,455,456,457,458,459,460";
-            //string[] strplain = plain.Split(',');
-            //string EncVal = "";
-            //for (int i = 0; strplain.Length > i; i++)
-            //{
-            //    string val = strplain[i].ToString();
-            //    EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
-            //}
+            string plain = "";
+            string[] strplain = plain.Split(',');
+            string EncVal = "";
+            for (int i = 0; strplain.Length > i; i++)
+            {
+                string val = strplain[i].ToString();
+                EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
+            }
 
             string nv = Convert.ToString(Session["NavBarVisible"]);
             string userAgent = Request.UserAgent;
@@ -164,9 +165,23 @@ namespace ShineWeb.Controllers
             HttpContext.Response.Cache.SetExpires(DateTime.UtcNow.AddMinutes(-1));
             HttpContext.Response.Cache.SetCacheability(HttpCacheability.NoCache);
             HttpContext.Response.Cache.SetNoStore();
+            HttpContext.Response.Cookies.Clear();
             Session.Clear();
             Session.Abandon();
             Session.RemoveAll();
+            // Sign out Forms Authentication
+            FormsAuthentication.SignOut();
+
+            // Expire all cookies
+            foreach (string cookieName in Request.Cookies.AllKeys)
+            {
+                var cookie = new HttpCookie(cookieName)
+                {
+                    Expires = DateTime.Now.AddDays(-1)
+                };
+
+                Response.Cookies.Add(cookie);
+            }
             return RedirectToAction("Index", "Login");
         }
     }

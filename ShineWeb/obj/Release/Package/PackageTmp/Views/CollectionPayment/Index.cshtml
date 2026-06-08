@@ -1,28 +1,4 @@
-﻿@*@model ShineWeb.Models.SingleMasterModel
-    @{
-        ViewBag.Title = ViewData["FormName"];
-    }*@
-@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
-    <link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />
-    <link href="~/Content/navbar.css" rel="stylesheet" />
-    <link href="~/Content/buttonTop.css" rel="stylesheet" />
-    <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
-    <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />*@
-
-@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
-
-@*<script src="~/Scripts/bootstrap.min.js"></script>
-    <script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
-@*<script src="~/Scripts/jquery-1.11.1.min.js"></script>
-    <script src="~/Scripts/bootstrap_3.3.7.min.js"></script>
-    <script src="~/Scripts/jquery-3.7.1.js"></script>
-    <script src="~/Scripts/jquery-ui.js"></script>*@
-@*<script src="~/Scripts/datatable.js"></script>*@
-@*<script src="~/Scripts/dataTables.2.2.2.js"></script>
-    <script src="~/Scripts/js/refreshtoken.js"></script>
-    <script src="~/GKBS_Grid/js/gridui.js"></script>*@
-
-@model ShineWeb.Models.SingleMasterModel
+﻿@model ShineWeb.Models.SingleMasterModel
 @{
     ViewBag.Title = ViewData["FormName"];
     Layout = "~/Views/Shared/_LayoutBT5.cshtml";
@@ -124,29 +100,7 @@
             border-width: 0 0 0 0;
             background-color: #fff;
             font-weight: bold;
-        }
-    /* .each {
-            border-bottom: 1px solid #555;
-            padding: 3px 0;
-        }
-
-        .acItem .name {
-            font-size: 14px;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .acItem .desc {
-            font-size: 10px;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #555;
-        }
-
-        .ui-autocomplete {
-            max-height: 245px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-    */
+        }   
     th, td {
         white-space: nowrap;
     }
@@ -618,14 +572,22 @@
                 <!-- Party Search + Info -->
                 <div class="mb-2">
                     <div class="input-group">
-                        <span class="form-label flex-grow-1">
-                            <input class="form-control FormclrField" type="text" id="txtSearch">
-                            <label class="labelup">Select *</label>
+                        <span id="openParty" class="input-group-text" title="New Party"><span class="fas fa-arrow-up-right-from-square"></span></span>
+                        <span class="form-label flex-fill">
+                            <input class="form-control FormclrField" type="text" id="txtSearch" placeholder="Select Party">
+                            <label class="labelup" for="txtCode"> Select *</label>
                         </span>
-                        <span id="VendInfo" class="input-group-text">
-                            <span class="glyphicon glyphicon-info-sign"></span>
-                        </span>
+                        <span id="VendInfo" class="input-group-text"><span class="glyphicon glyphicon-info-sign" style="background-color:white;"></span></span>
                     </div>
+                    @*<div class="input-group">
+            <span class="form-label flex-grow-1">
+                <input class="form-control FormclrField" type="text" id="txtSearch">
+                <label class="labelup">Select *</label>
+            </span>
+            <span id="VendInfo" class="input-group-text">
+                <span class="glyphicon glyphicon-info-sign"></span>
+            </span>
+        </div>*@
                     <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrSearch" class="clrdivs"></div>
                 </div>
 
@@ -974,7 +936,7 @@
                         <button type="button" class="btn clrforpdf" id="btnPDF">
                             <i class="fa-regular fa-file-pdf" style="color:white;"></i> PDF
                         </button>
-                        <button type="button" class="btn btn-primary" id="btnPreview">
+                        <button type="button" class="btn clrforpreview" id="btnPreview">
                             <span class="glyphicon glyphicon-print"></span> Preview
                         </button>
                         <button type="button" class="btn clrforpreview" id="btnPrint">
@@ -1132,7 +1094,7 @@
 
 
 <script>
-
+    //~Filter Action Buttons
     let mapusersRole = {
         canView: $("#txtViewID").val() == 1,
         canEdit: $("#txtModifyID").val() == 1,
@@ -1151,10 +1113,8 @@
                 icon: '👁️',
                 title: 'View Data',
                 className: 'dg-action-view',
-                // 💡 NEW TAG: This action will be rendered as a single icon
                 displayType: 'single_icon',
                 visible: mapusersRole.canView,
-                // $("#txtViewID").val() == 1,
                 handler: (rowdata) => {
                     $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
@@ -1194,8 +1154,6 @@
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
                         nTransMode = 2;
-
-                        //alert("Bill Table : " + rdo1 + ", Draft : " + rdo2);
                         GetDocViewData(3, ID);
                         nTransMode = 2;
                         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
@@ -1352,9 +1310,7 @@
 </script>
 
 <script type="text/javascript">
-    //document.body.style.zoom = "85%";
     $("#txtDocID").prop("disabled", true);
-    //dvDocuments,
     $("#dvMain").hide();
     $(".FormBtField").prop("disabled", true);
 
@@ -1389,7 +1345,30 @@
         }
     });
 
-    //dvGrid1,dvGrid2,rdoAdvanceData,rdoOSData
+    var nDocPrefix = $("#txtFormID").val();
+    var UID = '@Session["LoginUserID"]';
+    var Aurl = '@Session["APIurl"]';
+    var RID = '@Session["RoleID"]';
+    var DecVal = '@Session["DecimalValues"]';
+    LoadBranchByRoles('#cmbBranch');
+    var ConfigRoundtype = '@Session["RoundoffType"]';
+    var ConfigRoundvalue = '@Session["RoundoffValue"]';
+    var ConfigWriteoffAmt = '@Session["WriteoffAmt"]';
+    var VisaPern = '@Session["VisaPern"]';
+    var BatchMode = 0; // 0 - New product, 1 - Edit Product
+    var nTransMode = 1, nIsDraft = 0;
+    var PrintTransID = nDocPrefix == 19 ? 8 : 9, PrintConfigID = 0;
+    var grid, CollectionPayment;
+    GetColumnSettingsData(2, 27, 1,true);
+    setDate("dtpDate", 0);
+    setDate("dtpFFrom", 0);
+    setDate("dtpFTo", 0);
+
+    setTimeout(function () {
+        GetFilterData();
+    }, 1200);
+    GetData(1);
+
     $("#dvGrid1").hide();
     $("#rdoOSData").click(function () {
         $("#dvGrid2").show();
@@ -1418,10 +1397,6 @@
     //$("#VendInfo").hide();
     $("#VendInfo").click(function () {
         if ($("#txtCustomerID").val() != "") {
-            //var vinfo = "<u>Code :</u> " + $("#lblName").text() + "<br/><u>Mob No</u> : " + $("#lblMob1").text() + "<br/>" + "<u>GSTIN</u> : " + $("#lblGSTIN").text() + "<br/><br/>";
-            //vinfo += "<u>Billing Address :</u><br/>" + $("#txtBAdd1").val() + "<br/>" + $("#txtBAdd2").val() + "<br/>" + $("#txtBAdd3").val() + "<br/><br/>";
-            //vinfo += "<u>Shipping Address :</u><br/>" + $("#txtSAdd1").val() + "<br/>" + $("#txtSAdd2").val() + "<br/>" + $("#txtSAdd3").val() + "<br/><br/>";
-            //vinfo += "<u>Pincode : </u>" + $("#txtPincode").val();
             var htmlTable = `
 <table style="width:100%; border-collapse:collapse; font-family:Arial, sans-serif; font-size:14px;">
 
@@ -1472,10 +1447,7 @@ ${$("#txtSAdd3").val()}
         }
     });
     var modalPayment = new bootstrap.Modal(document.getElementById('myModalPayment'));// document.getElementById("myModalPayment");
-    //var spanPayment = document.getElementsByClassName("closePaymode")[0];
-    //spanPayment.onclick = function () {
-    //    modalPayment.hide();
-    //}
+
     $('#btnPaymentClose').click(function (e) {
         modalPayment.hide();
     });
@@ -1483,72 +1455,8 @@ ${$("#txtSAdd3").val()}
         modalPayment.show();
         PaymodeConfig();
     });
-
-    //document.getElementById('VendInfo').remove();
-    var nDocPrefix = $("#txtFormID").val();
-    var UID = '@Session["LoginUserID"]';
-    var Aurl = '@Session["APIurl"]';
-    var RID = '@Session["RoleID"]';
-    var DecVal = '@Session["DecimalValues"]';
-    @*var DefBranch = '@Session["DefaultBranch"]';*@
-    LoadBranchByRoles();
-    var ConfigRoundtype = '@Session["RoundoffType"]';
-    var ConfigRoundvalue = '@Session["RoundoffValue"]';
-    var ConfigWriteoffAmt = '@Session["WriteoffAmt"]';
-    var VisaPern = '@Session["VisaPern"]';
-    var BatchMode = 0; // 0 - New product, 1 - Edit Product
-    var nTransMode = 1, nIsDraft = 0;
-    var PrintTransID = nDocPrefix == 19 ? 8 : 9, PrintConfigID = 0;
-    var grid, CollectionPayment;
-    GetColumnSettingsData(2, 27, 1);
-    setDate("dtpDate", 0);
-    setDate("dtpFFrom", 0);
-    setDate("dtpFTo", 0);
-
-    setTimeout(function () {
-        GetFilterData();
-    }, 1200);
-    GetData(1);
-
-if ($("#txtAddID").val() == 0) {
-    $("#trAdd").hide();
-    $("#btnAdd").hide();
-}
-
-if ($("#txtReurnPricePerm").val() == 0) {
-    $("#trRetPrice").hide();
-    }
     GetPrintProfile(PrintTransID);
-    function GetPrintProfile(nTransID) {
-        $.ajax({
-            url: Aurl + "printprofileconfig/getprofile",
-            type: 'get',
-            contentType: 'json',
-            data: { TransID: nTransID },
-            xhrFields: {
-                withCredentials: true
-            },
-            async: false,
-            success: function (data) {
-                $('#cmbPrintProfile').find("option").remove();
-                $('#cmbPrintProfile').append($('<option/>', {
-                    value: 0,
-                    text: "-- Select --",
-                }));
-                var lstdata = eval(data)
-                var getdef = lstdata.filter(pr => pr.DefaultConfig == 1);
-                var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
-                $.each(lstdata, function (i, items) {
-                    $('#cmbPrintProfile').append($('<option/>', {
-                        value: items.ConfigID,
-                        text: items.ConfigName, 'data-automail': items.AutoMail
-                    }));
-                    $('#cmbPrintProfile').val(defid);
-                    PrintConfigID = defid;
-                });
-            }
-        });
-    }
+
 //18 - payment, 19 - collection
     if (nDocPrefix == 19) {
         $("#trBeat,#trSalesman").show();
@@ -1634,63 +1542,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
         }
         ClearForm();
     });
-    $("#btnAdd").click(function () {
-        //dvDocuments,
-        nTransMode = 1;
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
-        ClearForm();
-    })
-    $("#btnClose").click(function () {
-        //dvDocuments,
-        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
-    });
-    function CloseForm() {
-        if ($("#txtTransType").val() == 3 || $("#txtTransType").val() == 2) {
-            this.close();
-        } else {
-            $("#dvMain").hide();
-            $("#dvDocuments").show();
-            $("#MainHeading").text($("#txtFormName").val());
-            //GetData(rdo1 ? 6 : 10);
-            GetFilterData();
-        }
-    }
+
 
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
-
-    function LoadBranchByRoles() {
-        var RID = '@Session["RoleID"]';
-        console.log("RoleID being sent:", RID);
-        $.ajax({
-            url: Aurl + "BranchMapping/getByRole",
-            type: 'GET',
-            dataType: 'json',
-            data: { RoleID: RID },
-            xhrFields: { withCredentials: true },
-            success: function (data) {
-                console.log("Data returned from API:", data);
-                $('#cmbBranch').empty();
-                $('#cmbBranch').append($('<option/>', { value: 0, text: "-- Select --" }));
-                var defaultBranch = 0;
-                $.each(data, function (i, item) {
-                    console.log("Adding item to dropdown:", item);
-                    $('#cmbBranch').append($('<option/>', {
-                        value: item.BranchID,
-                        text: item['Branch Name']
-                    }));
-                    if (item.SetAsDefault) {
-                        defaultBranch = item.BranchID;
-                    }
-                });
-                if (defaultBranch != 0) {
-                    $('#cmbBranch').val(defaultBranch);//.trigger("change");
-                }
-            }
-        });
-    }
 
     function SetTagZero() {
         var inputs = $(".txtsettag");
@@ -1735,7 +1591,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var val = e.target.value;
         var id = e.target.id;
         if (id == "txtTradeDiscPern") {
-            console.log("3. Tr Disc : " + val);
+            //console.log(("3. Tr Disc : " + val);
         }
         if (!txtValuechanged)
             updateInputColumn(id, val);
@@ -1764,15 +1620,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         //CalculateBatchGrid();
     });
 
-    //$('#tblGridoneData tbody').on('dblclick', 'td>.lblHeaderBal', function (e) {
-    //    var tg = e.target;
-    //    var id = e.target.id;
-    //    var collamt = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
-    //    var val = document.getElementById(id).getAttribute("lbltag");
-    //    var refid = document.getElementById(id).getAttribute("refadjid");
-    //    updateInputColumn(refid, val);
-    //    calculateGrid1Value();
-    //});
     $('#tblGridtwoData tbody').on('focusin', 'td>.txtsettag', function (e) {
         // .clsdgvTag
         var id = e.target.id;
@@ -1797,15 +1644,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         //CalculateBatchGrid();
     });
 
-    //$('#tblGridtwoData tbody').on('dblclick', 'td>.lblFooterBal', function (e) {
-    //    var tg = e.target;
-    //    var id = e.target.id;
-    //        var val = document.getElementById(id).getAttribute("lbltag");
-    //        var refid = document.getElementById(id).getAttribute("refadjid");
-    //        updateInputColumn(refid, val);
-    //        calculateGrid2Value();
-    //});
-    //GetData(2, DefBranch, $("#dtpDate").val());
     $("#dtpDate,#cmbBranch").change(function (e) {
         //ClearForm();
         $("#txtCustomerID,#txtSearch,#txtHDClosingBalance").val(""); $("#cmbSalesman,#cmbBeat").val("0");
@@ -1833,10 +1671,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
             bal = (clsbl) - parseFloat(val);
         else
             bal = (clsbl) + parseFloat(val);
-        console.log("After amount Bal : ", bal);
+        //console.log(("After amount Bal : ", bal);
         var crdr = bal >= 0 ? "Dr" : "Cr";
         var clb = parseFloat(Math.abs(bal)).toFixed(DecVal);
-        console.log("Final Bal : ", clb);
+        //console.log(("Final Bal : ", clb);
         $("#txtBalance").val(clb.toString() + " " + crdr);
         //updateInputColumn("txtBalance", Math.abs(bal))
         $("#txtBalance").css("color", bal > 0 ? "Red" : "Green");
@@ -1850,11 +1688,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     });
 
     var BatchRID = 0, ProductRID = 0;
-
-    function Scrolltoid(id) {
-        //window.scrollTo(id[0].offsetLeft, id[0].offsetTop);
-        window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: "smooth" });
-    }
+    //~Calculation Grid 1
     function calculateGrid1Value() {
         var dAdjAmt = 0;
         $("#tblGridoneData tbody tr").each(function () {
@@ -1874,7 +1708,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         ///updateInputColumn("txtRemainingAmount", remAmt);
         CalculateAdjustvalues();
     }
-
+    //~Amt change
     $("#txtAmount").change(function (e) {
         txtValuechanged = true;
         var id = e.target.id;
@@ -1883,16 +1717,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn(id, val);
         calculateGrid1Value();
         var clsbl = $("#txtHDClosingBalance").val() != "" ? parseFloat($("#txtHDClosingBalance").val()) : 0;
-        console.log("Cls Bal : ", clsbl);
+        //console.log(("Cls Bal : ", clsbl);
         var bal = 0;
         if (nDocPrefix == 19)//collection
             bal = (clsbl) - parseFloat(val);
         else
             bal = (clsbl) + parseFloat(val);
-        console.log("After amount Bal : ", bal);
+        //console.log(("After amount Bal : ", bal);
         var crdr = bal >= 0 ? "Dr" : "Cr";
         var clb = parseFloat(Math.abs(bal)).toFixed(DecVal);
-        console.log("Final Bal : ", clb);
+        //console.log(("Final Bal : ", clb);
         $("#txtBalance").val(clb.toString() + " " + crdr);
         //updateInputColumn("txtBalance", Math.abs(bal))
         $("#txtBalance").css("color", bal > 0  ? "Red" : "Green");
@@ -1922,166 +1756,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             updateInputColumn("txtVisaPern", dVisaP);
         }
     });
-    function calculateGrid2Value_old() {
-        //lblG1AdjAmt
-        var G1AdjAmt = parseFloat(document.getElementById("lblG1AdjAmt").getAttribute("lbltag"));
-        var orgcollamt = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
-        var PMID = $("#cmbPaymode").val();
-        var dAdjAmt = 0, dTotalAdjAmt = 0;
-        $("#tblGridtwoData tbody tr").each(function () {
-            var CurrRowIndex = TableGridtwoData.row($(this)).index();
-            var CollAmt = 0, AdjAmtPM = 0, DiscPern = 0, DiscAmt = 0, Balance = 0, dTAA = 0,dWriteoff = 0;
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "G2OS") {
-                    Balance = parseFloat($(this).attr('lbltag'));
-                }
-            })
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "AdjCollAmtFooter") {
-                    var val = parseFloat($(this).attr('txttag'));
-                    var maxval = parseFloat($(this).attr('max'));
-                    var dAvaAdjAmt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag"));
-                    var dTotRemAmt = parseFloat(document.getElementById("txtRemainingAmount").getAttribute("txttag"));
-                    console.log("Adj upto : ", dAvaAdjAmt, " Rem Amt : ", dTotRemAmt, " val : ", val);
-                    if (val > maxval) {
-                        dAdjAmt += 0;
-                        CollAmt = 0;
-                        updateInputColumn(fieldID, 0);
-                        showErrorSnackbar("Collect Amount should be less than Balance");
-                    } else {
-                        //if (dTotRemAmt >= val) {
-                        if (PMID == 9)//Note Adj
-                        {
-                            dAdjAmt += val;
-                            CollAmt = parseFloat(val);
-                        }
-                        else {
-                            if (val > (orgcollamt + G1AdjAmt)) {//check with header colltion amount + G1 Adj Amt
-                                dAdjAmt += 0;
-                                CollAmt = 0;
-                                updateInputColumn(fieldID, 0);
-                                showErrorSnackbar("Amount should be less than Given Collection Amount");
-                            }
-                            else {
-                                if (val > dTotRemAmt) {//check with Remaining amount
-                                    dAdjAmt += 0;
-                                    CollAmt = 0;
-                                    updateInputColumn(fieldID, 0);
-                                    showErrorSnackbar("Amount should be less than Remaining Amount");
-                                } else {
-                                    dAdjAmt += val;
-                                    CollAmt = parseFloat(val);
-                                }
-                            }
-                        }
-                        //}
-                        //else {
-                        //    if (CurrRowIndex == nGrid2CurrentRowIndex) {
-                        //        CollAmt = 0;
-                        //        updateInputColumn(fieldID, 0);
-                        //        showErrorSnackbar("Collect Amount should be less than Remaining Amount");
-                        //    }
-                        //}
-                    }
-                }
-                else if (fieldName == "AdjAmt") {
-                    if (CollAmt > 0) {
-                        AdjAmtPM = parseFloat($(this).attr('txttag'));
-                    } else{
-                        updateInputColumn(fieldID, 0);
-                        AdjAmtPM = 0;
-                    }
-
-                }
-                else if (fieldName == "AdjDiscPern") {
-                    //DiscPern = parseFloat($(this).attr('txttag'));
-                    if (CollAmt > 0) {
-                        var disval = parseFloat($(this).attr('txttag'));
-                        var calpern = (disval * Balance) / 100;
-                        var adjamtinminus = AdjAmtPM >= 0 ? 0 : AdjAmtPM;
-                        var sum = CollAmt + calpern - adjamtinminus;
-                        if (Balance >= sum) {
-                            DiscPern = disval;
-                        } else {
-                            if (nTransMode == "1" || nTransMode == 2) {
-                                showErrorSnackbar("Amount mismatched");
-                            }
-                            updateInputColumn(fieldID, 0);
-                            DiscPern = 0;
-                        }
-                    }
-                    else {
-                        updateInputColumn(fieldID, 0);
-                        DiscPern = 0;
-                    }
-                }
-                else if (fieldName == "AdjDiscAmt") {
-                    //DiscAmt = parseFloat($(this).attr('txttag'));
-                    if (CollAmt > 0) {
-                        var disval = parseFloat($(this).attr('txttag'));
-                        var adjamtinminus = AdjAmtPM >= 0 ? 0 : AdjAmtPM;
-                        var sum = CollAmt + disval - adjamtinminus;
-                        if (Balance >= sum) {
-                            updateInputColumn(fieldID, disval);
-                            DiscAmt = disval;
-                        } else {
-                            if (nTransMode == "1" || nTransMode == 2) {
-                                showErrorSnackbar("Amount mismatched");
-                            }
-                            updateInputColumn(fieldID, 0);
-                            DiscAmt = 0;
-                        }
-                    }
-                    else {
-                        updateInputColumn(fieldID, 0);
-                        DiscAmt = 0;
-                    }
-                }
-            });
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "WriteoffAmt") {
-                    if (CollAmt > 0) {
-                        dWriteoff = parseFloat($(this).attr('lbltag'));
-                    }
-                    else {
-                        updateLabelColumn(fieldID, 0);
-                        dWriteoff = 0;
-                    }
-                }
-                if (fieldName == "G2TotalAdjAmount") {
-                    var PMAdjamt = AdjAmtPM > 0 ? 0 : Math.abs(AdjAmtPM);
-                    var totadj = CollAmt + DiscAmt + PMAdjamt + dWriteoff
-                    updateLabelColumn(fieldID, totadj);
-                    dTotalAdjAmt += totadj;
-                    dTAA = totadj;
-                }
-                if (fieldName == "G2Balance") {
-                    //if (CollAmt > 0) {
-                    //    var val = parseFloat(Balance - dTAA);
-                    //    updateLabelColumn(fieldID, val);
-                    //} else {
-                    //    updateLabelColumn(fieldID, 0);
-                    //}
-                    var val = nTransMode == 5 || nTransMode == 4 ? 0 : parseFloat(Balance - dTAA);
-                    updateLabelColumn(fieldID, val);
-                }
-            });
-        });
-        //updateLabelColumn("lblG2CollAmt", dAdjAmt);
-        //updateLabelColumn("lblG2TotAdjAmt", dTotalAdjAmt);
-        SumG2FooterLabels();
-        updateInputColumn("txtAdjustedAmount", dTotalAdjAmt);
-        console.log("Tot Adj Amt : ", parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag")));
-        console.log("Adj Amt : ", dTotalAdjAmt);
-        var remamt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag")) - dTotalAdjAmt;
-        updateInputColumn("txtRemainingAmount", remamt);
-    }
+    //~Calculation Grid 2
     function calculateGrid2Value() {
 
         const G1AdjAmt = getTag("#lblG1AdjAmt", "lbltag");
@@ -2105,13 +1780,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
             let dWriteoff = 0;
             let dTAA = 0;
-            console.log("CollAmt : ", CollAmt);
+            //console.log(("CollAmt : ", CollAmt);
             // ----- Validate Collection Amount -----
             if (CollAmt) {
                 let maxval = getMaxEl($r, "input[name='AdjCollAmtFooter']");
                 let remAmt = getTag("#txtRemainingAmount", "txttag");
                 let totAdj = getTag("#txtTotAdjustmentAmount", "txttag");
-                console.log("remAmt : ", remAmt);
+                //console.log(("remAmt : ", remAmt);
                 if (CollAmt > maxval) {
                     CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "Collect Amount should be less than Balance");
                 }
@@ -2221,7 +1896,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $('#tblGridtwoData tbody').on('focusin', 'tr', function () {
         nGrid2CurrentRowIndex = TableGridtwoData.row(this).index()
     });
-
+    //~Grid 1 Amt Change
     $('#tblGridoneData tbody').on('change', '.AdjCollAmtHeader', function (e) {
         var id = e.target.id;
         var val = e.target.value;
@@ -2230,6 +1905,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn(id, val);
         calculateGrid1Value();
     });
+    //~Grid 1 Amt Space
     $('#tblGridoneData tbody').on('keydown', '.AdjCollAmtHeader', function (e) {
         var kyc = e.keyCode;
         var val = e.target.value;
@@ -2276,6 +1952,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         });
         return dTotalAdjAmt;
     }
+    //~Grid 2 Amt Space
     $('#tblGridtwoData tbody').on('keydown', '.AdjCollAmtFooter', function (e) {
         var PMID = $("#cmbPaymode").val();
         const key = e.keyCode;
@@ -2354,6 +2031,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             SumG2FooterLabels();
         }
     });
+    //~Grid 2 Amt Ctrl Space
     $('#tblGridtwoData tbody').on('keydown', '.AdjCollAmtFooter', function (e) {
         var PMID = $("#cmbPaymode").val();
         const key = e.keyCode;
@@ -2367,7 +2045,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var dCollAmt = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
             var dG2DiscAmt = getG2FooterSum(3);
             var calcdiff = (dCollAmt + dG1AdjAmt - dG2TotAdjAmt)
-            console.log("Amt : " + calcdiff);
+            //console.log(("Amt : " + calcdiff);
             var dTotRemAmt = parseFloat(document.getElementById("txtRemainingAmount").getAttribute("txttag"));
 
             //Get full row of the space-clicked cell
@@ -2440,13 +2118,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                             let dWriteoff = 0;
                             let dTAA = 0;
-                            console.log("CollAmt : ", CollAmt);
+                            //console.log(("CollAmt : ", CollAmt);
                             // ----- Validate Collection Amount -----
                             if (CollAmt) {
                                 let maxval = getMaxEl($r, "input[name='AdjCollAmtFooter']");
                                 let remAmt = getTag("#txtRemainingAmount", "txttag");
                                 let totAdj = getTag("#txtTotAdjustmentAmount", "txttag");
-                                console.log("remAmt : ", remAmt);
+                                //console.log(("remAmt : ", remAmt);
                                 if (CollAmt >= remAmt) {
                                     //CollAmt = resetInput($r, "input[name='AdjCollAmtFooter']", "1.Amount (" + CollAmt + ") should be less than Remaining Amount(" + remAmt + ")");
                                     //updateLbl($r, "input[name='AdjCollAmtFooter']", remAmt);
@@ -2568,100 +2246,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }, 500)
         }
     });
-    $('#tblGridtwoData_test tbody').on('keydown', '.AdjCollAmtFooter', function (e) {
-
-        const key = e.keyCode;
-        const isSpace = key === 32;
-        const isCtrlSpace = key === 32 && e.ctrlKey;
-
-        if (isSpace) {
-            e.preventDefault();
-            //console.log("value ", e.target.value);
-            //showErrorSnackbar("value : "+ e.target.value)
-
-            // --- CURRENT ROW ---
-            const row = $(this).closest("tr");
-            const rowData = TableGridtwoData.row(row).data();
-            const currRowDocID = rowData[0];
-
-            // --- COMMON VALUES ---
-            const dG1AdjAmt = parseFloat($("#lblG1AdjAmt").attr("lbltag"));
-            const dCollAmt = parseFloat($("#txtAmount").attr("txttag"));
-            const dTotRemAmt = parseFloat($("#txtRemainingAmount").attr("txttag"));
-            const dG2TotAdjAmt = G2Sumvalue(nGrid2CurrentRowIndex);
-
-
-            if (dTotRemAmt <= 0) {
-                showErrorSnackbar("Remaining Amount should be greater than zero");
-                return;
-            }
-
-            // Calculate available amount
-            const diffAmt = dCollAmt + dG1AdjAmt - dG2TotAdjAmt;
-
-            // --- PROCESS ONLY CURRENT ROW ---
-            let balance = 0;
-
-            // LABEL updates
-            row.find("label").each(function () {
-                const field = $(this);
-                const name = field.attr("name");
-
-                if (name === "G2OS") {
-                    balance = parseFloat(field.attr("lbltag"));
-                }
-
-                if (name === "WriteOff") {
-                    updateLabelColumn(field.attr("id"), 0);
-                }
-            });
-
-            // INPUT updates
-            row.find("input").each(function () {
-                const field = $(this);
-                const fieldID = field.attr("id");
-                const name = field.attr("name");
-
-                switch (name) {
-                    case "AdjCollAmtFooter":
-                        const collAmt = Math.min(diffAmt, balance);
-                        updateInputColumn(fieldID, collAmt);
-                        break;
-
-                    case "AdjDiscPern":
-                    case "AdjDiscAmt":
-                    case "AdjAmt":
-                        updateInputColumn(fieldID, 0);
-                        break;
-                }
-            });
-
-            // SELECT update
-            row.find("select[name='FullyAdj']").val(0);
-        }
-        calculateGrid2Value();
-        setTimeout(() => {
-            CalculateAdjustvalues();
-        }, 500)
-    });
-
-    $('#tblGridtwoData_older tbody').on('change', '.AdjCollAmtFooter', function (e) {//old method
-        var dTotAdjAmt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag"));
-        var id = e.target.id;
-        var val = e.target.value;
-        var name = e.target.name;
-        ProdGridChange = true;
-
-        if (dTotAdjAmt > 0) {
-            updateInputColumn(id, val);
-            calculateGrid2Value();
-            // const $row = $(this).closest("tr");
-            CalculateAdjustvalues();
-        } else {
-            showErrorSnackbar("Adjustment Amount should be greater than zero");
-            updateInputColumn(id, 0);
-        }
-    });
+    //~Grid 2 Amt Change
     $('#tblGridtwoData tbody').on('change', '.AdjCollAmtFooter', function (e) {
 
         var dTotAdjAmt = getTag("#txtTotAdjustmentAmount", "txttag");
@@ -2768,13 +2353,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
             CalculateAdjustvalues();
         }, 500);
     });
-
+    //~Grid 2 Adj Amt Change
     $('#tblGridtwoData tbody').on('change', '.AdjFooter', function (e) {
 
         ProdGridChange = true;
         var RemAmt = parseFloat(document.getElementById("txtRemainingAmount").getAttribute("txttag"));
         const $row = $(this).closest("tr");
-        console.log("Row data ", $row);
+        //console.log(("Row data ", $row);
         const rowData = TableGridtwoData.row($row).data();
         const CurrRowDocID = rowData[0];
 
@@ -2850,127 +2435,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         CalculateAdjustvalues();
     });
 
-    $('#tblGridtwoData tbody').on('change', '.AdjFooter_old', function (e) {
-        var currrowdata = TableGridtwoData.row(nGrid2CurrentRowIndex).data();
-        var CurrRowDocID = currrowdata[0];
-        var dTotAdjAmt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag"));
-        var id = e.target.id;
-        var fieldval = e.target.value;
-        var name = e.target.name;
-        ProdGridChange = true;
-        updateInputColumn(id, fieldval);
-        var dAdjAmt = 0, dTotalAdjAmt = 0;
-        $("#tblGridtwoData tbody tr").each(function () {
-            var CollAmt = 0, AdjAmtPM = 0, DiscPern = 0, DiscAmt = 0, Balance = 0, dTAA = 0, dWriteoff = 0;
-            var rowData = TableGridtwoData.row($(this)).data();
-            var RowDocID = rowData[0];
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "G2OS") {
-                    Balance = parseFloat($(this).attr('lbltag'));
-                }
-            })
-            if (CurrRowDocID == RowDocID) {
-
-                $(this).find("input").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "AdjCollAmtFooter") {
-                        CollAmt = parseFloat($(this).attr('txttag'));
-                    }
-                    else if (fieldName == "AdjDiscPern") {
-                        DiscPern = parseFloat($(this).attr('txttag'));
-                    }
-                    else if (fieldName == "AdjDiscAmt") {
-                        DiscAmt = parseFloat($(this).attr('txttag'));
-                    }
-                });
-                $(this).find("input").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "AdjAmt") {
-                        var Val = parseFloat(fieldval);
-                        AdjAmtPM = parseFloat(0);
-                        if (CollAmt > 0)
-                        {
-                            if (Val > 0)
-                            {
-                                if (Val <= Balance) {
-                                    updateInputColumn(fieldID, Val);
-                                    AdjAmtPM = parseFloat(Val);
-                                }
-                                else {
-                                    updateInputColumn(fieldID, 0);
-                                    showErrorSnackbar("Amount Mismatched");
-                                }
-                            }
-                            else {
-                                if (Balance >= (CollAmt + DiscAmt + Math.abs(Val)))
-                                {
-                                    updateInputColumn(fieldID, Val);
-                                    AdjAmtPM = parseFloat(Val);
-                                }
-                                else
-                                {
-                                    updateInputColumn(fieldID, 0);
-                                    showErrorSnackbar("Amount Mismatched");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            showErrorSnackbar("Collected Amount should be greater than zero");
-                            updateInputColumn(fieldID, 0);
-                        }
-                    }
-                });
-                $(this).find("label").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "WriteoffAmt") {
-                        if (fieldName == "WriteoffAmt") {
-                            //$(this).val(0);
-                            dWriteoff = 0;// parseFloat($(this).attr('lbltag'));
-                            updateLabelColumn(fieldID, 0);
-                        }
-                        //dWriteoff = parseFloat($(this).attr('lbltag'));
-                    }
-                    if (fieldName == "G2TotalAdjAmount") {
-                        var PMAdjamt = AdjAmtPM > 0 ? 0 : Math.abs(AdjAmtPM);
-                        var totadj = CollAmt + DiscAmt + PMAdjamt + dWriteoff;
-                        updateLabelColumn(fieldID, totadj);
-                        dTotalAdjAmt += totadj;
-                        dTAA = totadj;
-                    }
-                    //if (fieldName == "G2Balance") {
-                    //    var RemOS = Balance - dTAA;
-                    //    updateLabelColumn(fieldID, RemOS);
-                    //}
-                });
-                $(this).find("select").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "FullyAdj") {
-                        $(this).val(0);
-                    }
-                });
-            }
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "G2Balance") {
-                    var RemOS = Balance - dTAA;
-                    updateLabelColumn(fieldID, RemOS);
-                }
-            });
-        });
-        //calculateGrid2Value();
-        SumG2FooterLabels();
-        updateInputColumn("txtAdjustedAmount", dTotalAdjAmt);
-
-        CalculateAdjustvalues();
-    });
     function CalculateAdjustvalues() {
         var G1CollValue = getG1FooterSum(1);
         var HeaderCollAmt = parseFloat(document.getElementById("txtAmount").getAttribute("txttag"));
@@ -2994,22 +2458,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn("txtTotAdjustmentAmount", AdjustUpto);
         updateInputColumn("txtAdjustedAmount", G2CollValue + G2DiscValue + G2WriteoffAmt);
 
-        //if (G2AdjValue <= 0) {
-        //    var AdjustedValue = AdjustUpto + Math.abs(G2AdjValue);
-        //    updateInputColumn("txtAdjustedAmount", (G2CollValue + G2DiscValue + G2WriteoffAmt) + Math.abs(G2AdjValue));
-        //    updateInputColumn("txtTotAdjustmentAmount", AdjustUpto);//AdjustedValue
-        //} else {
-
-        //    var AdjustedValue = G2CollValue +  Math.abs(G2AdjValue);
-        //    updateInputColumn("txtTotAdjustmentAmount", AdjustUpto);
-        //    updateInputColumn("txtAdjustedAmount", AdjustedValue + G2DiscValue + G2WriteoffAmt);
-        //    //showSuccessSnackbar("Adjusted Amount : " + AdjustedValue + G2DiscValue + G2WriteoffAmt);
-        //}
-
-
         var totadjmtamt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag")).toFixed(4);
         var totadjtedamt = parseFloat(document.getElementById("txtAdjustedAmount").getAttribute("txttag")).toFixed(4);
-        console.log("totadjmtamt", totadjmtamt, "totadjtedamt", totadjtedamt);
+        //console.log(("totadjmtamt", totadjmtamt, "totadjtedamt", totadjtedamt);
 
         var cRemAmt = parseFloat(totadjmtamt) - parseFloat(G2CollValue + OCPos) //Math.round((parseFloat(totadjmtamt) - parseFloat(totadjtedamt)) * 1) / 1;
 
@@ -3025,10 +2476,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
             bal = ((clsbl) - parseFloat(val)) - G2DiscAmt;
         else
             bal = ((clsbl) + parseFloat(val)) - G2DiscAmt;
-        console.log("After amount Bal : ", bal);
+        //console.log(("After amount Bal : ", bal);
         var crdr = bal >= 0 ? "Dr" : "Cr";
         var clb = parseFloat(Math.abs(bal)).toFixed(DecVal);
-        console.log("Final Bal : ", clb);
+        //console.log(("Final Bal : ", clb);
         $("#txtBalance").val(clb.toString() + " " + crdr);
         //updateInputColumn("txtBalance", Math.abs(bal))
         $("#txtBalance").css("color", bal > 0 ? "Red" : "Green");
@@ -3195,165 +2646,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         CalculateAdjustvalues();
     });
 
-    $('#tblGridtwoData_older tbody').on('change', '.AdjDiscPern,.AdjDiscAmt', function (e) {//old function
-        var currrowdata = TableGridtwoData.row(nGrid2CurrentRowIndex).data();
-        var CurrRowDocID = currrowdata[0];
-        var dTotAdjAmt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag"));
-        var id = e.target.id;
-        var fieldval = parseFloat(e.target.value);
-        var CurrentFName = e.target.name;
-        ProdGridChange = true;
-        updateInputColumn(id, fieldval);
-        var dAdjAmt = 0, dTotalAdjAmt = 0,dTotDiscAmt = 0;
-        $("#tblGridtwoData tbody tr").each(function () {
-            var CollAmt = 0, AdjAmtPM = 0, DiscPern = 0, DiscAmt = 0, Balance = 0, dTAA = 0, dWriteoff = 0;
-            var rowData = TableGridtwoData.row($(this)).data();
-            var RowDocID = rowData[0];
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "G2OS") {
-                    Balance = parseFloat($(this).attr('lbltag'));
-                }
-
-            });
-            if (CurrRowDocID == RowDocID) {
-
-                $(this).find("input").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "AdjCollAmtFooter") {
-                        CollAmt = parseFloat($(this).attr('txttag'));
-                    }
-                    else if (fieldName == "AdjAmt") {
-                        AdjAmtPM = parseFloat($(this).attr('txttag'));
-                    }
-                    else if (fieldName == "AdjDiscPern") {
-                        var Disval = parseFloat($(this).attr('txttag'));
-
-                        if (Disval >= 0) {
-                            if (CurrentFName == "AdjDiscAmt") {
-                                var calpern = (fieldval / Balance) * 100;
-                                var adjamtinminus = AdjAmtPM >= 0 ? 0 : AdjAmtPM;
-                                var sum = CollAmt + fieldval - adjamtinminus;
-                                if (Balance >= sum) {
-                                    updateInputColumn(fieldID, calpern);
-                                    DiscPern = calpern;
-                                } else {
-                                    showErrorSnackbar("Amount mismatched")
-                                    updateInputColumn(fieldID, 0);
-                                    DiscPern = 0;
-                                }
-                            }
-                            else {
-                                const fullValue = document.getElementById(fieldID).getAttribute('txttag');
-                                var val = fullValue != "" ? parseFloat(fullValue) : 0;
-                                var adjamtinminus = AdjAmtPM >= 0 ? 0 : AdjAmtPM;
-                                var calpern = (val * Balance) / 100;
-                                var sum = CollAmt + calpern - adjamtinminus;
-                                if (Balance >= sum) {
-                                    //updateInputColumn(fieldID, calpern);
-                                    DiscPern = val;
-                                } else {
-                                    showErrorSnackbar("Amount mismatched")
-                                    updateInputColumn(fieldID, 0);
-                                    DiscPern = 0;
-                                }
-                                //updateInputColumn(fieldID, val);
-                                //DiscPern = val;
-                            }
-                        }
-                        else {
-                            showErrorSnackbar("Discount % should be greater than zero")
-                            updateInputColumn(fieldID, 0);
-                        }
-                    }
-                    else if (fieldName == "AdjDiscAmt") {
-                        //DiscAmt = parseFloat($(this).attr('txttag'));
-                        var Disval = parseFloat($(this).attr('txttag'));
-                        if (Disval >= 0)
-                        {
-                            if (CurrentFName == "AdjDiscPern") {
-                                var calpern = (DiscPern * Balance) / 100;
-                                var adjamtinminus = AdjAmtPM >= 0 ? 0 : AdjAmtPM;
-                                updateInputColumn(fieldID, calpern);
-                                DiscAmt = calpern;
-                            } else {
-                                const fullValue = document.getElementById(fieldID).getAttribute('txttag');
-                                var val = fullValue != "" ? parseFloat(fullValue) : 0;
-                                var adjamtinminus = AdjAmtPM >= 0 ? 0 : AdjAmtPM;
-                                var sum = CollAmt + val - adjamtinminus;
-                                if (Balance >= sum) {
-                                    //updateInputColumn(fieldID, calpern);
-                                    DiscAmt = val;
-                                } else {
-                                    showErrorSnackbar("Amount mismatched")
-                                    updateInputColumn(fieldID, 0);
-                                    DiscAmt = 0;
-                                }
-                                //updateInputColumn(fieldID, val);
-                                //DiscAmt = val;
-                            }
-                        }
-                        else
-                        {
-                            showErrorSnackbar("Discount Amount should be greater than zero")
-                            updateInputColumn(fieldID, 0);
-                        }
-                    }
-                });
-                $(this).find("label").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "WriteoffAmt") {
-                        console.log("writeoff field trigger");
-                        $(this).val(0);
-                        dWriteoff = 0;// parseFloat($(this).attr('lbltag'));
-                        updateLabelColumn(fieldID, 0);
-                    }
-                    if (fieldName == "G2TotalAdjAmount") {
-                        var PMAdjamt = AdjAmtPM > 0 ? 0 : Math.abs(AdjAmtPM);
-                        var totadj = CollAmt + DiscAmt + PMAdjamt + dWriteoff;
-                        updateLabelColumn(fieldID, totadj);
-                        dTotalAdjAmt += totadj;
-                        dTAA = totadj;
-                    }
-                    //if (fieldName == "G2Balance") {
-                    //    var val = parseFloat(Balance - dTAA);
-                    //    updateLabelColumn(fieldID, val);
-                    //}
-                });
-                $(this).find("select").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "FullyAdj") {
-                        $(this).val(0);
-                    }
-                });
-            }
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "G2Balance") {
-                    var val = parseFloat(Balance - dTAA);
-                    updateLabelColumn(fieldID, val);
-                }
-            });
-            //$(this).find("input").each(function (index) {
-            //    const fieldName = $(this).attr("name");
-            //    const fieldID = $(this).attr("id");
-            //    if (fieldName == "AdjDiscAmt") {
-            //        dTotDiscAmt += parseFloat($(this).attr('txttag'));
-            //    }
-            //});
-        });
-        //updateLabelColumn("lblG2DiscAmt", dTotDiscAmt);
-        SumG2FooterLabels();
-        //updateInputColumn("txtAdjustedAmount", dTotalAdjAmt);
-
-        //var remamt = parseFloat(document.getElementById("txtTotAdjustmentAmount").getAttribute("txttag")) - dTotalAdjAmt;
-        CalculateAdjustvalues();
-    });
     $('#tblGridtwoData tbody').on('change', '.AdjDiscPern,.AdjDiscAmt', function (e) {
 
         var $row = $(e.target).closest("tr");        // ✔ only this row
@@ -3444,28 +2736,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
     //$("#tblGridoneData").change(function (e) {
     var txtValuechanged = false;
 
-function setDate1(FieldID,Type) {
-    $.ajax({
-         url: "@Url.Action("setdate", "Home")",
-        type: 'get',
-        contentType: 'json',
-        data: { TypeID: Type },
-        success: function (data) {
-            $.each(data, function (i, items) {
-                $("#" + FieldID).attr("max", items.MaxDate);
-                $("#" + FieldID).attr("min", items.MinDate);
-                $("#" + FieldID).val(items.Value);
-            });
-        }
-    })
-    }
     $("#trVisa").hide();
     function PaymodeChangeFieldValidation(PMID) {
-        var selval = PMID;
-
+        var selval = PMID
         updateInputColumn("txtVisaPern", 0); updateInputColumn("txtVisaAmt", 0);
-
-
         $("#cmbBankName").val(0);
         $("#txtBranchName,#txtIFSC").val("");
         $('#cmbChequeNo').find("option").remove();
@@ -3473,11 +2747,8 @@ function setDate1(FieldID,Type) {
             value: 0,
             text: "-- Select --",
         }));
-
         if (selval == 2 || selval == 3 || selval == 4 || selval == 5) {
             $("#cmbFromAccount").val(DefBankAcc);
-
-
         } else {
             $("#cmbFromAccount").val(0);
         }
@@ -3625,7 +2896,35 @@ function setDate1(FieldID,Type) {
         var isedit = nTransMode == 2;
         GetDocumentID(DocDate, Branch, nDocPrefix, prefix, isedit, id);
     });
-
+    function LoadPartyAutolistdata() {
+        $.ajax({
+            url: Aurl + "collectionpayment/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: 1, DocPrefix: nDocPrefix, CodeName: "", ID: "", BranchID: $("#cmbBranch").val(), Date: $("#dtpDate").val() },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                arrVendor = [], arrVendorName = [], nIndexarrVendor = 0;
+                $.each(data, function (i, items) {
+                    if (items.FType == 1) {
+                        var ven = {
+                            "label": items.Code + " | " + items.Name,
+                            "name": items.Name,
+                            "code": items.Code,
+                            "id": items.ID,
+                            "add1": items.Billadd1,
+                        }
+                        arrVendor.push(ven);
+                        arrVendorName[nIndexarrVendor] = items.Name;
+                        nIndexarrVendor++;
+                    }
+                });
+            }
+        });
+    }
+    //~Preload Data
     function GetData(nMode, strName = null, strID = null, dtpDt = null) {
         $.ajax({
             url: Aurl + "collectionpayment/get",
@@ -3642,7 +2941,7 @@ function setDate1(FieldID,Type) {
                         value: 0,
                         text: "-- Select --",
                     }));
-                    arrVendor = [], arrVendorCode = [], arrVendorName = [], arrBankAccountData = [], arrReasons = [];
+                    arrVendor = [], arrVendorName = [], arrBankAccountData = [], arrReasons = [];
                     nIndexarrVendor = 0, nIndexarrProd = 0, strReasons = '<option value="0">-Reason-</option>';
                     $.each(data, function (i, items) {
                         if (items.FType == 1) {
@@ -3654,7 +2953,6 @@ function setDate1(FieldID,Type) {
                                 "add1": items.Billadd1,
                             }
                             arrVendor.push(ven);
-                            arrVendorCode[nIndexarrVendor] = items.Code;
                             arrVendorName[nIndexarrVendor] = items.Name;
                             nIndexarrVendor++;
                         }
@@ -3746,7 +3044,7 @@ function setDate1(FieldID,Type) {
                     });
                     SetAutlistforFields();
                     //$("#cmbBranch").val(DefBranch);
-                    LoadBranchByRoles();
+                    LoadBranchByRoles('#cmbBranch');
 
                 }
                 else if (nMode == 2) {
@@ -3794,10 +3092,10 @@ function setDate1(FieldID,Type) {
                             bal = (clsbl) - parseFloat(val);
                         else
                             bal = (clsbl) + parseFloat(val);
-                        console.log("After amount Bal : ", bal);
+                        //console.log(("After amount Bal : ", bal);
                         var crdr = bal >= 0 ? "Dr" : "Cr";
                         var clb = parseFloat(Math.abs(bal)).toFixed(DecVal);
-                        console.log("Final Bal : ", clb);
+                        //console.log(("Final Bal : ", clb);
                         $("#txtBalance").val(clb.toString() + " " + crdr);
                         //updateInputColumn("txtBalance", Math.abs(bal))
                         $("#txtBalance").css("color", bal > 0 ? "Red" : "Green");
@@ -3816,7 +3114,7 @@ function setDate1(FieldID,Type) {
                     }
                 }
                 else if (nMode == 33) {
-                    arrVendor = [], arrVendorCode = [], arrVendorName = [], arrBankAccountData = [];
+                    arrVendor = [], arrVendorName = [], arrBankAccountData = [];
                     nIndexarrVendor = 0, nIndexarrProd = 0;
                     $.each(data, function (i, items) {
                         var ven = {
@@ -3827,7 +3125,6 @@ function setDate1(FieldID,Type) {
                             "add1": items.Billadd1,
                         }
                         arrVendor.push(ven);
-                        arrVendorCode[nIndexarrVendor] = items.Code;
                         arrVendorName[nIndexarrVendor] = items.Name;
                         nIndexarrVendor++;
                     });
@@ -4046,7 +3343,7 @@ function setDate1(FieldID,Type) {
                 TableGrid1Data = $('#tblGridoneData').DataTable();
                 //end
                 //g2start
-                console.log("g2data ", g2data);
+                //console.log(("g2data ", g2data);
 
                 var G2dataSet = g2data.map(function (items, nRowIndex) {
                     G2Bal += parseFloat(items.Balance);
@@ -4114,50 +3411,6 @@ function setDate1(FieldID,Type) {
                     }
                 });
                 TableGridtwoData = $('#tblGridtwoData').DataTable();
-                //$.each(data, function (i, items) {
-                //    if (items.TypeID == "1") {
-                //        TableGrid1Data.row.add([
-                //            items.ID,
-                //            items.DocPrefix,
-                //            items.FAID,
-                //            items.DocValue,
-                //            G1So,
-                //            items.DocID,
-                //            items.Tran_Date,
-                //            items.DocRef,
-                //            items.TransName,
-                //            '<label name="G1NetAmount" lbltag="' + items.NetAmt + '" title="' + items.NetAmt + '" class="lblsettag" id="dgv1NetAmount' + i + '">' + parseFloat(items.NetAmt).toFixed(DecVal) + '</label>',
-                //            '<label name="G1Balance" lbltag="' + items.Balance + '" title="' + items.Balance + '" class="lblsettag lblHeaderBal" id="dgv1Balance' + i + '" refadjid="dgv1AdjAmt' + i + '">' + parseFloat(items.Balance).toFixed(DecVal) + '</label>',
-                //            '<input type="number" txttag="0" title="0" name="AdjCollAmtHeader"  class="txtsettag AdjCollAmtHeader gdInput"  id="dgv1AdjAmt' + i + '"  min="0" max="' + items.Balance +'" oninput="maxCheckGrid1(this)"/>'
-                //        ]).draw(false);
-                //        G1Bal += parseFloat(items.Balance);
-                //        G1So++;
-                //    }
-                //    else {
-                //        TableGridtwoData.row.add([
-                //            items.ID,
-                //            items.DocPrefix,
-                //            items.FAID,
-                //            items.DocValue,
-                //            G2So,
-                //            items.DocPrefix == "15" ? '<a href="javascript:void(0)" style="cursor: pointer;" class="clsInvoiceCollection">' + items.DocID + '</a>' : items.DocID,
-                //            items.Tran_Date,
-                //            items.DocRef,
-                //            items.TransName,
-                //            '<label name="G2NetAmount" lbltag="' + items.NetAmt + '" title="' + items.NetAmt + '" class="lblsettag" id="dgv2NetAmount' + i + '">' + parseFloat(items.NetAmt).toFixed(DecVal) + '</label>',
-                //            '<label name="G2OS" lbltag="' + items.Balance + '" title="' + items.Balance + '" class="lblsettag lblFooterBal" id="dgv2OS' + i + '" refadjid="dgv2CollAmt' + i + '">' + parseFloat(items.Balance).toFixed(DecVal) + '</label>',
-                //            '<input type="number" txttag="0" title="0" name="AdjCollAmtFooter"  class="txtsettag AdjCollAmtFooter gdInput"  id="dgv2CollAmt' + i + '"  min="0" max="' + items.Balance + '"/>',//
-                //            '<input type="number" txttag="0" title="0" name="AdjAmt"  class="txtsettag AdjFooter gdInput"  id="dgv2AdjAmt' + i + '"/>',
-                //            '<input type="number" txttag="0" title="0" name="AdjDiscPern"  class="txtsettag AdjDiscPern gdInput"  id="dgv2DiscPern' + i + '"/></br><input type="number" txttag="0" title="0" name="AdjDiscAmt"  class="txtsettag AdjDiscAmt gdInput"  id="dgv2DiscAmt' + i + '"/>',
-                //            '<select name="FullyAdj" id="dgvFulladj'+i+'" class="gdInput"><option value="0">No</option><option value="1">Yes</option></select>',
-                //            '<label name="G2TotalAdjAmount" lbltag="0" title="0" class="lblsettag" id="dgv2TotalAdjAmount' + i + '">' + parseFloat(0).toFixed(DecVal) + '</label>',
-                //            '<label name="G2Balance" lbltag="' + items.Balance + '" title="' + items.Balance + '" class="lblsettag" id="dgv2Bal' + i + '">' + parseFloat(items.Balance).toFixed(DecVal) + '</label>',
-                //        ]).draw(false);
-                //        G2Bal += parseFloat(items.Balance);
-                //        G2So++;
-                //    }
-                //});
-                //lblG1TotalBalance,lblG1AdjAmt
                 var G1Count = TableGrid1Data.rows().count();
                 var G2Count = TableGridtwoData.rows().count();
                 //$("#lblAdvDocCount").text("(" + G1Count + ")"); $("#lblOSDocCount").text("(" + G2Count + ")");
@@ -4332,7 +3585,7 @@ function setDate1(FieldID,Type) {
                     TableGrid1Data = $('#tblGridoneData').DataTable();
                     //end
                     //g2start
-                    console.log("g2 ", g2data);
+                    //console.log(("g2 ", g2data);
                     var G2dataSet = g2data.map(function (Docsitems, nRowIndex) {
                         G2Bal += parseFloat(Docsitems.Balance);
                         G2DocValue += parseFloat(Docsitems.NetAmt);
@@ -4617,7 +3870,7 @@ function setDate1(FieldID,Type) {
                         TableGrid1Data = $('#tblGridoneData').DataTable();
                         //end
                         //g2start
-                        console.log("g2 ", g2data);
+                        //console.log(("g2 ", g2data);
                         var G2dataSet = g2data.map(function (Docsitems, nRowIndex) {
                             G2Bal += parseFloat(Docsitems.Balance);
                             G2DocValue += parseFloat(Docsitems.NetAmt);
@@ -4629,7 +3882,7 @@ function setDate1(FieldID,Type) {
                             var Reasons = "<select title=" + Docsitems.ReasonName + " name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
                             if (parseFloat(Docsitems.CollAmt) > 0)
                             {
-                                console.log("CollAmt : " + Docsitems.CollAmt);
+                                //console.log(("CollAmt : " + Docsitems.CollAmt);
                             }
                             var TotAdjAmt = parseFloat(Docsitems.CollAmt) + parseFloat(Docsitems.DiscAmt)  +
                                 (parseFloat(Docsitems.AdjAmt) <= 0 ? Math.abs(parseFloat(Docsitems.AdjAmt)) : 0)
@@ -4797,8 +4050,8 @@ function setDate1(FieldID,Type) {
                                 title: 'Settings',
                                 visible: true,
                                 onClick: (gridInstance, event) => {
-                                    //console.log("gridInstance : ", gridInstance);
-                                    //console.log("event : ", event);
+                                    ////console.log(("gridInstance : ", gridInstance);
+                                    ////console.log(("event : ", event);
                                     //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
                                     //modalGenColumnSettings.style.display = "block";
                                     modalGenColumnSettings.show();
@@ -4811,8 +4064,8 @@ function setDate1(FieldID,Type) {
                                 title: 'Add New',
                                 visible: $("#txtAddID").val() == 1,
                                 onClick: (gridInstance, event) => {
-                                    //console.log("gridInstance : ", gridInstance);
-                                    //console.log("event : ", event);
+                                    ////console.log(("gridInstance : ", gridInstance);
+                                    ////console.log(("event : ", event);
                                     //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
                                     nTransMode = 1;
                                     $("#dvMain").show();
@@ -4832,7 +4085,7 @@ function setDate1(FieldID,Type) {
                     if (CollPYjsData.length == 0) {
                         if (ClickType == 1)
                             showErrorSnackbar("No records found");
-                    }                        
+                    }
                 }
             });
         }
@@ -4880,9 +4133,22 @@ function setDate1(FieldID,Type) {
         var nDocPrefix = rowdata[1];//[0];
         InvoiceCollectionModalPopup(ID, nDocPrefix)
     });
-
+    //~Close
+    $("#btnClose").click(function () {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    function CloseForm() {
+        if ($("#txtTransType").val() == 3 || $("#txtTransType").val() == 2) {
+            this.close();
+        } else {
+            $("#dvMain").hide();
+            $("#dvDocuments").show();
+            $("#MainHeading").text($("#txtFormName").val());
+            GetFilterData();
+        }
+    }
+    //~Clear
     $("#btnClear").click(function () {
-        //ClearForm();
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
     $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
@@ -4908,7 +4174,7 @@ function setDate1(FieldID,Type) {
         $("#txtNoofCopies").val("1");
         SetFilterDate();
         //$("#cmbBranch").val(DefBranch);
-        LoadBranchByRoles();
+        LoadBranchByRoles('#cmbBranch');
         $("#cmbFromAccount").val(DefBankAcc);
         setTimeout(function () {
             GetFilterData();
@@ -4940,54 +4206,27 @@ function setDate1(FieldID,Type) {
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
     }
+    
     function SetAutlistforFields() {
-        ////Search
-        $("#txtSearch").autocomplete({
-            minLength: 0, autoFocus: true,
-            source: arrVendor,
-            //focus: function (event, ui) {
-            //    $("#txtSearch").val(ui.item.name);
-            //    return false;
-            //},
-            select: function (event, ui) {
-                $("#txtSearch").val(ui.item.name);
-                GetData(2, ui.item.code);
-                //$("#txtRemarks").val(ui.item.id);
+        //~AutoList Party
+        PaginatedAutocomplete({
+            inputId: "txtSearch",
+            data: arrVendor,
+            onSelect: function (item) {
+                $("#txtSearch").val(item.name);
+                GetData(2, item.code);
                 return false;
-            },
-        }).autocomplete("instance")._renderItem = function (ul, item) {
-            return $("<li class='each'>")
-                .append("<div class='acItem'><span class='name'>" +
-                    item.label + "</span><br><span class='desc'>" +
-                    item.add1 + "</span></div>")
-                .appendTo(ul);
-        };
-        $("#txtFilterParty").autocomplete({
-            minLength: 0, autoFocus: true,
-            source: arrVendor,
-            //focus: function (event, ui) {
-            //    $("#txtFilterParty").val(ui.item.name);
-            //    return false;
-            //},
-            select: function (event, ui) {
-                $("#txtFilterParty").val(ui.item.name);
-                //$("#txtRemarks").val(ui.item.id);
+            }
+        });
+        //~AutoList Filter Party
+        PaginatedAutocomplete({
+            inputId: "txtFilterParty",
+            data: arrVendor,
+            onSelect: function (item) {
+                $("#txtFilterParty").val(item.name);
                 return false;
-            },
-        }).autocomplete("instance")._renderItem = function (ul, item) {
-            return $("<li class='each'>")
-                .append("<div class='acItem'><span class='name'>" +
-                    item.label + "</span></div>")
-                .appendTo(ul);
-        };
-
-        //setTimeout(function () {
-        //    $("#txtFilterParty,#txtSearch").val("");
-        //    $('input#txtFilterParty').autocomplete("search");
-        //    $('input#txtSearch').autocomplete("search");
-        //    var esc = $.Event("keydown", { keyCode: 27 });
-        //    $("#txtFilterParty,#txtSearch").trigger(esc);
-        //}, 100);
+            }
+        });
     }
     $("#btnPaymentAccept").click(function () {
         nIsDraft = 0;
@@ -5070,6 +4309,7 @@ function setDate1(FieldID,Type) {
             }
         }
     });
+    //~Validation
     var PaymentAccept = false;
     function SaveValidation() {
         var IsValid = true;
@@ -5323,11 +4563,9 @@ function setDate1(FieldID,Type) {
             });
         }
     }
-
+    //~Save
     function SaveData() {
         $("#btnSave").prop("disabled", true);
-        //alert("Validation success");
-
         AddDocstoSave();
         var listTrans = {
             "IsDraft": nIsDraft,
@@ -5380,7 +4618,6 @@ function setDate1(FieldID,Type) {
                 $("#btnSave").prop("disabled", false);
                 $.each(data, function (i, items) {
                     if (items.MsgID == 0) {
-                        //alert(items.Message);
                         showSuccessSnackbar(items.Message);
                         modalPayment.hide();
                         //ClearForm();
@@ -5406,8 +4643,6 @@ function setDate1(FieldID,Type) {
                         }
                     }
                     else {
-                        //$("#dvErrorName").html(items.Message);
-                        //alert(items.Message);
                         showErrorSnackbar(items.Message);
                     }
                 });
@@ -5471,7 +4706,7 @@ function setDate1(FieldID,Type) {
         return AllowAdvance;
     };
 
-    
+    //~View from another form(Home, Fin Rep Space click)
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {
         nTransMode = 5;
         var ID = $("#txtID").val();
@@ -5483,6 +4718,7 @@ function setDate1(FieldID,Type) {
         $("#btnEmail,#btnWhatsapp").show();
         $("#MainHeading").text("View " + $("#txtFormName").val());
     }
+    //~Web Collection Doc Load
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {
         nTransMode = 1;
         var ID = $("#txtID").val();
@@ -5503,28 +4739,40 @@ function setDate1(FieldID,Type) {
         $("#MainHeading").text("Create " + $("#txtFormName").val());
         $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
     }
-    function GetColumnSettingsData(nMode, nFormID, nTableID) {
-        $.ajax({
-            url: Aurl + "columnsettings/getcolumnsettings",
-            /*url: "http://localhost:44396/api/singlemaster/get",*/
-            type: 'get',
-            contentType: 'json',
-            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
-            xhrFields: {
-                withCredentials: true
-            },
-            async: false,
-            success: function (data) {
-                if (data.length > 0) {
-                    columns = (data);
-                    console.log("columns : ", columns);
-                    columns.push(actions);
-                    columns.push(OtherActions);
+        var Url = '@Session["url"].ToString()';
+    $("#openParty").click(function (e) {
+        var nPartyID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        var ProdUrl = "";
+        if (nDocPrefix == 19)
+            ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+        else
+            ProdUrl = Url + "VendorMaster?name=Xuc04S1bb%2FOf%2BKcJwjOr5w%3D%3D&strFormID=4UQ15ZdC2EvQshvLkmfipw%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
 
-                } else {
-                    showErrorSnackbar("No column data found");
-                }
-            }
-        });
-    }
+        window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+    });    
+    // Add this once on page load in your invoice JS
+    window.addEventListener("message", function (event) {
+        var data = event.data;        
+        if (data && data.source === "CustomerMaster") {
+            var customerID = data.customerid;
+            var code = data.customercode;
+            var name = data.customername;
+            GetData(2, code);            
+            LoadPartyAutolistdata();
+            setTimeout(() => {
+                SetAutlistforFields();
+            }, 1000);            
+        }     
+        if (data && data.source === "VendorMaster") {            
+            var code = data.vendorcode;
+            var name = data.vendorname;
+            GetData(2, code);
+            LoadPartyAutolistdata();
+            setTimeout(() => {
+                SetAutlistforFields();
+            }, 1000);
+        }     
+    });
 </script>
