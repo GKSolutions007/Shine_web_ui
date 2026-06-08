@@ -89,7 +89,7 @@ namespace ShineWeb.Controllers
                 Session["ThemeID"] = dtAppconfig.Rows[0]["ThemeID"].ToString();
                 Session["Showallstatus"] = dtAppconfig.Rows[0]["Showallstatus"].ToString();
                 Session["DecimalValues"] = dtAppconfig.Rows[0]["DecimalValues"].ToString();
-                Session["DefaultBranch"] = dtAppconfig.Rows[0]["DefaultBranch"].ToString();
+                Session["ItemOrderby"] = dtAppconfig.Rows[0]["ItemOrderby"].ToString();
                 Session["RoundoffType"] = dtAppconfig.Rows[0]["Roundoff"].ToString();// 1 - nearest,2-lowest,3-heighest
                 Session["RoundoffValue"] = dtAppconfig.Rows[0]["RoundoffValue"].ToString();
                 Session["EnableReturnPrice"] = dtAppconfig.Rows[0]["EnableReturnPrice"].ToString();
