@@ -5032,6 +5032,69 @@ if ($("#txtReurnPricePerm").val() == 0) {
             });
         }
     }
+    // 👇 Function to apply keydown listener to all input elements in the table
+    function setupArrowKeyNavigationforPasswordTable() {
+        if ($('#tblCreditLimPassword').length) {
+            const allInputs = document.querySelectorAll('#tblCreditLimPassword tbody input');
+            allInputs.forEach((input, index) => {
+                input.onkeydown = function (e) {
+                    const currentRow = input.closest('tr');
+                    if (currentRow) {
+                        const inputIndex = Array.from(currentRow.querySelectorAll('input')).indexOf(input);
+                        var hasclass = $(this).is('.gkbsautocomplete, .ui-autocomplete-input');//$(this).hasClass('ui-autocomplete-input');
+                        if (e.key === 'ArrowDown') {                            
+                                if (!ModalState) {
+                                    const nextRow = currentRow.nextElementSibling;
+                                    if (nextRow) {
+                                        const nextInputs = nextRow.querySelectorAll('input');
+                                        if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
+                                }                            
+                        }
+                        if (e.key === 'ArrowUp') {
+                            
+                                if (!ModalState) {
+                                    const prevRow = currentRow.previousElementSibling;
+                                    if (prevRow) {
+                                        const prevInputs = prevRow.querySelectorAll('input');
+                                        if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
+                                }
+                            
+                        }
+                        if (!e.shiftKey && e.key === 'Enter') {
+                            //console.log("Item row select enter 0");
+                            var lencls = $('.ui-menu-item').length;
+                            const allInputsList = Array.from(document.querySelectorAll('#tblCreditLimPassword tbody input:not([disabled])'));
+                            const currentInputIndex = allInputsList.indexOf(input);
+                            const nextInput = allInputsList[currentInputIndex + 1];
+                            if (nextInput) {
+                                //console.log("Item row select enter 1");
+                                nextInput.focus();
+                            } else {
+                                $("#btnCreditLimPasswordAccept").focus();                               
+                            }
+                            e.preventDefault();
+                        }
+                        if (e.shiftKey && e.key === 'Enter') {
+                            const allInputsList = Array.from(document.querySelectorAll('#tblCreditLimPassword tbody input:not([disabled])'));
+                            const currentInputIndex = allInputsList.indexOf(input);
+                            const nextInput = allInputsList[currentInputIndex - 1];
+
+                            if (nextInput) {
+                                nextInput.focus();
+                            } else {                               
+                                $("#btnCreditLimPasswordAccept").focus();
+                            }
+                            e.preventDefault();
+                        }
+                    }
+                };
+            });
+        }
+    }
     var customersalllist = [];
     GetCustomerList();
     function GetCustomerList() {
@@ -6387,7 +6450,41 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         },
                         onCellDoubleClick: (rowdata, fieldName, cellValue, column) => {
                             if (rowdata) {
+                                console.log("rowdata", rowdata)
                                 var Message = rowdata.InfoMessage;
+                                Message = `
+<table class="table table-bordered" style="table-layout: fixed; width: 100%;">
+    <tr>
+        <td style="width:30%" align="right">Party Name :</td>
+        <td style="width:70%; word-wrap: break-word; white-space: normal;">
+            <b>${rowdata.VendorID || ''}</b>
+        </td>
+    </tr>
+    <tr>
+        <td style="width:30%" align="right">Salesman :</td>
+        <td style="width:70%; word-wrap: break-word; white-space: normal;">
+            <b>${rowdata.Salesman || ''}</b>
+        </td>
+    </tr>
+    <tr>
+        <td style="width:30%" align="right">Beat Name :</td>
+        <td style="width:70%; word-wrap: break-word; white-space: normal;">
+            <b>${rowdata.BeatName || ''}</b>
+        </td>
+    </tr>
+    <tr>
+        <td style="width:30%" align="right">Remarks :</td>
+        <td style="width:70%; word-wrap: break-word; white-space: normal;">
+            <b>${rowdata.Remarks || ''}</b>
+        </td>
+    </tr>
+    <tr>
+        <td align="right">Narration :</td>
+        <td style="word-wrap: break-word; white-space: normal;">
+            <b>${rowdata.narration || ''}</b>
+        </td>
+    </tr>
+</table>`;
                                 InfoDialogMsg(Message, "Info Message");
                             } else {
                                 showErrorSnackbar("No info found")
@@ -6803,6 +6900,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 ]).draw(false);
                             });
                             modalCreditLimPassword.show();
+                            setupArrowKeyNavigationforPasswordTable();
                             IsValid = false;
                         }
                         else {
