@@ -261,7 +261,7 @@
     $input.off("keydown.pac").on("keydown.pac", function (e) {
         var isOpen = $GKBSdropdown.is(":visible");
 
-        if (e.key === "ArrowDown") {
+        if (!e.ctrlKey && e.key === "ArrowDown") {
             e.preventDefault();
             state.mouseBlock = true;
             if (!isOpen) { reset(""); openDropdown(); return; }
