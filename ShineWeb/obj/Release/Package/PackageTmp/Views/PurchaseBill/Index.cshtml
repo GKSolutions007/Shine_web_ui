@@ -577,7 +577,7 @@
         <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
     </div>
     <hr />
-    <div class="toastBox"></div>   
+    <div class="toastBox"></div>
     <div id="dvDocuments">
         <div class="row w-100">
             <div class="col-12 col-md-4">
@@ -646,7 +646,7 @@
 
                 </div>
             </div>
-        </div>      
+        </div>
         <table width="100%">
             <tr>
                 <td width="10%" hidden>
@@ -798,7 +798,7 @@
                     <input id="txtTransBillPrice" />
                     <input id="txtTempABS" />
                     <input id="txtHProdCode" />
-                    <input id="txtMRPonTax"/>
+                    <input id="txtMRPonTax" />
                 </div>
 
                 <!-- Item Details -->
@@ -895,7 +895,7 @@
                                 <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Net ₹</th>
                                 <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span></th>
                                 <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TransPrice</th>
-                                <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Location</th>                                
+                                <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Location</th>
                             </tr>
                         </thead>
                         <tfoot>
@@ -1128,7 +1128,7 @@
                                        oninput="sanitizeNumericOnly(this, null)" />
                                 <label class="labelup">Copies</label>
                             </span>
-                            
+
                         </div>
 
                     </div>
@@ -1137,7 +1137,7 @@
                 <!-- ===== SECTION 4: Summary totals (table KEPT — label+value alignment needed) ===== -->
                 <div class="col-12 col-md-3">
                     <table class="table">
-                        
+
                         <tr class="bgclrfortr">
                             <td style="border:none;" align="right">
                                 <label>Tax Amount :</label>
@@ -1201,11 +1201,11 @@
                     </div>
 
                     <!-- Buttons (right) -->
-                    <div class="col-12 col-md-6 text-end d-flex flex-wrap justify-content-end gap-1">                                                
+                    <div class="col-12 col-md-6 text-end d-flex flex-wrap justify-content-end gap-1">
                         <div class="form-check pe-5" id="dvUpdateVendor">
-            <input class="form-check-input" style="font-size:14px;" type="checkbox" id="chkUpdateVendor">
-            <label class="form-check-label" for="chkUpdateVendor" style="font-size:14px;color:black">Update Vendor in Product</label>
-        </div>
+                            <input class="form-check-input" style="font-size:14px;" type="checkbox" id="chkUpdateVendor">
+                            <label class="form-check-label" for="chkUpdateVendor" style="font-size:14px;color:black">Update Vendor in Product</label>
+                        </div>
                         <button type="button" class="btn" id="btnWhatsapp" style="background-color:green;color:white">
                             <i class="fa-brands fa-whatsapp" style="color:white"></i> Whatsapp
                         </button>
@@ -1410,8 +1410,8 @@
         </div>
     </div>
 
-    <!-- Product Info Modal -->
-    <div class="modal fade" id="myModalPinfo" tabindex="-1" aria-labelledby="lblPinfoHeading" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <!-- Product Info Modal | data-bs-backdrop="static" data-bs-keyboard="false" -->
+    <div class="modal fade" id="myModalPinfo" tabindex="-1" aria-labelledby="lblPinfoHeading" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
 
@@ -1592,7 +1592,7 @@
 
             </div>
         </div>
-    </div>   
+    </div>
 </body>
 
 <script>
@@ -4782,6 +4782,21 @@ var Url = '@Session["url"].ToString()';
             showErrorSnackbar("Select Vendor");
         }
     });
+    $('#tblProductData tbody').on('keydown', 'td', function (event) {
+        if (event.key == "F4") {
+            rowdata = ProductTable.row($(this).parents('tr')).data();
+            if (rowdata) {
+                if ($("#txtVendorID").val() != "") {
+                    modalPinfo.show();
+                    var ProdID = rowdata[0];
+                    GetData(14, $("#txtVendorID").val(), ProdID)
+                }
+                else {
+                    showErrorSnackbar("Select Vendor");
+                }
+            }            
+        }
+    });
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempAL = [], arrBankAcc = [], arrAllPaymode = [];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0, strBankAcc = "", strCreditTerm = "", strTransmode = "";
     var prodids = 0, DefBankAcc = 0, strIFSC = '', strBank = '', strBranch = '', strReasons = "", arrReasons = [], strLocation = '';
@@ -5114,6 +5129,32 @@ var Url = '@Session["url"].ToString()';
                 }
             }
 
+        });
+    }
+    function LoadPartyAutolistdata() {
+        $.ajax({
+            url: Aurl + "purchasebill/get",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: 1, CodeName: null, ID: null },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                arrVendor = [], arrVendorName = [], nIndexarrVendor = 0;
+                $.each(data, function (i, items) {
+                    if (items.FType == 1) {
+                        var ven = {
+                            "label": items.Code + " | " + items.Name,
+                            "name": items.Name,
+                            "code": items.Code,
+                            "id": items.ID,
+                        }
+                        arrVendor.push(ven);
+                        arrVendorName.push(items.Name);
+                    }
+                });
+            }
         });
     }
     var ConvFact = 0;
@@ -5609,7 +5650,47 @@ var Url = '@Session["url"].ToString()';
         var ProdUrl = Url + "VendorMaster?name=Xuc04S1bb%2FOf%2BKcJwjOr5w%3D%3D&strFormID=4UQ15ZdC2EvQshvLkmfipw%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nVendID;
         window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
     });
+    document.addEventListener("keydown", function (event) {
 
+        if (event.key == "F8") {
+            event.preventDefault();
+
+            switch (event.target.id) {
+
+                case "txtHProds":
+                    $("#openproduct").trigger("click");
+                    break;
+
+                case "txtSearch":
+                    $("#openvendor").trigger("click");
+                    break;
+
+            }
+        }        
+    });
+    // Add this once on page load in your invoice JS
+    window.addEventListener("message", function (event) {
+        var data = event.data;
+        if (data && data.source === "ProductMaster") {
+            var ProductID = data.productid;
+            var code = data.productcode;
+            var name = data.productname;
+
+            GetData(4, code);
+            setTimeout(() => {
+                GetProductList()
+            }, 500);
+        }
+        else if (data && data.source === "VendorMaster") {
+            var code = data.vendorcode;
+            var name = data.vendorname;
+            GetData(3, code);
+            LoadPartyAutolistdata();
+            setTimeout(() => {
+                SetAutlistforFields();
+            }, 1000);
+        }
+    });
     function SetAutlistforFields() {
         //~AutoList Vendor
         PaginatedAutocomplete({

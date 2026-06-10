@@ -4902,7 +4902,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         setupArrowKeyNavigation1();
     }
 
-    function ReLoadProductAutolists() {
+    function ReLoadProductAutolists(prodname) {
         const ProdALInputs = document.querySelectorAll('#tblProductData tbody input[name=ProdName]');
         ProdALInputs.forEach((input, index) => {
             var FID = ProdALInputs[index].id;
@@ -4925,6 +4925,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 //},
             });
         });
+        $('#' + gridprodfieldid).val(prodname);
     }
     // 👇 Function to apply keydown listener to all input elements in the table
     function setupArrowKeyNavigation1() {
@@ -4955,6 +4956,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             }
                         }
+                        if (e.ctrlKey && e.key === 'ArrowDown') {
+                            if (hasclass) {
+                                if (!ModalState) {
+                                    const nextRow = currentRow.nextElementSibling;
+                                    if (nextRow) {
+                                        const nextInputs = nextRow.querySelectorAll('input');
+                                        if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
+                                }
+                            }
+                        }
                         if (e.key === 'ArrowUp') {
                             if (hasclass) {
                                 var vbl = $('.ui-menu-item').is(":visible");
@@ -4965,6 +4978,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             else {
                                 if (!ModalState)
                                 {
+                                    const prevRow = currentRow.previousElementSibling;
+                                    if (prevRow) {
+                                        const prevInputs = prevRow.querySelectorAll('input');
+                                        if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
+                                }
+                            }
+                        }
+                        if (e.ctrlKey && e.key === 'ArrowUp') {
+                            if (hasclass) {
+                                if (!ModalState) {
                                     const prevRow = currentRow.previousElementSibling;
                                     if (prevRow) {
                                         const prevInputs = prevRow.querySelectorAll('input');
@@ -5042,7 +5067,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     if (currentRow) {
                         const inputIndex = Array.from(currentRow.querySelectorAll('input')).indexOf(input);
                         var hasclass = $(this).is('.gkbsautocomplete, .ui-autocomplete-input');//$(this).hasClass('ui-autocomplete-input');
-                        if (e.key === 'ArrowDown') {                            
+                        if (e.key === 'ArrowDown') {
                                 if (!ModalState) {
                                     const nextRow = currentRow.nextElementSibling;
                                     if (nextRow) {
@@ -5050,10 +5075,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
                                         e.preventDefault();
                                     }
-                                }                            
+                                }
                         }
                         if (e.key === 'ArrowUp') {
-                            
+
                                 if (!ModalState) {
                                     const prevRow = currentRow.previousElementSibling;
                                     if (prevRow) {
@@ -5062,7 +5087,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         e.preventDefault();
                                     }
                                 }
-                            
+
                         }
                         if (!e.shiftKey && e.key === 'Enter') {
                             //console.log("Item row select enter 0");
@@ -5074,7 +5099,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 //console.log("Item row select enter 1");
                                 nextInput.focus();
                             } else {
-                                $("#btnCreditLimPasswordAccept").focus();                               
+                                $("#btnCreditLimPasswordAccept").focus();
                             }
                             e.preventDefault();
                         }
@@ -5085,7 +5110,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                             if (nextInput) {
                                 nextInput.focus();
-                            } else {                               
+                            } else {
                                 $("#btnCreditLimPasswordAccept").focus();
                             }
                             e.preventDefault();
@@ -5095,9 +5120,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
             });
         }
     }
+    var arrFilterCustomerName = [];
+
     var customersalllist = [];
     GetCustomerList();
-    function GetCustomerList() {
+    function GetCustomerList_old() {
         $.ajax({
             url: Aurl + "invoice/getcustomerlist",
             type: 'get',
@@ -5106,14 +5133,45 @@ if ($("#txtReurnPricePerm").val() == 0) {
             xhrFields: {
                 withCredentials: true
             },
-            async: false,
+            //async: false,
             success: function (data) {
                 customersalllist = data;
                 CustomerAutolist(customersalllist);
+                FiltersCustomerAutolist(customersalllist);
             }
         });
     }    
-    $("#cmbBeat,#cmbSalesman").change(function () {
+    async function GetCustomerList() {
+        try {
+            const response = await fetch(
+                Aurl + "invoice/getcustomerlist",
+                {
+                    method: "GET",
+                    credentials: "include", // equivalent to xhrFields.withCredentials = true
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            customersalllist = data;
+            CustomerAutolist(customersalllist);
+            FiltersCustomerAutolist(customersalllist);
+
+        } catch (error) {
+            console.error("Failed to load customer list:", error);
+        }
+    }
+    //$("#cmbBeat,#cmbSalesman").change(function () {
+    //    SortCustomerslist();
+    //});
+    function SortCustomerslist() {
         const beatID = Number($("#cmbBeat").val());
         const salesmanID = Number($("#cmbSalesman").val());
         const allSalesman = Number('@Session["AllSalesmanInvoice"]');
@@ -5132,11 +5190,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 (salesmanID === 0 || allSalesman === 1)
             )
         );
-        console.log(filtcusts);
+        //console.log(filtcusts);
         CustomerAutolist(filtcusts);
         $("#txtCustomerID,#txtSearch").val(""), $("#lblName,#lblPartyCloseBal,#lblPartyACDRating").text("");
-        $("#lblCustomerScheme").hide();        
-    });
+        $("#lblCustomerScheme").hide();
+    }
+
     function CustomerAutolist(listdata) {
         arrVendor = [], arrVendorName = [], nIndexarrVendor = 0;
         $.each(listdata, function (i, items) {
@@ -5166,12 +5225,38 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
-    //$("#cmbBeat,#cmbSalesman").change(function (e) {
-    //    var BeatID = $("#cmbBeat").val();
-    //    var SalesmanID = $("#cmbSalesman").val();
-    //    $("#txtCustomerID").val(""), $("#txtSearch").val(""), $("#lblName").text("");
-    //    GetData(33, BeatID, SalesmanID);
-    //});
+    function FiltersCustomerAutolist(listdata) {
+        var custlist = [];
+        $.each(listdata, function (i, items) {
+            var ven = {
+                "label": items.Code + " | " + items.Name,
+                "name": items.Name,
+                "code": items.Code,
+                "id": items.ID,               
+            }
+            if (items.ID == DefCustID) {
+                DefCustCode = items.Code;
+            }
+            custlist.push(ven);
+            arrFilterCustomerName[i] = items.Name;           
+        });
+        //~AutoList Filter Customer
+        PaginatedAutocomplete({
+            inputId: "txtFilterParty",
+            data: custlist,
+            onSelect: function (item) {
+                $("#txtFilterParty").val(item.name);                
+                return false;
+            }
+        });
+    }
+    $("#cmbBeat,#cmbSalesman").change(function (e) {
+        var BeatID = $("#cmbBeat").val();
+        var SalesmanID = $("#cmbSalesman").val();
+        $("#txtCustomerID").val(""), $("#txtSearch").val(""), $("#lblName").text("");
+        $("#lblCustomerScheme").hide();
+        GetData(33, BeatID, SalesmanID);
+    });
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempAL = [], arrBankAcc = [], arrCreditTerm = [], arrAllPaymode = [],arrReasons = [];
     var nIndexarrProdCode = 0, nIndexarrProdName = 0, nIndexarrProdCodeName = 0;
     var prodids = 0, strBankAcc = "", strCreditTerm = "", strTransmode = "", strBanks = "", strReasons = "";
@@ -5462,7 +5547,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#txtSAdd3").val(items.Shipadd3),
                             $("#txtPincode").val(items.Pincode);
                         $("#txtCustomerScheme").val(items.CustomerScheme);
-                        
+
                         if (items.CustomerScheme == "1")
                             $("#lblCustomerScheme").show();
                         else
@@ -6328,7 +6413,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var IsValid = true;
         $(".clrdivs").html("");
         if ($("#txtFilterParty").val() != "") {
-            const exists = arrVendorName.indexOf($("#txtFilterParty").val().trim()) !== -1;
+            const exists = arrFilterCustomerName.indexOf($("#txtFilterParty").val().trim()) !== -1;
             if (!exists) {
                 IsValid = false;
                 $("#divErrFParty").html("Select Party Name from list");
@@ -6359,7 +6444,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 xhrFields: {
                     withCredentials: true
                 },
-                async: false,
                 success: function (data) {
                     var InvoicejsData = eval(data);
                     if (rdo1 == "1")
@@ -6665,25 +6749,25 @@ if ($("#txtReurnPricePerm").val() == 0) {
         ////console.log("End Time : ", new Date().toISOString());
     }
     function SetAutlistforFields() {
-        //~AutoList Customer
-        PaginatedAutocomplete({
-            inputId: "txtSearch",
-            data: arrVendor,
-            onSelect: function (item) {
-                $("#txtSearch").val(item.name);
-                GetData(3, item.code);
-                return false;
-            }
-        });
-        //~AutoList Filter Customer
-        PaginatedAutocomplete({
-            inputId: "txtFilterParty",
-            data: arrVendor,
-            onSelect: function (item) {
-                $("#txtFilterParty").val(item.name);
-                return false;
-            }
-        });
+        ////~AutoList Customer
+        //PaginatedAutocomplete({
+        //    inputId: "txtSearch",
+        //    data: arrVendor,
+        //    onSelect: function (item) {
+        //        $("#txtSearch").val(item.name);
+        //        GetData(3, item.code);
+        //        return false;
+        //    }
+        //});
+        ////~AutoList Filter Customer
+        //PaginatedAutocomplete({
+        //    inputId: "txtFilterParty",
+        //    data: arrVendor,
+        //    onSelect: function (item) {
+        //        $("#txtFilterParty").val(item.name);
+        //        return false;
+        //    }
+        //});
         //~AutoList Filter Reason
         PaginatedAutocomplete({
             inputId: "txtReason",
@@ -7580,6 +7664,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#dvDocuments").hide();
         $("#MainHeading").text("View Invoice");
     }
+    var gridprodfieldid;
     $("#opencustomer").click(function (e) {
         var nPartyID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
         vw = window.innerWidth;
@@ -7615,8 +7700,55 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
             GetProductList()
             setTimeout(() => {
-                ReLoadProductAutolists();
+                ReLoadProductAutolists(name);
             }, 1000);
+            if (gridprodfieldid) {
+                var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                GetData(4, code, CustID);
+            }
+        }
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F8") {
+            event.preventDefault();
+            var FieldID = event.target.id;
+            var FieldName = event.target.name;
+            if (FieldID == "txtSearch") {
+                var nPartyID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                vw = window.innerWidth;
+                vh = window.innerHeight;
+                var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+            }
+            if (FieldName == "ProdName") {
+                //console.log("editingRow ", editingRow.data());
+                gridprodfieldid = FieldID;
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                vw = window.innerWidth;
+                vh = window.innerHeight;
+                var ProdUrl = Url + "ProductMaster?name=dFLU9MS0CpfVS5wW5G17EQ%3D%3D&strFormID=RjZMX%2BX6NiPSRFI2WDoZJA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + prodid;
+                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+            }
+        }
+        if (event.key === "F4") {
+            if ($("#txtCustomerID").val() != "") {
+                modalPinfo.show();
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                if (prodid > 0) {
+                    GetData(14, $("#txtCustomerID").val(), prodid)
+                }
+            }
+            else {
+                showErrorSnackbar("Select Customer");
+            }
         }
     });
     function invSwitchTab(idx, btn) {
@@ -7726,4 +7858,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
             img.src = canvas.toDataURL();    // ← runs only after canvas is populated
         });
     }
+    
 </script>
+
