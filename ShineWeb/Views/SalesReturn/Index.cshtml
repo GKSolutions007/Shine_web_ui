@@ -4419,7 +4419,7 @@ if ($("#txtAddID").val() == 0) {
         $scrollBody.scrollTop($scrollBody.get(0).scrollHeight);
         setupArrowKeyNavigation1();
     }
-    function ReLoadProductAutolists() {
+    function ReLoadProductAutolists(prodname) {
         const ProdALInputs = document.querySelectorAll('#tblProductData tbody input[name=ProdName]');
         ProdALInputs.forEach((input, index) => {
             var FID = ProdALInputs[index].id;
@@ -4440,6 +4440,7 @@ if ($("#txtAddID").val() == 0) {
                 }
             });            
         });
+        $('#' + gridprodfieldid).val(prodname);
     }
     // 👇 Function to apply keydown listener to all input elements in the table
     function setupArrowKeyNavigation1() {
@@ -4469,6 +4470,18 @@ if ($("#txtAddID").val() == 0) {
                                 }
                             }
                         }
+                        if (e.ctrlKey && e.key === 'ArrowDown') {
+                            if (hasclass) {
+                                if (!ModalState) {
+                                    const nextRow = currentRow.nextElementSibling;
+                                    if (nextRow) {
+                                        const nextInputs = nextRow.querySelectorAll('input');
+                                        if (nextInputs[inputIndex]) nextInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
+                                }
+                            }
+                        }
                         if (e.key === 'ArrowUp') {
                             if (hasclass) {
                                 var vbl = $('.ui-menu-item').is(":visible");
@@ -4477,6 +4490,18 @@ if ($("#txtAddID").val() == 0) {
                                 }
                             }
                             else {
+                                if (!ModalState) {
+                                    const prevRow = currentRow.previousElementSibling;
+                                    if (prevRow) {
+                                        const prevInputs = prevRow.querySelectorAll('input');
+                                        if (prevInputs[inputIndex]) prevInputs[inputIndex].focus();
+                                        e.preventDefault();
+                                    }
+                                }
+                            }
+                        }
+                        if (e.ctrlKey && e.key === 'ArrowUp') {
+                            if (hasclass) {
                                 if (!ModalState) {
                                     const prevRow = currentRow.previousElementSibling;
                                     if (prevRow) {
@@ -6612,12 +6637,43 @@ if ($("#txtAddID").val() == 0) {
 
             GetProductList()
             setTimeout(() => {
-                ReLoadProductAutolists();
+                ReLoadProductAutolists(name);
             }, 1000);
+            if (gridprodfieldid) {
+                var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                GetData(4, code, CustID);
+            }
         }
         else if (data && data.source === "Return Type") {
             var rid = data.id;            
             LoadReturnTypedata(rid);
+        }
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F8") {
+            event.preventDefault();
+            var FieldID = event.target.id;
+            var FieldName = event.target.name;
+            if (FieldID == "txtSearch") {
+                var nPartyID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                vw = window.innerWidth;
+                vh = window.innerHeight;
+                var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+            }
+            if (FieldName == "ProdName") {
+                //console.log("editingRow ", editingRow.data());
+                gridprodfieldid = FieldID;
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                vw = window.innerWidth;
+                vh = window.innerHeight;
+                var ProdUrl = Url + "ProductMaster?name=dFLU9MS0CpfVS5wW5G17EQ%3D%3D&strFormID=RjZMX%2BX6NiPSRFI2WDoZJA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + prodid;
+                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+            }
         }
     });
 </script>
