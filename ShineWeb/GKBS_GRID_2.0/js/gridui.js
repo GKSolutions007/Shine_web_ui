@@ -557,7 +557,7 @@ class GKBSDynamicGrid {
                         console.log("have no : " + col.field, Object.values(values));
                     }
                     // Format numbers (e.g., 12,300.50)
-                    const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                    const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2, style: 'currency', currency: 'INR' });
 
                     cell.innerHTML = `                    
                     `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${dataToCalculate.length}</div> ` : ``) + ` 
