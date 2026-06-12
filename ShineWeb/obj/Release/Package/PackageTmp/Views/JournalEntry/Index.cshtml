@@ -3,7 +3,7 @@
     ViewBag.Title = ViewData["FormName"];
     Layout = "~/Views/Shared/_LayoutBT5.cshtml";
 }
-<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+@*<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />*@
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
@@ -433,7 +433,29 @@
                             </div>
                             <div style="padding-top:2px; width:100%" class="row">
                                 <div class="col-sm-12 col-md-4 col-lg-4"></div>
-                                <div class="col-sm-12 col-md-4 col-lg-4"></div>
+                                <div class="col-sm-12 col-md-4 col-lg-4">
+                                    <table width="100%">
+                                        <tr>
+
+                                            <td width="75%" align="left" style="padding-left:2px">
+                                                <span class="form-label">
+                                                    <select class="form-control" id="cmbPrintProfile">
+                                                        <option value="0">Select</option>
+                                                    </select>
+                                                    <label class="labelup"> Print Profile</label>
+                                                </span>
+                                            </td>
+                                            <td width="25%" align="left" style="padding-left:5px">
+                                                <span class="form-label flex-grow-1">
+                                                    <input id="txtNoofCopies" class="form-control" value="1" type="number"
+                                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'divErrPrintProfile')" oninput="sanitizeNumericOnly(this, 'divErrPrintProfile')" />
+                                                    <label class="labelup">Copies</label>
+                                                </span>
+                                                <div class="text-danger pt-1 ps-1" id="divErrPrintCopy"></div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
                                 <div class="col-sm-12 col-md-4 col-lg-4" align="right">
                                     <div style="padding-left:20px">
                                         <span class="form-label">
@@ -455,36 +477,19 @@
                 <div class="modal-footer">
                     <table width="100%">
                         <tr>
-
-                            <td width="18%" align="left" style="padding-left:2px">
-                                <span class="form-label">
-                                    <select class="form-control" id="cmbPrintProfile">
-                                        <option value="0">Select</option>
-                                    </select>
-                                    <label class="labelup"> Print Profile</label>
-                                </span>
-                            </td>
-                            <td width="7%" align="left" style="padding-left:5px">
-                                <span class="form-label flex-grow-1">
-                                    <input id="txtNoofCopies" class="form-control" value="1" type="number"
-                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'divErrPrintProfile')" oninput="sanitizeNumericOnly(this, 'divErrPrintProfile')" />
-                                    <label class="labelup">Copies</label>
-                                </span>
-                                <div class="text-danger pt-1 ps-1" id="divErrPrintCopy"></div>
-                            </td>
-                            <td width="75%" align="right">
+                            <td align="right">
                                 <div style="padding-right:20px">
 
-                                    <button type="button" class="btn" id="btnWhatsapp" style="background-color:green;color:white">
-                                        <i class='fa-brands fa-whatsapp'></i> Whatsapp
+                                    <button type="button" title="Whatsapp" class="btn" id="btnWhatsapp" style="background-color:green;color:white">
+                                        <i class='fa-brands fa-whatsapp'></i>
                                     </button>
 
-                                    <button type="button" class="btn clrforpdf" id="btnEmail">
-                                        <span class="bi bi-envelope"></span> Mail
+                                    <button type="button" title="Mail" class="btn clrforpdf" id="btnEmail">
+                                        <span class="bi bi-envelope"></span>
                                     </button>
 
-                                    <button type="button" class="btn clrforpdf" id="btnPDF">
-                                        <i class='fa-regular fa-file-pdf'></i> PDF
+                                    <button type="button" title="PDF" class="btn clrforpdf" id="btnPDF">
+                                        <i class='fa-regular fa-file-pdf'></i>
                                     </button>
 
                                     <button type="button" class="btn clrforpreview" id="btnPreview">
@@ -494,7 +499,9 @@
                                     <button type="button" class="btn clrforpreview" id="btnPrint">
                                         <span class="bi bi-printer"></span> Print
                                     </button>
-
+                                    <button type="button" class="btn btn-edit-style" id="btnTEdit"><span class="glyphicon glyphicon-pencil"> Edit</span></button>
+                                    <button type="button" class="btn btn-cancel-style" id="btnTCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>
+                                    <button type="button" class="btn btn-variant-style" id="btnTVariant"><span class="bi bi-copy"> Variant</span></button>
                                     <button type="button" class="btn btn-danger" id="btnClear">
                                         <span class="glyphicon glyphicon-refresh"> Clear</span>
                                     </button>
@@ -523,6 +530,15 @@
 <script>
     //~Filter Action Buttons
     var nTransMode = 1;
+    let mapusersRole = {
+        canView: $("#txtViewID").val() == 1,
+        canEdit: $("#txtModifyID").val() == 1,
+        canVariant: $("#txtVariantID").val() == 1,
+        canCancel: $("#txtCancelID").val() == 1,
+        canPrint: $("#txtViewID").val() == 1,
+        canPreview: $("#txtViewID").val() == 1,
+        canPDF: $("#txtViewID").val() == 1
+    };
     const allGridActions = [
         {
             icon: '👁️',
@@ -538,6 +554,7 @@
                 var ID = rowData.ID;//[0];
                 var sts = rowData.Status;//[8];
                 nTransMode = 5;
+                ViewActionButtonPermission();
                 $("#txtID").val(ID);
                 GetData(3, ID);
                 $(".FormclrField,.FormclrcmbField").prop("disabled", true);
@@ -565,17 +582,7 @@
                 var sts = rowData.Status;//[8];
                 if (sts != "Cancelled") {
                     $("#txtID").val(ID);
-                    nTransMode = 2;
-                    //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
-                    GetData(3, ID);
-                    nTransMode = 2;
-                    $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-                    $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-                    $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-                    $("#btnSave,#btnClose").prop("disabled", false);
-                    $("#btnSave,#btnClose").show();
-                    $("#btnEmail,#btnWhatsapp").hide();
-                    $(".modal-title#lblPopupheading").text("Modify " + $("#txtFormName").val());
+                    EditActionTrigger(rowData);
                 }
                 else {
                     showErrorSnackbar("Cannot Modify.This document already cancelled");
@@ -592,25 +599,11 @@
                 $(".clrdivs").html("");
                 $("#txtAccountName,#txtRemarks,#txtValue").val("")
                 $("#cmbFAType").val(1);
-                nTransMode = 3;
+                
                 var ID = rowData.ID;//[0];
                 var sts = rowData.Status;//[8];
                 $("#txtID").val(ID);
-                GetData(1, "");
-                GetData(3, ID);
-                $(".modal-title#lblPopupheading").text("Variant " + $("#txtFormName").val());
-                $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-                $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
-                $("#btnPreview,#btnPDF").prop("disabled", true);
-                $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-                $("#btnSave,#btnClose,#btnDraft").show();
-                $("#btnEmail,#btnWhatsapp").hide();
-                //showErrorSnackbar("Variant functionality still developing");
-                setTimeout(() => {
-                    var DocDate = $("#dtpDate").val();
-                    var Branch = $("#txtBranchName").val();
-                    GetDocumentID(DocDate, Branch, FID);
-                }, 1000);
+                VariantActionTrigger(rowData);
             }
         },
         {
@@ -626,17 +619,7 @@
                 var ID = rowData.ID;//[0];
                 var sts = rowData.Status;//[8];
                 if (sts != "Cancelled") {
-                    $(".modal-title#lblPopupheading").text("Cancel " + $("#txtFormName").val());
-                    $("#txtID").val(ID);
-                    nTransMode = 4;
-                    GetData(3, ID);
-                    $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-                    $("#txtNarration,#txtRemarks").prop("disabled", false);
-                    $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-                    $("#btnSave,#btnClose").prop("disabled", false);
-                    $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
-                    $("#btnSave,#btnClose").show();
-                    $("#btnEmail,#btnWhatsapp").hide();
+                    CancelActionTrigger(rowData);
                 }
                 else {
                     showErrorSnackbar("This document already cancelled");
@@ -654,7 +637,16 @@
                 var sts = rowData.StatusID;//[9];
                 $("#txtID").val(ID);
                 $("#txtStatus").val(sts);
-                $("#btnPrint").click();
+                //$("#btnPrint").click();
+                var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                $("#txtNoofCopies").val(copies);
+                $('#cmbPrintProfile').val(defid);
+                PrintConfigID = defid;
+                setTimeout(() => {
+                    $("#btnPrint").click();
+                }, 300);
             }
         },
         {
@@ -668,7 +660,16 @@
                 var sts = rowData.StatusID;//[9];
                 $("#txtID").val(ID);
                 $("#txtStatus").val(sts);
-                $("#btnPreview").click();
+                //$("#btnPreview").click();
+                var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                $("#txtNoofCopies").val(copies);
+                $('#cmbPrintProfile').val(defid);
+                PrintConfigID = defid;
+                setTimeout(() => {
+                    $("#btnPreview").click();
+                }, 300);
             }
         },
         {
@@ -682,7 +683,16 @@
                 var sts = rowData.StatusID;//[9];
                 $("#txtID").val(ID);
                 $("#txtStatus").val(sts);
-                $("#btnPDF").click();
+                //$("#btnPDF").click();
+                var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                $("#txtNoofCopies").val(copies);
+                $('#cmbPrintProfile').val(defid);
+                PrintConfigID = defid;
+                setTimeout(() => {
+                    $("#btnPDF").click();
+                }, 300);
             }
         },
         {
@@ -696,7 +706,16 @@
                 var sts = rowData.CurrentStatus;//[9];
                 $("#txtID").val(ID);
                 $("#txtStatus").val(sts);
-                $("#btnEmail").click();
+                //$("#btnEmail").click();
+                var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                $("#txtNoofCopies").val(copies);
+                $('#cmbPrintProfile').val(defid);
+                PrintConfigID = defid;
+                setTimeout(() => {
+                    $("#btnEmail").click();
+                }, 300);
             }
         },
         {
@@ -739,7 +758,15 @@
         "ShowinColumnOption": false,
         "actions": menuActions
     }
-
+    function ViewActionButtonPermission() {
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        if (mapusersRole.canEdit)
+            $("#btnTEdit").show();
+        if (mapusersRole.canCancel)
+            $("#btnTCancel").show();
+        if (mapusersRole.canVariant)
+            $("#btnTVariant").show();
+    }
 </script>
 
 <script type="text/javascript">
@@ -890,6 +917,116 @@
             }
         });
     }
+    $('#btnTEdit').click(function (e) {
+        var Did = $("#txtID").val();
+        var Currsts = $("#txtStatus").val();
+        $(".clrdivs").html("");
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        $.ajax({
+            url: Aurl + "validatedocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: 1, TransID: FID, ID: Did, Status: Currsts },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        EditActionTrigger(rowinfo);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message)
+                    }
+                });
+            }
+        });
+    });
+    function EditActionTrigger(rowData) {
+        nTransMode = 2;
+        GetData(3, rowData.ID);
+        nTransMode = 2;
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnSave,#btnClose").prop("disabled", false);
+        $("#btnSave,#btnClose").show();
+        $("#btnEmail,#btnWhatsapp").hide();
+        $(".modal-title#lblPopupheading").text("Modify " + $("#txtFormName").val());
+    }
+    $('#btnTCancel').click(function (e) {
+        var Did = $("#txtID").val();
+        var Currsts = $("#txtStatus").val();
+        $(".clrdivs").html("");
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        $.ajax({
+            url: Aurl + "validatedocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: 2, TransID: FID, ID: Did, Status: Currsts },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        CancelActionTrigger(rowinfo);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message)
+                    }
+                });
+            }
+        });
+    });
+    function CancelActionTrigger(rowData) {
+        $(".modal-title#lblPopupheading").text("Cancel " + $("#txtFormName").val());
+        $("#txtID").val(rowData.ID);
+        nTransMode = 4;
+        GetData(3, ID);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("#txtNarration,#txtRemarks").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
+        $("#btnSave,#btnClose").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnSave,#btnClose").show();
+        $("#btnEmail,#btnWhatsapp").hide();
+    }
+    $('#btnTVariant').click(function (e) {
+        var Did = $("#txtID").val();
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        VariantActionTrigger(rowinfo);
+    });
+    function VariantActionTrigger(rowData) {
+        nTransMode = 3;
+        GetData(1, "");
+        GetData(3, rowData.ID);
+        $(".modal-title#lblPopupheading").text("Variant " + $("#txtFormName").val());
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
+        $("#btnPreview,#btnPDF").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnSave,#btnClose,#btnDraft").show();
+        $("#btnEmail,#btnWhatsapp").hide();
+        //showErrorSnackbar("Variant functionality still developing");
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#txtBranchName").val();
+            GetDocumentID(DocDate, Branch, FID);
+        }, 1000);
+    }
     function SetTagZero() {
         var inputs = $(".txtsettag");
         for (var i = 0; i < inputs.length; i++) {
@@ -973,9 +1110,9 @@ function updateInputColumn(inputID, netValue) {
                         stickyToWindow: true,
                         enableExport: false,
                         enablePrint: false,
-                        enableColumnsBtn: false,  // Controls the '⚙️ Columns' button (Assuming you want to rename enableColumnVisibility)
-                        enableAddRow: false,      // 💡 NEW: Controls '➕ Add Row'
-                        enableRemoveRow: false,   // 💡 NEW: Controls '➖ Remove Selected'
+                        enableColumnsBtn: false,
+                        enableAddRow: false,
+                        enableRemoveRow: false,
                         enableSorting: true,
                         searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
@@ -984,7 +1121,7 @@ function updateInputColumn(inputID, netValue) {
                         customButtons: [
                             {
                                 icon: '⚙️',
-                                text: 'Settings',
+                                text: '',
                                 title: 'Settings',
                                 visible: true,
                                 onClick: (gridInstance, event) => {                                   
@@ -994,8 +1131,8 @@ function updateInputColumn(inputID, netValue) {
                             },
                             {
                                 icon: '➕',
-                                text: 'Add New',
-                                title: 'Add New',
+                                text: 'New',
+                                title: 'New ' + $("#MainHeading").text(),
                                 visible: $("#txtAddID").val() == 1,
                                 onClick: (gridInstance, event) => {
                                     nTransMode = 1;
@@ -1004,7 +1141,7 @@ function updateInputColumn(inputID, netValue) {
                                     $(".FormclrField,.FormclrcmbField").prop("disabled", false);
                                     $("#btnSave,#btnClear,#btnClose").prop("disabled", false);
                                     $("#btnPreview,#btnPDF").prop("disabled", true);
-
+                                    $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
                                     $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
                                     TableJVData.draw().clear();
                                     ClearForm();

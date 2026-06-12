@@ -13,7 +13,7 @@
 <script src="~/Scripts/jquery-1.11.1.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
-<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+@*<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />*@
 <script src="~/Scripts/5.3.8/bootstrap.bundle.min.js"></script>
 
 <script src="~/datatable/1.13.6/jquery.dataTables.min.js"></script>
@@ -1197,14 +1197,14 @@
 
                 <!-- Buttons -->
                 <div class="col-12 col-md-6 text-end d-flex flex-wrap justify-content-end gap-1">
-                    <button type="button" class="btn" id="btnWhatsapp" style="background-color:green;color:white;">
-                        <i class='fa-brands fa-whatsapp' style='color:white'></i> Whatsapp
+                    <button type="button" title="Whatsapp" class="btn" id="btnWhatsapp" style="background-color:green;color:white;">
+                        <i class='fa-brands fa-whatsapp' style='color:white'></i>
                     </button>
-                    <button type="button" class="btn clrforpdf" id="btnEmail">
-                        <span class="glyphicon glyphicon-envelope"></span> Mail
+                    <button type="button" title="Mail" class="btn clrforpdf" id="btnEmail">
+                        <span class="glyphicon glyphicon-envelope"></span>
                     </button>
-                    <button type="button" class="btn clrforpdf" id="btnPDF">
-                        <i class='fa-regular fa-file-pdf' style='color:white'></i> PDF
+                    <button type="button" title="PDF" class="btn clrforpdf" id="btnPDF">
+                        <i class='fa-regular fa-file-pdf' style='color:white'></i>
                     </button>
                     <button type="button" class="btn clrforpreview" id="btnPreview">
                         <span class="glyphicon glyphicon-print"></span> Preview
@@ -1212,6 +1212,9 @@
                     <button type="button" class="btn clrforpreview" id="btnPrint">
                         <span class="glyphicon glyphicon-print"></span> Print
                     </button>
+                    <button type="button" class="btn btn-edit-style" id="btnTEdit"><span class="glyphicon glyphicon-pencil"> Edit</span></button>
+                    <button type="button" class="btn btn-cancel-style" id="btnTCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>
+                    <button type="button" class="btn btn-variant-style" id="btnTVariant"><span class="bi bi-copy"> Variant</span></button>
                     <button type="button" class="btn btn-danger" id="btnClear">
                         <span class="glyphicon glyphicon-refresh"></span> Clear
                     </button>
@@ -1594,6 +1597,7 @@
                     var ID = rowdata.ID;//[0];
                     nTransMode = 5;
                     $("#txtID").val(ID);
+                    ViewActionButtonPermission();
                     GetProductViewData(7, ID);
                     $(".FormclrField,.FormclrcmbField").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
@@ -1636,25 +1640,7 @@
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[9];
                     if (sts != "Cancelled") {
-                        nTransMode = 2;
-                        var rdo1 = $("#rdoMainTableData").is(":checked");
-                        var rdo2 = $("#rdoDraftTableData").is(":checked");
-                        //$("#txtID").val(ID);
-                        GetProductViewData(rdo1 ? 7 : 11, ID);
-                        nTransMode = rdo1 ? 2 : 1;
-                        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-                        $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
-                        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-                        $("#btnSave,#btnDraft").show();
-                        $("#btnSave,#btnClose,#btnDraft").prop("disabled", false);
-                        $("#dvMain").show();
-                        $("#btnEmail,#btnWhatsapp").hide();
-                        $("#dvDocuments").hide();
-                        $("#balanceContainer").show();
-                        if ($("#txtEnableBranch").val() == 1) {
-                            $("#cmbBranch").prop("disabled", true);
-                        }
-                        $("#MainHeading").text(rdo1 ? "Modify Purchase Return" : "Create Purchase Return");
+                        EditActionTrigger(rowdata);
                     }
                     else {
                         showErrorSnackbar("Cannot Modify.This document already cancelled");
@@ -1672,27 +1658,7 @@
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[10];
                     $("#txtID").val(ID);
-                    nTransMode = 3;
-                    GetData(1);
-                    GetProductViewData(7, ID);
-                    $("#dvMain").show();
-                    $("#btnEmail,#btnWhatsapp").hide();
-                    $("#dvDocuments").hide();
-                    $("#MainHeading").text("Variant Purchase Return");
-                    $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-                    $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
-                    $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
-                    $("#btnPreview,#btnPDF,#btnPrint").hide();
-                    $("#btnSave,#btnClear,#btnDraft").show();
-                    $("#balanceContainer").hide();
-                    if ($("#txtEnableBranch").val() == 1) {
-                        $("#cmbBranch").prop("disabled", true);
-                    }
-                    setTimeout(() => {
-                        var DocDate = $("#dtpDate").val();
-                        var Branch = $("#cmbBranch").val();
-                        GetDocumentID(DocDate, Branch, 12);
-                    }, 1000);
+                    VariantActionTrigger(rowdata);
                 }
             },
             {
@@ -1726,22 +1692,7 @@
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
                         if (rdo1 == "1") {
-                            $("#MainHeading").text("Cancel Purchase Return");
-                            nTransMode = 4;
-                            GetProductViewData(7, ID);
-                            $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-                            $("#txtNarration,#txtRemarks").prop("disabled", false);
-                            $("#btnPreview,#btnPDF,#btnClear,#btnDraft,#btnPrint").prop("disabled", true);
-                            $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
-                            $("#btnSave,#btnClose").prop("disabled", false);
-                            $("#btnSave").show();
-                            $("#dvMain").show();
-                            $("#btnEmail,#btnWhatsapp").hide();
-                            $("#dvDocuments").hide();
-                            $("#balanceContainer").show();
-                            if ($("#txtEnableBranch").val() == 1) {
-                                $("#cmbBranch").prop("disabled", true);
-                            }
+                            CancelActionTrigger(rowdata);
                         }
                         else {
                             var conf = confirm("Do you want to remove draft data?");
@@ -1766,7 +1717,16 @@
                     var sts = rowData.CurrentStatus;//[9];
                     $("#txtID").val(ID);
                     $("#txtStatus").val(sts);
-                    $("#btnPrint").click();
+                    //$("#btnPrint").click();
+                    var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                    var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                    var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                    $("#txtNoofCopies").val(copies);
+                    $('#cmbPrintProfile').val(defid);
+                    PrintConfigID = defid;
+                    setTimeout(() => {
+                        $("#btnPrint").click();
+                    }, 300);
                 }
             },
             {
@@ -1780,7 +1740,16 @@
                     var sts = rowData.CurrentStatus;//[9];
                     $("#txtID").val(ID);
                     $("#txtStatus").val(sts);
-                    $("#btnPreview").click();
+                    //$("#btnPreview").click();
+                    var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                    var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                    var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                    $("#txtNoofCopies").val(copies);
+                    $('#cmbPrintProfile').val(defid);
+                    PrintConfigID = defid;
+                    setTimeout(() => {
+                        $("#btnPreview").click();
+                    }, 300);
                 }
             },
             {
@@ -1794,7 +1763,16 @@
                     var sts = rowData.CurrentStatus;//[9];
                     $("#txtID").val(ID);
                     $("#txtStatus").val(sts);
-                    $("#btnPDF").click();
+                    //$("#btnPDF").click();
+                    var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                    var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                    var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                    $("#txtNoofCopies").val(copies);
+                    $('#cmbPrintProfile').val(defid);
+                    PrintConfigID = defid;
+                    setTimeout(() => {
+                        $("#btnPDF").click();
+                    }, 300);
                 }
             },
             {
@@ -1808,7 +1786,16 @@
                     var sts = rowData.CurrentStatus;//[9];
                     $("#txtID").val(ID);
                     $("#txtStatus").val(sts);
-                    $("#btnEmail").click();
+                    //$("#btnEmail").click();
+                    var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                    var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                    var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                    $("#txtNoofCopies").val(copies);
+                    $('#cmbPrintProfile').val(defid);
+                    PrintConfigID = defid;
+                    setTimeout(() => {
+                        $("#btnEmail").click();
+                    }, 300);
                 }
             },
             {
@@ -1850,6 +1837,15 @@
         }
     }
     LoadPermissions();
+    function ViewActionButtonPermission() {
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        if (mapusersRole.canEdit)
+            $("#btnTEdit").show();
+        if (mapusersRole.canCancel)
+            $("#btnTCancel").show();
+        if (mapusersRole.canVariant)
+            $("#btnTVariant").show();
+    }
 </script>
 <script type="text/javascript">
     $("#txtDocID").prop("disabled", true);
@@ -4594,6 +4590,135 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
+    $('#btnTEdit').click(function (e) {
+        var Did = $("#txtID").val();
+        var Currsts = $("#txtStatus").val();
+        $(".clrdivs").html("");
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        $.ajax({
+            url: Aurl + "validatedocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: 1, TransID: 12, ID: Did, Status: Currsts },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        EditActionTrigger(rowinfo);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message)
+                    }
+                });
+            }
+        });
+    });
+    function EditActionTrigger(rowData) {
+        nTransMode = 2;
+        var rdo1 = $("#rdoMainTableData").is(":checked");
+        var rdo2 = $("#rdoDraftTableData").is(":checked");
+        //$("#txtID").val(ID);
+        GetProductViewData(rdo1 ? 7 : 11, rowData.ID);
+        nTransMode = rdo1 ? 2 : 1;
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnSave,#btnDraft").show();
+        $("#btnSave,#btnClose,#btnDraft").prop("disabled", false);
+        $("#dvMain").show();
+        $("#btnEmail,#btnWhatsapp").hide();
+        $("#dvDocuments").hide();
+        $("#balanceContainer").show();
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
+        $("#MainHeading").text(rdo1 ? "Modify Purchase Return" : "Create Purchase Return");
+    }
+    $('#btnTCancel').click(function (e) {
+        var Did = $("#txtID").val();
+        var Currsts = $("#txtStatus").val();
+        $(".clrdivs").html("");
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        $.ajax({
+            url: Aurl + "validatedocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: 2, TransID: 12, ID: Did, Status: Currsts },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        CancelActionTrigger(rowinfo);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message)
+                    }
+                });
+            }
+        });
+    });
+    function CancelActionTrigger(rowData) {
+        $("#MainHeading").text("Cancel Purchase Return");
+        nTransMode = 4;
+        GetProductViewData(7, rowData.ID);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("#txtNarration,#txtRemarks").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnClear,#btnDraft,#btnPrint").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnSave,#btnClose").prop("disabled", false);
+        $("#btnSave").show();
+        $("#dvMain").show();
+        $("#btnEmail,#btnWhatsapp").hide();
+        $("#dvDocuments").hide();
+        $("#balanceContainer").show();
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
+    }
+    $('#btnTVariant').click(function (e) {
+        var Did = $("#txtID").val();
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        VariantActionTrigger(rowinfo);
+    });
+    function VariantActionTrigger(rowData) {
+        nTransMode = 3;
+        GetData(1);
+        GetProductViewData(7, rowData.ID);
+        $("#dvMain").show();
+        $("#btnEmail,#btnWhatsapp").hide();
+        $("#dvDocuments").hide();
+        $("#MainHeading").text("Variant Purchase Return");
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnPreview,#btnPDF,#btnPrint").hide();
+        $("#btnSave,#btnClear,#btnDraft").show();
+        $("#balanceContainer").hide();
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 12);
+        }, 1000);
+    }
     function CalculateDiffPrice() {
         var Q1 = 0, Q2 = 0, Q3 = 0, gross = 0, TAmt = 0, NAmt = 0;
         $("#tblProductData tbody tr").each(function () {
@@ -4685,31 +4810,25 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             customButtons: [
                                 {
                                     icon: '⚙️',
-                                    text: 'Settings',
+                                    text: '',
                                     title: 'Settings',
                                     visible: true,
-                                    onClick: (gridInstance, event) => {
-                                        //console.log("gridInstance : ", gridInstance);
-                                        //console.log("event : ", event);
-                                        //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
-                                        //modalGenColumnSettings.style.display = "block";
+                                    onClick: (gridInstance, event) => {                                       
                                         modalGenColumnSettings.show();
                                         GendralColumnSettings(1, 26, 1, 0);
                                     }
                                 },
                                 {
                                     icon: '➕',
-                                    text: 'Add New',
-                                    title: 'Add New',
-                                    visible: $("#txtAddID").val() == 1,
-                                    onClick: (gridInstance, event) => {
-                                        //console.log("gridInstance : ", gridInstance);
-                                        //console.log("event : ", event);
-                                        //alert('Settings clicked! Total rows: ' + gridInstance.originalData.length);
+                                    text: 'New',
+                                    title: 'New Purchase Return',
+                                    visible: $("#txtAddID").val() == 1 && rdo1 == 1,
+                                    onClick: (gridInstance, event) => {                                        
                                         nTransMode = 1;
                                         $("#dvMain").show();
                                         $("#dvDocuments").hide();
                                         $("#balanceContainer").hide();
+                                        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
                                         ClearForm();
                                         //Addprodgridline();
                                         setTimeout(() => {
@@ -4728,12 +4847,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             },
                             onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                                //// Double-click handler - shows JSON format
-                                //let message = `Double-Clicked Cell:\n`;
-                                //message += `• Field: ${fieldName}\n`;
-                                //message += `• Value: ${cellValue}\n\n`;
-                                //message += `Full Row Data:\n${JSON.stringify(rowData, null, 2)}`;
-                                //alert(message);
+                                
                             },
                             onColumnResize: (colIndex, field, header, newWidth) => {
                                 UpdateColumnWidth(26, 1, 0, colIndex, field, newWidth)
@@ -4772,52 +4886,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
             });
         }
     }
-
-    function getActionsByRole(role, row) {
-        let actions = [];
-        var rdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : $("#rdoQTNTableData").is(":checked") ? "3" : "4";
-        var cancelperm = $("#txtCancelID").val() == 0 ? false : rdo1 == "1" ? true : rdo1 == "2" || rdo1 == "4" ? true : false;
-
-        if (row.Status !== 'Amended' && row.Status !== 'Cancelled') {
-            if (rdo1 == "2") {
-                if ($("#txtDraftModifyID").val() != 0)
-                    actions.push({ cls: "clsEdit", label: "✏️ Edit" });
-                if ($("#txtDraftCancelID").val() != 0)
-                    actions.push({ cls: "clsCancel", label: "❌ Cancel" });
-                if ($("#txtDraftModifyID").val() == 0 && $("#txtDraftCancelID").val() == 0)
-                    actions.push({ cls: "", label: "✖️ No Permission found" });
-            }
-            else {
-                if (role.canEdit)
-                    actions.push({ cls: "clsEdit", label: "✏️ Edit" });
-                if (cancelperm)
-                    actions.push({ cls: "clsCancel", label: "❌ Cancel" });
-            }
-        }
-
-        if (role.canVariant && rdo1 == "1")
-            actions.push({ cls: "clsVariant", label: "📄 Variant" });
-
-        if (role.canPrint && rdo1 == "1")
-            actions.push({ cls: "clsprint", label: "<i class='fa-solid fa-print'></i> Print" });
-
-        if (role.canPreview && rdo1 == "1")
-            actions.push({ cls: "clspreview", label: "<i class='fa-solid fa-print'></i> Preview" });
-
-        if (role.canPDF && rdo1 == "1")
-            actions.push({ cls: "clspdf", label: "<i class='fa-regular fa-file-pdf' style='color:brown'></i> PDF" });
-
-        if (rdo1 == "1")
-            actions.push({ cls: "clsemail", label: "<i class='fa-solid fa-envelope' style='color:brown'></i> Mail" });
-
-        if (rdo1 == "1")
-            actions.push({ cls: "clswhatsapp", label: "<i class='fa-brands fa-whatsapp' style='color:green'></i> Whatsapp" });
-
-        //actions.push({ cls: "clsrowinfo ", label: "ℹ️ Other Info" });
-        return actions;
-    }
-
-
     $('#txtFilterParty').change(function (e) {
         var Search = e.target.value;
         var sdf = Search.split('|');

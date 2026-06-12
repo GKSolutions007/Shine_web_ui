@@ -40,14 +40,19 @@
     <script src="https://cdn.syncfusion.com/ej2/syncfusion-helper.js" type="text/javascript"></script>*@
 
     <style>
-        .btn-edit-style {
+        .btn-edit-style, .btn-edit-style:hover {
             background-color: var(--editbuttonbgcolor);
             color: var(--ButtonTextColor);
         }
-        .btn-cancel-style {
+        .btn-cancel-style, .btn-cancel-style:hover {
             background-color: var(--cancelbuttonbgcolor);
             color: var(--ButtonTextColor);
         }
+        .btn-variant-style, .btn-variant-style:hover {
+            background-color: var(--variantbuttonbgcolor);
+            color: var(--ButtonTextColor);
+        }
+        
         table tr th {
             background-color: var(--gridheaderbackground) !important;
             color: var(--gridheadertextcolor) !important;
@@ -74,12 +79,16 @@
         }
 
         .btn {
-            padding: 7px 10px !important;
+            padding: 5px 10px !important;
             font-size: 13px !important;
             font-weight: 600 !important;
             color: var(--ButtonTextColor) !important;
-        }
-
+            transition: all .25s cubic-bezier(.4,0,.2,1);
+        }       
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 10px rgba(0,0,0,.12);
+            }
         .form-control {
             font-size: 12px !important;
         }
@@ -2311,7 +2320,7 @@
         var Aurl = '@Session["APIurl"]';
         var RID = '@Session["RoleID"]';
         var ItemsperPage =  parseInt('@Session["ItemsperPage"]', 10) < 0 ? 'All' :parseInt('@Session["ItemsperPage"]', 10)  || 10;
-        var SendAutoMail = 0;
+        var SendAutoMail = 0,Printcopies = 1;
         var RetainDate = parseInt('@Session["RetainDate"]');
         var PreviousItemsCount = 0, PreviousNetAmt = 0;
         var autoDraftInterval = null;
@@ -2469,7 +2478,7 @@
                 }
             });
         }
-
+        var TransactionPrintProfiles = [];
         function GetPrintProfile(nTransID) {
             $.ajax({
                 url: Aurl + "printprofileconfig/getprofile",
@@ -2486,15 +2495,19 @@
                         value: 0,
                         text: "-- Select --",
                     }));
-                    var lstdata = eval(data)
-                    var getdef = lstdata.filter(pr => pr.DefaultConfig == 1);
+                    TransactionPrintProfiles = eval(data)
+                    var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
                     var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
-                    $.each(lstdata, function (i, items) {
+                    var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;                    
+                    $.each(TransactionPrintProfiles, function (i, items) {
                         $('#cmbPrintProfile').append($('<option/>', {
                             value: items.ConfigID,
-                            text: items.ConfigName, 'data-automail': items.AutoMail
+                            text: items.ConfigName,
+                            'data-automail': items.AutoMail,
+                            'data-nocopies': items.NoCopies,
                         }));
                         $('#cmbPrintProfile').val(defid);
+                        $("#txtNoofCopies").val(copies);
                         PrintConfigID = defid;
                     });
                 }
@@ -2694,13 +2707,13 @@
     $("#sidedivcollapsed").hide();
     $("#sidenavfooter").hide();
     $(".sidenav,#sidenavfooter").css("width", "0%");// !important;
-    $(".main,.footerAction").css("width", "99%");
+    $(".main,.footerAction").css("width", "100%");
     $(".main").css("margin-left", "0");
 
     $(".sidenav").mouseleave(function () {//
         //console.log("Mouse leave trigger");
         $(".sidenav,#sidenavfooter").css("width", "0%");
-        $(".main,.footerAction").css("width", "99%");
+        $(".main,.footerAction").css("width", "100%");
         $(".main").css("margin-left", "0");
         $("#sidenavfooter").hide();
         $("#sidedivexpand").show();
@@ -3931,8 +3944,10 @@ function CloseConfirmDialogMsg_old(message) {
             document.documentElement.style.setProperty('--ButtonTextColor', items.ButtonTextColor);
             document.documentElement.style.setProperty('--gridheaderbackground', items.GridHeaderBackGround);
             document.documentElement.style.setProperty('--gridheadertextcolor', items.GridHeaderTextColor);
-            document.documentElement.style.setProperty('--editbuttonbgcolor', items.SaveButton);
-            document.documentElement.style.setProperty('--cancelbuttonbgcolor', items.SaveButton);
+            document.documentElement.style.setProperty('--editbuttonbgcolor', items.EditButton);
+            document.documentElement.style.setProperty('--cancelbuttonbgcolor', items.CancelButton);
+            document.documentElement.style.setProperty('--variantbuttonbgcolor', items.VariantButton);
+            
         });
     }
     function GetColorData_old(nMode, strName = null) {
@@ -4042,12 +4057,14 @@ function CloseConfirmDialogMsg_old(message) {
     $('#cmbPrintProfile').change(function (e) {
         var selval = e.target.value;
         var $selected = $(this).find('option:selected');
-        SendAutoMail = 0;
+        SendAutoMail = 0, Printcopies = 1;
         if ($selected) {
             SendAutoMail = $selected.data('automail');
+            Printcopies = $selected.data('nocopies');
         }
         if (selval > 0) {
             PrintConfigID = $('#cmbPrintProfile').val();
+            $("#txtNoofCopies").val(Printcopies);
         } else {
             $('#cmbPrintProfile').val(PrintConfigID);
         }
@@ -4086,7 +4103,7 @@ function CloseConfirmDialogMsg_old(message) {
             }
         }
         else {
-            showErrorSnackbar("Select Print profile");
+            showErrorSnackbar("Select valid print profile");
         }
     });
     $("#btnPreview").click(function (e) {

@@ -14,7 +14,7 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <!-- Bootstrap 5 -->
-<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+@*<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />*@
 <script src="~/Scripts/5.3.8/bootstrap.bundle.min.js"></script>
 
 <script src="~/datatable/1.13.6/jquery.dataTables.min.js"></script>
@@ -943,11 +943,14 @@
         </div>
         <div class="footerAction modal-footer">
             <div style="padding-right:20px" align="right" class="p-2">
-                <button type="button" class="btn" id="btnWhatsapp" style="background-color:green;color:white"><i class='fa-brands fa-whatsapp' style='color:white'></i> Whatsapp</button>
-                <button type="button" class="btn clrforpdf" id="btnEmail"><span class="glyphicon glyphicon-envelope"> Mail</span></button>
-                <button type="button" class="btn clrforpdf" id="btnPDF"><i class='fa-regular fa-file-pdf' style='color:white'></i> PDF</button>
+                <button type="button" title="Whatsapp" class="btn" id="btnWhatsapp" style="background-color:green;color:white"><i class='fa-brands fa-whatsapp'></i></button>
+                <button type="button" title="Mail" class="btn clrforpdf" id="btnEmail"><span class="glyphicon glyphicon-envelope"> </span></button>
+                <button type="button" title="PDF" class="btn clrforpdf" id="btnPDF"><i class='fa-regular fa-file-pdf'></i> </button>
                 <button type="button" class="btn clrforpreview" id="btnPreview"><span class="glyphicon glyphicon-print"> Preview</span></button>
                 <button type="button" class="btn clrforpreview" id="btnPrint"><span class="glyphicon glyphicon-print"> Print</span></button>
+                <button type="button" class="btn btn-edit-style" id="btnTEdit"><span class="glyphicon glyphicon-pencil"> Edit</span></button>
+                <button type="button" class="btn btn-cancel-style" id="btnTCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>
+                <button type="button" class="btn btn-variant-style" id="btnTVariant"><span class="bi bi-copy"> Variant</span></button>
                 <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
                 <button type="button" class="btn btn-primary" id="btnDraft"><span class="glyphicon glyphicon-saved"> Draft</span></button>
                 <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
@@ -1041,6 +1044,7 @@
                     var ID = rowdata.ID;//[0];
                     nTransMode = 5;
                     $("#txtID").val(ID);
+                    ViewActionButtonPermission();
                     GetProductViewData(7, ID);
                     $(".FormclrField,.FormclrcmbField").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
@@ -1084,25 +1088,7 @@
                     var sts = rowdata.Status;//[9];
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
-                        nTransMode = 2;
-                        var rdo1 = $("#rdoMainTableData").is(":checked");
-                        var rdo2 = $("#rdoDraftTableData").is(":checked");
-                        GetProductViewData(rdo1 ? 7 : rdo2 ? 10 : 14, ID);
-                        nTransMode = rdo1 ? 2 : 1;
-                        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-                        $("#btnDraft").prop("disabled", rdo1);
-                        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-                        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-                        $("#btnEmail,#btnWhatsapp").hide();
-                        $("#btnSave,#btnClose").prop("disabled", false);
-                        $("#btnSave,#btnClose").show();
-                        $("#dvMain").show();
-                        $("#dvDocuments").hide();
-                        $("#MainHeading").text((rdo1 ? "Modify " : "Create") + $("#txtFormName").val());
-                        if ($("#txtEnableBranch").val() == 1) {
-                            $("#cmbBranch").prop("disabled", true);
-                        }
-                        //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
+                        EditActionTrigger(rowdata);
                     }
                     else {
                         showErrorSnackbar("Cannot Modify.This document already cancelled");
@@ -1119,29 +1105,7 @@
                     $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
                     $("#txtID").val(ID);
-                    nTransMode = 3;
-                    GetData(1);
-                    var rdo1 = $("#rdoMainTableData").is(":checked");
-                    var rdo2 = $("#rdoDraftTableData").is(":checked");
-                    GetProductViewData(rdo1 ? 7 : rdo2 ? 10 : 14, ID);
-                    $("#dvMain").show();
-                    $("#dvDocuments").hide();
-                    $("#MainHeading").text("Variant " + $("#txtFormName").val());
-                    $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-                    $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
-                    $("#btnPreview,#btnPDF").prop("disabled", true);
-                    $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-                    $("#btnEmail,#btnWhatsapp").hide();
-                    $("#btnSave,#btnClose,#btnDraft").show();
-                    if ($("#txtEnableBranch").val() == 1) {
-                        $("#cmbBranch").prop("disabled", true);
-                    }
-                    setTimeout(() => {
-                        var DocDate = $("#dtpDate").val();
-                        var Branch = $("#cmbBranch").val();
-                        //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
-                        GetDocumentID(DocDate, Branch, 3);
-                    }, 1000);
+                    VariantActionTrigger(rowdata);
                 }
             },
             {
@@ -1176,24 +1140,7 @@
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
                         if (rdo1) {
-                            nTransMode = 4;
-                            var rdo1 = $("#rdoMainTableData").is(":checked");
-                            var rdo2 = $("#rdoDraftTableData").is(":checked");
-                            GetProductViewData(7, ID);
-                            $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-                            $("#txtNarration,#txtRemarks").prop("disabled", false);
-                            $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
-                            $("#btnSave,#btnClose").prop("disabled", false);
-                            $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
-                            $("#btnSave,#btnClose").show();
-                            $("#dvMain").show();
-                            $("#dvDocuments").hide();
-                            $("#btnEmail,#btnWhatsapp").hide();
-                            $("#MainHeading").text("Cancel " + $("#txtFormName").val());
-                            if ($("#txtEnableBranch").val() == 1) {
-                                $("#cmbBranch").prop("disabled", true);
-                            }
-                            //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
+                            CancelActionTrigger(rowdata);
                         }
                         else {
                             var conf = confirm("Do you want to remove draft data?");
@@ -1302,7 +1249,15 @@
         }
     }
     LoadPermissions();
-
+    function ViewActionButtonPermission() {
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        if (mapusersRole.canEdit)
+            $("#btnTEdit").show();
+        if (mapusersRole.canCancel)
+            $("#btnTCancel").show();
+        if (mapusersRole.canVariant)
+            $("#btnTVariant").show();
+    }
 </script>
 
 <script type="text/javascript">
@@ -1998,7 +1953,7 @@
                             customButtons: [
                                 {
                                     icon: '⚙️',
-                                    text: 'Settings',
+                                    text: '',
                                     title: 'Settings',
                                     visible: true,
                                     onClick: (gridInstance, event) => {
@@ -2008,13 +1963,14 @@
                                 },
                                 {
                                     icon: '➕',
-                                    text: 'Add New',
-                                    title: 'Add New',
-                                    visible: $("#txtAddID").val() == 1,
+                                    text: 'New',
+                                    title: 'New Purchase Order',
+                                    visible: $("#txtAddID").val() == 1 && rdo1 == "1",
                                     onClick: (gridInstance, event) => {
                                         nTransMode = 1;
                                         $("#dvMain").show();
                                         $("#dvDocuments").hide();
+                                        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
                                         ClearForm();
                                         GetData(2, $("#cmbUOMType").val());
                                         setTimeout(() => {
@@ -2428,6 +2384,139 @@
                 }
             }
         });
+    }
+    $('#btnTEdit').click(function (e) {
+        var Did = $("#txtID").val();
+        var Currsts = $("#txtStatus").val();
+        $(".clrdivs").html("");
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        $.ajax({
+            url: Aurl + "validatedocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: 1, TransID: 3, ID: Did, Status: Currsts },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        EditActionTrigger(rowinfo);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message)
+                    }
+                });
+            }
+        });
+    });
+    function EditActionTrigger(rowData) {
+        nTransMode = 2;
+        var rdo1 = $("#rdoMainTableData").is(":checked");
+        var rdo2 = $("#rdoDraftTableData").is(":checked");
+        GetProductViewData(rdo1 ? 7 : rdo2 ? 10 : 14, rowData.ID);
+        nTransMode = rdo1 ? 2 : 1;
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnDraft").prop("disabled", rdo1);
+        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnEmail,#btnWhatsapp").hide();
+        $("#btnSave,#btnClose").prop("disabled", false);
+        $("#btnSave,#btnClose").show();
+        $("#dvMain").show();
+        $("#dvDocuments").hide();
+        $("#MainHeading").text((rdo1 ? "Modify " : "Create ") + $("#txtFormName").val());
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
+        //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
+    }
+    $('#btnTCancel').click(function (e) {
+        var Did = $("#txtID").val();
+        var Currsts = $("#txtStatus").val();
+        $(".clrdivs").html("");
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        $.ajax({
+            url: Aurl + "validatedocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: 2, TransID: 3, ID: Did, Status: Currsts },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        CancelActionTrigger(rowinfo);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message)
+                    }
+                });
+            }
+        });
+    });
+    function CancelActionTrigger(rowData) {
+        nTransMode = 4;
+        var rdo1 = $("#rdoMainTableData").is(":checked");
+        var rdo2 = $("#rdoDraftTableData").is(":checked");
+        GetProductViewData(7, rowData.ID);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("#txtNarration,#txtRemarks").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
+        $("#btnSave,#btnClose").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnSave,#btnClose").show();
+        $("#dvMain").show();
+        $("#dvDocuments").hide();
+        $("#btnEmail,#btnWhatsapp").hide();
+        $("#MainHeading").text("Cancel " + $("#txtFormName").val());
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
+        //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
+    }
+    $('#btnTVariant').click(function (e) {
+        var Did = $("#txtID").val();
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        VariantActionTrigger(rowinfo);
+    });
+    function VariantActionTrigger(rowData) {
+        nTransMode = 3;
+        GetData(1);
+        var rdo1 = $("#rdoMainTableData").is(":checked");
+        var rdo2 = $("#rdoDraftTableData").is(":checked");
+        GetProductViewData(rdo1 ? 7 : rdo2 ? 10 : 14, rowData.ID);
+        $("#dvMain").show();
+        $("#dvDocuments").hide();
+        $("#MainHeading").text("Variant " + $("#txtFormName").val());
+        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
+        $("#btnPreview,#btnPDF").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnEmail,#btnWhatsapp").hide();
+        $("#btnSave,#btnClose,#btnDraft").show();
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
+            GetDocumentID(DocDate, Branch, 3);
+        }, 1000);
     }
     var arrBaseProductBatchInfo = [];
     function getProductBatchInfo(nProdID, nBranchID) {
