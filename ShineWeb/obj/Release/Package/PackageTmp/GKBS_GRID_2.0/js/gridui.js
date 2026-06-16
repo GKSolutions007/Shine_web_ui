@@ -724,7 +724,8 @@ class GKBSDynamicGrid {
             this.options.customButtons.forEach(btnConfig => {
                 const customBtn = document.createElement('button');
                 customBtn.className = btnConfig.className || 'dg-btn';
-
+                customBtn.id = btnConfig.id || (btnConfig.text == "New" ? "btnGKBSGNew" : btnConfig.title == "Settings" ? "btnGKBSGSetting"
+                    : 'btndefid');   
                 // Set button text with optional icon
                 if (btnConfig.icon && btnConfig.text) {
                     customBtn.innerText = `${btnConfig.icon} ${btnConfig.text}`;

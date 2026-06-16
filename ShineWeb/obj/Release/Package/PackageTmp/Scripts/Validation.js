@@ -728,9 +728,23 @@ document.addEventListener("keydown", function (event) {
     }
     if (event.key === "F10") {
         event.preventDefault();
-        $("#tblProductData tbody tr:first")
-            .find("input:enabled, select:enabled, textarea:enabled")
-            .first()
-            .focus();
+        //$("#tblProductData tbody tr:first")
+        //    .find("input:enabled, select:enabled, textarea:enabled")
+        //    .first()
+        //    .focus();
+        var rows = $("#tblProductData tbody tr");
+        var rowCount = rows.length;
+
+        if (rowCount === 1) {
+            rows.first()
+                .find("input:enabled, select:enabled, textarea:enabled")
+                .first()
+                .focus();
+        } else if (rowCount > 1) {
+            rows.last()
+                .find("input:enabled, select:enabled, textarea:enabled")
+                .first()
+                .focus();
+        }
     }
 });

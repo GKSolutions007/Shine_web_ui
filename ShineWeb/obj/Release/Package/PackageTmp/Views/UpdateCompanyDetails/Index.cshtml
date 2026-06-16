@@ -56,10 +56,11 @@
         background: var(--card-bg);
         border-radius: var(--border-radius);
         box-shadow: var(--card-shadow);
-        padding: 24px;
-        margin-bottom: 24px;
+        padding: 15px;
+        margin-bottom: 10px;
         transition: var(--transition);
         border: 1px solid rgba(102, 126, 234, 0.1);
+        min-height:440px;
     }
 
         .modern-card:hover {
@@ -326,8 +327,8 @@
     }
 
         .row > div {
-            padding-left: 12px;
-            padding-right: 12px;
+            padding-left: 7px;
+            padding-right: 7px;
         }
 
     /* Toast Styling */
@@ -337,6 +338,114 @@
         right: 20px;
         z-index: 9999;
     }
+</style>
+<style>
+    .expiry-info-wrap {
+        margin-top: 14px;
+    }
+
+    .expiry-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 14px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+
+    .expiry-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .expiry-icon {
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    .expiry-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.3;
+    }
+
+    .expiry-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.75;
+        font-weight: 600;
+    }
+
+    .expiry-date {
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .expiry-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        line-height: 1.2;
+    }
+
+    .expiry-days-num {
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .expiry-days-label {
+        font-size: 11px;
+        opacity: 0.75;
+        font-weight: 600;
+    }
+
+    /* Status: Safe (green) - more than 30 days */
+    .expiry-card.status-safe {
+        background: linear-gradient(135deg, #e6f9ef, #d4f4e2);
+        border-color: #34d399;
+        color: #065f46;
+    }
+
+        .expiry-card.status-safe .expiry-icon {
+            color: #10b981;
+        }
+
+    /* Status: Warning (yellow/orange) - 15 to 30 days */
+    .expiry-card.status-warning {
+        background: linear-gradient(135deg, #fff8e1, #ffecb3);
+        border-color: #fbbf24;
+        color: #92400e;
+    }
+
+        .expiry-card.status-warning .expiry-icon {
+            color: #f59e0b;
+        }
+
+    /* Status: Critical (red) - less than 15 days */
+    .expiry-card.status-critical {
+        background: linear-gradient(135deg, #fdecea, #fbd5d3);
+        border-color: #f87171;
+        color: #991b1b;
+    }
+
+        .expiry-card.status-critical .expiry-icon {
+            color: #ef4444;
+        }
+
+    /* Status: Expired (dark red / gray) */
+    .expiry-card.status-expired {
+        background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+        border-color: #9ca3af;
+        color: #374151;
+    }
+
+        .expiry-card.status-expired .expiry-icon {
+            color: #6b7280;
+        }
 </style>
 <body>
     @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
@@ -495,20 +604,23 @@
                     <span class="card-header-icon">📋</span>
                     License & Regulatory
                 </div>
-
-                <div class="form-label">
-                    <input class="form-control FormclrField" type="number" id="txtAadhaar" maxlength="12"
-                           oninput="if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
-                    <label class="labelup" for="txtAadhaar">Aadhaar Number</label>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-label">
+                            <input class="form-control FormclrField" type="number" id="txtAadhaar" maxlength="12"
+                                   oninput="if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }">
+                            <label class="labelup" for="txtAadhaar">Aadhaar No</label>
+                        </div>
+                        <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrorOnAadhaar" class="clrdivs"></div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-label">
+                            <input class="form-control FormclrField" type="text" id="txtFSSAI" maxlength="14">
+                            <label class="labelup" for="txtFSSAI">FSSAI No</label>
+                        </div>
+                        <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrorOnFSSAI" class="clrdivs"></div>
+                    </div>
                 </div>
-                <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrorOnAadhaar" class="clrdivs"></div>
-
-                <div class="form-label">
-                    <input class="form-control FormclrField" type="text" id="txtFSSAI" maxlength="14">
-                    <label class="labelup" for="txtFSSAI">FSSAI Number</label>
-                </div>
-                <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrorOnFSSAI" class="clrdivs"></div>
-
                 <div class="row">
                     <div class="col-6">
                         <div class="form-label">
@@ -528,22 +640,42 @@
                 <div class="row">
                     <div class="col-6">
                         <div class="form-label">
-                            <input class="form-control FormclrField" type="date" id="dtpFSD">
+                            <input class="form-control FormclrField" title="Financial Start Date" type="date" id="dtpFSD">
                             <label class="labelup">FSD</label>
                         </div>
                         <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrorOnDL20" class="clrdivs"></div>
                     </div>
                     <div class="col-6">
                         <div class="form-label">
-                            <input class="form-control FormclrField" type="date" id="dtpFED">
+                            <input class="form-control FormclrField" title="Financial End Date" type="date" id="dtpFED">
                             <label class="labelup">FED</label>
                         </div>
                         <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrorOnFSDFED" class="clrdivs"></div>
                     </div>
-                </div>                
+                </div>
+                <div class="row">
+                    <!-- Expiry Info Badge -->
+                    <div class="expiry-info-wrap" id="expiryInfoWrap" style="display:none;">
+                        <div class="expiry-card" id="expiryCard">
+                            <div class="expiry-left">
+                                <span class="expiry-icon" id="expiryIcon">⏳</span>
+                                <div class="expiry-text">
+                                    <span class="expiry-label">License Expiry</span>
+                                    <span class="expiry-date" id="expiryDateText">--</span>
+                                </div>
+                            </div>
+                            <div class="expiry-right">
+                                <span class="expiry-days-num" id="expiryDaysNum">--</span>
+                                <span class="expiry-days-label">days left</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
             </div>
         </div>
-    </div>
+        
+       
 
     <!-- Action Buttons -->
     <div class="action-buttons">
@@ -610,6 +742,7 @@
                         $("#cmbState").val(items.StateID);
                         $("#dtpFSD").val(items.F_SD);
                         $("#dtpFED").val(items.F_ED);
+                        showExpiryInfo(items.ExpiryDate, items.ExpiryDays)
                     });
                 }
             }, error: function (data) {
@@ -789,4 +922,38 @@
             $canfocus.eq(index).focus();
         }
     });
+</script>
+<script>
+
+function showExpiryInfo(expiryDateStr, expiryDays) {
+    const wrap = document.getElementById('expiryInfoWrap');
+    const card = document.getElementById('expiryCard');
+    const dateText = document.getElementById('expiryDateText');
+    const daysNum = document.getElementById('expiryDaysNum');
+    const icon = document.getElementById('expiryIcon');
+
+    wrap.style.display = 'block';
+    dateText.textContent = expiryDateStr;
+    daysNum.textContent = expiryDays;
+
+    // Reset classes
+    card.classList.remove('status-safe', 'status-warning', 'status-critical', 'status-expired');
+
+    if (expiryDays < 0) {
+        card.classList.add('status-expired');
+        icon.textContent = '⛔';
+        daysNum.textContent = 'Expired';
+    } else if (expiryDays <= 14) {
+        card.classList.add('status-critical');
+        icon.textContent = '⚠️';
+    } else if (expiryDays <= 30) {
+        card.classList.add('status-warning');
+        icon.textContent = '⏳';
+    } else {
+        card.classList.add('status-safe');
+        icon.textContent = '✅';
+    }
+}
+
+
 </script>
