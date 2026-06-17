@@ -22,7 +22,7 @@
         'max-height:340px;overflow:hidden;">',
         '<ul id="' + listId + '" style="',
         'list-style:none;margin:0;padding:0;',
-        'max-height:280px;overflow-y:auto;color:var(--acitemname)"></ul>',
+        'max-height:250px;overflow-y:auto;color:var(--acitemname)"></ul>',
         '<div style="',
         'padding:6px 12px;font-size:12px;color:#888;',
         'border-top:1px solid #eee;background:#fafafa;',
@@ -42,7 +42,7 @@
         var rect = $input[0].getBoundingClientRect();
 
         // Check if dropdown goes below viewport, if so show it ABOVE the input
-        var dropHeight = 340;
+        var dropHeight = 300;
         var spaceBelow = window.innerHeight - rect.bottom;
         var showAbove = spaceBelow < dropHeight && rect.top > dropHeight;
 

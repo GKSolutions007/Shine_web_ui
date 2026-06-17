@@ -557,7 +557,7 @@ class GKBSDynamicGrid {
                         console.log("have no : " + col.field, Object.values(values));
                     }
                     // Format numbers (e.g., 12,300.50)
-                    const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                    const fmt = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2, style: 'currency', currency: 'INR' });
 
                     cell.innerHTML = `                    
                     `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${dataToCalculate.length}</div> ` : ``) + ` 
@@ -724,7 +724,8 @@ class GKBSDynamicGrid {
             this.options.customButtons.forEach(btnConfig => {
                 const customBtn = document.createElement('button');
                 customBtn.className = btnConfig.className || 'dg-btn';
-
+                customBtn.id = btnConfig.id || (btnConfig.text == "New" ? "btnGKBSGNew" : btnConfig.title == "Settings" ? "btnGKBSGSetting"
+                    : 'btndefid');   
                 // Set button text with optional icon
                 if (btnConfig.icon && btnConfig.text) {
                     customBtn.innerText = `${btnConfig.icon} ${btnConfig.text}`;
