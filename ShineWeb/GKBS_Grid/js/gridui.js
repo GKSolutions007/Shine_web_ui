@@ -1281,11 +1281,11 @@ class GKBSDynamicGrid {
     <div class="dg-filter-group">
             <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}" hidden>Sort A to Z</div>
             <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}" hidden>Sort Z to A</div>
-            <hr hidden/>
+            <hr class"hrgricline" hidden/>
             <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}">📏 Auto Fit This Column</div>
             <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}">📏 Auto Fit All Columns</div>
         </div>
-        <hr/>
+        <hr class"hrgricline"/>
            <div class="dg-filter-group">
             <div class="dg-filter-text-input" style="display: flex; gap: 5px;">
                 <select class="dg-text-filter-operator">
@@ -1295,14 +1295,14 @@ class GKBSDynamicGrid {
                        class="dg-text-filter-input" style="flex-grow: 1;" value="${savedValue}">
             </div>
         </div>
-        <hr/>
+        <hr class"hrgricline"/>
         
         <div class="dg-filter-group">
             <div class="dg-filter-text-input">
                 <input type="text" placeholder="Search..." class="dg-text-filter-input">
             </div>
         </div>
-        <hr/>
+        <hr class"hrgricline"/>
         <div class="dg-filter-checkbox-list">
             </div>
         <div class="dg-filter-actions">
@@ -1328,7 +1328,7 @@ class GKBSDynamicGrid {
         <label class="dg-select-all-label">
             <input type="checkbox" class="dg-select-all-checkbox" ${allCheckedAttr}> (Select All)
         </label>
-        <hr/>
+        <hr class"hrgricline"/>
     `;
         uniqueValues.forEach(rawValue => {
             const value = String(rawValue);
