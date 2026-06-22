@@ -748,3 +748,93 @@ document.addEventListener("keydown", function (event) {
         }
     }
 });
+function numberToIndianCurrencyWords(amount) {
+
+    amount = parseFloat(amount);
+
+    if (isNaN(amount))
+        return "";
+
+    if (amount === 0)
+        return "";
+
+    const ones = [
+        "", "One", "Two", "Three", "Four", "Five", "Six",
+        "Seven", "Eight", "Nine", "Ten", "Eleven",
+        "Twelve", "Thirteen", "Fourteen", "Fifteen",
+        "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+    ];
+
+    const tens = [
+        "", "", "Twenty", "Thirty", "Forty",
+        "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+    ];
+
+    function convertHundreds(num) {
+
+        let str = "";
+
+        if (num > 99) {
+            str += ones[Math.floor(num / 100)] + " Hundred ";
+            num %= 100;
+        }
+
+        if (num > 19) {
+            str += tens[Math.floor(num / 10)] + " ";
+            num %= 10;
+        }
+
+        if (num > 0) {
+            str += ones[num] + " ";
+        }
+
+        return str.trim();
+    }
+
+    function convertNumber(num) {
+
+        if (num === 0)
+            return "Zero";
+
+        let result = "";
+
+        const crore = Math.floor(num / 10000000);
+        num %= 10000000;
+
+        const lakh = Math.floor(num / 100000);
+        num %= 100000;
+
+        const thousand = Math.floor(num / 1000);
+        num %= 1000;
+
+        const remainder = num;
+
+        if (crore)
+            result += convertHundreds(crore) + " Crore ";
+
+        if (lakh)
+            result += convertHundreds(lakh) + " Lakh ";
+
+        if (thousand)
+            result += convertHundreds(thousand) + " Thousand ";
+
+        if (remainder)
+            result += convertHundreds(remainder);
+
+        return result.trim();
+    }
+
+    let rupees = Math.floor(amount);
+
+    let paise = Math.round((amount - rupees) * 100);
+
+    let words = convertNumber(rupees) + " Rupees";
+
+    if (paise > 0) {
+        words += " and " + convertNumber(paise) + " Paise";
+    }
+
+    words += " Only";
+
+    return words;
+}

@@ -176,7 +176,7 @@
         background-color: #c2f6b5;
         z-index: 1000;
     }
-   
+
     .modalPaymode {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
@@ -290,6 +290,7 @@
         .slider.round:before {
             border-radius: 50%;
         }
+
 </style>
 <body>
 
@@ -369,7 +370,7 @@
                         <tr class="trclrforcolheader">
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ID</th>
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">StatusID</th>
-                            <th style="text-align:center;font-size: 12px;width:3%;" class="trclrforcolheader"><input id="chkSelectAll" type="checkbox" /></th>
+                            <th style="text-align:center;font-size: 12px;width:3%;text-align:center !important" class="trclrforcolheader"><input id="chkSelectAll" type="checkbox" /></th>
                             <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Doc ID</th>
                             <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Date</th>
                             <th style="text-align:center;font-size: 12px;width:15%;" class="trclrforcolheader">Party Name</th>
@@ -386,20 +387,27 @@
             </div>
         </div>
 
-        <div class="footerAction modal-footer">
-            <div class="text-end p-2">
-                <button type="button" class="btn btn-danger" id="btnClear">
-                    <span class="glyphicon glyphicon-refresh"> Clear</span>
-                </button>
+        <div class="footerAction">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 p-2">
+                <div class="d-flex align-items-end gap-3">
+                    <label style="color:black"> Selected Cheques :</label> <label id="lblChqCountValue" style="font-size:16px;font-weight:500;padding-right:30px;color:black">0.00 / 0</label>
+                </div>
+               
+                <div class="d-flex flex-wrap gap-1 justify-content-end">
+                    <button type="button" class="btn btn-danger" id="btnClear">
+                        <span class="glyphicon glyphicon-refresh"> Clear</span>
+                    </button>
 
-                <button type="button" class="btn btn-success" id="btnSave">
-                    <span class="glyphicon glyphicon-saved"> Save</span>
-                </button>
+                    <button type="button" class="btn btn-success" id="btnSave">
+                        <span class="glyphicon glyphicon-saved"> Save</span>
+                    </button>
 
-                <button type="button" class="btn btn-warning" id="btnClose">
-                    <span class="glyphicon glyphicon-remove"> Close</span>
-                </button>
+                    <button type="button" class="btn btn-warning" id="btnClose">
+                        <span class="glyphicon glyphicon-remove"> Close</span>
+                    </button>
+                </div>
             </div>
+
         </div>
     </div>
 
@@ -542,8 +550,8 @@
         paging: false,
         searching: false,
         info: false,
-        ordering: true,
-        scrollY: "250px",
+        ordering: false,
+        scrollY: "425px",
         scrollX: true,
         scrollCollapse: true,
         "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false, filter: false, ordering: false },
@@ -805,6 +813,7 @@ setTimeout(function () { GetFilterData(2); }, 800);
                     }
                     else if (nMode == 3) {
                         DocumentData.draw().clear(); DocumentData.draw().clear();
+                        $("#lblChqCountValue").text("0.00 / 0");
                         if (data.length > 0) {
                             $.each(data, function (i, items) {
                                 DocumentData.row.add([
@@ -844,8 +853,24 @@ setTimeout(function () { GetFilterData(2); }, 800);
         $('#tblDocumentData tr td input').each(function (i, items) {
             items.checked = IsChk;
         });
+        CalulateSelectedCheques();
     });
-
+    $('#tblDocumentData tbody').on('change', 'input[type=checkbox]', function (e) {
+        CalulateSelectedCheques();
+    });
+    function CalulateSelectedCheques() {
+        var Checkedrows = 0, Value = 0;
+        $('#tblDocumentData tbody tr').each(function (i, items) {
+            var rowdata = DocumentData.row($(this)).data();
+            var CheqAmt = rowdata[10];
+            var isChk = $(this).find("input[type=checkbox]").is(":checked");
+            if (isChk) {
+                Value += parseFloat(CheqAmt);
+                Checkedrows++;
+            }
+        });
+        $("#lblChqCountValue").text(parseFloat(Value).toFixed(DecVal) + " / " + Checkedrows);
+    }        
     $("#chkBRType").click(function (e) {
         var ischk = $("#chkBRType").is(":checked");
         $("#txtBankCharge").prop("disabled", !ischk);
@@ -880,6 +905,7 @@ setTimeout(function () { GetFilterData(2); }, 800);
         $(".clrdivs").html("");
         $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
         $("#btnPreview,#btnPDF").prop("disabled", true);
+        $("#lblChqCountValue").text("0.00 / 0");
         DocumentData.draw().clear();
         DocumentData.draw().clear();
         GetData(1);
