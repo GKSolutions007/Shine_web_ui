@@ -21,6 +21,7 @@
 <script src="~/datatable/1.13.6/dataTables.bootstrap5.min.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/Scripts/multiselect/GKBSmultiselectiondropdown.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
     <!-- Icon font for the modernized UI. Host locally if this environment has no internet access. -->
@@ -570,7 +571,7 @@
     /* ---- Toasts ---- */
     .toastBox {
         position: fixed;
-        top: 10px;
+        top: 30px;
         right: 10px;
         z-index: 999;
         display: flex;
@@ -671,11 +672,11 @@
         border-radius: var(--bc-radius-sm);
         padding: 7px 10px;
         font-size: 11px;
-        margin-bottom: 10px;
+        margin-bottom: 2px;
     }
 
         .pay-summary-row b {
-            font-size: 12.5px;
+            font-size: 13px;
         }
 
     .pay-add-grid {
@@ -710,12 +711,6 @@
 
     .pay-field.full {
         grid-column: 1 / -1;
-    }
-
-    #btnAddPayment {
-        width: 100%;
-        justify-content: center;
-        margin-bottom: 10px;
     }
 
     .pay-list {
@@ -762,6 +757,66 @@
         color: var(--bc-muted);
         padding: 14px 0;
     }
+
+    /* ---- TransName filter tabs ---- */
+    .bc-transname-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        align-items: center;
+    }
+
+    .bc-tab {
+        height: 26px;
+        padding: 0 11px;
+        border-radius: 14px;
+        border: 1.3px solid var(--bc-border);
+        background: #fff;
+        color: var(--bc-muted);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: background .12s ease, color .12s ease, border-color .12s ease;
+        white-space: nowrap;
+    }
+
+        .bc-tab:hover {
+            border-color: var(--bc-primary);
+            color: var(--bc-primary);
+        }
+
+        .bc-tab.active {
+            background: var(--bc-primary);
+            color: #fff;
+            border-color: var(--bc-primary);
+        }
+
+        .bc-tab.all-tab.active {
+            background: var(--bc-text);
+            border-color: var(--bc-text);
+        }
+
+        .bc-tab .tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.25);
+            color: inherit;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 16px;
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 0 4px;
+        }
+
+        .bc-tab:not(.active) .tab-count {
+            background: var(--bc-bg);
+            color: var(--bc-muted);
+        }
 
     /* =========================================================
        RESPONSIVE BREAKPOINTS
@@ -848,6 +903,419 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* ---- Remarks button ---- */
+    .btn-remark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1.2px solid var(--bc-border);
+        background: #fff;
+        color: var(--bc-muted);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all .15s ease;
+        position: relative;
+    }
+
+        .btn-remark:hover {
+            border-color: var(--bc-primary);
+            color: var(--bc-primary);
+            background: var(--bc-primary-light);
+        }
+
+        .btn-remark.has-remark {
+            border-color: var(--bc-warning);
+            color: var(--bc-warning);
+            background: var(--bc-warning-light);
+        }
+
+    /* ---- Remark tooltip ---- */
+    .remark-tooltip-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remark-tooltip {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 6px);
+        right: 0;
+        min-width: 200px;
+        max-width: 280px;
+        background: var(--bc-text);
+        color: #fff;
+        font-size: 10.5px;
+        padding: 7px 10px;
+        border-radius: var(--bc-radius-sm);
+        box-shadow: var(--bc-shadow-md);
+        z-index: 300;
+        white-space: normal;
+        line-height: 1.5;
+        pointer-events: none;
+    }
+
+        .remark-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            right: 9px;
+            border: 5px solid transparent;
+            border-top-color: var(--bc-text);
+        }
+
+        .remark-tooltip .tt-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: rgba(255,255,255,.65);
+            margin-bottom: 2px;
+        }
+
+        .remark-tooltip .tt-value {
+            word-break: break-word;
+        }
+
+    .remark-tooltip-wrap:hover .remark-tooltip {
+        display: block;
+    }
+
+    /* ---- Save Response Badge ---- */
+    .save-error-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-left: 4px;
+        vertical-align: middle;
+        flex-shrink: 0;
+        position: relative;
+        border: none;
+        line-height: 1;
+    }
+
+        /* Error badge — red */
+        .save-error-badge.save-badge-error {
+            background: var(--bc-danger, #dc2626);
+        }
+
+            .save-error-badge.save-badge-error:hover {
+                background: #b91c1c;
+            }
+
+        /* Success badge — green */
+        .save-error-badge.save-badge-success {
+            background: var(--bc-success, #16a34a);
+        }
+
+            .save-error-badge.save-badge-success:hover {
+                background: #15803d;
+            }
+
+    .save-error-tooltip {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 190px;
+        max-width: 260px;
+        color: #fff;
+        font-size: 10.5px;
+        padding: 7px 10px;
+        border-radius: var(--bc-radius-sm, 4px);
+        box-shadow: var(--bc-shadow-md);
+        z-index: 400;
+        white-space: normal;
+        line-height: 1.5;
+        pointer-events: none;
+        font-weight: 600;
+        text-align: left;
+    }
+
+        /* Error tooltip — red */
+        .save-error-tooltip.save-tip-error {
+            background: var(--bc-danger, #dc2626);
+        }
+
+            .save-error-tooltip.save-tip-error::after {
+                border-top-color: var(--bc-danger, #dc2626);
+            }
+
+        /* Success tooltip — green */
+        .save-error-tooltip.save-tip-success {
+            background: var(--bc-success, #16a34a);
+        }
+
+            .save-error-tooltip.save-tip-success::after {
+                border-top-color: var(--bc-success, #16a34a);
+            }
+
+        .save-error-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+        }
+
+    .save-error-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+
+        .save-error-wrap:hover .save-error-tooltip {
+            display: block;
+        }
+
+    /* Row highlight */
+    #tblBulkCollectionData tbody tr.row-save-error {
+        border-left-color: var(--bc-danger, #dc2626) !important;
+        background-color: #fff5f5 !important;
+    }
+
+    #tblBulkCollectionData tbody tr.row-save-success {
+        border-left-color: var(--bc-success, #16a34a) !important;
+        background-color: #f0fdf4 !important;
+    }
+    /* ---- Remarks modal ---- */
+    .modalRemarks {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 250;
+        background: rgba(15,18,30,.45);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modalRemarks-content {
+        background: #fff;
+        width: 94%;
+        max-width: 440px;
+        border-radius: var(--bc-radius);
+        padding: 18px;
+        box-shadow: var(--bc-shadow-md);
+    }
+
+        .modalRemarks-content h5 {
+            margin: 0 0 4px 0;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modalRemarks-content .sub {
+            font-size: 11px;
+            color: var(--bc-muted);
+            margin-bottom: 14px;
+        }
+
+    .remark-field label {
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--bc-muted);
+        display: block;
+        margin-bottom: 3px;
+    }
+
+    .remark-field textarea {
+        width: 100%;
+        border-radius: var(--bc-radius-sm);
+        border: 1.3px solid var(--bc-border);
+        padding: 7px 9px;
+        font-size: 12px;
+        font-family: inherit;
+        resize: vertical;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+        .remark-field textarea:focus {
+            border-color: var(--bc-primary);
+            box-shadow: 0 0 0 2px var(--bc-primary-light);
+            outline: none;
+        }
+
+    .closeRemark {
+        cursor: pointer;
+        color: var(--bc-muted);
+        font-size: 16px;
+    }
+
+        .closeRemark:hover {
+            color: var(--bc-text);
+        }
+
+    /* ---- FAID row background colour palette ---- */
+    /* 12 distinct light tints that cycle per unique FAID */
+    .faid-bg-0 {
+        background-color: #eef4ff !important;
+    }
+
+    .faid-bg-1 {
+        background-color: #fff8ee !important;
+    }
+
+    .faid-bg-2 {
+        background-color: #edfff5 !important;
+    }
+
+    .faid-bg-3 {
+        background-color: #fff0f0 !important;
+    }
+
+    .faid-bg-4 {
+        background-color: #f4eeff !important;
+    }
+
+    .faid-bg-5 {
+        background-color: #edfffe !important;
+    }
+
+    .faid-bg-6 {
+        background-color: #fffbee !important;
+    }
+
+    .faid-bg-7 {
+        background-color: #f0f9ff !important;
+    }
+
+    .faid-bg-8 {
+        background-color: #fff0fa !important;
+    }
+
+    .faid-bg-9 {
+        background-color: #f0fff4 !important;
+    }
+
+    .faid-bg-10 {
+        background-color: #fef9ee !important;
+    }
+
+    .faid-bg-11 {
+        background-color: #eef6ff !important;
+    }
+
+    #tblBulkCollectionData tbody tr:hover td {
+        filter: brightness(0.97);
+    }
+
+    /* ---- Summary Modal ---- */
+    .modalSummary {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        background: rgba(15,18,30,.5);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modalSummary-content {
+        background: #fff;
+        width: 96%;
+        max-width: 820px;
+        max-height: 88vh;
+        overflow: auto;
+        border-radius: var(--bc-radius);
+        padding: 18px;
+        box-shadow: var(--bc-shadow-md);
+    }
+
+        .modalSummary-content h5 {
+            margin: 0 0 4px 0;
+            font-weight: 700;
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modalSummary-content .sub {
+            font-size: 11px;
+            color: var(--bc-muted);
+            margin-bottom: 12px;
+        }
+
+    .closeSummary {
+        cursor: pointer;
+        color: var(--bc-muted);
+        font-size: 16px;
+    }
+
+        .closeSummary:hover {
+            color: var(--bc-text);
+        }
+
+    #tblSummary {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11.5px;
+    }
+
+        #tblSummary thead th {
+            background: #f7f8fc;
+            color: var(--bc-text);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .2px;
+            padding: 7px 8px;
+            border-bottom: 1.5px solid var(--bc-border);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        #tblSummary tbody td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eef0f5;
+            vertical-align: middle;
+        }
+
+        #tblSummary tbody tr:hover {
+            background: #fafbff;
+        }
+
+        #tblSummary tfoot td {
+            padding: 7px 8px;
+            font-size: 11.5px;
+            background: #f7f8fc;
+            border-top: 2px solid var(--bc-border);
+            font-weight: 700;
+        }
+
+    .sum-customer {
+        font-weight: 700;
+    }
+
+    .sum-badge {
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 12px;
+        background: var(--bc-primary-light);
+        color: var(--bc-primary);
+        margin-left: 4px;
+    }
 </style>
 
 <body>
@@ -932,12 +1400,23 @@
                 <i class="bi bi-search"></i>
                 <input type="text" id="txtSearchRow" placeholder="Search party, doc id or ref no..." />
             </div>
+            <!-- TransName filter tabs (shown below toolbar after data loads) -->
+            <div id="dvTransTabs" style="display:none;">
+                <div class="bc-transname-tabs" id="transnameTabs"></div>
+            </div>
             <div class="bc-bulkactions">
                 <button type="button" class="bc-btn bc-btn-outline bc-btn-sm" id="btnResetAll">
                     <i class="bi bi-arrow-counterclockwise"></i> Reset all
                 </button>
+                <button type="button" class="bc-btn bc-btn-outline bc-btn-sm" id="btnExport" title="Export visible data to Excel">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                </button>
+                <button type="button" class="bc-btn bc-btn-outline bc-btn-sm" id="btnSummary" title="Customer-wise Adjusted Summary">
+                    <i class="bi bi-bar-chart-line"></i> Summary
+                </button>
             </div>
         </div>
+
 
         <!-- ===================== DATA TABLE ===================== -->
         <div class="bc-loading" id="dvLoading">
@@ -969,6 +1448,7 @@
                         <th style="width:5%;">Other %</th>
                         <th style="width:5%;">Other ₹</th>
                         <th style="width:7%;">Adjusted ₹</th>
+                        <th style="width:3%;">Note</th>
                     </tr>
                 </thead>
                 <tbody id="tblBody"></tbody>
@@ -985,6 +1465,7 @@
                         <td></td>
                         <td align="right" id="ftOther">0.00</td>
                         <td align="right" id="ftAdjusted">0.00</td>
+                        <td></td>
                     </tr>
                 </tfoot>
             </table>
@@ -996,6 +1477,18 @@
         <div class="bc-mini-summary">
             <div class="stat"><span class="lbl">Records</span><span class="val" id="statRecords">0</span></div>
             <div class="stat"><span class="lbl">Balance</span><span class="val" id="statBalance">0.00</span></div>
+            <div class="stat" title="Cash Collection Amount">
+                <span class="lbl">Cash Collected</span>
+                <span class="val" id="statcashCollected">0.00</span>
+            </div>
+            <div class="stat" title="Cheque Collection - Count &amp; Amount">
+                <span class="lbl">CHQ (<span id="statChqCount">0</span>)</span>
+                <span class="val" id="statchqCollected">0.00</span>
+            </div>
+            <div class="stat" title="Bank Transfer Collection - Count &amp; Amount">
+                <span class="lbl">BT (<span id="statBtCount">0</span>)</span>
+                <span class="val" id="statbtCollected">0.00</span>
+            </div>
             <div class="stat acc-collected"><span class="lbl">Collected</span><span class="val" id="statCollected">0.00</span></div>
             <div class="stat"><span class="lbl">Disc+Other</span><span class="val" id="statDiscOther">0.00</span></div>
             <div class="stat acc-remaining"><span class="lbl">Remaining</span><span class="val" id="statRemaining">0.00</span></div>
@@ -1016,11 +1509,17 @@
             <div class="sub" id="payModalSub">Doc ID</div>
 
             <div class="pay-summary-row">
-                <span>Balance: <b id="paySummaryBalance">0.00</b></span>
-                <span>Added: <b id="paySummaryAdded">0.00</b></span>
+                <span>Cum. Balance: <b id="paySummaryBalance">0.00</b></span>
                 <span>Remaining: <b id="paySummaryRemaining">0.00</b></span>
+                <span>Recd Amt: <b id="paySummaryRecd">0.00</b></span>
             </div>
+            <div class="pay-summary-row d-none">
 
+                <span>Entered: <b id="paySummaryAdded">0.00</b></span>
+            </div>
+            <div class="pay-summary-row">
+                <label id="paySummaryAmtinword"></label>
+            </div>
             <!-- Mode selector: only Cheque or Bank Transfer allowed; one at a time -->
             <div class="pay-add-grid" id="payAddGrid">
 
@@ -1028,14 +1527,13 @@
                 <div class="pay-field">
                     <label>Mode <span style="color:var(--bc-danger)">*</span></label>
                     <select id="paymodeMode">
-                        <option value="">-- Select Mode --</option>
-                        <option value="Cheque">Cheque</option>
-                        <option value="BankTransfer">Bank Transfer</option>
+                        <option value="2" selected>Cheque</option>
+                        <option value="4">Bank Transfer</option>
                     </select>
                 </div>
                 <div class="pay-field">
                     <label>Amount <span style="color:var(--bc-danger)">*</span></label>
-                    <input type="number" id="paymodeAmount" min="0" step="0.01" placeholder="0.00" />
+                    <input type="number" id="paymodeAmount" min="0" step="1" placeholder="0.00" />
                 </div>
 
                 <!-- ── CHEQUE fields ── -->
@@ -1050,20 +1548,14 @@
                 <div class="pay-field" id="payChqBankWrap" style="display:none;">
                     <label>Bank</label>
                     <select id="paymodeChqBank">
-                        <option value="">-- Select Bank --</option>
-                        <option>State Bank of India</option>
-                        <option>HDFC Bank</option>
-                        <option>ICICI Bank</option>
-                        <option>Axis Bank</option>
-                        <option>Kotak Mahindra Bank</option>
-                        <option>Bank of Baroda</option>
-                        <option>Punjab National Bank</option>
-                        <option>Canara Bank</option>
-                        <option>Union Bank of India</option>
-                        <option>IndusInd Bank</option>
-                        <option>Yes Bank</option>
-                        <option>Federal Bank</option>
-                        <option>Other</option>
+                        <option value="0">-- Select Bank --</option>
+                        <option value="1">State Bank of India</option>
+                        <option value="2">HDFC Bank</option>
+                        <option value="3">ICICI Bank</option>
+                        <option value="4">Axis Bank</option>
+                        <option value="5">Kotak Mahindra Bank</option>
+                        <option value="6">Bank of Baroda</option>
+                        <option value="65">Other</option>
                     </select>
                 </div>
                 <div class="pay-field" id="payChqBranchWrap" style="display:none;">
@@ -1079,12 +1571,9 @@
                 <div class="pay-field" id="payBTBankAccWrap" style="display:none;">
                     <label>Bank Account <span style="color:var(--bc-danger)">*</span></label>
                     <select id="paymodeBTBankAcc">
-                        <option value="">-- Select Account --</option>
-                        <option>SBI - 00001234567890</option>
-                        <option>HDFC - 50100123456789</option>
-                        <option>ICICI - 123456789012</option>
-                        <option>Axis - 9876543210123</option>
-                        <option>Other</option>
+                        <option value="0">-- Select Account --</option>
+                        <option value="23">SBI - 00001234567890</option>
+                        <option value="34">HDFC - 50100123456789</option>
                     </select>
                 </div>
                 <div class="pay-field" id="payBTRefNoWrap" style="display:none;">
@@ -1094,17 +1583,15 @@
                 <div class="pay-field" id="payBTTransferModeWrap" style="display:none;">
                     <label>Transfer Mode <span style="color:var(--bc-danger)">*</span></label>
                     <select id="paymodeBTTransferMode">
-                        <option value="">-- Select --</option>
-                        <option value="NEFT">NEFT</option>
-                        <option value="RTGS">RTGS</option>
-                        <option value="IMPS">IMPS</option>
-                        <option value="UPI">UPI</option>
+                        <option value="0">-- Select --</option>
+                        <option value="3">NEFT</option>
+                        <option value="4">RTGS</option>
+                        <option value="5">IMPS</option>
+                        <option value="6">UPI</option>
                     </select>
                 </div>
 
             </div>
-
-            <button type="button" class="bc-btn bc-btn-primary" id="btnAddPayment"><i class="bi bi-plus-circle"></i> Add Payment</button>
 
             <div class="pay-list" id="payList"></div>
 
@@ -1113,12 +1600,72 @@
             </div>
         </div>
     </div>
+    <!-- ===================== SUMMARY MODAL (Customer-wise) ===================== -->
+    <div class="modalSummary" id="modalSummary">
+        <div class="modalSummary-content">
+            <h5>
+                <span><i class="bi bi-bar-chart-line" style="margin-right:6px;"></i>Adjusted Documents — Customer Summary</span>
+                <span class="closeSummary" id="btnCloseSummary"><i class="bi bi-x-lg"></i></span>
+            </h5>
+            <div class="sub" id="summaryModalSub">Showing customer-wise totals for all adjusted documents.</div>
+            <div style="overflow:auto;">
+                <table id="tblSummary" width="100%">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="width:3%;vertical-align:middle;">#</th>
+                            <th rowspan="2" style="width:18%;vertical-align:middle;">Customer Name</th>
+                            <th colspan="2" style="text-align:center;border-bottom:1px solid var(--bc-border);">Cash Adj ₹</th>
+                            <th colspan="2" style="text-align:center;border-bottom:1px solid var(--bc-border);">Chq/BT Adj ₹</th>
+                            <th rowspan="2" style="width:5%;text-align:center;vertical-align:middle;" class="d-none">CHQ</th>
+                            <th rowspan="2" style="width:5%;text-align:center;vertical-align:middle;" class="d-none">BT</th>
+                            <th rowspan="2" style="width:8%;text-align:right;vertical-align:middle;">Disc ₹</th>
+                            <th rowspan="2" style="width:8%;text-align:right;vertical-align:middle;">Other ₹</th>
+                            <th rowspan="2" style="width:9%;text-align:right;vertical-align:middle;">Total Adj ₹</th>
+                        </tr>
+                        <tr>
+                            <th style="width:8%;text-align:right;color:var(--bc-success);">+ Amt</th>
+                            <th style="width:8%;text-align:right;color:var(--bc-danger);">− Amt</th>
+                            <th style="width:8%;text-align:right;color:var(--bc-success);">+ Amt</th>
+                            <th style="width:8%;text-align:right;color:var(--bc-danger);">− Amt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblSummaryBody"></tbody>
+                    <tfoot id="tblSummaryFoot"></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== REMARKS MODAL (per FAID) ===================== -->
+    <div class="modalRemarks" id="modalRemarks">
+        <div class="modalRemarks-content">
+            <h5>
+                <span><i class="bi bi-chat-left-text" style="margin-right:6px;"></i>Remarks &amp; Narration</span>
+                <span class="closeRemark" id="btnCloseRemarks"><i class="bi bi-x-lg"></i></span>
+            </h5>
+            <div class="sub" id="remarkModalSub">Party — Doc</div>
+
+            <div class="remark-field" style="margin-bottom:10px;">
+                <label>Remarks</label>
+                <textarea id="txtRemarkText" rows="3" placeholder="Enter remarks here…" maxlength="100"></textarea>
+            </div>
+            <div class="remark-field" style="margin-bottom:14px;">
+                <label>Narration</label>
+                <textarea id="txtNarrationText" rows="3" placeholder="Enter narration here…" maxlength="500"></textarea>
+            </div>
+
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" class="bc-btn bc-btn-outline" id="btnClearRemarks"><i class="bi bi-eraser"></i> Clear</button>
+                <button type="button" class="bc-btn bc-btn-primary" id="btnSaveRemarks"><i class="bi bi-check2"></i> Save</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 <script type="text/javascript">
     var UID = '@Session["LoginUserID"]';
     var Aurl = '@Session["APIurl"]';
-    var DefBranch = '@Session["DefaultBranch"]';
+
     var DecVal = parseInt('@Session["DecimalValues"]');
     if (isNaN(DecVal)) DecVal = 2;
 
@@ -1129,8 +1676,58 @@
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
+    var DefBankAcc = 0;
+    var customerpreviousbankinfo = [];
     Loadfilterfieldaata()
     function Loadfilterfieldaata() {
+        //fetch('/datatable/fielddata.json')
+        //    .then(response => response.json())
+        //    .then(data => {
+        //        var arrBeatfilterdata = data.Table;
+        //        var arrSMfilterdata = data.Table1;
+        //        var arrCustfilterdata = data.Table2;
+        //        GKBSPaginatedMultiSelect({
+        //            inputId: 'txtBeat',
+        //            data: arrBeatfilterdata,
+        //            onSelect: function (items) { /* optional live hook */ }
+        //        });
+        //        GKBSPaginatedMultiSelect({
+        //            inputId: 'txtSalesman',
+        //            data: arrSMfilterdata,
+        //            onSelect: function (items) { /* optional live hook */ }
+        //        });
+        //        GKBSPaginatedMultiSelect({
+        //            inputId: 'txtCustomer',
+        //            data: arrCustfilterdata,
+        //            onSelect: function (items) { /* optional live hook */ }
+        //        });
+        //        //paymodeChqBank,paymodeBTBankAcc,paymodeBTTransferMode
+        //        $('#paymodeChqBank,#paymodeBTBankAcc,#paymodeBTTransferMode').find("option").remove();
+        //        $('#paymodeChqBank,#paymodeBTBankAcc,#paymodeBTTransferMode').append($('<option/>', {
+        //            value: 0,
+        //            text: "-- Select --",
+        //        }));
+        //        $.each(data.banks, function (i, items) {
+        //            $('#paymodeChqBank').append($('<option/>', {
+        //                value: items.ID,
+        //                text: items.Name,
+        //            }));
+        //        });
+        //        $.each(data.bankaccount, function (i, items) {
+        //            $('#paymodeBTBankAcc').append($('<option/>', {
+        //                value: items.ID,
+        //                text: items.Name,
+        //            }));
+        //        });
+        //        $.each(data.BTMode, function (i, items) {
+        //            $('#paymodeBTTransferMode').append($('<option/>', {
+        //                value: items.ID,
+        //                text: items.Name,
+        //            }));
+        //        });
+        //    })
+        //    .catch(error => console.error(error));
+
         $.ajax({
             url: Aurl + "bulkcollection/filterdata",
             type: 'get',
@@ -1142,10 +1739,11 @@
                 withCredentials: true
             },
             success: function (data) {
+                console.log(data);
                 var arrBeatfilterdata = data.Table;
                 var arrSMfilterdata = data.Table1;
                 var arrCustfilterdata = data.Table2;
-
+                customerpreviousbankinfo = data.Table6;
                 GKBSPaginatedMultiSelect({
                     inputId: 'txtBeat',
                     data: arrBeatfilterdata,
@@ -1160,6 +1758,32 @@
                     inputId: 'txtCustomer',
                     data: arrCustfilterdata,
                     onSelect: function (items) { /* optional live hook */ }
+                });
+                $('#paymodeChqBank,#paymodeBTBankAcc,#paymodeBTTransferMode').find("option").remove();
+                $('#paymodeChqBank,#paymodeBTBankAcc,#paymodeBTTransferMode').append($('<option/>', {
+                    value: 0,
+                    text: "-- Select --",
+                }));
+                $.each(data.Table4, function (i, items) {
+                    $('#paymodeChqBank').append($('<option/>', {
+                        value: items.ID,
+                        text: items.Name,
+                    }));
+                });
+
+                $.each(data.Table5, function (i, items) {
+                    $('#paymodeBTBankAcc').append($('<option/>', {
+                        value: items.ID,
+                        text: items.Name,
+                    }));
+                    if (items.SetDefault == 1)
+                        DefBankAcc = items.ID;
+                });
+                $.each(data.Table3, function (i, items) {
+                    $('#paymodeBTTransferMode').append($('<option/>', {
+                        value: items.ID,
+                        text: items.Name,
+                    }));
                 });
             }
         });
@@ -1203,6 +1827,7 @@
     }
 
     function setPayments($tr, arr) {
+        //console.log("$tr", $tr, 'data-payments', JSON.stringify(arr));
         $tr.attr('data-payments', JSON.stringify(arr));
     }
 
@@ -1223,11 +1848,12 @@
             { TransID: 3, ID: 103, FAID: 9003, PartyName: 'Velan Super Market', DocID: 'INV-2620', TransName: "Invoice", DocDate: '2026-Jun-08', RefNo: 'PO-3340', NetAmt: 45200, Balance: 45200 },
             { TransID: 4, ID: 104, FAID: 9004, PartyName: 'Murugan Agencies', DocID: 'INV-2622', TransName: "Sales Return", DocDate: '2026-Jun-09', RefNo: 'PO-3342', NetAmt: 12750, Balance: 4500 },
             { TransID: 5, ID: 105, FAID: 9005, PartyName: 'Lakshmi Provisions', DocID: 'INV-2630', TransName: "Invoice", DocDate: '2026-Jun-11', RefNo: 'PO-3360', NetAmt: 27800, Balance: 27800 },
-            { TransID: 6, ID: 106, FAID: 9006, PartyName: 'Sakthi Distributors', DocID: 'INV-2635', TransName: "Debit Note", DocDate: '2026-Jun-13', RefNo: 'PO-3372', NetAmt: 6400, Balance: 1900 },
+            { TransID: 6, ID: 106, FAID: 9006, PartyName: 'Sakthi Distributors', DocID: 'INV-2635', TransName: "Debit Note", DocDate: '2026-Jun-13', RefNo: 'PO-3372', NetAmt: 2800, Balance: 2800 },
             { TransID: 4, ID: 104, FAID: 9004, PartyName: 'Murugan Agencies', DocID: 'INV-2622', TransName: "Invoice", DocDate: '2026-Jun-09', RefNo: 'PO-3342', NetAmt: 12750, Balance: 4500 },
             { TransID: 5, ID: 105, FAID: 9005, PartyName: 'Lakshmi Provisions', DocID: 'INV-2630', TransName: "Receivable Voucher", DocDate: '2026-Jun-11', RefNo: 'PO-3360', NetAmt: 27800, Balance: 27800 },
-            { TransID: 6, ID: 106, FAID: 9006, PartyName: 'Sakthi Distributors', DocID: 'INV-2635',TransName:"Invoice", DocDate: '2026-Jun-13', RefNo: 'PO-3372', NetAmt: 6400, Balance: 1900 },
-            { TransID: 7, ID: 107, FAID: 9007, PartyName: 'Kovai Hardware Mart', DocID: 'CN-1042', TransName: "Credit Note", DocDate: '2026-Jun-14', RefNo: 'PO-3380', NetAmt: 1600, Balance: -1600 }
+            { TransID: 6, ID: 106, FAID: 9006, PartyName: 'Sakthi Distributors', DocID: 'INV-2635', TransName: "Invoice", DocDate: '2026-Jun-13', RefNo: 'PO-3372', NetAmt: 6400, Balance: 6400 },
+            { TransID: 7, ID: 107, FAID: 9007, PartyName: 'Kovai Hardware Mart', DocID: 'CN-1042', TransName: "Credit Note", DocDate: '2026-Jun-14', RefNo: 'PO-3380', NetAmt: 1600, Balance: -1600 },
+            { TransID: 6, ID: 106, FAID: 9006, PartyName: 'Sakthi Distributors', DocID: 'SR-223', TransName: "Sales Return", DocDate: '2026-Jun-13', RefNo: 'PO-3372', NetAmt: 2000, Balance: -2000 },
         ];
     }
 
@@ -1240,6 +1866,20 @@
         $('#dvLoading').show();
         $('#emptyState').hide();
         $('#dvTableWrap').hide();
+        //fetch('/datatable/json.json')
+        //    .then(response => response.json())
+        //    .then(data => {
+        //        var rows = data;
+        //        $('#dvLoading').hide();
+        //        if (!rows || !rows.length) {
+        //            toast('No live records found for this filter — showing sample preview rows. Connect your API in fetchCollectionData().', 'warning');
+        //            rows = getDemoRows();
+        //        }
+        //        renderRows(rows);
+        //    })
+        //    .catch(error => {
+        //        console.error('Error loading JSON:', error);
+        //    });
 
         $.ajax({
             url: Aurl + 'bulkcollection/documentdata',
@@ -1255,6 +1895,7 @@
             success: function (resp) {
                 var rows = (resp && resp.Data) ? resp.Data : resp;
                 $('#dvLoading').hide();
+                console.log("Pending docs ",rows);
                 if (!rows || !rows.length) {
                     toast('No live records found for this filter — showing sample preview rows. Connect your API in fetchCollectionData().', 'warning');
                     rows = getDemoRows();
@@ -1271,23 +1912,37 @@
 
     function renderRows(data) {
         var html = '';
-        console.log(" data ", data);
+        console.log("data", data)
+        // Build FAID → colour-index map (12 colours cycling)
+        var faidColorMap = {};
+        var faidColorCounter = 0;
+        data.forEach(function (item) {
+            var fid = item.FAID ?? '';
+            if (fid !== '' && !(fid in faidColorMap)) {
+                faidColorMap[fid] = faidColorCounter % 12;
+                faidColorCounter++;
+            }
+        });
         data.forEach(function (item, idx) {
-            var transId = item.TransID ?? '';
-            var id = item.ID ?? '';
+            var transId = item.DocPrefix ?? '';
+            var id = item.InvId ?? '';
             var faId = item.FAID ?? '';
             var orgpartyname = item.PartyName ?? '';
             var party = item.PartyName ?? '';
             party = party.length > 25 ? party.slice(0, 25) + '...' : party;
+            var beatid = item.BeatID ?? 0;
+            var salesmanid = item.SalesmanID ?? 0;
             var docId = item.DocId ?? '';
             var date = item.DocDate ?? '';
+            var docvalue = item.DocValue ?? '';
             var refNo = item.RefNo ?? '';
             var net = parseFloat(item.NetAmt ?? 0) || 0;
             var balance = parseFloat(item.Balance ?? 0) || 0;
+            var faidColorClass = (faId !== '') ? ' faid-bg-' + (faidColorMap[faId] ?? 0) : '';
             //<span class="bi bi-arrow-up-circle" style="color:forestgreen"></span>
 //<span class="bi bi-arrow-down-circle" style="color:orangered"></span>
-            html += '<tr data-transid="' + escHtml(transId) + '" data-id="' + escHtml(id) + '" data-faid="' + escHtml(faId) +
-                '" data-balance="' + balance + '" data-net="' + net + '" data-payments="[]">' +
+            html += '<tr class="' + faidColorClass.trim() + '" data-beatid="' + escHtml(beatid) + '" data-salesmanid="' + escHtml(salesmanid) + '" data-transid="' + escHtml(transId) + '" data-id="' + escHtml(id) + '" data-faid="' + escHtml(faId) +
+                '" data-balance="' + balance + '" data-docdate="' + date + '" data-docvalue="' + docvalue +'" data-net="' + net + '" data-transname="' + escHtml(item.TransName ?? '') + '" data-partyname="' + escHtml(orgpartyname) + '" data-payments="[]">' +
                 '<td data-label="#">' + (idx + 1) + '</td>' +
                 '<td data-label="Party Name"><span class="cell-strong" title="' + orgpartyname + '">' + escHtml(party) + '</span><br/>' +
                 '<span class="bi bi-geo-alt"> ' + (item.BeatName ?? '--') + '</span><br/><span class="bi bi-person-fill"> ' + (item.SalesmanName ?? '--') +'</span>'+
@@ -1301,25 +1956,31 @@
                  '</td>' +
                 '<td data-label="Cash ₹" class="cell-input">' +
                 '<div class="pay-cell">' +
-                '<input type="number" inputmode="decimal" class="inp-cashamt" value="0.00" min="0" step="0.01">' +
+                '<input type="number" inputmode="decimal" class="inp-cashamt" value="0.00" step="1">' +
                 '</div>' +
                 '</td>' +
                 '<td data-label="Chq/BT ₹" class="cell-input">' +
-                '<input type="number" inputmode="decimal" class="inp-chqbtamt" value="0.00" min="0" step="0.01">' +
+                '<input type="number" inputmode="decimal" class="inp-chqbtamt" value="0.00" step="1">' +
                 '</td>' +
                 '<td data-label="Pay Info" class="text-start">' +
                 '<div class="pay-cell">' +
                 '<button type="button" class="btn-collect"><i class="bi bi-plus-circle"></i> <span class="pay-count-lbl">Add</span></button>' +
                 '</div>' +
                 '</td>' +
-                '<td data-label="Disc %" class="disccell-input"><input type="number" inputmode="decimal" class="inp-discpct" value="0.00" min="0" max="100" step="0.01"></td>' +
-                '<td data-label="Disc ₹" class="disccell-input"><input type="number" inputmode="decimal" class="inp-discamt" value="0.00" min="0" step="0.01"></td>' +
-                '<td data-label="Other %" class="disccell-input"><input type="number" inputmode="decimal" class="inp-otherpct" value="0.00" min="0" max="100" step="0.01"></td>' +
-                '<td data-label="Other ₹" class="disccell-input"><input type="number" inputmode="decimal" class="inp-otheramt" value="0.00" min="0" step="0.01"></td>' +
+                '<td data-label="Disc %" class="disccell-input"><input type="number" inputmode="decimal" class="inp-discpct" value="0.00" min="0" max="100" step="1"></td>' +
+                '<td data-label="Disc ₹" class="disccell-input"><input type="number" inputmode="decimal" class="inp-discamt" value="0.00" min="0" step="1"></td>' +
+                '<td data-label="Other %" class="disccell-input"><input type="number" inputmode="decimal" class="inp-otherpct" value="0.00" min="0" max="100" step="1"></td>' +
+                '<td data-label="Other ₹" class="disccell-input"><input type="number" inputmode="decimal" class="inp-otheramt" value="0.00" min="0" step="1"></td>' +
                 '<td data-label="Adjusted ₹" class="text-end">' +
                 '<div class="cell-strong lbl-adjusted">0.00</div>' +
                 '<div class="remaining-hint lbl-remaininghint">Bal left: ' + formatNum(balance) + '</div>' +
                 '<span class="badge-status badge-pending">Pending</span>' +
+                '</td>' +
+                '<td data-label="Note" class="text-center">' +
+                '<div class="remark-tooltip-wrap">' +
+                '<button type="button" class="btn-remark" title="Add Remarks &amp; Narration"><i class="bi bi-chat-left-dots"></i></button>' +
+                '<div class="remark-tooltip" id="rtip-' + escHtml(faId) + '" style="display:none;"></div>' +
+                '</div>' +
                 '</td>' +
                 '</tr>';
         });
@@ -1330,6 +1991,8 @@
         $('#dvToolbar').show();
         $('#dvFooterAction').show();
         $('#emptyState').hide();
+        activeTransNames = [];   // reset to "All" on each new data load
+        buildTransNameTabs();
         recalcFooterTotals();
     }
 
@@ -1370,37 +2033,38 @@
         }
     }
 
-    // For a negative Balance, only ONE of Cash / Chq-BT may carry a value —
+    // Only ONE of Cash / Chq-BT may carry a value in the same row —
     // as soon as one of them is filled, the other is locked until cleared.
+    // This applies to ALL rows regardless of balance sign.
     function applyCashChqMutualExclusion($tr) {
-        var balance = parseFloat($tr.attr('data-balance')) || 0;
         var $cash = $tr.find('.inp-cashamt');
         var $chq = $tr.find('.inp-chqbtamt');
-
-        if (balance >= 0) {
-            $cash.prop('disabled', false).removeClass('bc-field-disabled');
-            $chq.prop('disabled', false).removeClass('bc-field-disabled');
-            return;
-        }
-
+        var $collbtn = $tr.find('.btn-collect');
+        //btn-collect
         var cashVal = parseFloat($cash.val()) || 0;
-        var chqVal = parseFloat($chq.val()) || 0;
+        var chqVal  = parseFloat($chq.val())  || 0;
 
         if (Math.abs(cashVal) > 0.004) {
+            // Cash has a value → lock Chq/BT
             $cash.prop('disabled', false).removeClass('bc-field-disabled');
-            $chq.prop('disabled', true).addClass('bc-field-disabled');
+            $chq.prop('disabled', true).addClass('bc-field-disabled').val('0.00');
+            $collbtn.prop('disabled', true);
         } else if (Math.abs(chqVal) > 0.004) {
+            // Chq/BT has a value → lock Cash
+            $collbtn.prop('disabled', false);
             $chq.prop('disabled', false).removeClass('bc-field-disabled');
-            $cash.prop('disabled', true).addClass('bc-field-disabled');
+            $cash.prop('disabled', true).addClass('bc-field-disabled').val('0.00');
         } else {
+            // Both are zero → unlock both
+            $collbtn.prop('disabled', false);
             $cash.prop('disabled', false).removeClass('bc-field-disabled');
             $chq.prop('disabled', false).removeClass('bc-field-disabled');
         }
     }
 
     // Clamps whichever of Cash / Chq-BT the user just edited so the pair
-    // never exceeds the document's Balance — if it would, the OTHER field
-    // is brought down automatically to keep Cash + Chq/BT within range.
+    // never exceeds the document's Balance, and enforces mutual exclusion
+    // so only one field can hold a value at a time.
     function clampCashChq($tr, which) {
         var balance = parseFloat($tr.attr('data-balance')) || 0;
         var $cash = $tr.find('.inp-cashamt');
@@ -1408,7 +2072,13 @@
 
         if (balance < 0) {
             var $active = which === 'cash' ? $cash : $chq;
-            var v = parseFloat($active.val());
+            var rawVal = $active.val();
+            // Allow mid-typing states: bare "-" or empty — don't clamp yet
+            if (rawVal === '' || rawVal === '-') {
+                applyCashChqMutualExclusion($tr);
+                return;
+            }
+            var v = parseFloat(rawVal);
             if (isNaN(v) || v > 0) v = 0;
             if (v < balance) v = balance;
             $active.val(v.toFixed(DecVal));
@@ -1416,38 +2086,42 @@
             return;
         }
 
-        var discamt = parseFloat($tr.find('.inp-discamt').val()) || 0;
+        // Positive balance: clamp the edited field to available room,
+        // then enforce mutual exclusion (the other field becomes 0 & locked).
+        var discamt  = parseFloat($tr.find('.inp-discamt').val())  || 0;
         var otheramt = parseFloat($tr.find('.inp-otheramt').val()) || 0;
-        var available = Math.max(0, balance - discamt - otheramt);
-
-        var cashVal = parseFloat($cash.val()) || 0;
-        var chqVal = parseFloat($chq.val()) || 0;
-        if (isNaN(cashVal) || cashVal < 0) cashVal = 0;
-        if (isNaN(chqVal) || chqVal < 0) chqVal = 0;
+        // Negative otheramt = discount (reduces balance); positive = no reduction.
+        var otherSettlement = otheramt < 0 ? Math.abs(otheramt) : 0;
+        var available = Math.max(0, balance - discamt - otherSettlement);
 
         if (which === 'cash') {
+            var cashVal = parseFloat($cash.val()) || 0;
+            if (isNaN(cashVal) || cashVal < 0) cashVal = 0;
             if (cashVal > available) cashVal = available;
-            var remForChq = Math.max(0, available - cashVal);
-            if (chqVal > remForChq) chqVal = remForChq;
+            $cash.val(cashVal.toFixed(DecVal));
         } else {
+            var chqVal = parseFloat($chq.val()) || 0;
+            if (isNaN(chqVal) || chqVal < 0) chqVal = 0;
             if (chqVal > available) chqVal = available;
-            var remForCash = Math.max(0, available - chqVal);
-            if (cashVal > remForCash) cashVal = remForCash;
+            $chq.val(chqVal.toFixed(DecVal));
         }
 
-        $cash.val(cashVal.toFixed(DecVal));
-        $chq.val(chqVal.toFixed(DecVal));
+        applyCashChqMutualExclusion($tr);
     }
 
     // When Disc or Other is entered, Cash / Chq-BT must shrink so the row
     // never exceeds its Balance — Chq/BT is trimmed first, then Cash.
+    // Note: positive Other ₹ does NOT reduce balance (no reconcile needed for positive).
+    //       Only negative Other ₹ reduces balance (discount), so we use otherSettlement.
     function reconcileCashChqAfterDiscOther($tr) {
         var balance = parseFloat($tr.attr('data-balance')) || 0;
         if (balance < 0) return;
 
         var discamt = parseFloat($tr.find('.inp-discamt').val()) || 0;
         var otheramt = parseFloat($tr.find('.inp-otheramt').val()) || 0;
-        var available = Math.max(0, balance - discamt - otheramt);
+        // Negative otheramt = discount (reduces balance); positive = no reduction.
+        var otherSettlement = otheramt < 0 ? Math.abs(otheramt) : 0;
+        var available = Math.max(0, balance - discamt - otherSettlement);
 
         var $cash = $tr.find('.inp-cashamt');
         var $chq = $tr.find('.inp-chqbtamt');
@@ -1482,7 +2156,9 @@
             var otherVal = parseFloat($other.val()) || 0;
             var discamt = parseFloat($tr.find('.inp-discamt').val()) || 0;
             var otheramt = parseFloat($tr.find('.inp-otheramt').val()) || 0;
-            var remaining = balance - otherVal - discamt - otheramt;
+            // Negative otheramt = discount (reduces balance); positive = no reduction.
+            var otherSettlement = otheramt < 0 ? Math.abs(otheramt) : 0;
+            var remaining = balance - otherVal - discamt - otherSettlement;
             if (remaining < 0) remaining = 0;
             $field.val(remaining.toFixed(DecVal));
         }
@@ -1557,6 +2233,8 @@
 
     function otherPctChanged($tr) {
         var balance = parseFloat($tr.attr('data-balance')) || 0;
+        // Other % allows negative values (negative = discount, reduces balance;
+        // positive = no balance reduction). Only block if balance itself is negative.
         if (balance < 0) { $tr.find('.inp-otherpct, .inp-otheramt').val('0.00'); recalcRow($tr); return; }
         if (!hasCashOrChq($tr)) {
             flashDiscOtherError($tr.find('.inp-otherpct'), 'Enter Cash or Chq/BT amount first before applying Other %.');
@@ -1564,17 +2242,25 @@
             recalcRow($tr); return;
         }
         var pct = parseFloat($tr.find('.inp-otherpct').val());
-        if (isNaN(pct) || pct < 0) pct = 0;
+        if (isNaN(pct)) pct = 0;
+        // Clamp: negative side limited to -100%, positive side limited to +100%
+        ///if (pct < -100) pct = -100;
+        if(isNaN(pct) || pct < 0) pct = 0;
         if (pct > 100) pct = 100;
         var amt = balance * pct / 100;
         $tr.find('.inp-otheramt').val(amt.toFixed(DecVal));
         $tr.find('.inp-otherpct').val(pct.toFixed(2));
-        reconcileCashChqAfterDiscOther($tr);
+        // Only reconcile Cash/Chq when Other is positive (no reduction when positive)
+        if (amt > 0) {
+            reconcileCashChqAfterDiscOther($tr);
+        }
         recalcRow($tr);
     }
 
     function otherAmtChanged($tr) {
         var balance = parseFloat($tr.attr('data-balance')) || 0;
+        // Other ₹ allows negative values (negative = discount, reduces balance;
+        // positive = no balance reduction). Only block if balance itself is negative.
         if (balance < 0) { $tr.find('.inp-otherpct, .inp-otheramt').val('0.00'); recalcRow($tr); return; }
         if (!hasCashOrChq($tr)) {
             flashDiscOtherError($tr.find('.inp-otheramt'), 'Enter Cash or Chq/BT amount first before applying Other ₹.');
@@ -1583,11 +2269,16 @@
         }
         var amt = parseFloat($tr.find('.inp-otheramt').val());
         if (isNaN(amt) || amt < 0) amt = 0;
+        // Clamp: cannot exceed balance in either direction
         if (amt > balance) amt = balance;
+        if (amt < -balance) amt = -balance;
         var pct = balance > 0 ? (amt / balance * 100) : 0;
         $tr.find('.inp-otheramt').val(amt.toFixed(DecVal));
         $tr.find('.inp-otherpct').val(pct.toFixed(2));
-        reconcileCashChqAfterDiscOther($tr);
+        // Only reconcile Cash/Chq when Other is positive (no reduction when positive)
+        if (amt > 0) {
+            reconcileCashChqAfterDiscOther($tr);
+        }
         recalcRow($tr);
     }
 
@@ -1598,19 +2289,26 @@
         var discamt = parseFloat($tr.find('.inp-discamt').val()) || 0;
         var otheramt = parseFloat($tr.find('.inp-otheramt').val()) || 0;
 
+        // Other ₹ behaviour:
+        //   Positive value → does NOT reduce the balance (no deduction from balance).
+        //   Negative value → acts as a discount and DOES reduce the balance.
+        // So only negative otheramt contributes to settlement.
+        var otherSettlement = otheramt < 0 ? Math.abs(otheramt) : 0;
+
         // Total Adjusted Amount = Cash + Chq/BT + Disc ₹ only.
         var adjusted = cashamt + chqbtamt + discamt;
-        // Full settlement (incl. Other ₹) only used to work out what's left.
-        var settled = adjusted + otheramt;
+        // Full settlement (incl. negative Other ₹ acting as discount).
+        var settled = adjusted + otherSettlement;
         var remaining = balance - settled;
 
-        $tr.find('.lbl-adjusted').text(formatNum(adjusted));
+        $tr.find('.lbl-adjusted').text(formatNum(adjusted + otherSettlement));
         $tr.find('.lbl-remaininghint').text('Bal left: ' + formatNum(remaining));
 
-        var payments = getPayments($tr);
+        var faid = $tr.attr('data-faid');
+        var payments = getFaidPayments(faid);
         var $btn = $tr.find('.btn-collect');
         if (payments.length > 0) {
-            $btn.addClass('has-pay').html('<i class="bi bi-credit-card"></i> <span class="pay-count-lbl">' + payments.length + ' method' + (payments.length > 1 ? 's' : '') + '</span>');
+            $btn.addClass('has-pay').html('<i class="bi bi-credit-card"></i> <span class="pay-count-lbl" title="' + payments[0].paymentmode +'">' + payments[0].displaypmmode + ' ₹' + formatNum(payments[0].amount) + '</span>');
         } else {
             $btn.removeClass('has-pay').html('<i class="bi bi-plus-circle"></i> <span class="pay-count-lbl">Add</span>');
         }
@@ -1632,21 +2330,51 @@
 
     function recalcFooterTotals() {
         var tNet = 0, tBalance = 0, tCash = 0, tChqBt = 0, tDisc = 0, tOther = 0, n = 0;
+        var tChqAmt = 0, tBTAmt = 0, chqCount = 0, btCount = 0;
+        var seenFaids = {};  // track FAIDs already counted for payments (shared per FAID)
 
         $('#tblBody tr').each(function () {
             var $tr = $(this);
             n++;
-            tNet += parseFloat($tr.attr('data-net')) || 0;
+            tNet     += parseFloat($tr.attr('data-net'))    || 0;
             tBalance += parseFloat($tr.attr('data-balance')) || 0;
-            tCash += parseFloat($tr.find('.inp-cashamt').val()) || 0;
-            tChqBt += parseFloat($tr.find('.inp-chqbtamt').val()) || 0;
-            tDisc += parseFloat($tr.find('.inp-discamt').val()) || 0;
-            tOther += parseFloat($tr.find('.inp-otheramt').val()) || 0;
+            tCash    += parseFloat($tr.find('.inp-cashamt').val())   || 0;
+            tChqBt   += parseFloat($tr.find('.inp-chqbtamt').val())  || 0;
+            tDisc    += parseFloat($tr.find('.inp-discamt').val())   || 0;
+            tOther   += parseFloat($tr.find('.inp-otheramt').val())  || 0;
+
+            // Count Cheque and Bank Transfer payments (per unique FAID to avoid double-counting)
+            var faid = $tr.attr('data-faid');
+            if (faid && !seenFaids[faid]) {
+                seenFaids[faid] = true;
+                var payments = getFaidPayments(faid);
+                payments.forEach(function (p) {
+                    var amt = parseFloat(p.amount) || 0;
+                    if (p.mode === '2') {       // Cheque
+                        tChqAmt += amt;
+                        chqCount++;
+                    } else if (p.mode === '4') { // Bank Transfer
+                        tBTAmt += amt;
+                        btCount++;
+                    }
+                });
+            }
         });
 
         // Total Adjusted Amount = Cash + Chq/BT + Disc ₹ only.
         var tAdjusted = tCash + tChqBt + tDisc;
-        var remaining = tBalance - (tAdjusted + tOther);
+        // Only negative tOther (discount) reduces balance; positive does not.
+        var tOtherSettlement = 0;
+        // (We compute tOther as raw sum above; now apply sign logic for remaining)
+        // tOther may contain mixed positive/negative values summed per row;
+        // for footer remaining, apply same rule: negative reduces, positive doesn't.
+        // Recompute per-row to get correct settlement total.
+        var tOtherSettlementTotal = 0;
+        $('#tblBody tr').each(function () {
+            var oa = parseFloat($(this).find('.inp-otheramt').val()) || 0;
+            tOtherSettlementTotal += (oa < 0 ? Math.abs(oa) : 0);
+        });
+        var remaining = tBalance - (tAdjusted + tOtherSettlementTotal);
 
         $('#ftNet').text(formatNum(tNet));
         $('#ftBalance').text(formatNum(tBalance));
@@ -1658,7 +2386,19 @@
 
         $('#statRecords').text(n);
         $('#statBalance').text(formatNum(tBalance));
-        $('#statCollected').text(formatNum(tCash + tChqBt));
+
+        // Cash collection amount
+        $('#statcashCollected').text(formatNum(tCash));
+
+        // Cheque: count in label + amount
+        $('#statChqCount').text(chqCount);
+        $('#statchqCollected').text(formatNum(tChqAmt));
+
+        // Bank Transfer: count in label + amount
+        $('#statBtCount').text(btCount);
+        $('#statbtCollected').text(formatNum(tBTAmt));
+
+        $('#statCollected').text(formatNum(tCash + tChqAmt + tBTAmt));
         $('#statDiscOther').text(formatNum(tDisc + tOther));
         $('#statRemaining').text(formatNum(remaining));
     }
@@ -1674,12 +2414,37 @@
     $('#tblBody').on('input change', '.inp-cashamt', function () {
         var $tr = $(this).closest('tr');
         clampCashChq($tr, 'cash');
+        // When both Cash and Chq/BT are 0, reset disc/other fields to 0
+        if (!hasCashOrChq($tr)) {
+            $tr.find('.inp-discpct, .inp-discamt, .inp-otherpct, .inp-otheramt').val('0.00');
+            $tr.find('.lbl-adjusted').text('0.00');
+        }
         recalcRow($tr);
     });
     $('#tblBody').on('input change', '.inp-chqbtamt', function () {
         var $tr = $(this).closest('tr');
         clampCashChq($tr, 'chqbt');
+        // When both Cash and Chq/BT are 0, reset disc/other fields to 0
+        if (!hasCashOrChq($tr)) {
+            $tr.find('.inp-discpct, .inp-discamt, .inp-otherpct, .inp-otheramt').val('0.00');
+            $tr.find('.lbl-adjusted').text('0.00');
+        }
         recalcRow($tr);
+    });
+
+    // Finalise clamping when user leaves a Cash/Chq-BT field that may have
+    // been left in a mid-typing state (e.g. bare "-" on a negative-balance row).
+    $('#tblBody').on('focusout', '.inp-cashamt, .inp-chqbtamt', function () {
+        var $tr = $(this).closest('tr');
+        var balance = parseFloat($tr.attr('data-balance')) || 0;
+        if (balance < 0) {
+            var rawVal = $(this).val();
+            if (rawVal === '' || rawVal === '-') {
+                $(this).val('0.00');
+                applyCashChqMutualExclusion($tr);
+                recalcRow($tr);
+            }
+        }
     });
 
     // Space bar on Cash / Chq-BT auto-fills the field with the remaining
@@ -1690,7 +2455,20 @@
         var $tr = $(this).closest('tr');
         spaceFillCashChq($tr, $(this).hasClass('inp-cashamt') ? 'cash' : 'chqbt');
     });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Space" || event.key === " ") {
 
+            var FieldID = event.target.id;
+            var FieldName = event.target.name;
+            if (FieldID == "paymodeAmount") {
+                event.preventDefault();
+                var recdamt = $("#paySummaryRecd").text() || "0.00";
+                $("#paymodeAmount").val(recdamt)
+                document.getElementById("paySummaryAmtinword").innerHTML =
+                    numberToIndianCurrencyWords(recdamt);
+            }
+        }
+    });
     $('input[type=number]').on('focusin', function () { $(this).select(); });
 
     // ---------------------------------------------------------------
@@ -1712,31 +2490,73 @@
         return payments.length ? payments[0].mode : null;
     }
 
+    // ── FAID cumulative balance helpers ──────────────────────────────
+    // Sum the Chq/BT amounts already entered across ALL rows sharing the
+    // same FAID (this is what's been "committed" as Chq/BT for that FAID).
+    function getFaidChqBTTotal(faid, excludeRow) {
+        var total = 0;
+        $('#tblBody tr').each(function () {
+            var $r = $(this);
+            if (excludeRow && $r.is(excludeRow)) return;
+            if ($r.attr('data-faid') == faid) {
+                total += parseFloat($r.find('.inp-chqbtamt').val()) || 0;
+            }
+        });
+        return total;
+    }
+
+    // Cumulative balance = sum of all row balances for the same FAID.
+    function getFaidCumulativeBalance(faid) {
+        var total = 0;
+        $('#tblBody tr').each(function () {
+            var $r = $(this);
+            if ($r.attr('data-faid') == faid) {
+                total += parseFloat($r.attr('data-balance')) || 0;
+            }
+        });
+        return total;
+    }
+
+    // Returns the shared payments array stored on the first row of this FAID.
+    // All rows with the same FAID share a single payments list.
+    function getFaidPayments(faid) {
+        var $first = $('#tblBody tr[data-faid="' + faid + '"]').first();
+        if (!$first.length) return [];
+        return getPayments($first);
+    }
+
+    function setFaidPayments(faid, arr) {
+        $('#tblBody tr[data-faid="' + faid + '"]').each(function () {
+            setPayments($(this), arr);
+        });
+    }
+
     function togglePayFieldsForMode(mode) {
         // Cheque fields
         $('#payChqNoWrap, #payChqDateWrap, #payChqBankWrap, #payChqBranchWrap, #payChqIfscWrap')
-            .toggle(mode === 'Cheque');
+            .toggle(mode === '2');
         // Bank Transfer fields
-        $('#payBTBankAccWrap, #payBTRefNoWrap, #payBTTransferModeWrap')
-            .toggle(mode === 'BankTransfer');
+        $('#payBTBankAccWrap, #payBTRefNoWrap, #payBTTransferModeWrap')//, #payChqDateWrap
+            .toggle(mode === '4');
     }
 
     function applyModeLock($tr) {
-        var locked = getLockedMode($tr);
+        var faid = $tr.attr('data-faid');
+        var payments = getFaidPayments(faid);
+        var locked = payments.length ? payments[0].mode : null;
         var $sel = $('#paymodeMode');
         if (locked) {
             $sel.val(locked).prop('disabled', true);
-            // Hide the un-used mode option visually
             $sel.find('option').each(function () {
-                if ($(this).val() !== locked && $(this).val() !== '') {
-                    $(this).prop('disabled', true).hide();
+                if ($(this).val() !== locked) {
+                    $(this).prop('disabled', true);
                 }
             });
         } else {
-            $sel.val('').prop('disabled', false);
-            $sel.find('option').prop('disabled', false).show();
+            $sel.val('2').prop('disabled', false);
+            $sel.find('option').prop('disabled', false);
         }
-        togglePayFieldsForMode(locked || '');
+        togglePayFieldsForMode(locked || $sel.val());
     }
 
     $('#paymodeMode').on('change', function () {
@@ -1744,12 +2564,14 @@
     });
 
     function resetPayForm() {
-        $('#paymodeMode').val('').prop('disabled', false);
-        $('#paymodeMode option').prop('disabled', false).show();
+        $('#paymodeMode').val('Cheque').prop('disabled', false);
+        $('#paymodeMode option').prop('disabled', false);
         $('#paymodeAmount').val('');
+        document.getElementById("paySummaryAmtinword").innerHTML = "";
+
         // Cheque
         $('#paymodeChqNo').val('');
-        $('#paymodeChqDate').val('');
+        $('#paymodeChqDate').val(getCurrentDate());
         $('#paymodeChqBank').val('');
         $('#paymodeChqBranch').val('');
         $('#paymodeChqIfsc').val('');
@@ -1758,22 +2580,60 @@
         $('#paymodeBTRefNo').val('');
         $('#paymodeBTTransferMode').val('');
         // Hide all mode-specific wrappers
-        togglePayFieldsForMode('');
+        togglePayFieldsForMode('Cheque');
     }
 
     function openPaymentsModal($tr) {
         paymentsTargetRow = $tr;
-        var docId = $tr.find('td[data-label="Doc ID"]').text();
-        var party = $tr.find('td[data-label="Party Name"]').text();
-        $('#payModalSub').text(party + ' \u2014 ' + docId);
+        var faid = $tr.attr('data-faid');
+        var docId = $tr.find('td[data-label="Doc ID"]').text().trim();
+        var party = $tr.find('td[data-label="Party Name"]').text().trim();
+        $('#payModalSub').text(party);// + ' \u2014 FAID: ' + faid
 
+        $('#paymodeBTBankAcc').val(DefBankAcc);
         resetPayForm();
         applyModeLock($tr);
+
+
+        // Pre-fill existing payment details if already entered
+        var existingPayments = getFaidPayments(faid);
+        if (existingPayments.length > 0) {
+            var p = existingPayments[0];
+            $('#paymodeMode').val(p.mode).prop('disabled', true);
+            $('#paymodeAmount').val(p.amount ? parseFloat(p.amount).toFixed(DecVal) : '');
+            if (p.mode === '2') {
+                $('#paymodeChqNo').val(p.chqNo || '');
+                $('#paymodeChqDate').val(p.chqDate || getCurrentDate());
+                $('#paymodeChqBank').val(p.bank || '');
+                $('#paymodeChqBranch').val(p.branch || '');
+                $('#paymodeChqIfsc').val(p.ifsc || '');
+            } else if (p.mode === '4') {
+                $('#paymodeBTBankAcc').val(p.bankAcc || '');
+                $('#paymodeBTRefNo').val(p.refNo || '');
+                $('#paymodeBTTransferMode').val(p.transferMode || '');
+            }
+            togglePayFieldsForMode(p.mode);
+        }
+
         renderPaymentsModalList();
         $('#modalPayments').css('display', 'flex');
         setTimeout(function () { $('#paymodeAmount').focus(); }, 50);
     }
+    //paySummaryAmtinword
+    document.getElementById("paymodeAmount").addEventListener("input", function () {
 
+        let amount = this.value;
+
+        if (amount === "") {
+            document.getElementById("paySummaryAmtinword").innerHTML = "";
+            return;
+        }
+
+        document.getElementById("paySummaryAmtinword").innerHTML =
+            numberToIndianCurrencyWords(amount);
+
+        //renderPaymentsModalList();
+    });
     function closePaymentsModal() {
         $('#modalPayments').css('display', 'none');
         paymentsTargetRow = null;
@@ -1781,32 +2641,37 @@
 
     function renderPaymentsModalList() {
         if (!paymentsTargetRow) return;
-        var balance = parseFloat(paymentsTargetRow.attr('data-balance')) || 0;
-        var payments = getPayments(paymentsTargetRow);
+        var faid = paymentsTargetRow.attr('data-faid');
+        var cumulativeBalance = getFaidCumulativeBalance(faid);
+        var payments = getFaidPayments(faid);
         var added = sumPayments(payments);
-        var remaining = Math.max(0, balance - added);
+        var recdamt = getFaidChqBTTotal(faid, false);
+        var remaining = cumulativeBalance - added;
+        document.getElementById("paySummaryAmtinword").innerHTML =
+            numberToIndianCurrencyWords(added);
 
-        $('#paySummaryBalance').text(formatNum(balance));
+        $('#paySummaryBalance').text(formatNum(cumulativeBalance));
+        $('#paySummaryRecd').text(formatNum(recdamt));
         $('#paySummaryAdded').text(formatNum(added));
         $('#paySummaryRemaining').text(formatNum(remaining));
 
         if (!payments.length) {
-            $('#payList').html('<div class="pay-empty">No payment entry added yet.</div>');
+            $('#payList').html('<div class="pay-empty">No payment entry yet. Fill in the fields above and click Done.</div>');
             return;
         }
 
         var html = '';
         payments.forEach(function (p, i) {
-            var modeLabel = p.mode === 'BankTransfer' ? 'Bank Transfer' : p.mode;
+            var modeLabel = p.mode === '4' ? 'Bank Transfer' : "Cheque";
             var meta = '';
-            if (p.mode === 'Cheque') {
+            if (p.mode === '2') {
                 if (p.chqNo)   meta += ' &middot; Chq: ' + escHtml(p.chqNo);
                 if (p.chqDate) meta += ' &middot; ' + escHtml(p.chqDate);
-                if (p.bank)    meta += ' &middot; ' + escHtml(p.bank);
+                if (p.bank) meta += ' &middot; ' + $("#paymodeChqBank option:selected").text()//escHtml(p.bank);
             } else {
                 if (p.refNo)       meta += ' &middot; Ref: ' + escHtml(p.refNo);
-                if (p.transferMode) meta += ' &middot; ' + escHtml(p.transferMode);
-                if (p.bankAcc)     meta += ' &middot; ' + escHtml(p.bankAcc);
+                if (p.transferMode) meta += ' &middot; ' + $("#paymodeBTTransferMode option:selected").text()//escHtml(p.transferMode);
+                if (p.bankAcc) meta += ' &middot; ' + $("#paymodeBTBankAcc option:selected").text()//escHtml(p.bankAcc);
             }
             html += '<div class="pay-list-item">' +
                 '<span><span class="mode-chip">' + escHtml(modeLabel) + '</span>₹' + formatNum(p.amount) +
@@ -1820,26 +2685,50 @@
 
     $('#payList').on('click', '.pay-del', function () {
         if (!paymentsTargetRow) return;
+        var faid = paymentsTargetRow.attr('data-faid');
         var idx = parseInt($(this).attr('data-idx'));
-        var payments = getPayments(paymentsTargetRow);
+        var payments = getFaidPayments(faid);
         payments.splice(idx, 1);
-        setPayments(paymentsTargetRow, payments);
-        // Unlock mode selector if list is now empty
+        setFaidPayments(faid, payments);
+        $('#tblBody tr[data-faid="' + faid + '"]').each(function () {
+            //setPayments($(this), []);
+            var $btn = $(this).find('.btn-collect');
+            $btn.removeClass('has-pay').html('<i class="bi bi-plus-circle"></i> <span class="pay-count-lbl">Add</span>');
+        });
         applyModeLock(paymentsTargetRow);
         renderPaymentsModalList();
         recalcRow(paymentsTargetRow);
     });
 
-    $('#btnAddPayment').on('click', function () {
-        if (!paymentsTargetRow) return;
-        var balance  = parseFloat(paymentsTargetRow.attr('data-balance')) || 0;
-        var payments = getPayments(paymentsTargetRow);
-        var already  = sumPayments(payments);
+    // Done button — validates and saves the payment entry directly (no separate Add)
+    $('#btnDonePayments').on('click', function () {
+        if (!paymentsTargetRow) { closePaymentsModal(); return; }
 
-        var mode   = $('#paymodeMode').val();
-        var amount = parseFloat($('#paymodeAmount').val());
+        var faid = paymentsTargetRow.attr('data-faid');
+        var cumulativeBalance = getFaidCumulativeBalance(faid);
+        var existingPayments = getFaidPayments(faid);
 
-        // Mode must be selected
+        var mode = $('#paymodeMode').val();
+        var selpaymode = $('#paymodeMode option:selected').text();
+        var amtRaw = $('#paymodeAmount').val().trim();
+
+        // If the amount field is empty and we already have a saved entry,
+        // just close — user didn't change anything.
+        if (amtRaw === '' && existingPayments.length > 0) {
+            closePaymentsModal();
+            $('#tblBody tr[data-faid="' + faid + '"]').each(function () { recalcRow($(this)); });
+            return;
+        }
+
+        // If amount field is empty and no prior entry, just close.
+        if (amtRaw === '') {
+            closePaymentsModal();
+            return;
+        }
+
+        var amount = parseFloat(amtRaw);
+
+        // Mode validation
         if (!mode) {
             toast('Please select a payment mode (Cheque or Bank Transfer).', 'warning');
             $('#paymodeMode').focus();
@@ -1854,8 +2743,8 @@
             return;
         }
 
-        // ── Cheque-specific mandatory fields ──
-        if (mode === 'Cheque') {
+        // Cheque mandatory fields
+        if (mode === '2') {
             var chqNo   = $('#paymodeChqNo').val().trim();
             var chqDate = $('#paymodeChqDate').val();
             if (!chqNo) {
@@ -1870,8 +2759,8 @@
             }
         }
 
-        // ── Bank Transfer-specific mandatory fields ──
-        if (mode === 'BankTransfer') {
+        // Bank Transfer mandatory fields
+        if (mode === '4') {
             var bankAcc      = $('#paymodeBTBankAcc').val();
             var refNo        = $('#paymodeBTRefNo').val().trim();
             var transferMode = $('#paymodeBTTransferMode').val();
@@ -1892,20 +2781,14 @@
             }
         }
 
-        // Clamp to remaining balance
-        var remaining = balance - already;
-        if (amount > remaining) {
-            amount = Math.max(0, remaining);
-            toast('Amount adjusted to the remaining balance (₹' + formatNum(amount) + ').', 'warning');
-        }
-        if (amount <= 0) {
-            toast('This document already has the full balance allocated.', 'warning');
-            return;
+        // Clamp to cumulative FAID balance
+        if (amount > Math.abs(cumulativeBalance)) {
+            amount = Math.abs(cumulativeBalance);
+            toast('Amount adjusted to the FAID cumulative balance (₹' + formatNum(amount) + ').', 'warning');
         }
 
-        var entry = { mode: mode, amount: amount };
-
-        if (mode === 'Cheque') {
+        var entry = { mode: mode, amount: amount, displaypmmode: (mode === '2' ? "CHQ" : "BT"), paymentmode: selpaymode };
+        if (mode === '2') {
             entry.chqNo   = $('#paymodeChqNo').val().trim();
             entry.chqDate = $('#paymodeChqDate').val();
             entry.bank    = $('#paymodeChqBank').val();
@@ -1917,48 +2800,344 @@
             entry.transferMode = $('#paymodeBTTransferMode').val();
         }
 
-        payments.push(entry);
-        setPayments(paymentsTargetRow, payments);
-        recalcRow(paymentsTargetRow);
+        // Replace (overwrite) — one entry per FAID
+        setFaidPayments(faid, [entry]);
 
-        var modeLabel = mode === 'BankTransfer' ? 'Bank Transfer' : mode;
-        toast(modeLabel + ' of ₹' + formatNum(amount) + ' added.', 'success');
+        var modeLabel = mode === '4' ? 'Bank Transfer' : "Cheque";
+        toast(modeLabel + ' of ₹' + formatNum(amount) + ' saved.', 'success');// for FAID ' + faid + '.'
 
-        // Reset amount field only; keep mode locked
-        $('#paymodeAmount').val('');
-        if (mode === 'Cheque') {
-            $('#paymodeChqNo').val('');
-            $('#paymodeChqDate').val('');
-            $('#paymodeChqBank').val('');
-            $('#paymodeChqBranch').val('');
-            $('#paymodeChqIfsc').val('');
+        // Recalc all rows for this FAID
+        $('#tblBody tr[data-faid="' + faid + '"]').each(function () { recalcRow($(this)); });
+
+        closePaymentsModal();
+    });
+
+    $('#btnClosePayments').on('click', closePaymentsModal);
+
+    // ---------------------------------------------------------------
+    // TransName tab filter + text search  (both work together)
+    // Multiple transaction tabs can be selected simultaneously.
+    // Clicking a non-All tab toggles it; clicking All resets all.
+    // ---------------------------------------------------------------
+    var activeTransNames = [];  // empty = "All"
+
+    function buildTransNameTabs() {
+        // Collect unique TransNames from all rows
+        var counts = { All: 0 };
+        $('#tblBody tr').each(function () {
+            var tn = $(this).attr('data-transname') || '';
+            counts.All++;
+            if (tn) {
+                counts[tn] = (counts[tn] || 0) + 1;
+            }
+        });
+
+        // Build tab HTML — All first, then sorted alphabetically
+        var names = Object.keys(counts).filter(function (k) { return k !== 'All'; }).sort();
+        var html = '';
+
+        // "All" tab
+        var allActive = (activeTransNames.length === 0) ? ' active' : '';
+        html += '<button type="button" class="bc-tab all-tab' + allActive + '" data-transname="All">' +
+            'All<span class="tab-count">' + counts['All'] + '</span>' +
+            '</button>';
+
+        names.forEach(function (name) {
+            var isActive = (activeTransNames.indexOf(name) !== -1) ? ' active' : '';
+            html += '<button type="button" class="bc-tab' + isActive + '" data-transname="' + escHtml(name) + '">' +
+                escHtml(name) +
+                '<span class="tab-count">' + counts[name] + '</span>' +
+                '</button>';
+        });
+
+        $('#transnameTabs').html(html);
+        $('#dvTransTabs').show();
+    }
+
+    // Tab click — toggle individual tabs; All resets selection
+    $(document).on('click', '.bc-tab', function () {
+        var name = $(this).attr('data-transname');
+
+        if (name === 'All') {
+            activeTransNames = [];
+            $('.bc-tab').removeClass('active');
+            $(this).addClass('active');
         } else {
-            $('#paymodeBTRefNo').val('');
+            // Deactivate the All tab
+            $('.bc-tab.all-tab').removeClass('active');
+
+            var idx = activeTransNames.indexOf(name);
+            if (idx === -1) {
+                activeTransNames.push(name);
+                $(this).addClass('active');
+            } else {
+                activeTransNames.splice(idx, 1);
+                $(this).removeClass('active');
+            }
+
+            // If nothing is selected, revert to All
+            if (activeTransNames.length === 0) {
+                $('.bc-tab.all-tab').addClass('active');
+            }
         }
 
-        // Re-lock the mode selector so the same mode stays selected
-        applyModeLock(paymentsTargetRow);
-        renderPaymentsModalList();
-        $('#paymodeAmount').focus();
+        applyRowFilters();
     });
 
-    $('#btnClosePayments, #btnDonePayments').on('click', closePaymentsModal);
-
-    // ---------------------------------------------------------------
-    // Search filter (visual only — totals still reflect every row)
-    // ---------------------------------------------------------------
-    $('#txtSearchRow').on('input', function () {
-        var q = $(this).val().trim().toLowerCase();
+    // Combined filter: text search + active TransName tabs (multi-select)
+    function applyRowFilters() {
+        var q = $('#txtSearchRow').val().trim().toLowerCase();
         $('#tblBody tr').each(function () {
             var $tr = $(this);
+            var tn = $tr.attr('data-transname') || '';
+            var matchTab = (activeTransNames.length === 0) || (activeTransNames.indexOf(tn) !== -1);
             var hay = $tr.find('td').slice(1, 5).text().toLowerCase();
-            $tr.toggle(hay.indexOf(q) !== -1);
+            var matchSearch = !q || (hay.indexOf(q) !== -1);
+            $tr.toggle(matchTab && matchSearch);
         });
+    }
+
+    // Text search now calls the combined filter
+    $('#txtSearchRow').on('input', function () {
+        applyRowFilters();
     });
+
+    // Hide tabs when Clear is clicked (handled below in btnClear)
+
 
     // ---------------------------------------------------------------
     // Bulk actions
     // ---------------------------------------------------------------
+
+    // ---------------------------------------------------------------
+    // Export visible rows to Excel (.xlsx) using SheetJS
+    // Captures all entered values, pay info, and column filters state.
+    // File name: Bulkcollection_YYYYMMDDHHmmssSSS.xlsx
+    // ---------------------------------------------------------------
+    function exportToExcel() {
+        // Build datetime suffix: YYYYMMDDHHmmssSSS
+        var now = new Date();
+        var pad = function (v, n) { return String(v).padStart(n || 2, '0'); };
+        var suffix = String(now.getFullYear()) +
+            pad(now.getMonth() + 1) + pad(now.getDate()) +
+            pad(now.getHours()) + pad(now.getMinutes()) +
+            pad(now.getSeconds()) + pad(now.getMilliseconds(), 3);
+        var fileName = 'Bulkcollection_' + suffix + '.xlsx';
+
+        // --- Column definitions (header label + data extractor) ---
+        var columns = [
+            { header: '#',            get: function ($tr, idx) { return idx + 1; } },
+            { header: 'Party Name',   get: function ($tr)      { return $tr.find('td[data-label="Party Name"] .cell-strong').attr('title') || $tr.find('td[data-label="Party Name"] .cell-strong').text().trim(); } },
+            { header: 'Beat',         get: function ($tr)      {
+                var txt = $tr.find('td[data-label="Party Name"]').text();
+                // Beat is shown after BI geo-alt icon
+                var parts = $tr.find('td[data-label="Party Name"]').clone();
+                parts.find('.cell-strong, .badge-transname').remove();
+                var lines = parts.text().replace(/\s+/g, ' ').trim().split(/\s{2,}/);
+                // Extract from spans directly
+                var spans = $tr.find('td[data-label="Party Name"] span');
+                var beat = '', salesman = '';
+                spans.each(function () {
+                    var t = $(this).text().trim();
+                    if ($(this).hasClass('bi-geo-alt') || $(this).hasClass('cell-strong') || $(this).hasClass('badge-transname')) return;
+                    // The text node after bi-geo-alt and bi-person-fill spans
+                });
+                // Simpler: read raw text of the td and parse
+                var rawText = $tr.find('td[data-label="Party Name"]').clone();
+                // Use the span texts in order
+                var allSpans = $tr.find('td[data-label="Party Name"]').find('span');
+                var beatVal = '', salesmanVal = '';
+                allSpans.each(function (i, el) {
+                    var cls = $(el).attr('class') || '';
+                    var t = $(el).text().trim();
+                    if (cls.indexOf('bi-geo-alt') !== -1) beatVal = t.replace(/^[\s\u00a0]+/, '');
+                    if (cls.indexOf('bi-person-fill') !== -1) salesmanVal = t.replace(/^[\s\u00a0]+/, '');
+                });
+                return beatVal;
+            }},
+            { header: 'Salesman',     get: function ($tr) {
+                var allSpans = $tr.find('td[data-label="Party Name"]').find('span');
+                var salesmanVal = '';
+                allSpans.each(function (i, el) {
+                    var cls = $(el).attr('class') || '';
+                    if (cls.indexOf('bi-person-fill') !== -1) salesmanVal = $(el).text().replace(/^[\s\u00a0]+/, '').trim();
+                });
+                return salesmanVal;
+            }},
+            { header: 'Doc ID',       get: function ($tr) { return $tr.find('td[data-label="Doc ID"]').clone().find('.badge-transname').remove().end().text().trim(); } },
+            { header: 'Trans Type',   get: function ($tr) { return $tr.attr('data-transname') || ''; } },
+            { header: 'Date',         get: function ($tr) { return $tr.find('td[data-label="Date"]').text().trim(); } },
+            { header: 'Ref No',       get: function ($tr) { return $tr.find('td[data-label="Ref No"]').text().trim(); } },
+            { header: 'Net \u20b9',   get: function ($tr) { return parseFloat($tr.attr('data-net')) || 0; }, numeric: true },
+            { header: 'Balance',      get: function ($tr) { return parseFloat($tr.attr('data-balance')) || 0; }, numeric: true },
+            { header: 'Cash \u20b9',  get: function ($tr) { return parseFloat($tr.find('.inp-cashamt').val()) || 0; }, numeric: true },
+            { header: 'Chq/BT \u20b9', get: function ($tr) { return parseFloat($tr.find('.inp-chqbtamt').val()) || 0; }, numeric: true },
+            { header: 'Pay Mode',     get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                if (!payments.length) return '';
+                return payments[0].mode === '2' ? 'Cheque' : (payments[0].mode === '4' ? 'Bank Transfer' : '');
+            }},
+            { header: 'Pay Amount',   get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return payments.length ? (parseFloat(payments[0].amount) || 0) : 0;
+            }, numeric: true },
+            { header: 'Chq No',       get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return (payments.length && payments[0].mode === '2') ? (payments[0].chqNo || '') : '';
+            }},
+            { header: 'Chq Date',     get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return (payments.length && payments[0].mode === '2') ? (payments[0].chqDate || '') : '';
+            }},
+            { header: 'Bank',         get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return (payments.length && payments[0].mode === '2') ? (payments[0].bank || '') : '';
+            }},
+            { header: 'Branch',       get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return (payments.length && payments[0].mode === '2') ? (payments[0].branch || '') : '';
+            }},
+            { header: 'IFSC',         get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return (payments.length && payments[0].mode === '2') ? (payments[0].ifsc || '') : '';
+            }},
+            { header: 'BT Bank Acc',  get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return (payments.length && payments[0].mode === '4') ? (payments[0].bankAcc || '') : '';
+            }},
+            { header: 'BT Ref No',    get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return (payments.length && payments[0].mode === '4') ? (payments[0].refNo || '') : '';
+            }},
+            { header: 'BT Transfer Mode', get: function ($tr) {
+                var faid = $tr.attr('data-faid');
+                var payments = getFaidPayments(faid);
+                return (payments.length && payments[0].mode === '4') ? (payments[0].transferMode || '') : '';
+            }},
+            { header: 'Disc %',       get: function ($tr) { return parseFloat($tr.find('.inp-discpct').val()) || 0; }, numeric: true },
+            { header: 'Disc \u20b9',  get: function ($tr) { return parseFloat($tr.find('.inp-discamt').val()) || 0; }, numeric: true },
+            { header: 'Other %',      get: function ($tr) { return parseFloat($tr.find('.inp-otherpct').val()) || 0; }, numeric: true },
+            { header: 'Other \u20b9', get: function ($tr) { return parseFloat($tr.find('.inp-otheramt').val()) || 0; }, numeric: true },
+            { header: 'Adjusted \u20b9', get: function ($tr) {
+                var v = parseFloat($tr.find('.lbl-adjusted').text());
+                return isNaN(v) ? 0 : v;
+            }, numeric: true },
+            { header: 'Status',       get: function ($tr) { return $tr.find('.badge-status').text().trim(); } }
+        ];
+
+        // --- Collect filter context for info sheet ---
+        var filterBeat     = $('#txtBeat').val() || '';
+        var filterSalesman = $('#txtSalesman').val() || '';
+        var filterCustomer = $('#txtCustomer').val() || '';
+        var filterDate     = $('#txtAsonDate').val() || '';
+        var filterSearch   = $('#txtSearchRow').val() || '';
+        var filterTabs     = activeTransNames.length ? activeTransNames.join(', ') : 'All';
+        var collDate       = $('#dtpDate').val() || '';
+
+        // --- Collect only VISIBLE rows ---
+        var visibleRows = [];
+        $('#tblBody tr:visible').each(function () {
+            visibleRows.push($(this));
+        });
+
+        if (!visibleRows.length) {
+            toast('No visible rows to export.', 'warning');
+            return;
+        }
+
+        // --- Build data array for main sheet ---
+        var headers = columns.map(function (c) { return c.header; });
+        var dataRows = visibleRows.map(function ($tr, i) {
+            return columns.map(function (col) { return col.get($tr, i); });
+        });
+
+        // --- Build totals footer row ---
+        var numericColIdxs = {};
+        columns.forEach(function (col, i) { if (col.numeric) numericColIdxs[i] = true; });
+        var totalsRow = columns.map(function (col, i) {
+            if (i === 0) return 'TOTAL';
+            if (!col.numeric) return '';
+            var sum = 0;
+            dataRows.forEach(function (row) { sum += parseFloat(row[i]) || 0; });
+            return parseFloat(sum.toFixed(2));
+        });
+
+        // --- Assemble worksheet data ---
+        var wsData = [headers].concat(dataRows).concat([totalsRow]);
+
+        var wb = XLSX.utils.book_new();
+
+        // Main data sheet
+        var ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Column widths
+        var colWidths = [4, 28, 18, 18, 12, 16, 10, 11, 11, 11, 12, 11, 10, 11, 10, 12, 16, 14, 14, 16, 12, 16, 8, 11, 8, 11, 12, 10];
+        ws['!cols'] = colWidths.map(function (w) { return { wch: w }; });
+
+        // Style header row and totals (SheetJS CE supports basic cell types; full style needs xlsx-style or pro)
+        // We set types explicitly for numeric cells so Excel recognises them as numbers
+        dataRows.forEach(function (row, ri) {
+            columns.forEach(function (col, ci) {
+                if (col.numeric) {
+                    var cellAddr = XLSX.utils.encode_cell({ r: ri + 1, c: ci });
+                    if (ws[cellAddr]) ws[cellAddr].t = 'n';
+                }
+            });
+        });
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Bulk Collection');
+
+        // --- Filter Info sheet ---
+        var infoData = [
+            ['Export Info', ''],
+            ['Exported At',  now.toLocaleString()],
+            ['File Name',    fileName],
+            ['', ''],
+            ['Applied Filters', ''],
+            ['Beat',         filterBeat || '(all)'],
+            ['Salesman',     filterSalesman || '(all)'],
+            ['Customer',     filterCustomer || '(all)'],
+            ['As on Date',   filterDate || '(all)'],
+            ['Collection Date', collDate || ''],
+            ['Trans Type Tab', filterTabs],
+            ['Row Search',   filterSearch || '(none)'],
+            ['', ''],
+            ['Summary', ''],
+            ['Visible Rows', visibleRows.length],
+        ];
+        // Add footer totals summary
+        columns.forEach(function (col, i) {
+            if (col.numeric && i > 0) {
+                infoData.push([col.header, totalsRow[i]]);
+            }
+        });
+
+        var wsInfo = XLSX.utils.aoa_to_sheet(infoData);
+        wsInfo['!cols'] = [{ wch: 20 }, { wch: 35 }];
+        XLSX.utils.book_append_sheet(wb, wsInfo, 'Export Info');
+
+        // --- Trigger download ---
+        XLSX.writeFile(wb, fileName);
+        toast('Exported ' + visibleRows.length + ' rows to ' + fileName, 'success');
+    }
+
+    $('#btnExport').on('click', function () {
+        if (typeof XLSX === 'undefined') {
+            toast('SheetJS library not loaded. Check your internet connection.', 'danger');
+            return;
+        }
+        exportToExcel();
+    });
+
     $('#btnResetAll').on('click', function () {
         $('#tblBody tr').each(function () {
             var $tr = $(this);
@@ -1967,7 +3146,186 @@
             initRowLockState($tr);
             recalcRow($tr);
         });
+        faidRemarksStore = {};
+        $('#tblBody .btn-remark').removeClass('has-remark').attr('title', 'Add Remarks & Narration');
+        $('#tblBody tr').removeClass('row-save-error row-save-success');
+        //row-save-error row-save-success
+        $('#tblBody tr .save-error-wrap').hide();
+        //save-error-wrap
+        $('#tblBody .remark-tooltip').hide().html('');
         toast('All entries reset.', 'success');
+    });
+
+    // ---------------------------------------------------------------
+    // Summary Modal — Customer-wise adjusted documents view
+    // ---------------------------------------------------------------
+    function buildSummaryData() {
+        // customerMap[partyName] = {
+        //   cashAdjPos, cashAdjPosCount, cashAdjNeg, cashAdjNegCount,
+        //   chqBtAdjPos, chqBtAdjPosCount, chqBtAdjNeg, chqBtAdjNegCount,
+        //   chqCount, btCount, discAmt, otherAmt, totalAdj
+        // }
+        var customerMap = {};
+        var customerOrder = [];
+
+        // Track FAIDs already processed for payment counting (payments are per-FAID not per-row)
+        var seenFaidsPay = {};
+
+        $('#tblBody tr').each(function () {
+            var $tr = $(this);
+            var cashVal  = parseFloat($tr.find('.inp-cashamt').val())  || 0;
+            var chqBtVal = parseFloat($tr.find('.inp-chqbtamt').val()) || 0;
+            var discAmt  = parseFloat($tr.find('.inp-discamt').val())  || 0;
+            var otherAmt = parseFloat($tr.find('.inp-otheramt').val()) || 0;
+            var adjVal   = parseFloat($tr.find('.lbl-adjusted').text()) || 0;
+
+            // Only include rows that have any adjustment
+            if (Math.abs(cashVal) < 0.004 && Math.abs(chqBtVal) < 0.004 &&
+                Math.abs(discAmt) < 0.004 && Math.abs(otherAmt) < 0.004) return;
+
+            var partyName = $tr.attr('data-partyname') ||
+                            $tr.find('td[data-label="Party Name"] .cell-strong').attr('title') ||
+                            $tr.find('td[data-label="Party Name"] .cell-strong').text().trim() ||
+                            '(Unknown)';
+
+            if (!customerMap[partyName]) {
+                customerMap[partyName] = {
+                    cashAdjPos: 0, cashAdjPosCount: 0,
+                    cashAdjNeg: 0, cashAdjNegCount: 0,
+                    chqBtAdjPos: 0, chqBtAdjPosCount: 0,
+                    chqBtAdjNeg: 0, chqBtAdjNegCount: 0,
+                    chqCount: 0, btCount: 0,
+                    discAmt: 0, otherAmt: 0, totalAdj: 0
+                };
+                customerOrder.push(partyName);
+            }
+
+            // Cash: split into positive and negative buckets
+            if (cashVal > 0.004) {
+                customerMap[partyName].cashAdjPos += cashVal;
+                customerMap[partyName].cashAdjPosCount++;
+            } else if (cashVal < -0.004) {
+                customerMap[partyName].cashAdjNeg += cashVal;
+                customerMap[partyName].cashAdjNegCount++;
+            }
+
+            // Chq/BT: split into positive and negative buckets
+            if (chqBtVal > 0.004) {
+                customerMap[partyName].chqBtAdjPos += chqBtVal;
+                customerMap[partyName].chqBtAdjPosCount++;
+            } else if (chqBtVal < -0.004) {
+                customerMap[partyName].chqBtAdjNeg += chqBtVal;
+                customerMap[partyName].chqBtAdjNegCount++;
+            }
+
+            customerMap[partyName].discAmt  += discAmt;
+            customerMap[partyName].otherAmt += otherAmt;
+            customerMap[partyName].totalAdj += adjVal;
+
+            // Count cheques/BTs per FAID (once per FAID, credited to the party)
+            var faid = $tr.attr('data-faid');
+            if (faid && !seenFaidsPay[faid]) {
+                seenFaidsPay[faid] = true;
+                var payments = getFaidPayments(faid);
+                payments.forEach(function (p) {
+                    if (p.mode === '2') customerMap[partyName].chqCount++;
+                    else if (p.mode === '4') customerMap[partyName].btCount++;
+                });
+            }
+        });
+
+        return { map: customerMap, order: customerOrder };
+    }
+
+    function openSummaryModal() {
+        var result = buildSummaryData();
+        var map    = result.map;
+        var order  = result.order;
+
+        if (!order.length) {
+            toast('No adjusted documents to summarise. Enter Cash or Chq/BT amounts first.', 'warning');
+            return;
+        }
+
+        var html = '';
+        var gCashPos = 0, gCashPosCount = 0, gCashNeg = 0, gCashNegCount = 0;
+        var gChqBtPos = 0, gChqBtPosCount = 0, gChqBtNeg = 0, gChqBtNegCount = 0;
+        var gChq = 0, gBT = 0, gDisc = 0, gOther = 0, gTotal = 0;
+
+        order.forEach(function (name, i) {
+            var c = map[name];
+            gCashPos      += c.cashAdjPos;      gCashPosCount  += c.cashAdjPosCount;
+            gCashNeg      += c.cashAdjNeg;      gCashNegCount  += c.cashAdjNegCount;
+            gChqBtPos     += c.chqBtAdjPos;     gChqBtPosCount += c.chqBtAdjPosCount;
+            gChqBtNeg     += c.chqBtAdjNeg;     gChqBtNegCount += c.chqBtAdjNegCount;
+            gChq          += c.chqCount;
+            gBT           += c.btCount;
+            gDisc         += c.discAmt;
+            gOther        += c.otherAmt;
+            gTotal        += c.totalAdj;
+
+            var cashPosCell  = c.cashAdjPosCount  > 0 ? '<span style="color:var(--bc-success);font-weight:700;">' + formatNum(c.cashAdjPos)  + '</span><span style="color:var(--bc-muted);font-size:9px;"> (' + c.cashAdjPosCount  + ')</span>' : '<span style="color:var(--bc-muted);">—</span>';
+            var cashNegCell  = c.cashAdjNegCount  > 0 ? '<span style="color:var(--bc-danger);font-weight:700;">'  + formatNum(c.cashAdjNeg)  + '</span><span style="color:var(--bc-muted);font-size:9px;"> (' + c.cashAdjNegCount  + ')</span>' : '<span style="color:var(--bc-muted);">—</span>';
+            var chqPosCell   = c.chqBtAdjPosCount > 0 ? '<span style="color:var(--bc-success);font-weight:700;">' + formatNum(c.chqBtAdjPos) + '</span><span style="color:var(--bc-muted);font-size:9px;"> (' + c.chqBtAdjPosCount + ')</span>' : '<span style="color:var(--bc-muted);">—</span>';
+            var chqNegCell   = c.chqBtAdjNegCount > 0 ? '<span style="color:var(--bc-danger);font-weight:700;">'  + formatNum(c.chqBtAdjNeg) + '</span><span style="color:var(--bc-muted);font-size:9px;"> (' + c.chqBtAdjNegCount + ')</span>' : '<span style="color:var(--bc-muted);">—</span>';
+
+            html += '<tr>' +
+                '<td>' + (i + 1) + '</td>' +
+                '<td class="sum-customer">' + escHtml(name) +
+                (c.chqCount > 0 ? '<span class="sum-badge">CHQ: ' + c.chqCount + '</span>' : '') +
+                (c.btCount  > 0 ? '<span class="sum-badge" style="background:#e8f5e9;color:#2e7d32;">BT: ' + c.btCount + '</span>' : '') +
+                '</td>' +
+                '<td style="text-align:right;">' + cashPosCell  + '</td>' +
+                '<td style="text-align:right;">' + cashNegCell  + '</td>' +
+                '<td style="text-align:right;">' + chqPosCell   + '</td>' +
+                '<td style="text-align:right;">' + chqNegCell   + '</td>' +
+                '<td style="text-align:center;" class="d-none">' + c.chqCount + '</td>' +
+                '<td style="text-align:center;" class="d-none">' + c.btCount  + '</td>' +
+                '<td style="text-align:right;">' + formatNum(c.discAmt)  + '</td>' +
+                '<td style="text-align:right;">' + formatNum(c.otherAmt) + '</td>' +
+                '<td style="text-align:right;font-weight:700;">' + formatNum(c.totalAdj) + '</td>' +
+                '</tr>';
+        });
+
+        $('#tblSummaryBody').html(html);
+
+        var gCashPosCell  = gCashPosCount  > 0 ? formatNum(gCashPos)  + ' (' + gCashPosCount  + ')' : '—';
+        var gCashNegCell  = gCashNegCount  > 0 ? formatNum(gCashNeg)  + ' (' + gCashNegCount  + ')' : '—';
+        var gChqPosCell   = gChqBtPosCount > 0 ? formatNum(gChqBtPos) + ' (' + gChqBtPosCount + ')' : '—';
+        var gChqNegCell   = gChqBtNegCount > 0 ? formatNum(gChqBtNeg) + ' (' + gChqBtNegCount + ')' : '—';
+
+        $('#tblSummaryFoot').html(
+            '<tr>' +
+            '<td colspan="2" style="font-weight:700;">Grand Total (' + order.length + ' customers)</td>' +
+            '<td style="text-align:right;color:var(--bc-success);font-weight:700;">' + gCashPosCell  + '</td>' +
+            '<td style="text-align:right;color:var(--bc-danger);font-weight:700;">'  + gCashNegCell  + '</td>' +
+            '<td style="text-align:right;color:var(--bc-success);font-weight:700;">' + gChqPosCell   + '</td>' +
+            '<td style="text-align:right;color:var(--bc-danger);font-weight:700;">'  + gChqNegCell   + '</td>' +
+            '<td style="text-align:center;" class="d-none">' + gChq  + '</td>' +
+            '<td style="text-align:center;" class="d-none">' + gBT   + '</td>' +
+            '<td style="text-align:right;">' + formatNum(gDisc)  + '</td>' +
+            '<td style="text-align:right;">' + formatNum(gOther) + '</td>' +
+            '<td style="text-align:right;">' + formatNum(gTotal) + '</td>' +
+            '</tr>'
+        );
+
+        $('#summaryModalSub').text(order.length + ' customer(s) with adjusted documents.');
+        $('#modalSummary').css('display', 'flex');
+    }
+
+    function closeSummaryModal() {
+        $('#modalSummary').css('display', 'none');
+    }
+
+    $('#btnSummary').on('click', openSummaryModal);
+    $('#btnCloseSummary').on('click', closeSummaryModal);
+    $('#modalSummary').on('click', function (e) {
+        if ($(e.target).is('#modalSummary')) closeSummaryModal();
+    });
+    $(document).on('keydown.summary', function (e) {
+        if (e.key === 'Escape' && $('#modalSummary').css('display') !== 'none') {
+            closeSummaryModal();
+        }
     });
 
     // ---------------------------------------------------------------
@@ -2010,51 +3368,300 @@
     $('#btnClear').on('click', function () {
         $('.FormclrField').not('#txtAsonDate, #dtpDate').val('');
         $('#tblBody').empty();
-        $('#dvTableWrap, #dvToolbar, #dvFooterAction').hide();
+        $('#dvTableWrap, #dvToolbar, #dvFooterAction, #dvTransTabs').hide();
         $('#emptyState').show();
+        activeTransNames = [];
+        faidRemarksStore = {};
         recalcFooterTotals();
     });
 
     $('#btnSave').on('click', function () {
+        if (cfFocus != 3) {
+            ConfirmDialogMsg("Do you want to save data?");
+        } else {
+            SaveData();
+        }
+    });
+    function SaveData() {
         var rows = $('#tblBody tr');
         if (!rows.length) {
-            toast('No documents to save.', 'warning');
+            toast('No documents to save.', 'danger');
             return;
         }
+        if ($("#cmbBranch").val() == 0) {
+            IsValid = false;
+            toast('Select valid Branch', 'danger');
+            return;
+        }
+        if ($("#dtpDate").val() == "") {
+            IsValid = false;
+            toast('Date should not be empty.', 'danger');
+            return;
+        }
+        // ---------------------------------------------------------------
+        // Validation: Per FAID, total Chq/BT amount entered in rows must be
+        // <= total payment info (payinfo) amount. PayInfo must be equal or
+        // greater than the Chq/BT adjusted amount.
+        // ---------------------------------------------------------------
+        var faidChqBTMap = {};   // faid -> total chqbt amount from rows
+        var faidPayMap = {};   // faid -> total payinfo amount
+        rows.each(function () {
+            var $tr = $(this);
+            var faid = $tr.attr('data-faid');
+            if (!faid) return;
+            var chqbt = parseFloat($tr.find('.inp-chqbtamt').val()) || 0;
+            faidChqBTMap[faid] = (faidChqBTMap[faid] || 0) + chqbt;
+        });
+        // Sum payinfo amounts per FAID (payments stored on first row of each FAID)
+        var seenFaidsValidation = {};
+        rows.each(function () {
+            var $tr = $(this);
+            var faid = $tr.attr('data-faid');
+            if (!faid || seenFaidsValidation[faid]) return;
+            seenFaidsValidation[faid] = true;
+            var payments = getFaidPayments(faid);
+            var payTotal = 0;
+            payments.forEach(function (p) { payTotal += parseFloat(p.amount) || 0; });
+            faidPayMap[faid] = payTotal;
+        });
 
+        // ---------------------------------------------------------------
+        // NEW Validation 1: Net sum of all Cash values (positive docs + negative
+        // docs) must be >= 0.  A negative-balance doc can carry a negative cash
+        // entry; the combined total must not go below zero.
+        // Same rule applies to Chq/BT.
+        // ---------------------------------------------------------------
+        //var netCashSum = 0;
+        //var netChqBtSum = 0;
+        //rows.each(function () {
+        //    var $tr = $(this);
+        //    var faid = $tr.attr('data-faid');
+        //    var $first =  $('#tblBody tr[data-faid="' + faid + '"]')
+        //    netCashSum += parseFloat($(this).find('.inp-cashamt').val()) || 0;
+        //    netChqBtSum += parseFloat($(this).find('.inp-chqbtamt').val()) || 0;
+        //});
+        //if (netCashSum < -0.004) {
+        //    toast('Save blocked — Net Cash total is negative (₹' + formatNum(netCashSum) + '). The sum of all Cash entries (positive + negative documents) must be ≥ 0.', 'danger');
+        //    return;
+        //}
+        //if (netChqBtSum < -0.004) {
+        //    toast('Save blocked — Net Chq/BT total is negative (₹' + formatNum(netChqBtSum) + '). The sum of all Chq/BT entries (positive + negative documents) must be ≥ 0.', 'danger');
+        //    return;
+        //}
+
+        // Check each FAID: payinfo >= chqbt
+        var validationErrors = [];
+        Object.keys(faidChqBTMap).forEach(function (faid) {
+            var chqbtTotal = faidChqBTMap[faid];
+            var payTotal = faidPayMap[faid] || 0;
+            if (chqbtTotal > 0.004 && payTotal < chqbtTotal - 0.004) {
+                // Find a display label (party name or doc id) for this FAID
+                var $firstRow = $('#tblBody tr[data-faid="' + faid + '"]').first();
+                var partyName = $firstRow.find('td[data-label="Party Name"]').text().trim() || ('FAID ' + faid);
+                validationErrors.push(
+                    partyName + ': Chq/BT adjusted = ₹' + formatNum(chqbtTotal) +
+                    ', Payment info = ₹' + formatNum(payTotal) +
+                    '. Payment value must be equal to or greater than the adjusted Chq/BT amount.'
+                );
+            }
+        });
+        if (validationErrors.length) {
+            toast('Save blocked — payment info mismatch:' + validationErrors.join(''), 'danger');
+            // Also show a more detailed alert for clarity
+            //alert('Cannot save. Payment info value must be equal to or greater than the Chq/BT adjusted document value:' + validationErrors.join(''));
+            return;
+        }
+        // ---------------------------------------------------------------
+        console.log("row data", rows);
         var payload = [];
         rows.each(function () {
             var $tr = $(this);
-            payload.push({
-                TransID: $tr.attr('data-transid'),
-                ID: $tr.attr('data-id'),
-                FAID: $tr.attr('data-faid'),
-                Balance: parseFloat($tr.attr('data-balance')) || 0,
-                CashAmt: parseFloat($tr.find('.inp-cashamt').val()) || 0,
-                ChqBTAmt: parseFloat($tr.find('.inp-chqbtamt').val()) || 0,
-                DiscPct: parseFloat($tr.find('.inp-discpct').val()) || 0,
-                DiscAmt: parseFloat($tr.find('.inp-discamt').val()) || 0,
-                OtherPct: parseFloat($tr.find('.inp-otherpct').val()) || 0,
-                OtherAmt: parseFloat($tr.find('.inp-otheramt').val()) || 0,
-                Payments: getPayments($tr)
-            });
+            var balamt = (parseFloat($tr.attr('data-balance')) || 0);
+            var casamt = (parseFloat($tr.find('.inp-cashamt').val()) || 0);
+            var cqbtamt = (parseFloat($tr.find('.inp-chqbtamt').val()) || 0);
+            if (casamt != 0 || cqbtamt != 0) {
+                var faid = $tr.attr('data-faid');
+                var remarkData = getFaidRemarks(faid);
+                payload.push({
+                    TransID: $tr.attr('data-transid'),
+                    ID: $tr.attr('data-id'),
+                    FAID: faid,
+                    DocValue: $tr.attr('data-docvalue'),
+                    DocDate: $tr.attr('data-docdate'),
+                    BeatID: $tr.attr('data-beatid'),
+                    SalesmanID: $tr.attr('data-salesmanid'),
+                    Balance: balamt,
+                    CashAmt: casamt,
+                    ChqBTAmt: cqbtamt,
+                    DiscPct: parseFloat($tr.find('.inp-discpct').val()) || 0,
+                    DiscAmt: parseFloat($tr.find('.inp-discamt').val()) || 0,
+                    OtherPct: parseFloat($tr.find('.inp-otherpct').val()) || 0,
+                    OtherAmt: parseFloat($tr.find('.inp-otheramt').val()) || 0,
+                    TotalAdjusted: parseFloat($tr.find('.lbl-adjusted').text()) || 0,
+                    Payments: getPayments($tr),
+                    Remarks: remarkData.remarks || '',
+                    Narration: remarkData.narration || ''
+                });
+            }
         });
-
+        console.log("Save row data 2", payload);
         // TODO: point this at your real save endpoint.
+        var bulkcollectiondata = {
+            "DocDate": $("#dtpDate").val(),
+            "DocPrefix": 19,
+            "BranchID": $("#cmbBranch").val(),
+            "UserID": UID,
+            "AdjDocs": payload
+        }
         $.ajax({
-            url: Aurl + 'api/BulkCollection/SaveCollection',
+            url: Aurl + 'bulkcollection/save',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ UserID: UID, BranchID: DefBranch, Rows: payload }),
-            success: function () {
-                toast('Collection saved successfully.', 'success');
+            data: JSON.stringify(bulkcollectiondata),
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (response) {
+                console.log("Save response ", response);
+                handleSaveResponse(response);
             },
             error: function () {
                 console.log('Save payload (connect your API in the btnSave handler):', payload);
                 toast('Could not reach the Save API — payload logged to console for now.', 'warning');
             }
         });
-    });
+    }
+
+    // ---------------------------------------------------------------
+    // Save Response Handler
+    // Processes the structured API response and applies error badges
+    // or clears data on full success.
+    //
+    // Response shape:
+    //   { Success: bool, Response: [ { ResponseType, ResponseApplyby,
+    //     TransID, ID, FAID, ResponseMessage }, ... ] }
+    //
+    // ResponseApplyby:
+    //   "1" → Document-level error  → match TransID + ID + FAID
+    //   "2" → FAID-level error      → match FAID only
+    //   "3" → Common error          → show in Toast only
+    // ---------------------------------------------------------------
+    function handleSaveResponse(response) {
+        // Clear any previous save-error state from rows
+        clearSaveErrors();
+
+        var allSuccess = response.Success === true || response.Success === 'true';
+
+        if (allSuccess) {
+            // ── Full success ──────────────────────────────────────────
+            toast('Collection saved successfully.', 'success');
+            clearAllData();
+            return;
+        }
+
+        // ── Partial / full failure ────────────────────────────────────
+        var responseArr = response.Response || [];
+        var hasRowErrors = false;
+
+        responseArr.forEach(function (item) {
+            var respType = String(item.ResponseType || '').trim();
+            var applyBy   = String(item.ResponseApplyby || '').trim();
+            var message   = String(item.ResponseMessage || '').trim();
+            var transId   = String(item.TransID  || '').trim();
+            var docId     = String(item.ID       || '').trim();
+            var faidStr   = String(item.FAID     || '').trim();
+
+            if (applyBy === '1') {
+                // ── Document-wise: match TransID + ID + FAID ─────────
+                var $matchedRows = $('#tblBody tr').filter(function () {
+                    var $tr = $(this);
+                    return (
+                        String($tr.attr('data-transid') || '').trim() === transId &&
+                        String($tr.attr('data-id')      || '').trim() === docId   &&
+                        String($tr.attr('data-faid')    || '').trim() === faidStr
+                    );
+                });
+                if ($matchedRows.length) {
+                    hasRowErrors = true;
+                    $matchedRows.each(function () {
+                        attachSaveErrorBadge($(this), message, respType);
+                    });
+                }
+            } else if (applyBy === '2') {
+                // ── FAID-wise: match FAID only ────────────────────────
+                var $faidRows = $('#tblBody tr[data-faid="' + escHtml(faidStr) + '"]');
+                if ($faidRows.length) {
+                    hasRowErrors = true;
+                    $faidRows.each(function () {
+                        var casamt = (parseFloat($(this).find('.inp-cashamt').val()) || 0);
+                        var cqbtamt = (parseFloat($(this).find('.inp-chqbtamt').val()) || 0);
+                        if (casamt != 0 || cqbtamt != 0)
+                            attachSaveErrorBadge($(this), message, respType);
+                    });
+                }
+            } else if (applyBy === '3') {
+                // ── Common error: Toast only ──────────────────────────
+                toast(message, 'danger');
+            }
+        });
+
+        // Show a summary toast when row-level errors exist
+        if (hasRowErrors) {
+            var errCount = $('#tblBody tr.row-save-error').length;
+            toast('Save completed with errors. ' + errCount + ' row(s) highlighted — hover the \u26a0 badge for details.', 'warning');
+        }
+    }
+    //row-save-error row-save-success 
+    // Attaches a red/green error badge with hover tooltip to a row's Doc ID cell.
+    // If a badge already exists on that row (e.g. multiple error entries), appends message.
+    // respType - "Error" or "Success"
+    function attachSaveErrorBadge($tr, message, respType) {
+        var isError = (respType || '').trim().toLowerCase() === 'error';
+
+        $tr.removeClass('row-save-error row-save-success');
+        $tr.addClass(isError ? 'row-save-error' : 'row-save-success');
+
+        // Use the Doc ID cell as the anchor for the badge
+        var $docCell = $tr.find('td[data-label="Doc ID"]');
+        if (!$docCell.length) $docCell = $tr.find('td').eq(2); // fallback
+
+        // Check if a badge wrap already exists — stack messages if so
+        var $existingWrap = $docCell.find('.save-error-wrap');
+        if ($existingWrap.length) {
+            var $tip = $existingWrap.find('.save-error-tooltip');
+            $tip.html($tip.html() + '<div style="border-top:1px solid rgba(255,255,255,.3);margin-top:4px;padding-top:4px;">' + escHtml(message) + '</div>');
+            return;
+        }
+
+        var badgeClass = isError ? 'save-badge-error' : 'save-badge-success';
+        var tipClass = isError ? 'save-tip-error' : 'save-tip-success';
+        var icon = isError ? '&#9888;' : '&#10003;';
+
+        var $wrap = $(
+            '<span class="save-error-wrap">' +
+            '<span class="save-error-badge ' + badgeClass + '" title="">' + icon + '</span>' +
+            '<span class="save-error-tooltip ' + tipClass + '">' + escHtml(message) + '</span>' +
+            '</span>'
+        );
+        $docCell.append($wrap);
+    }
+
+    // Removes all save-error visual state from the table
+    function clearSaveErrors() {
+        $('#tblBody tr.row-save-error').removeClass('row-save-error');
+        $('#tblBody .save-error-wrap').remove();
+    }
+
+    // Clears all table data and resets filters to initial state (called on full success)
+    function clearAllData() {
+        $('#tblBody').empty();
+        $('#dvTableWrap, #dvToolbar, #dvFooterAction, #dvTransTabs').hide();
+        $('#emptyState').show();
+        activeTransNames = [];
+        faidRemarksStore = {};
+        recalcFooterTotals();
+    }
 
     // ---------------------------------------------------------------
     // Keyboard navigation
@@ -2071,18 +3678,41 @@
             .filter(':visible:not(:disabled)').toArray();
     }
 
+    // Given an <input> inside a table row, find the input in the next
+    // cell to the RIGHT in the same row (for Enter key navigation).
+    function navigateTableCellRight($input) {
+        var $td = $input.closest('td');
+        var $tr = $td.closest('tr');
+        var colIdx = $td.index();
+        var totalCols = $tr.find('td').length;
+
+        // Search right from the current cell
+        for (var c = colIdx + 1; c < totalCols; c++) {
+            var $targetTd = $tr.find('td').eq(c);
+            var $inp = $targetTd.find('input:visible:not(:disabled)');
+            if ($inp.length) return $inp[0];
+        }
+        // If at end of row, wrap to first input in next row
+        var $nextRow = $tr.next('tr');
+        if (!$nextRow.length) return null;
+        for (var nc = 0; nc < $nextRow.find('td').length; nc++) {
+            var $ntd = $nextRow.find('td').eq(nc);
+            var $ni = $ntd.find('input:visible:not(:disabled)');
+            if ($ni.length) return $ni[0];
+        }
+        return null;
+    }
+
     // Given an <input> inside a table row, find the input in the same
     // column of the adjacent row (direction: +1 = down, -1 = up).
     function navigateTableCell($input, direction) {
         var $td   = $input.closest('td');
         var $tr   = $td.closest('tr');
-        var colIdx = $td.index();           // which <td> are we in?
+        var colIdx = $td.index();
 
         var $targetRow = direction === 1 ? $tr.next('tr') : $tr.prev('tr');
         if (!$targetRow.length) return null;
 
-        // Walk through subsequent columns if the matched column has no
-        // visible+enabled input (e.g. a disabled disc field).
         var totalCols = $targetRow.find('td').length;
         for (var c = colIdx; c < totalCols && c >= 0; c += direction) {
             var $targetTd = $targetRow.find('td').eq(c);
@@ -2105,7 +3735,7 @@
             if (e.target.tagName.toLowerCase() === 'textarea') return;
             if (isEnter) {
                 e.preventDefault();
-                $('#btnAddPayment').trigger('click');
+                $('#btnDonePayments').trigger('click');
             }
             return;
         }
@@ -2115,10 +3745,16 @@
 
         // ── Inside the data table ──────────────────────────────────
         if ($t.closest('#tblBody').length) {
-            if (isDown || isEnter) {
+            if (isEnter) {
                 e.preventDefault();
-                var next = navigateTableCell($t, 1);
+                var next = navigateTableCellRight($t);
                 if (next) { next.focus(); if (next.select) next.select(); }
+                return;
+            }
+            if (isDown) {
+                e.preventDefault();
+                var nextDown = navigateTableCell($t, 1);
+                if (nextDown) { nextDown.focus(); if (nextDown.select) nextDown.select(); }
                 return;
             }
             if (isUp) {
@@ -2142,5 +3778,130 @@
         }
     });
 
+    // ---------------------------------------------------------------
+    // Remarks & Narration — per FAID storage + tooltip + modal
+    // ---------------------------------------------------------------
+
+    // In-memory store keyed by FAID: { remarks: '', narration: '' }
+    var faidRemarksStore = {};
+
+    function getFaidRemarks(faid) {
+        return faidRemarksStore[faid] || { remarks: '', narration: '' };
+    }
+
+    function setFaidRemarks(faid, obj) {
+        faidRemarksStore[faid] = obj;
+    }
+
+    // Build the tooltip inner HTML for a given FAID and show/hide the tip
+    function updateRemarkTooltip(faid) {
+        var data = getFaidRemarks(faid);
+        var hasR = (data.remarks || '').trim().length > 0;
+        var hasN = (data.narration || '').trim().length > 0;
+
+        // Update all remark buttons sharing this FAID
+        $('#tblBody tr[data-faid="' + faid + '"] .btn-remark').each(function () {
+            var $btn = $(this);
+            if (hasR || hasN) {
+                $btn.addClass('has-remark').attr('title', '');
+            } else {
+                $btn.removeClass('has-remark').attr('title', 'Add Remarks & Narration');
+            }
+        });
+
+        // Update tooltip content (one tooltip per unique FAID row — rows sharing FAID share tooltip)
+        $('#tblBody tr[data-faid="' + faid + '"] .remark-tooltip').each(function () {
+            var $tip = $(this);
+            if (!hasR && !hasN) {
+                $tip.hide().html('');
+                return;
+            }
+            var html = '';
+            if (hasR) {
+                html += '<div class="tt-label">Remarks</div><div class="tt-value">' + escHtml(data.remarks) + '</div>';
+                if (hasN) html += '<div style="margin-top:5px;border-top:1px solid rgba(255,255,255,.2);padding-top:5px;"></div>';
+            }
+            if (hasN) {
+                html += '<div class="tt-label">Narration</div><div class="tt-value">' + escHtml(data.narration) + '</div>';
+            }
+            $tip.html(html).css('display', ''); // let CSS :hover control visibility
+        });
+    }
+
+    // Re-apply tooltip visibility rule via CSS hover (we set display:'none' initially per row;
+    // after saving, remove the inline display:none so the CSS :hover rule takes over)
+    $('#tblBody').on('mouseenter', '.remark-tooltip-wrap', function () {
+        var $tip = $(this).find('.remark-tooltip');
+        if ($tip.html()) $tip.show();
+    }).on('mouseleave', '.remark-tooltip-wrap', function () {
+        $(this).find('.remark-tooltip').hide();
+    });
+
+    // ── Remarks modal open ───────────────────────────────────────────
+    var remarksTargetFaid = null;
+
+    $('#tblBody').on('click', '.btn-remark', function (e) {
+        e.stopPropagation();
+        var $tr = $(this).closest('tr');
+        var faid = $tr.attr('data-faid');
+        var party = $tr.find('td[data-label="Party Name"] .cell-strong').attr('title') ||
+                    $tr.find('td[data-label="Party Name"] .cell-strong').text().trim();
+        var docId = $tr.find('td[data-label="Doc ID"]').clone().find('.badge-transname').remove().end().text().trim();
+
+        remarksTargetFaid = faid;
+        $('#remarkModalSub').text(party + ' — ' + docId);
+
+        var data = getFaidRemarks(faid);
+        $('#txtRemarkText').val(data.remarks || '');
+        $('#txtNarrationText').val(data.narration || '');
+
+        $('#modalRemarks').css('display', 'flex');
+        setTimeout(function () { $('#txtRemarkText').focus(); }, 60);
+    });
+
+    // ── Save remarks ─────────────────────────────────────────────────
+    $('#btnSaveRemarks').on('click', function () {
+        if (!remarksTargetFaid) { closeRemarksModal(); return; }
+
+        var remarks   = $('#txtRemarkText').val().trim();
+        var narration = $('#txtNarrationText').val().trim();
+
+        setFaidRemarks(remarksTargetFaid, { remarks: remarks, narration: narration });
+        updateRemarkTooltip(remarksTargetFaid);
+
+        var hasAny = remarks.length > 0 || narration.length > 0;
+        toast(hasAny ? 'Remarks saved.' : 'Remarks cleared.', 'success');
+        closeRemarksModal();
+    });
+
+    // ── Clear remarks ─────────────────────────────────────────────────
+    $('#btnClearRemarks').on('click', function () {
+        $('#txtRemarkText').val('');
+        $('#txtNarrationText').val('');
+    });
+
+    function closeRemarksModal() {
+        $('#modalRemarks').css('display', 'none');
+        remarksTargetFaid = null;
+    }
+
+    $('#btnCloseRemarks').on('click', closeRemarksModal);
+
+    // Close remarks modal on backdrop click
+    $('#modalRemarks').on('click', function (e) {
+        if ($(e.target).is('#modalRemarks')) closeRemarksModal();
+    });
+
+    // Also dismiss with Escape key
+    $(document).on('keydown.remarks', function (e) {
+        if (e.key === 'Escape' && $('#modalRemarks').css('display') !== 'none') {
+            closeRemarksModal();
+        }
+    });
+
     $('#trFooter').show();
+    //$('#txtRemarkText').on('keypress', function (e) {
+    //    if (e.which == 32)
+    //        return false;
+    //});
 </script>

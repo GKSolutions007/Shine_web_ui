@@ -3587,7 +3587,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var qty = dQty != "" ? parseFloat(dQty) : 0;//e.target.value != "" ? parseFloat(e.target.value) : 0;
         var dDiffGross = 0, dDiffNet = 0;
         $("#tblProductData tbody tr").each(function () {
-            //console.log("ProductPriceQtyChange");
             var rowdata = ProductTable.row($(this)).data();
             var RowIndex = ProductTable.row($(this)).index();
             var GridProdID = rowdata[0];
@@ -6503,7 +6502,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         ]
                     });
                     ProductTable = $('#tblProductData').DataTable();
+                    console.time("prodeditrecalc");
+                    const startTime = performance.now();
                     $("#tblProductData tbody tr").each(function () {
+
                         $(this).find("input[name=ProdName]").each(function (index) {
                             const fieldName = $(this).attr("name");
                             const fieldID = $(this).attr("id");
@@ -6527,16 +6529,22 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         {
                             var drrowdata = ProductTable.row($(this)).data();
                             var drRowIndex = ProductTable.row($(this)).index();
-                            $(this).find("input[name=Qty]").each(function (index) {
+                            var $tr = $(this);
+                            $tr.find("input[name=Qty]").each(function (index) {
                                 const fieldName = $(this).attr("name");
                                 const fieldID = $(this).attr("id");
                                 const dQty = $(this).attr("txttag");
-                                //console.log("fieldID", fieldID, "dQty", dQty);
-                                ProductPriceQtyChange(dQty, fieldID, 0, drRowIndex);
+                                //ProductPriceQtyChange(dQty, fieldID, 0, drRowIndex);
+                                ProductEditmodeRecalculate(dQty, fieldID, $tr);
                             });
                         }
                     });
+                    console.timeEnd("prodeditrecalc");
+                    const endTime = performance.now();
 
+                    console.log(
+                        `prodeditrecalc execution time: ${(endTime - startTime).toFixed(3)} ms`
+                    );
                     ProductRID = ProductTable.rows().count() + 1;
                     calculateProdGrid();
                     setupArrowKeyNavigation1();
@@ -6553,7 +6561,224 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
     }
+    function ProductEditmodeRecalculate(dQty, id, $mycurrentrow) {
+        const qty = parseFloat(dQty) || 0;
+        let dDiffGross = 0, dDiffNet = 0;
 
+        $mycurrentrow.each(function () {
+            const $row = $(this);
+            const rowdata = ProductTable.row($row).data();
+
+            const TaxPern = parseFloat(rowdata[2]);
+            const TempBatchQty = parseFloat(rowdata[26]);
+            const TInvoicePrice = parseFloat(rowdata[28]);
+            const trkInv = parseFloat(rowdata[8]);
+
+            const ApponMRPCum = parseFloat($row.find("label[name='ApponMRPCum']").attr("lbltag")) || 0;
+            const TotMRPonTaxAmt = parseFloat($row.find("label[name='TotalMRPonTax']").attr("lbltag")) || 1;
+
+            // Highlight row based on qty
+            $row.find('td').css("background-color", qty === 0 ? "lightgrey" : "white");
+
+            // Validate batch qty
+            if (TempBatchQty < qty && trkInv !== 0) {
+                if (id != null) {
+                    updateInputColumn(id, 0);
+                    showErrorSnackbar("Qty Mismatched. Qty should be less than Batch Qty only.");
+                }
+                return; // skip this row
+            }
+
+            // --- Read UOM conversion factor ---
+            let CFValue = 0;
+            $row.find("select[name='UOM'] option:selected").each(function () {
+                CFValue = parseFloat($(this).attr('name')) || 0;
+            });
+
+            // --- Read prices and discounts from inputs ---
+            const getTag = (name) => parseFloat($row.find(`input[name='${name}']`).attr("txttag")) || 0;
+            const ExclPrice = getTag("Excl");
+            const ProdDisc = getTag("ProdDiscPern");
+            const TrDisc = getTag("TradeDiscPern");
+            const AddnlDisc = getTag("AddnlDiscPern");
+
+            // --- Compute discount amounts ---
+            const basePrice = ExclPrice * qty;
+            const ProdDiscAmt = (basePrice * ProdDisc) / 100;
+            const afterProd = basePrice - ProdDiscAmt;
+            const TrDiscAmt = (afterProd * TrDisc) / 100;
+            const AddnlDiscAmt = (afterProd * AddnlDisc) / 100;
+
+            // --- Update discount amount inputs ---
+            updateInputColumn($row.find("input[name='ProdDiscAmt']").attr("id"), ProdDiscAmt);
+            updateInputColumn($row.find("input[name='TradeDiscAmt']").attr("id"), TrDiscAmt);
+            updateInputColumn($row.find("input[name='AddnlDiscAmt']").attr("id"), AddnlDiscAmt);
+
+            // --- Compute totals ---
+            const dPTGross = basePrice - (ProdDiscAmt + TrDiscAmt + AddnlDiscAmt);
+            const dPTTax = ApponMRPCum > 0
+                ? qty * TotMRPonTaxAmt
+                : (TaxPern * dPTGross) / 100;
+            const dPTNet = dPTGross + dPTTax;
+
+            // --- Update labels ---
+            const updateLabel = (name, val) => {
+                const $lbl = $row.find(`label[name='${name}']`);
+                updateLabelColumn($lbl.attr("id"), val);
+            };
+
+            updateLabel("Goods", basePrice);
+            updateLabel("Gross", dPTGross);
+            updateLabel("TaxAmt", dPTTax);
+            updateLabel("NetAmt", dPTNet);
+
+            // --- Diff value ---
+            const $diffLabel = $row.find("label[name='DiffValue']");
+            if (dQty > 0) {
+                const grossDiff = (dPTGross / dQty) - (TInvoicePrice * CFValue);
+                const netDiff = (dPTNet / dQty) - (TInvoicePrice * CFValue);
+                updateLabelColumn($diffLabel.attr("id"), grossDiff);
+                $diffLabel.css("color", grossDiff >= 0 ? "green" : "red");
+                dDiffGross += grossDiff * dQty;
+                dDiffNet += netDiff * dQty;
+            } else {
+                updateLabelColumn($diffLabel.attr("id"), 0);
+                $diffLabel.css("color", "black");
+            }
+        });
+    }
+    function ProductEditmodeRecalculate_old(dQty, id, $mycurrentrow) {
+        var qty = dQty != "" ? parseFloat(dQty) : 0;
+        var dDiffGross = 0, dDiffNet = 0;
+        $mycurrentrow.each(function () {
+            var rowdata = ProductTable.row($(this)).data();
+            var RowIndex = ProductTable.row($(this)).index();
+            var GridProdID = rowdata[0];
+            var TaxPern = parseFloat(rowdata[2]);
+            var TempBatchQty = parseFloat(rowdata[26]);
+            var TInvoicePrice = parseFloat(rowdata[28]);
+            var trkInv = parseFloat(rowdata[8]);
+            var TP = (TaxPern / 100) + 1;
+            var ExclPrice = 0, InclPrice = 0, ProdDisc = 0, ProdDiscAmt = 0, TrDisc = 0, trDiscAmt = 0, AddnlDisc = 0, AddnlDiscAmt = 0,
+                dPTGross = 0, dPTTax = 0, dPTNet = 0, CFValue = 0;
+
+                //console.log("item wise");
+                var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
+                var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 1;
+                if (qty == 0) {
+                    $(this).find('td').css("background-color", "lightgrey");
+                }
+                else {
+                    $(this).find('td').css("background-color", "white");
+                }
+                if (TempBatchQty >= qty || trkInv == 0) {//
+                    $(this).find("select").each(function (index) {
+                        const fieldName = $(this).attr("name");
+                        const fieldID = $(this).attr("id");
+                        if (fieldName == "UOM") {
+                            var val = $('option:selected', this).attr('name');
+                            CFValue = parseFloat(val);
+                        }
+                    });
+                    $(this).find("input").each(function (index) {
+                        const fieldName = $(this).attr("name");
+                        const fieldID = $(this).attr("id");
+                        if (fieldName == "Excl") {
+                            ExclPrice = parseFloat($(this).attr("txttag"));
+                        }
+                        if (fieldName == "Incl") {
+                            InclPrice = parseFloat($(this).attr("txttag"));
+                        }
+                        if (fieldName == "ProdDiscPern") {
+                            ProdDisc = parseFloat($(this).attr("txttag"));
+                        }
+                        if (fieldName == "ProdDiscAmt") {
+                            //ProdDisc = parseFloat($(this).attr("txttag"));
+                            var price = (ExclPrice * qty);
+                            ProdDiscAmt = parseFloat((price * ProdDisc) / 100);
+                            updateInputColumn(fieldID, ProdDiscAmt);
+                        }
+                        if (fieldName == "TradeDiscPern") {
+                            TrDisc = parseFloat($(this).attr("txttag"));
+                        }
+                        if (fieldName == "TradeDiscAmt") {
+                            //ProdDisc = parseFloat($(this).attr("txttag"));
+                            var price = ((ExclPrice * qty) - ProdDiscAmt);
+                            TrDiscAmt = parseFloat((price * TrDisc) / 100);
+                            updateInputColumn(fieldID, TrDiscAmt);
+                        }
+                        if (fieldName == "AddnlDiscPern") {
+                            AddnlDisc = parseFloat($(this).attr("txttag"));
+                        }
+                        if (fieldName == "AddnlDiscAmt") {
+                            var price = ((ExclPrice * qty) - ProdDiscAmt);
+                            AddnlDiscAmt = parseFloat((price * AddnlDisc) / 100);
+                            updateInputColumn(fieldID, AddnlDiscAmt);
+                        }
+                    });
+                    $(this).find("label").each(function (index) {
+                        const fieldName = $(this).attr("name");
+                        const fieldID = $(this).attr("id");
+                        var price = (ExclPrice * qty);
+                        if (fieldName == "Goods") {
+                            var gds = parseFloat(price);//;
+                            //$(this).text(gds);
+                            updateLabelColumn(fieldID, gds);
+                            dPTGoods = gds;
+                        }
+                        if (fieldName == "Gross") {
+                            var grs = (parseFloat(price) - (TrDiscAmt + AddnlDiscAmt + ProdDiscAmt));//;
+                            //$(this).text(grs);
+                            updateLabelColumn(fieldID, grs);
+                            dPTGross = grs;
+                        }
+                        if (fieldName == "TaxAmt") {
+                            var tamt = ApponMRPCum > 0 ? (qty * parseFloat(TotMRPonTaxAmt)) : ((TaxPern * dPTGross) / 100);//;
+                            //$(this).text(tamt);
+                            updateLabelColumn(fieldID, tamt);
+                            dPTTax = tamt;
+                        }
+                        if (fieldName == "NetAmt") {
+                            var neta = (parseFloat(dPTGross) + parseFloat(dPTTax));//;
+                            //$(this).text(neta);
+                            updateLabelColumn(fieldID, neta);
+                            dPTNet = parseFloat($(this).text());
+                        }
+                        if (fieldName == "DiffValue") {
+
+                            if (dQty > 0) {
+                                var val = dPTGross / dQty;
+                                var Diff = val - (TInvoicePrice * CFValue);
+                                var AbsDiff = Diff;// Math.abs(Diff);
+                                updateLabelColumn(fieldID, AbsDiff);
+                                var clrcolor = Diff >= 0 ? "green" : "red";
+                                $(this).css("color", clrcolor);
+                                dDiffGross += (AbsDiff * dQty);
+                                ////console.log("Gross", AbsDiff);
+                                val = dPTNet / dQty;
+                                Diff = val - (TInvoicePrice * CFValue);
+                                AbsDiff = Diff;// Math.abs(Diff);
+                                dDiffNet += (AbsDiff * dQty);
+                                ////console.log("Net", AbsDiff);
+                            } else {
+                                updateLabelColumn(fieldID, 0);
+                                $(this).css("color", "black");
+                                dDiffGross += 0;
+                                dDiffNet += 0;
+                            }
+                        }
+                    });
+                    //updateInputColumn("txtDiffExcl", dDiffGross); updateInputColumn("txtDiffIncl", dDiffNet);
+                }
+                else {
+                    if (id != null) {
+                        updateInputColumn(id, 0);
+                        showErrorSnackbar("Qty Mismatched. Qty should be less than Batch Qty only.")
+                    }
+                }
+            
+        });
+    }
     $('#btnTEdit').click(function (e) {
         var Did = $("#txtID").val();
         var Currsts = $("#txtStatus").val();
