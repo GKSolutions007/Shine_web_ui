@@ -131,6 +131,8 @@ namespace ShineWeb.Controllers
                 string ThemeJson = JsonConvert.SerializeObject(dtThemes);
                 Session["JsonTheme"] = "";// ThemeJson;
                 ViewData["JsonTheme"] = ThemeJson;
+                string dtJSONPermission = JsonConvert.SerializeObject(dtPermission);
+                Session["Menus"] = dtJSONPermission;
                 return RedirectToAction("Index", "Home");
             }
             catch(Exception ex)

@@ -1425,10 +1425,9 @@
                     </div>
                 </div>
             </header>
-        }
-        else if (LayoutName == "UserPermission")
-        {
-
+            }
+            else if (LayoutName == "UserPermission")
+            {
             <div class="sidenav">
 
 
@@ -1451,7 +1450,7 @@
                                 <a href="~/Home" style="color:lightgreen;font-size:large"><img src="~/Images/G_large_Transparent.png" style="width:45px;height:35px" />@*<b> Shine Web</b>*@</a>
                                 <label id="acompname" style="font-size:16px;font-weight:800">@CompName</label>
                             </td>
-
+                            
                             <!-- Favourite Menus in Header -->
                             <td id="tdFavouiteMenus" style="width:40%; padding-left: 10px;">
                                 <div style="display: flex; flex-wrap: nowrap; gap: 5px; align-items: center; overflow-x: auto;">
@@ -1604,7 +1603,7 @@
                         </div>
                         <i class="fa fa-sign-out" style="font-size: 18px; font-weight: bold; color: var(--CompanyNameColor); padding: 5px "></i>
                         @*@Html.ActionLink("Test Level Rep", "Index", "TestLevelReport", new { name = "ONuKr1oIASSV+koj5n/Zz0ymu1AOgX8YlbLqAg8l8rQ=", strFormID = "BOII5FUynjpl5RZJJ8nW1g==" }, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot" })<br />*@
-                        @Html.ActionLink("LogOut", "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot", onclick = "localStorage.removeItem('FilterDatelist');localStorage.removeItem('ThemeData'); sessionStorage.clear();" })
+                        @Html.ActionLink("LogOut", "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot", onclick = "localStorage.removeItem('FilterDatelist');localStorage.removeItem('ThemeData');localStorage.removeItem('MenusData'); sessionStorage.clear();" })
                     </div>
                 </div>
             </div>
@@ -2362,6 +2361,7 @@
                 }
             }
         }
+
         function startAutoDraftSave() {
             if (autoDraftInterval) return; // prevent multiple intervals
             autoDraftInterval = setInterval(function () {
@@ -2522,7 +2522,7 @@
                     TransactionPrintProfiles = eval(data)
                     var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
                     var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
-                    var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;                    
+                    var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
                     $.each(TransactionPrintProfiles, function (i, items) {
                         $('#cmbPrintProfile').append($('<option/>', {
                             value: items.ConfigID,
@@ -2538,6 +2538,15 @@
             });
         }
         var ApplyCommonEnterEvent = true;
+        const allformdivs = document.querySelectorAll('#listContainer div');
+        const allformlinks = [];
+
+        // Collect all link hrefs
+        allformdivs.forEach(div => {
+            div.querySelectorAll('a').forEach(link => {
+                allformlinks.push(link.href);
+            });
+        });
     </script>
     <link href="~/Content/dialogbox/confirmdialog.css" rel="stylesheet" />
     <canvas id="cmCanvas"></canvas>
@@ -3929,6 +3938,8 @@ function CloseConfirmDialogMsg_old(message) {
         const left = window.screenX + (window.innerWidth - vw) / 2;
         const top = window.screenY + (window.innerHeight - vh) / 2;
         //Session["PurchaseOneView"],Session["SalesOneView"]
+        
+        var formhavepermission = checkFormPermission("OneView?");
         var OpenOneView = false;
         if (PartyType == 1)//customer
         {
@@ -3937,10 +3948,22 @@ function CloseConfirmDialogMsg_old(message) {
         {
             OpenOneView = EnablePurchaseOneView == "1" || ByShortcut;
         }
-        if (OpenOneView) {
-            var SCDUrl = Url + "OneView?name=sH%2BTEIdelWKGNxqaVlmc0mDpErf3b%2B6xXTQX8LLAeLU%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + ID + "&PartyType=" + PartyType;
-            window.open(SCDUrl, "_blank", "width=" + vw + ",height=" + vh + ",top=" + top + ",left=" + left + ",scrollbars=yes,resizable=yes");
+        if (formhavepermission) {
+            if (OpenOneView) {
+                var SCDUrl = Url + "OneView?name=sH%2BTEIdelWKGNxqaVlmc0mDpErf3b%2B6xXTQX8LLAeLU%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + ID + "&PartyType=" + PartyType;
+                window.open(SCDUrl, "_blank", "width=" + vw + ",height=" + vh + ",top=" + top + ",left=" + left + ",scrollbars=yes,resizable=yes");
+            }
         }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> One View</code></h4>")
+        }
+    }
+    function checkFormPermission(formkey) {
+        return allformlinks.filter(lk => lk.includes(formkey)).length > 0 
+    }
+    function checkAddEditPermission(formkey) {
+        var perms = localStorage.getItem("MenusData");
+        return JSON.parse(perms).filter(lk => lk.MenuId == formkey).length > 0
     }
     function GetBranchwiseABSQty(nProdID) {
         $.ajax({
@@ -4004,6 +4027,8 @@ function CloseConfirmDialogMsg_old(message) {
             $(".trclrforcolheader").css("background-color", items.GridHeaderBackGround);
             $(".trclrforcolheader,.dg-btn").css("color", items.GridHeaderTextColor);
             $(".modal-title").css("color", items.PopupHeaderText);
+            //document.documentElement.style.setProperty('--bs-btn-close-color', items.PopupHeaderText);
+            //
             //$(".ui-menu-item-wrapper.ui-state-active").attr("style", "background-color: " + items.AutocompleteBG + " !important");
             document.documentElement.style.setProperty('--header-bg', items.GridHeaderBackGround);
             document.documentElement.style.setProperty('--header-text', items.GridHeaderTextColor);

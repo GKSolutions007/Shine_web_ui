@@ -2263,10 +2263,17 @@ if ($("#txtAddID").val() == 0) {
     });
     function updateLabelColumn(labelID, netValue) {
         //const label = document.getElementById(`dgvProdGross${rowId}`);
-        const label = document.getElementById(labelID);
-        label.setAttribute('lbltag', netValue.toFixed(4));
-        label.innerText = netValue.toFixed(DecVal);
-        label.title = netValue.toFixed(4);
+        try {
+            if (labelID != undefined) {
+                const label = document.getElementById(labelID);
+                label.setAttribute('lbltag', netValue.toFixed(4));
+                label.innerText = netValue.toFixed(DecVal);
+                label.title = netValue.toFixed(4);
+            }
+        }
+        catch(error) {
+            console.error("Error ", error, "labelID", labelID);
+        }
     }
     function updateInputColumn(inputID, netValue) {
         //const label = document.getElementById(`dgvProdGross${rowId}`);
@@ -6654,12 +6661,12 @@ if ($("#txtAddID").val() == 0) {
         $("#dvMain").show();
         $("#dvDocuments").hide();
         $("#btnPreview,#btnPDF,#btnPrint").hide();
-        $("#btnSave,#btnClear,#btnDraft").show();
-        $("#btnEmail,#btnWhatsapp").show();
-        $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
+        $("#btnSave,#btnDraft").show();
+        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").prop("disabled", true);
         $("#MainHeading").text("Variant " + $("#txtFormName").val());
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
+        $("#btnSave,#btnDraft").prop("disabled", false);
+        $("#btnTEdit,#btnTCancel,#btnTVariant,#btnEmail,#btnWhatsapp,#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
         $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
         GetVariantData(VarType, ID, PartyID);
         $("#MainHeading").text("Create " + $("#txtFormName").val());
@@ -6676,7 +6683,7 @@ if ($("#txtAddID").val() == 0) {
             xhrFields: {
                 withCredentials: true
             },
-            async: false,
+            //async: false,
             success: function (data) {
                 ProductTable.draw().clear(); ProductTable.draw().clear();
                 $.each(data, function (i, items) {
@@ -6861,15 +6868,33 @@ if ($("#txtAddID").val() == 0) {
         var nPartyID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
         vw = window.innerWidth;
         vh = window.innerHeight;
-        var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
-        window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        //var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+        //window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        const hasPermission = nPartyID == 0
+            ? checkAddEditPermission("103")
+            : checkAddEditPermission("104");
+        if (hasPermission) {
+            var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nPartyID == 0 ? "Add" : "Edit") + " Customer </code></h4>");
+        }
     });
     $("#openreaturntype").click(function (e) {
         var nReturnTypeID = $("#cmbReturnType").val() != "" ? $("#cmbReturnType").val() : 0;
         vw = window.innerWidth;
         vh = window.innerHeight;
+        const hasPermission = nReturnTypeID == 0
+            ? checkAddEditPermission("31")
+            : checkAddEditPermission("32");
+        if (hasPermission) {
         var ProdUrl = Url + "SingleMaster?name=GN98nHEfhTQXGt73jXp5pfOnlepY6%2BX6xvbkh%2BN5XBY%3D&strFormID=jdLumi2w7Hxz4%2BVktNGHzA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nReturnTypeID;
-        window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nReturnTypeID == 0 ? "Add" : "Edit") + " Return Type </code></h4>");
+        }
     });
     
     $("#btnAddNewProduct").click(function (e) {
@@ -6918,11 +6943,7 @@ if ($("#txtAddID").val() == 0) {
             var FieldID = event.target.id;
             var FieldName = event.target.name;
             if (FieldID == "txtSearch") {
-                var nPartyID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                vw = window.innerWidth;
-                vh = window.innerHeight;
-                var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
-                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                $("#opencustomer").trigger("click");
             }
             if (FieldName == "ProdName") {
                 //console.log("editingRow ", editingRow.data());
@@ -6934,15 +6955,19 @@ if ($("#txtAddID").val() == 0) {
                 }
                 vw = window.innerWidth;
                 vh = window.innerHeight;
+                const hasPermission = prodid === 0
+                    ? checkAddEditPermission("111")
+                    : checkAddEditPermission("112");
+                if (hasPermission) {
                 var ProdUrl = Url + "ProductMaster?name=dFLU9MS0CpfVS5wW5G17EQ%3D%3D&strFormID=RjZMX%2BX6NiPSRFI2WDoZJA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + prodid;
-                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                    window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                }
+                else {
+                    showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (prodid == 0 ? "Add" : "Edit") + " Product</code></h4>")
+                }
             }
             if (FieldID == "cmbReturnType") {
-                var nReturnTypeID = $("#cmbReturnType").val() != "" ? $("#cmbReturnType").val() : 0;
-                vw = window.innerWidth;
-                vh = window.innerHeight;
-                var ProdUrl = Url + "SingleMaster?name=GN98nHEfhTQXGt73jXp5pfOnlepY6%2BX6xvbkh%2BN5XBY%3D&strFormID=jdLumi2w7Hxz4%2BVktNGHzA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nReturnTypeID;
-                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                $("#openreaturntype").trigger("click");
             }
         }
         if (event.key === "F4") {

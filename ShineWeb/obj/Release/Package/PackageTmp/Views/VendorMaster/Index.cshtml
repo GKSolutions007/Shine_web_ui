@@ -308,7 +308,7 @@
                                                     <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
                                                         <div>
                                                             <span class="form-label">
-                                                                <input class="form-control FormclrField" type="email" id="txtEMail" placeholder="">
+                                                                <input class="form-control FormclrField" type="email" id="txtEMail" placeholder=""  style="text-transform:lowercase">
                                                                 <label class="labelup" for="txtEMail">E-Mail ID</label>
                                                             </span>
                                                             <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnEMail" class="clrdivs"></div>
@@ -609,7 +609,7 @@
                                                 <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
                                                     <div>
                                                         <span class="form-label">
-                                                            <input class="form-control FormclrField" type="text" id="txtGSTIN" placeholder="" maxlength="15">
+                                                            <input class="form-control FormclrField" type="text" id="txtGSTIN" placeholder="" maxlength="15" style="text-transform:uppercase">
                                                             <label class="labelup" for="txtGSTIN">GSTIN</label>
                                                         </span>
                                                         <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnGSTIN" class="clrdivs"></div>
@@ -834,7 +834,9 @@
         var nMode = 1;
         var FID = $("#txtFormID").val();
         var Table = $('#tblMasterData').DataTable();
-        AllVendorData();
+        setTimeout(() => {
+            AllVendorData();
+        }, 700);
         //~Grid Data
         function AllVendorData() {
             $.ajax({
@@ -1039,7 +1041,7 @@
                                 $("#txtBAdd2").val(items.Billadd2),
                                 $("#txtBAdd3").val(items.Billadd3),
                                 $("#txtSAdd1").val(items.Shipadd1),
-                                $("#txtSAdd2").val(items.shipadd2),
+                                $("#txtSAdd2").val(items.Shipadd2),
                                 $("#txtSAdd3").val(items.Shipadd3),
                                 $("#txtPincode").val(items.Pincode),
                                 $("#txtContactperson").val(items.ContactPerson),
@@ -1461,10 +1463,18 @@
         var Url = '@Session["url"].ToString()';
         $("#opencreditterm").click(function (e) {
             var ncrtermID = $("#cmbCreditTerm").val() != "" ? $("#cmbCreditTerm").val() : 0;
-    vw = window.innerWidth;
-    vh = window.innerHeight;
-            var ProdUrl = Url + "TaxCompGift?name=egOIy11IfurSCf1xP3tHhcsrFfMn%2F3jcr%2BHSpUEIF0Q%3D&strFormID=Tg3R3dzL5d8qh2W0SyphdQ%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + ncrtermID;
-    window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+            vw = window.innerWidth;
+            vh = window.innerHeight;
+            const hasPermission = ncrtermID == 0
+                ? checkAddEditPermission("15")
+                : checkAddEditPermission("16");
+            if (hasPermission) {
+                var ProdUrl = Url + "TaxCompGift?name=egOIy11IfurSCf1xP3tHhcsrFfMn%2F3jcr%2BHSpUEIF0Q%3D&strFormID=Tg3R3dzL5d8qh2W0SyphdQ%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + ncrtermID;
+                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+            }
+            else {
+                showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (ncrtermID == 0 ? "Add" : "Edit") + " Credit Term</code></h4>");
+            }
 });
 
         window.addEventListener("message", function (event) {
@@ -1481,11 +1491,7 @@
                 var FieldID = event.target.id;
                 var FieldName = event.target.name;
                 if (FieldID == "cmbCreditTerm") {
-                    var ncrtermID = $("#cmbCreditTerm").val() != "" ? $("#cmbCreditTerm").val() : 0;
-                    vw = window.innerWidth;
-                    vh = window.innerHeight;
-                    var ProdUrl = Url + "TaxCompGift?name=egOIy11IfurSCf1xP3tHhcsrFfMn%2F3jcr%2BHSpUEIF0Q%3D&strFormID=Tg3R3dzL5d8qh2W0SyphdQ%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + ncrtermID;
-                    window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                    $("#opencreditterm").trigger("click");
                 }
             }
         });

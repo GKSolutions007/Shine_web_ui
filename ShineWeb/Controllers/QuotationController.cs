@@ -12,7 +12,7 @@ namespace ShineWeb.Controllers
     public class QuotationController : Controller
     {
         clsBusinessLayer objBL = new clsBusinessLayer();
-        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string TransVariantID = "0")
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string TransVariantID = "0", string PartyID = "0")
         {
             if (Session["LoginUserID"] == null)
             {
@@ -41,6 +41,7 @@ namespace ShineWeb.Controllers
                 dam.FormName = Name;
                 dam.ID = TranID;
                 dam.TransType = TypeID;
+                dam.PartyID = PartyID;
                 dam.Add = AddPerm;
                 dam.Modify = ModPerm;
                 dam.View = ViewPerm;

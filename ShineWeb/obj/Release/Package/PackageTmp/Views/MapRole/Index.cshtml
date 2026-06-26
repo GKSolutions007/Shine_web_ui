@@ -168,12 +168,12 @@
                                     </button>
                                 </td>
                                 <td>
-                                    <button id="btnGet" type="button" class="btn btn-info">
+                                    <button id="btnGet" type="button" class="btn btn-primary">
                                         <span class="glyphicon glyphicon-import" style="color:white"></span>&#x2009;Get Details
                                     </button>
                                 </td>
                                 <td>
-                                    <button id="btnSubmit" type="button" class="btn btn-success">
+                                    <button id="btnSave" type="button" class="btn btn-success">
                                         <span class="glyphicon glyphicon-saved"> Save</span>
                                     </button>
                                 </td>
@@ -205,10 +205,10 @@
     var LogID = '@Session["LoginUserID"]';
     var RID = '@Session["RoleID"]';
     var Aurl = '@Session["APIurl"]';
-    $(document).ready(function () {
+   
         $("#txtUserName").prop('disabled', false);
         $('#txtUserName').focus();
-        $('#btnSubmit').toggle(false);
+        $('#btnSave').toggle(false);
         $('#divSaveMsg').html('');
 
         $(window).scroll(function () {
@@ -251,7 +251,7 @@
             });
         }
         $('#btnGet').click(function () {
-            $('#btnSubmit').toggle(false);
+            $('#btnSave').toggle(false);
             //jsTreeLoad($('#txtRoleName').val())
 
             var IsTrue = true;
@@ -267,9 +267,9 @@
                 var blTrue = true;
                 if (blTrue) {
                     $("#txtUserName").prop('disabled', true);
-                    $('#btnSubmit').toggle(true);
+                    $('#btnSave').toggle(true);
                     $('#divSaveMsg').html('');
-                    $('#treeView').hide();
+                    $('#treeView,#btnGet').hide();
                     jsTreeLoad(var_RoleName);
                 }
                 else {
@@ -278,21 +278,20 @@
                 }
             }
         });
-        function jsTreeLoad(var_RoleName)
-        {
+        function jsTreeLoad(var_RoleName) {
             var exporcoll = $("#chkExpandAll").is(":checked") ? 1 : 2;
             $('#treeView').show();
             $('#treeView').jstree("refresh");
             $('#MobiletreeView').show();
             $('#MobiletreeView').jstree("refresh");
 
-            var treeData,mobiletree;
+            var treeData, mobiletree;
             $.ajax({
                 url: Aurl + "maprole/gettreedata",
                 type: 'get',
                 contentType: 'json',
                 data: { RoleID: var_RoleName, UID: LogID },
-                async : false,
+                async: false,
                 xhrFields: {
                     withCredentials: true
                 },
@@ -392,8 +391,11 @@
                 }
             });
         }
-        $('#btnSubmit').click(function () {
-            $("#btnSubmit").prop("disabled", true);
+        $('#btnSave').click(function () {
+            if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+        });
+        function SaveData() {
+            $("#btnSave").prop("disabled", true);
             getCheckedIDs();
             $('#divSaveMsg').html('');
             let sb = document.getElementById("RepLoadersnackbarMap");
@@ -410,13 +412,13 @@
                 },
                 success: function (data) {
                     sb.classList.remove("show");
-                    $("#btnSubmit").prop("disabled", false);
+                    $("#btnSave").prop("disabled", false);
                     $('#divSaveMsg').html('Saved Successfully');
                     showSuccessSnackbar("Saved Successfully");
                     $('#txtUserName').prop("disabled", false);
                     $('#txtUserName').val(0);
                     $('#txtUserName').focus();
-                    $('#btnSubmit').toggle(false);
+                    $('#btnSave').toggle(false);
                     $('#treeView').hide();
                     setTimeout(() => {
                         $('#btnClear').click();
@@ -424,13 +426,14 @@
 
                 }, error: function (data) {
                     sb.classList.remove("show");
-                    $("#btnSubmit").prop("disabled", false);
+                    $("#btnSave").prop("disabled", false);
                     if (data.status == "401") {
                         var msg = data.responseJSON.Message;
                         //showErrorSnackbar(msg + " Logout and Login again.");
                     }
                 }
             });
-        });
-    });
+        }
+    
+
 </script>
