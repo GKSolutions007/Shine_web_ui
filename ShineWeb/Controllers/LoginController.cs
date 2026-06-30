@@ -25,23 +25,19 @@ namespace ShineWeb.Controllers
         public ActionResult Index(string Msg=null)
         {
             //272,273,274,275,276
-            string plain = "";
-            string[] strplain = plain.Split(',');
-            string EncVal = "";
-            for (int i = 0; strplain.Length > i; i++)
-            {
-                string val = strplain[i].ToString();
-                EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
-            }
+            //string plain = "";
+            //string[] strplain = plain.Split(',');
+            //string EncVal = "";
+            //for (int i = 0; strplain.Length > i; i++)
+            //{
+            //    string val = strplain[i].ToString();
+            //    EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
+            //}
 
             string nv = Convert.ToString(Session["NavBarVisible"]);
             string userAgent = Request.UserAgent;
             bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
             string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
-                //"http://202.21.32.54/sampapi/api/";
-            // HttpContext.Request.Url.AbsoluteUri.ToString();
-            //APIurl = "https://gksapp.in/shinewebapi/api/";
-            //APIurl = "http://localhost:44396/api/";
             Session["APIurl"] = APIurl;
             HttpContext.Session.Add("APIurl", APIurl);
 

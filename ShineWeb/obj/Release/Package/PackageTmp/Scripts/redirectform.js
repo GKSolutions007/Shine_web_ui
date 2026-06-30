@@ -1,4 +1,27 @@
-﻿var baseURL = document.getElementById("hdnApiurl").value;
+﻿const redirectpermissionMap = {
+    1: { menuID: "135", menuName: "View Purchase Bill" },
+    2: { menuID: "163", menuName: "View Automatic Indent" },
+    3: { menuID: "169", menuName: "View Purchase Order" },
+    4: { menuID: "157", menuName: "View Credit Note" },
+    5: { menuID: "175", menuName: "View Debit Note" },
+    6: { menuID: "181", menuName: "View Payable Voucher" },
+    7: { menuID: "187", menuName: "View Receivable Voucher" },
+    8: { menuID: "193", menuName: "View Contra" },
+    9: { menuID: "199", menuName: "View Journal Entry" },
+    10: { menuID: "205", menuName: "View Other Collection" },
+    11: { menuID: "211", menuName: "View Other Payment" },
+    12: { menuID: "218", menuName: "View Purchase Return" },
+    13: { menuID: "152", menuName: "View Inventory Adjustment" },
+    14: { menuID: "148", menuName: "View Quotation" },
+    15: { menuID: "227", menuName: "View Invoice" },
+    16: { menuID: "234", menuName: "View Sales Return" },
+    19: { menuID: "251", menuName: "View Collection" },
+    18: { menuID: "246", menuName: "View Payment" },
+    21: { menuID: "284", menuName: "View Assign Invoices" },
+    22: { menuID: "330", menuName: "View Inventory Conversion" },
+    23: { menuID: "501", menuName: "View Delivery" } 
+};
+var baseURL = document.getElementById("hdnApiurl").value;
 function OpenTransactionDocument(dTransID, DocID) {
     $.ajax({
         url: baseURL + "quicaccessdocument/validate",
@@ -11,6 +34,13 @@ function OpenTransactionDocument(dTransID, DocID) {
         success: function (data) {
             $.each(data, function (i, items) {
                 if (items.MsgID == "0") {
+                    const permission = redirectpermissionMap[dTransID];
+                    if (permission && !checkAddEditPermission(permission.menuID)) {
+                        showErrorSnackbar(
+                            `You don't have permission for &ensp;<h4><code>${permission.menuName}</code></h4>`
+                        );
+                        return;
+                    }       
                     if (dTransID == 1) {
                         window.open(
                             'PurchaseBill?name=Vd%2B%2BrU8QQpt1lN1iIJW1a%2FK0VGZeYK0pqK2Sc7MnuHQ%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,

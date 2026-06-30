@@ -1425,13 +1425,13 @@
                     </div>
                 </div>
             </header>
-            }
-            else if (LayoutName == "UserPermission")
-            {
+        }
+        else if (LayoutName == "UserPermission")
+        {
             <div class="sidenav">
 
 
-                <div style="top: 0; position: fixed; width: 100%;height:45px;z-index:10000;" class="dvmainmenuheader">                   
+                <div style="top: 0; position: fixed; width: 100%;height:45px;z-index:10000;" class="dvmainmenuheader">
                     <div id="icQS" onclick="focussearch();" data-bs-toggle="modal" data-bs-target="#myModal" class="widesearchfield">
                         <img src="~/Images/search-icon.png" style="width: 14px; height: 14px; opacity: 0.7;" alt="Search" />
                         <span>Search</span>
@@ -1450,7 +1450,7 @@
                                 <a href="~/Home" style="color:lightgreen;font-size:large"><img src="~/Images/G_large_Transparent.png" style="width:45px;height:35px" />@*<b> Shine Web</b>*@</a>
                                 <label id="acompname" style="font-size:16px;font-weight:800">@CompName</label>
                             </td>
-                            
+
                             <!-- Favourite Menus in Header -->
                             <td id="tdFavouiteMenus" style="width:40%; padding-left: 10px;">
                                 <div style="display: flex; flex-wrap: nowrap; gap: 5px; align-items: center; overflow-x: auto;">
@@ -1531,7 +1531,7 @@
                         string strManuName = Convert.ToString(dtParent.Rows[iRow]["MenuName"]);
                         string MainMenuEnc = Convert.ToString(dtParent.Rows[iRow]["EncMenuName"]);
                         string ZeEnc = "jJOtHsRVwYECOhoiBc69dA==";
-                        System.Data.DataRow[] dr = dtPermission.Select("MenuParentId=" + nParentID.ToString(), "DisplayIndex");                        
+                        System.Data.DataRow[] dr = dtPermission.Select("MenuParentId=" + nParentID.ToString(), "DisplayIndex");
                         //System.Data.DataRow[] dr = dtPermission.Select("MenuTree=" + nParentID.ToString());
                         if (dr.Count() > 0 && nTreeID != 8) //strManuName != "Web"
                         {
@@ -2585,7 +2585,7 @@
             <button class="cm-btn cm-confirm" tabindex="-1" id="cmYes">Confirm</button>
         </div>
     </div>
-
+    <script src="~/Scripts/redirectform.js"></script>
     <div style="padding-left: 10px; padding-top: 40px;padding-bottom: 20px;width:100%">
         <div id="actionPopup" class="action-popup">
             <div class="popup-header">
@@ -2604,7 +2604,7 @@
 </body>
 </html>
 @*<script src="~/Scripts/jquery-3.7.1.min.js"></script>*@
-<script src="~/Scripts/redirectform.js"></script>
+
 <script type="text/javascript">
     
     var UserImgData = '@Session["UserImgData"]';
@@ -3032,7 +3032,8 @@
         if (event.key === "F2") {          
             previousFocus = event.target.id;
             var vbl = $('#dtpDate').is(":visible");
-            if (vbl) {
+            var dsbl = $('#dtpDate').is(":disabled");
+            if (vbl && !dsbl) {
                 $("#txtSelectdtpDate").val($("#dtpDate").val());
                 modaldtpDateSelection.show();
                 document.getElementById('mydtpDateSelection').addEventListener('shown.bs.modal', function () {
@@ -3615,7 +3616,22 @@
     $("#btnNo").click(function () {
         $("#confirmModal").modal("hide");
     });
+    // Keyboard navigation
+    document.addEventListener('keydown', function (e) {
+        if (!$("#confirmModal").is(":visible")) return;
 
+        switch (e.key) {
+            case "ArrowLeft":
+                $("#btnYes").trigger("focus");
+                e.preventDefault();
+                break;
+
+            case "ArrowRight":
+                $("#btnNo").trigger("focus");
+                e.preventDefault();
+                break;
+        }
+    });
     //$(".ui-dialog-titlebar-close").html('x');
     function ClearConfirmDialogMsg_old(message) {
         var IsAccepted = false;
@@ -3941,7 +3957,10 @@ function CloseConfirmDialogMsg_old(message) {
         
         var formhavepermission = checkFormPermission("OneView?");
         var OpenOneView = false;
-        if (PartyType == 1)//customer
+        if (OpenOneView == 0) {
+            OpenOneView = true;
+        }
+        else if (PartyType == 1)//customer
         {
             OpenOneView = EnableSalesOneView == "1" || ByShortcut;
         } else if (PartyType == 2)//vendor
@@ -3964,6 +3983,43 @@ function CloseConfirmDialogMsg_old(message) {
     function checkAddEditPermission(formkey) {
         var perms = localStorage.getItem("MenusData");
         return JSON.parse(perms).filter(lk => lk.MenuId == formkey).length > 0
+    }
+    function checkValidStatus(status) {
+        const isValidStatus = !['Amended', 'Cancelled', 'Processed', 'Close'].includes(status);
+        return isValidStatus
+    }
+    function ValidateCancelDraftData(nActionType, nTransID, nID, nStatus) {
+        let result = false;
+
+        $.ajax({
+            url: Aurl + "validatedraftdocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: nActionType, TransID: nTransID, ID: nID, Status: nStatus },
+            xhrFields: {
+                withCredentials: true
+            },async : false,
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        GetFilterData();
+                        result = true;
+                    } else if (items.MsgID == 1) {
+                        //edit mode validation
+                        result = true;
+                    } else {
+                        showErrorSnackbar(items.Message);
+                        result = false;
+                    }
+                    return false;
+                });
+            },
+            error: function () {
+                result = false;
+            }
+        });
+        return result;
     }
     function GetBranchwiseABSQty(nProdID) {
         $.ajax({
@@ -5460,6 +5516,7 @@ function CloseConfirmDialogMsg_old(message) {
             document.getElementById('cmTag').textContent = c.tag;
             document.getElementById('cmTitle').textContent = c.title;
             document.getElementById('cmMessage').textContent = c.message;
+
             btnYes.textContent = c.yesLabel;
             setTimeout(() => {
                 if (c.focustype == 1)
@@ -5662,7 +5719,38 @@ function CloseConfirmDialogMsg_old(message) {
             if (e.key !== 'Escape' || !overlay.classList.contains('visible')) return;
             shake(() => { hide(); if (onNo) onNo(); });
         });
+        // Keyboard navigation
+        document.addEventListener('keydown123', function (e) {
 
+            if (!overlay.classList.contains('visible')) return;
+
+            switch (e.key) {
+                case "ArrowLeft":
+                    btnYes.focus();
+                    e.preventDefault();
+                    break;
+
+                case "ArrowRight":
+                    btnNo.focus();
+                    e.preventDefault();
+                    break;
+
+                case "Tab":
+                    // Keep focus between Yes and No buttons
+                    if (document.activeElement === btnYes) {
+                        btnNo.focus();
+                    } else {
+                        btnYes.focus();
+                    }
+                    e.preventDefault();
+                    break;
+
+                case "Enter":
+                    document.activeElement.click();
+                    e.preventDefault();
+                    break;
+            }
+        });
         window.addEventListener('resize', () => {
             resizeCanvas();
             if (overlay.classList.contains('visible')) centerDialog();

@@ -753,7 +753,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled') {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftModifyID").val() != 0)
                                 isVisible = true;
@@ -799,7 +800,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled') {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftCancelID").val() != 0)
                                 isVisible = true;
@@ -820,6 +822,7 @@
                     var rdo1 = $("#rdoMainTableData").is(":checked");
                     var ID = rowData.ID;//[0];
                     var sts = rowData.Status;//[9];
+                    var stsID = rowData.CurrentStatus;
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
                         if (rdo1) {
@@ -828,7 +831,8 @@
                         else {
                             var conf = confirm("Do you want to remove draft data?");
                             if (conf) {
-                                GetData(10, ID);
+                                //GetData(10, ID);
+                                ValidateCancelDraftData(2, 2, ID, stsID)
                             }
                         }
                     }
@@ -1566,6 +1570,10 @@ setTimeout(function () { GetFilterData(); }, 800);
         nTransMode = 2;
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
+        var stsID = rowData.CurrentStatus;        
+        if (rdo2 && !ValidateCancelDraftData(1, 2, rowData.ID, stsID)) {
+            return;
+        }
         GetProductViewData(rdo1 ? 5 : 8, rowData.ID);
         nTransMode = rdo1 ? 2 : 1;
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
