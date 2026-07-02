@@ -1059,6 +1059,7 @@
                     $("#txtID").val(ID);
                     ViewActionButtonPermission();
                     GetProductViewData(7, ID);
+                    $("#txtStatus").val(rowData.CurrentStatus);
                     $(".FormclrField,.FormclrcmbField").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
@@ -1080,7 +1081,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed') {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftModifyID").val() != 0)
                                 isVisible = true;
@@ -1128,7 +1130,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed') {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftCancelID").val() != 0)
                                 isVisible = true;
@@ -1146,10 +1149,11 @@
                 },
                 displayType: 'menu_item',
                 handler: (rowdata, gridInstance) => {
-                    var rdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : $("#rdoAITableData").is(":checked") ? "3" : "4";
+                    var rdo1 = $("#rdoMainTableData").is(":checked");
                     $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[9];
+                    var stsID = rowdata.CurrentStatus;
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
                         if (rdo1) {
@@ -1158,7 +1162,8 @@
                         else {
                             var conf = confirm("Do you want to remove draft data?");
                             if (conf) {
-                                GetData(15, ID);
+                                //GetData(15, ID);
+                                ValidateCancelDraftData(2, 14, ID, stsID)
                             }
                         }
                     }
@@ -3340,7 +3345,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     }
                     $("#cmbPriceType").val(items.PriceID);
                     $("#cmbPriceType").prop("disabled", true);
-                    $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), $("#txtStatus").val(items.Status);
+                    $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);//, $("#txtStatus").val(items.Status)
                     updateInputColumn("txtFright", items.FrightAmt); updateInputColumn("txtOtherChargPern", items.OtherChargePern); updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
                     updateInputColumn("txtProdDiscAmt", items.TotalProdDiscAmt);
                     updateInputColumn("txtTradeDiscPern", items.TradeDiscPern); updateInputColumn("txtAddnlDiscPern", items.AddnlDiscPern);
@@ -3522,9 +3527,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
         nTransMode = 2;
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
+        var stsID = rowData.CurrentStatus;
+        if (rdo2 && !ValidateCancelDraftData(1, 14, rowData.ID, stsID)) {
+            return;
+        }
         //showErrorSnackbar("Bill Table : " + rdo1 + ", Draft : " + rdo2);
         GetProductViewData(rdo1 ? 7 : rdo2 ? 11 : 17, rowData.ID);
         nTransMode = rdo1 ? 2 : 1;
+        $("#txtStatus").val(stsID);
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
@@ -3574,6 +3584,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#MainHeading").text("Cancel Quotation");
         nTransMode = 4;
         GetProductViewData(7, rowData.ID);
+        var stsID = rowData.CurrentStatus;
+        $("#txtStatus").val(stsID);
         $(".FormclrField,.FormclrcmbField").prop("disabled", true);
         $("#txtNarration,#txtRemarks").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
@@ -3601,6 +3613,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         nTransMode = 3;
         GetData(1);
         GetProductViewData(7, rowData.ID);
+        $("#txtStatus").val(1);
         $("#dvMain").show();
         $("#dvDocuments").hide();
         $("#btnEmail,#btnWhatsapp").hide();

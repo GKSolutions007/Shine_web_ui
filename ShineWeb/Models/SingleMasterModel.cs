@@ -42,6 +42,8 @@ namespace ShineWeb.Models
         public string ChildURL5 { get; set; }
         public string DraftModify { get; set; }
         public string DraftCancel { get; set; }
+        public string CrossTran1 { get; set; }
+        public string CrossTran2 { get; set; }
     }
     public class getsetdates
     {

@@ -759,7 +759,7 @@
                 </div>
 
                 <!-- Manufacturer -->
-                <div class="col-12 col-md-3 mb-2">
+                <div class="col-12 col-md-3 mb-2 dvSelectItems">
                     <div class="input-group">
                         <span class="form-label flex-grow-1">
                             <select class="form-control FormclrcmbField" id="cmbManuf">
@@ -823,7 +823,7 @@
         </div>
 
         <!-- Item Details -->
-        <div class="col-12 col-md-4 mb-1">
+        <div class="col-12 col-md-4 mb-1 dvSelectItems">
             <span class="form-label">
                 <input class="form-control FormclrField" id="txtHProds" />
                 <label class="labelup">Item Details</label>
@@ -844,7 +844,7 @@
         </div>
 
         <!-- UOM -->
-        <div class="col-12 col-md-2 mb-1">
+        <div class="col-12 col-md-2 mb-1 dvSelectItems">
             <span class="form-label">
                 <select tabindex="3" class="form-control FormclrcmbField" id="cmbUOM">
                     <option value="0">Select UOM</option>
@@ -854,7 +854,7 @@
         </div>
 
         <!-- Reason -->
-        <div class="col-12 col-md-2 mb-1">
+        <div class="col-12 col-md-2 mb-1 dvSelectItems">
             <span class="form-label">
                 <select tabindex="3" class="form-control FormclrcmbField" id="cmbReason">
                     <option value="0">Select Reason</option>
@@ -864,15 +864,15 @@
         </div>
 
         <!-- Batch Button -->
-        <div class="col-12 col-md-1 mb-1 d-flex align-items-center">
+        <div class="col-12 col-md-1 mb-1 d-flex align-items-center dvSelectItems">
             <div>
-                <button tabindex="4" class="btn btn-primary" id="btnBatch">Batch</button>
+                <button tabindex="4" class="btn btn-primary dvSelectItems" id="btnBatch">Batch</button>
                 <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrProductBatch" class="clrdivs"></div>
             </div>
         </div>
 
         <!-- Empty gap -->
-        <div class="col-12 col-md-3 mb-3"></div>
+        <div class="col-12 col-md-3 mb-3 dvSelectItems"></div>
 
         <!-- Product Data Table (kept — data grid) -->
         <div class="col-sm-12 col-md-12 col-lg-12">
@@ -1600,11 +1600,12 @@
                     $("#txtID").val(ID);
                     ViewActionButtonPermission();
                     GetProductViewData(7, ID);
+                    $("#txtStatus").val(rowdata.CurrentStatus);
                     $(".FormclrField,.FormclrcmbField").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
                     $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
                     $("#btnPreview,#btnPDF,#btnPrint").show();
-                    $("#btnSave,#btnClear,#btnDraft").hide();
+                    $("#btnSave,#btnClear,#btnDraft,.dvSelectItems").hide();
                     $("#dvMain").show();
                     $("#btnEmail,#btnWhatsapp").show();
                     $("#dvDocuments").hide();
@@ -1690,6 +1691,7 @@
                     $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[9];
+                    var stsID = rowdata.CurrentStatus;
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
                         if (rdo1 == "1") {
@@ -1698,7 +1700,8 @@
                         else {
                             var conf = confirm("Do you want to remove draft data?");
                             if (conf) {
-                                GetData(15, ID);
+                                //GetData(15, ID);
+                                ValidateCancelDraftData(2, 12, ID, stsID)
                             }
                         }
                     }
@@ -2945,7 +2948,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#txtDiffIncl").css("color", DiffIncl >= 0 ? "green" : "red");
         var ItemCount = parseInt(ProductTable.rows().count());
         $("#lblPTCount").text(ItemCount);
-        $("#cmbPriceType").prop("disabled", false);
+        let ptdisb = nTransMode == 4 || nTransMode == 5;
+        $("#cmbPriceType").prop("disabled", ptdisb);
         if (ItemCount == 0) {
             $("#txtTradeDiscPern,#txtTradeDiscAmt,#txtAddnlDiscPern,#txtAddnlDiscAmt").prop("disabled", false);
         } else {
@@ -3809,6 +3813,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var PID = $('#txtHProdID').val();
             //var Filterdata = BatchAcceptArray.filter(arr => arr.ProdID.includes(PID));
             BatchRID = 0;
+            let disbfield = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
             for (var i = 0; i < TempBatch.length; i++) {
                 dPurchasePrice = (parseFloat(TempBatch[i].ReturnPrice)) * parseFloat(ConvFact);
                 dActQty = (parseFloat(TempBatch[i].ActQty)) / parseFloat(ConvFact);
@@ -3824,10 +3829,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     '<label id="dgvbtActFreeAct' + BatchRID + '" lbltag="' + dActFreeQty + '" title="' + dActFreeQty + '" class="lblsettag" name="ActFreeQty">' + parseFloat(dActFreeQty).toFixed(DecVal) + '</label>',
                     '<label id="dgvbtActDmgAct' + BatchRID + '" lbltag="' + dActDmgQty + '" title="' + dActDmgQty + '" class="lblsettag" name="ActDmgQty">' + parseFloat(dActDmgQty).toFixed(DecVal) + '</label>',
                     '<label id="dgvbtMRP' + BatchRID + '" lbltag="' + TempBatch[i].MRP + '" title="' + TempBatch[i].MRP + '" class="lblsettag" name="MRP">' + parseFloat(TempBatch[i].MRP).toFixed(DecVal) + '</label>',
-                    '<input id="dgvbtQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag" name="Qty" min="0" max="' + dActQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                    '<input id="dgvbtFreeQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="FreeQty" min="0" max="' + dActFreeQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                    '<input id="dgvbtDmgQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag"  name="DmgQty" min="0" max="' + dActDmgQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="ReturnPrice" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>'
+                    '<input ' + disbfield +' id="dgvbtQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag" name="Qty" min="0" max="' + dActQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                    '<input ' + disbfield +' id="dgvbtFreeQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="FreeQty" min="0" max="' + dActFreeQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                    '<input ' + disbfield +' id="dgvbtDmgQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag"  name="DmgQty" min="0" max="' + dActDmgQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                    '<input ' + disbfield +' ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="ReturnPrice" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>'
                 ]).draw(false);
                 BatchRID++;
             }
@@ -4451,8 +4456,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     nPriceID = items.PriceID;
                     $("#cmbPriceType").val(items.PriceID);
                     $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks),
-                        $("#txtNarration").val(items.Narration),
-                        $("#txtStatus").val(items.Status);
+                        $("#txtNarration").val(items.Narration);
+                        //$("#txtStatus").val(items.Status);
                     $("#cmbReturnType").val(items.ReturnType);
                     updateInputColumn("txtFright", items.Frieght);//$("#txtFright").val(items.Frieght),
                     updateInputColumn("txtOtherChargPern", items.OtherChargePern);//$("#txtOtherChargPern").val(items.OtherChargePern),
@@ -4513,13 +4518,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             CFValue = parseFloat(forItemUOM[0].ConversionRate) || 1;
                         }
                         var dTransactionPrice = parseFloat(itemsProd.TransactionPrice) * CFValue
+                        let hdfield = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
                         return [
                             itemsProd.ProdID,
                             itemsProd.Code,
                             itemsProd.UomID,
                             itemsProd.TaxPern,
                             itemsProd.ReasonID,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clseditprod"  title="Edit Product"></span><br/><span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>' +
+                            '<span ' + hdfield +' style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-edit clseditprod"  title="Edit Product"></span><br/><span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>' +
                             '&ensp;<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
                             '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
                             '<input name = "ProName" class="gdInput" value="' + itemsProd.Name + '"  disabled title="' + itemsProd.Name + '"/><br/>' + itemsProd.Code,
@@ -4637,13 +4643,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
         //$("#txtID").val(ID);
+        var stsID = rowData.CurrentStatus;
+        if (rdo2 && !ValidateCancelDraftData(1, 12, rowData.ID, stsID)) {
+            return;
+        }
         GetProductViewData(rdo1 ? 7 : 11, rowData.ID);
+        $("#txtStatus").val(stsID);
         nTransMode = rdo1 ? 2 : 1;
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
         $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
-        $("#btnSave,#btnDraft").show();
+        $("#btnSave,#btnDraft,.dvSelectItems").show();
         $("#btnSave,#btnClose,#btnDraft").prop("disabled", false);
         $("#dvMain").show();
         $("#btnEmail,#btnWhatsapp").hide();
@@ -4694,7 +4705,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#btnSave,#btnClose").prop("disabled", false);
         $("#btnSave").show();
         $("#dvMain").show();
-        $("#btnEmail,#btnWhatsapp").hide();
+        $("#btnEmail,#btnWhatsapp,.dvSelectItems").hide();
         $("#dvDocuments").hide();
         $("#balanceContainer").show();
         if ($("#txtEnableBranch").val() == 1) {
@@ -4722,7 +4733,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
         $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
         $("#btnPreview,#btnPDF,#btnPrint").hide();
-        $("#btnSave,#btnClear,#btnDraft").show();
+        $("#btnSave,#btnClear,#btnDraft,.dvSelectItems").show();
         $("#balanceContainer").hide();
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
@@ -4839,7 +4850,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     visible: $("#txtAddID").val() == 1 && rdo1 == 1,
                                     onClick: (gridInstance, event) => {                                        
                                         nTransMode = 1;
-                                        $("#dvMain").show();
+                                        $("#dvMain,.dvSelectItems").show();
                                         $("#dvDocuments").hide();
                                         $("#balanceContainer").hide();
                                         $("#btnTEdit,#btnTCancel,#btnTVariant").hide();

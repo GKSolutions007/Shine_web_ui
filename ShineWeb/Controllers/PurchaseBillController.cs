@@ -39,7 +39,7 @@ namespace ShineWeb.Controllers
                 string DrftMod = dtPermission.Select("MenuID = 382", null).Length > 0 ? "1" : "0";
                 string DrftCan = dtPermission.Select("MenuID = 383", null).Length > 0 ? "1" : "0";
                 string EnbPaid = dtPermission.Select("MenuID = 481", null).Length > 0 ? "1" : "0";
-
+                string POPerm = dtPermission.Select("MenuID = 521", null).Length > 0 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 dam.ID = TranID;
@@ -55,6 +55,7 @@ namespace ShineWeb.Controllers
                 dam.DraftModify = DrftMod;
                 dam.DraftCancel = DrftCan;
                 dam.EnablePaid = EnbPaid;
+                dam.CrossTran1 = POPerm;
                 return View(dam);
             }
         }

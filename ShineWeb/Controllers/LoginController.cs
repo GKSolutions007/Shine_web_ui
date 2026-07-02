@@ -36,7 +36,7 @@ namespace ShineWeb.Controllers
 
             string nv = Convert.ToString(Session["NavBarVisible"]);
             string userAgent = Request.UserAgent;
-            bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
+            //bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
             string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
             Session["APIurl"] = APIurl;
             HttpContext.Session.Add("APIurl", APIurl);
@@ -88,8 +88,29 @@ namespace ShineWeb.Controllers
             ViewData["AlertMessage"] = Msg;
             return View(model);
         }
-        [HttpGet]
-        public JsonResult SendMail(string ToMail,string ID)
+        public ActionResult AAP()
+        {
+            string nv = Convert.ToString(Session["NavBarVisible"]);
+            string userAgent = Request.UserAgent;
+            //bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
+            string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
+            Session["APIurl"] = APIurl;
+            HttpContext.Session.Add("APIurl", APIurl);
+
+            string url = HttpContext.Request.Url.AbsoluteUri.ToString();
+            char IsSlash = url[url.Length - 1];
+            //string addslahinlast = IsSlash == '/' ? url : url + "/";
+            Session["url"] = IsSlash == '/' ? url : url + "/";
+            Session["DeviceType"] = Request.Browser.IsMobileDevice ? "0" : "1";
+            Session["DeviceOS"] = GetOperatingSystem(userAgent);
+            if (string.IsNullOrEmpty(nv))
+            {
+                Session["NavBarVisible"] = "LogOn";
+            }
+            return View();
+        }
+            [HttpGet]
+        public JsonResult SendMail_old(string ToMail,string ID)
         {
             string url = Session["url"].ToString();
             char isslash = url[url.Length - 1];
@@ -97,6 +118,85 @@ namespace ShineWeb.Controllers
             string ALink = url + "Login/AACM?AAlk=" + Url.Encode(clsEncryptDecrypt.Encrypt(ID));
             bool Issend = bl.SendEmail("Shine Activation mail", "Hii user, your activation link given below. Click the link to activate your account.\n" + ALink, ToMail);
             return Json(Issend ? 0 : 1, JsonRequestBehavior.AllowGet);
+        }
+        public JsonResult SendMail(string ToMail, string ID)
+        {
+            string url = Session["url"].ToString();
+            char isslash = url[url.Length - 1];
+            url = isslash == '/' ? url : url + "/";
+            string ALink = url + "Login/AACM?AAlk=" + Url.Encode(clsEncryptDecrypt.Encrypt(ID));
+
+            string subject = "Activate Your Account";
+            string body = BuildActivationEmailBody(ALink);
+
+            bool Issend = bl.SendEmail(subject, body, ToMail); // ensure IsBodyHtml = true inside SendEmail
+            return Json(Issend ? 0 : 1, JsonRequestBehavior.AllowGet);
+        }
+
+        private string BuildActivationEmailBody(string activationLink)
+        {
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+</head>
+<body style='margin:0;padding:0;background-color:#f4f6f8;font-family:Segoe UI, Arial, sans-serif;'>
+  <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background-color:#f4f6f8;padding:30px 0;'>
+    <tr>
+      <td align='center'>
+        <table role='presentation' width='480' cellpadding='0' cellspacing='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);'>
+          
+          <!-- Header -->
+          <tr>
+            <td style='background-color:#2563eb;padding:24px 32px;text-align:center;'>
+              <span style='color:#ffffff;font-size:20px;font-weight:600;'>Welcome Aboard!</span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style='padding:32px;'>
+              <p style='font-size:16px;color:#1f2937;margin:0 0 16px 0;'>Hi there,</p>
+              <p style='font-size:15px;color:#4b5563;line-height:1.6;margin:0 0 24px 0;'>
+                Thank you for creating an account with us. To get started, please confirm your email address by activating your account below.
+              </p>
+
+              <!-- Button -->
+              <table role='presentation' cellpadding='0' cellspacing='0' align='center' style='margin:0 auto 24px auto;'>
+                <tr>
+                  <td align='center' style='border-radius:6px;background-color:#2563eb;'>
+                    <a href='{activationLink}' target='_blank'
+                       style='display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:6px;'>
+                      Activate Account
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style='font-size:13px;color:#9ca3af;line-height:1.5;margin:0 0 8px 0;'>
+                If the button above doesn't work, please contact our support team for assistance.
+              </p>
+              <p style='font-size:13px;color:#9ca3af;line-height:1.5;margin:0;'>
+                If you didn't create this account, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style='background-color:#f9fafb;padding:16px 32px;text-align:center;border-top:1px solid #eef0f2;'>
+              <p style='font-size:12px;color:#9ca3af;margin:0;'>&copy; {DateTime.Now.Year} Shine. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>";
         }
         private string GetOperatingSystem(string userAgent)
         {
@@ -139,7 +239,10 @@ namespace ShineWeb.Controllers
 
                     HttpResponseMessage result = _client.GetAsync("activateaccount?UID=" + uid).Result;
                     if (result.IsSuccessStatusCode)
-                    {                        
+                    {
+                        //var jsonString = result.Content.ReadAsStringAsync();
+                        //string json = JsonConvert.DeserializeObject<string>(jsonString.Result);
+                        //DataTable dtResult = JsonConvert.DeserializeObject<DataTable>(json);
                         // DataTable dtRes = bl.BL_ExecuteParamSP("uspManageUsers", 5, uid);
                         msg = "You Account is Activated. You can Login now.";
                         ViewData["AlertMessage"] = msg;
@@ -148,7 +251,7 @@ namespace ShineWeb.Controllers
                     {
                         msg = "Account not activated. Try again later.";
                     }
-                    return RedirectToAction("Index", "Login",new { Msg = msg });
+                    return RedirectToAction("AAP", "Login",new { Msg = !result.IsSuccessStatusCode ? msg : null });//Index
                 }
             }
             catch (Exception ex)

@@ -386,6 +386,7 @@
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
     @Html.HiddenFor(model => model.DraftModify, new { @autocomplete = "off", @class = "form-control", @id = "txtDraftModifyID" })
     @Html.HiddenFor(model => model.DraftCancel, new { @autocomplete = "off", @class = "form-control", @id = "txtDraftCancelID" })
+    @Html.HiddenFor(model => model.CrossTran1, new { @autocomplete = "off", @class = "form-control", @id = "txtAllowAI" })    
     @Html.HiddenFor(model => model.EnableBranch, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableBranch" })
 
     <input hidden id="txtVendorID" />
@@ -416,8 +417,8 @@
                                 <input type="radio" name="sizeBy" value="dimensions" id="rdoDraftTableData">
                                 <label for="rdoDraftTableData">Draft Data</label>
 
-                                <input type="radio" name="sizeBy" value="dimensions" id="rdoAITableData">
-                                <label for="rdoAITableData">Indent Data</label>
+                                <input type="radio" name="sizeBy" value="dimensions" id="rdoAITableData" class="rdoAIField">
+                                <label for="rdoAITableData" class="rdoAIField">Indent Data</label>
                             </div>
                         </div>
                         <!-- Filters -->
@@ -580,7 +581,7 @@
                     </div>
 
                     <!-- Manufacturer + Days -->
-                    <div class="row">
+                    <div class="row dvclsforhdview">
 
                         <!-- Combined Border Section -->
                         <div class="col-12 mb-3">
@@ -671,9 +672,8 @@
         </div>
 
         <div>
-            <div>
-                <hr />
-
+            <hr />
+            <div class="dvclsforhdview">
                 <table class="table table-borderless" width="100%">
                     <tr hidden>
                         <td>
@@ -818,7 +818,7 @@
                 </tfoot>
             </table>
         </div>
-        <div class="container-fluid pb-5" style="padding-bottom:200px;">
+        <div class="container-fluid pb-5 pt-2" style="padding-bottom:200px;">
             <div class="row">
 
                 <div class="col-12 col-md-3"></div>
@@ -884,7 +884,7 @@
                         <tr class="bgclrfortr">
                             <td class="text-end" style="border:none;">
                                 <label>Tax Amount <a href="javascript:void(0);" id="toggleTax"> [+] </a>:</label>
-                                
+
                             </td>
                             <td class="text-end" style="border:none;">
                                 <label id="lblTaxAmount" class="fw-bold fs-5">0.00</label>
@@ -1015,6 +1015,8 @@
 </body>
 
 <script>
+    if ($("#txtAllowAI").val() == 0)
+        $(".rdoAIField").hide();
     //~Filter Action Buttons
     let mapusersRole = {
         canView: $("#txtViewID").val() == 1,
@@ -1047,6 +1049,7 @@
                     $("#txtID").val(ID);
                     ViewActionButtonPermission();
                     GetProductViewData(7, ID);
+                    $("#txtStatus").val(rowdata.CurrentStatus);
                     $(".FormclrField,.FormclrcmbField").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
@@ -1054,7 +1057,7 @@
                     $("#btnPreview,#btnPDF,#btnPrint").show();
                     $("#dvMain").show();
                     $("#btnEmail,#btnWhatsapp").show();
-                    $("#dvDocuments").hide();
+                    $("#dvDocuments,.dvclsforhdview").hide();
                     $("#MainHeading").text("View " + $("#txtFormName").val() + "_" + sts);
                     if ($("#txtEnableBranch").val() == 1) {
                         $("#cmbBranch").prop("disabled", true);
@@ -1068,7 +1071,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed') {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftModifyID").val() != 0)
                                 isVisible = true;
@@ -1115,7 +1119,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed') {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftCancelID").val() != 0)
                                 isVisible = true;
@@ -1138,15 +1143,17 @@
 
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[9];
+                    var stsID = rowdata.CurrentStatus;
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
-                        if (rdo1) {
+                        if (rdo1 == "1") {
                             CancelActionTrigger(rowdata);
                         }
                         else {
                             var conf = confirm("Do you want to remove draft data?");
                             if (conf) {
-                                GetData(12, ID);
+                                //GetData(12, ID);
+                                ValidateCancelDraftData(2, 3, ID, stsID)
                             }
                         }
                     }
@@ -1969,7 +1976,7 @@
                                     visible: $("#txtAddID").val() == 1 && rdo1 == "1",
                                     onClick: (gridInstance, event) => {
                                         nTransMode = 1;
-                                        $("#dvMain").show();
+                                        $("#dvMain,.dvclsforhdview").show();
                                         $("#dvDocuments").hide();
                                         $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
                                         ClearForm();
@@ -2282,7 +2289,7 @@
                     updateLabelColumn("lblRoundNet", items.NetAmt);//$("#lblRoundNet").text(items.NetAmt),
                     $("#txtRemarks").val(items.Remarks);
                     $("#txtNarration").val(items.Narration);
-                    $("#txtStatus").val(items.Status);
+                    //$("#txtStatus").val(items.Status);
                     $("#cmbUOMType").val(items.UOMType);
                     $.each(items.lstPartyInfo, function (i, itemsParty) {
                         $("#txtSearch").val(itemsParty.Name),
@@ -2300,6 +2307,7 @@
                         $("#lblOpenPOCount").text(itemsParty.POopen), $("#lblOpenAICount").text(itemsParty.AIopen);
                     });
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
+                    var hdnfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
                     ProductRID = 0;
 
                     var dataSet = items.lstProdGrid.map(function (itemsProd, i) {
@@ -2311,12 +2319,12 @@
                             itemsProd.TaxID,//dgvQty dgvInclPrice dgvExclPrice
                             itemsProd.TaxPern,
                             itemsProd.UOM,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&emsp; <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a><br/><span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>',
+                            '<span ' + hdnfields +' style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&emsp; <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a><br/><span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Product Info"></span>',
                             '<p style="font-size:14px;">' + (i + 1) + '</p>',
                             '<input disabled name = "ProName" class="gdInput" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '" style="border:none;"/><br/>' + itemsProd.Code,
-                            '<input txttag="' + itemsProd.ExclPrice + '" title="' + itemsProd.ExclPrice + '" type="number" step="any" id="dgvProdExclPrice' + ProductRID + '" name ="Excl" class="gdInput txtsettag dgvExclPrice" value="' + parseFloat(itemsProd.ExclPrice).toFixed(DecVal) + '"/>',
-                            '<input txttag="' + itemsProd.InclPrice + '" title="' + itemsProd.InclPrice + '" type="number" step="any" id="dgvProdInclPrice' + ProductRID + '" name="Incl" class="gdInput txtsettag dgvInclPrice" value="' + parseFloat(itemsProd.InclPrice).toFixed(DecVal) + '"/>',
-                            '<input txttag="' + itemsProd.Qty + '" title="' + itemsProd.Qty + '" type="number" step="any" id="dgvProdQty' + ProductRID + '" name="Qty" class="gdInput txtsettag dgvQty" value="' + parseFloat(itemsProd.Qty).toFixed(DecVal) + '"/>',
+                            '<input ' + disbfields +' txttag="' + itemsProd.ExclPrice + '" title="' + itemsProd.ExclPrice + '" type="number" step="any" id="dgvProdExclPrice' + ProductRID + '" name ="Excl" class="gdInput txtsettag dgvExclPrice" value="' + parseFloat(itemsProd.ExclPrice).toFixed(DecVal) + '"/>',
+                            '<input ' + disbfields +' txttag="' + itemsProd.InclPrice + '" title="' + itemsProd.InclPrice + '" type="number" step="any" id="dgvProdInclPrice' + ProductRID + '" name="Incl" class="gdInput txtsettag dgvInclPrice" value="' + parseFloat(itemsProd.InclPrice).toFixed(DecVal) + '"/>',
+                            '<input ' + disbfields +' txttag="' + itemsProd.Qty + '" title="' + itemsProd.Qty + '" type="number" step="any" id="dgvProdQty' + ProductRID + '" name="Qty" class="gdInput txtsettag dgvQty" value="' + parseFloat(itemsProd.Qty).toFixed(DecVal) + '"/>',
                             '<label name="UOM">' + itemsProd.UomName + '</label>',
                             '<label lbltag="' + itemsProd.GrossAmt + '" class="lblsettag" name="Gross" id="dgvProdGross' + ProductRID + '" title="' + (itemsProd.GrossAmt) + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
                             '<label name="Tax">' + itemsProd.TaxName + '</label>',
@@ -2418,7 +2426,12 @@
         nTransMode = 2;
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
+        var stsID = rowData.CurrentStatus;
+        if (rdo2 && !ValidateCancelDraftData(1, 3, rowData.ID, stsID)) {
+            return;
+        }
         GetProductViewData(rdo1 ? 7 : rdo2 ? 10 : 14, rowData.ID);
+        $("#txtStatus").val(stsID);
         nTransMode = rdo1 ? 2 : 1;
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
         $("#btnDraft").prop("disabled", false);
@@ -2428,12 +2441,13 @@
         $("#btnEmail,#btnWhatsapp").hide();
         $("#btnSave,#btnClose").prop("disabled", false);
         $("#btnSave,#btnClose,#btnDraft").show();
-        $("#dvMain").show();
+        $("#dvMain,.dvclsforhdview").show();
         $("#dvDocuments").hide();
         $("#MainHeading").text((rdo1 ? "Modify " : "Create ") + $("#txtFormName").val());
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
+        
         //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
     }
     $('#btnTCancel').click(function (e) {
@@ -2468,7 +2482,9 @@
         nTransMode = 4;
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
+        var stsID = rowData.CurrentStatus;
         GetProductViewData(7, rowData.ID);
+        $("#txtStatus").val(stsID);
         $(".FormclrField,.FormclrcmbField").prop("disabled", true);
         $("#txtNarration,#txtRemarks").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);
@@ -2477,7 +2493,7 @@
         $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
         $("#btnSave,#btnClose").show();
         $("#dvMain").show();
-        $("#dvDocuments").hide();
+        $("#dvDocuments,.dvclsforhdview").hide();
         $("#btnEmail,#btnWhatsapp").hide();
         $("#MainHeading").text("Cancel " + $("#txtFormName").val());
         if ($("#txtEnableBranch").val() == 1) {
@@ -2499,7 +2515,8 @@
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
         GetProductViewData(rdo1 ? 7 : rdo2 ? 10 : 14, rowData.ID);
-        $("#dvMain").show();
+        $("#txtStatus").val(1);
+        $("#dvMain,.dvclsforhdview").show();
         $("#dvDocuments").hide();
         $("#MainHeading").text("Variant " + $("#txtFormName").val());
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
@@ -2902,6 +2919,7 @@
                 "CBy": UID,
                 "Remarks": $("#txtRemarks").val(),
                 "Narration": $("#txtNarration").val(),
+                "FilterTypeID": $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : "3",
                 "DraftID": $("#txtDraftID").val() == "" ? 0 : $("#txtDraftID").val(),
                 "lstProdGrid": ProductArray,
                 "RoundOffAmt": document.getElementById("txtRoundOff").getAttribute("txttag"),// ReturnTagValue("txtRoundOff", ""),//$("#txtRoundOff").val(),

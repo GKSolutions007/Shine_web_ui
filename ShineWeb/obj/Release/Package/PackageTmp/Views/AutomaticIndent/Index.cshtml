@@ -733,6 +733,7 @@
                     $("#txtID").val(ID);
                     ViewActionButtonPermission();
                     GetProductViewData(5, ID);
+                    $("#txtStatus").val(rowData.CurrentStatus);
                     $(".FormclrField,.FormclrcmbField").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
@@ -753,7 +754,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled') {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftModifyID").val() != 0)
                                 isVisible = true;
@@ -799,7 +801,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled') {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftCancelID").val() != 0)
                                 isVisible = true;
@@ -820,6 +823,7 @@
                     var rdo1 = $("#rdoMainTableData").is(":checked");
                     var ID = rowData.ID;//[0];
                     var sts = rowData.Status;//[9];
+                    var stsID = rowData.CurrentStatus;
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
                         if (rdo1) {
@@ -828,7 +832,8 @@
                         else {
                             var conf = confirm("Do you want to remove draft data?");
                             if (conf) {
-                                GetData(10, ID);
+                                //GetData(10, ID);
+                                ValidateCancelDraftData(2, 2, ID, stsID)
                             }
                         }
                     }
@@ -1414,7 +1419,8 @@ setTimeout(function () { GetFilterData(); }, 800);
                     if (nTransMode != 3) {
                         $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     }
-                    $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), $("#txtStatus").val(items.Status);
+                    $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);
+                    //$("#txtStatus").val(items.Status);
                     $("#chkGeneratePO").prop("checked", items.TransportID == "1");
                     $("#lblOpenPOCount").text(items.AIopen), $("#lblOpenAICount").text(items.POopen);
                     $.each(items.lstPartyInfo, function (i, itemsParty) {
@@ -1566,7 +1572,12 @@ setTimeout(function () { GetFilterData(); }, 800);
         nTransMode = 2;
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
+        var stsID = rowData.CurrentStatus;        
+        if (rdo2 && !ValidateCancelDraftData(1, 2, rowData.ID, stsID)) {
+            return;
+        }
         GetProductViewData(rdo1 ? 5 : 8, rowData.ID);
+        $("#txtStatus").val(stsID);
         nTransMode = rdo1 ? 2 : 1;
         $(".FormclrField,.FormclrcmbField").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
@@ -1614,7 +1625,9 @@ setTimeout(function () { GetFilterData(); }, 800);
     function CancelActionTrigger(rowData) {
         $("#MainHeading").text("Cancel Automatic Indent")
         nTransMode = 4;
+        var stsID = rowData.CurrentStatus;
         GetProductViewData(5, rowData.ID);
+        $("#txtStatus").val(stsID);
         $(".FormclrField,.FormclrcmbField").prop("disabled", true);
         $("#txtNarration,#txtRemarks").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnClear,#btnDraft").prop("disabled", true);

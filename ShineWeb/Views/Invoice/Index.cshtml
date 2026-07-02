@@ -799,6 +799,8 @@
     @Html.HiddenFor(model => model.DraftModify, new { @autocomplete = "off", @class = "form-control", @id = "txtDraftModifyID" })
     @Html.HiddenFor(model => model.DraftCancel, new { @autocomplete = "off", @class = "form-control", @id = "txtDraftCancelID" })
     @Html.HiddenFor(model => model.EnablePaid, new { @autocomplete = "off", @class = "form-control", @id = "txtEnablePaid" })
+    @Html.HiddenFor(model => model.CrossTran1, new { @autocomplete = "off", @class = "form-control", @id = "txtAllowQTN" })
+    @Html.HiddenFor(model => model.CrossTran2, new { @autocomplete = "off", @class = "form-control", @id = "txtAllowOT" })
     <input hidden id="txtCustomerID" /><input hidden class="FormclrField" id="txtDraftID" />
     <input hidden id="txtBAdd1" /><input hidden id="txtBAdd2" /><input hidden id="txtBAdd3" />
     <input hidden id="txtSAdd1" /><input hidden id="txtSAdd2" /><input hidden id="txtSAdd3" />
@@ -834,10 +836,10 @@
                             <label for="rdoMainTableData"><i class="fas fa-file-invoice me-1"></i>Invoices</label>
                             <input type="radio" name="sizeBy" id="rdoDraftTableData" />
                             <label for="rdoDraftTableData"><i class="fas fa-pencil me-1"></i>Draft</label>
-                            <input type="radio" name="sizeBy" id="rdoQTNTableData" />
-                            <label for="rdoQTNTableData"><i class="fas fa-file-lines me-1"></i>Quotation</label>
-                            <input type="radio" name="sizeBy" id="rdoOrdertakenData" />
-                            <label for="rdoOrdertakenData"><i class="fas fa-cart-shopping me-1"></i>Order Taken</label>
+                            <input type="radio" name="sizeBy" id="rdoQTNTableData"  class="rdoQTNField"/>
+                            <label for="rdoQTNTableData" class="rdoQTNField"><i class="fas fa-file-lines me-1"></i>Quotation</label>
+                            <input type="radio" name="sizeBy" id="rdoOrdertakenData"  class="rdoOTField"/>
+                            <label for="rdoOrdertakenData" class="rdoOTField"><i class="fas fa-cart-shopping me-1"></i>Order Taken</label>
                         </div>
                     </div>
 
@@ -1983,7 +1985,12 @@
         });
 </script>
 <script>
+         var UID = '@Session["LoginUserID"]';
     ApplyCommonEnterEvent = false;
+    if ($("#txtAllowQTN").val() == 0)
+        $(".rdoQTNField").hide();
+    if ($("#txtAllowOT").val() == 0)
+        $(".rdoOTField").hide();
     //~Filter Action Buttons
     let mapusersRole = {
         canView: $("#txtViewID").val() == 1,
@@ -2018,6 +2025,7 @@
                     $("#txtID").val(ID);
                     ViewActionButtonPermission();
                     GetProductViewData(7, ID);
+                    $("#txtStatus").val(rowdata.CurrentStatus);
                     $(".FormclrField,.FormclrcmbField,#btnNewProd").prop("disabled", true);
                     $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
                     $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
@@ -2041,8 +2049,9 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed'
-                        && row.DeliveryCount == 0) {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus
+                        && row.DeliveryCount == 0) {//row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftModifyID").val() != 0)
                                 isVisible = true;
@@ -2090,8 +2099,8 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    if (row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed'
-                        && row.DeliveryCount == 0) {
+                    const isValidStatus = checkValidStatus(row.Status);
+                    if (isValidStatus && row.DeliveryCount == 0) {//row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed' && row.Status !== 'Processed'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftCancelID").val() != 0)
                                 isVisible = true;
@@ -2113,6 +2122,7 @@
                     var rdo1 = $("#rdoMainTableData").is(":checked");
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[10];
+                    var stsID = rowdata.CurrentStatus;
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
                         if (rdo1) {
@@ -2123,7 +2133,12 @@
                             var FSelID = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : $("#rdoQTNTableData").is(":checked") ? "3" : "4";
                             if (conf) {
                                 //GetData(15, ID, FSelID);
-                                CancelOTDraft(ID, FSelID);
+                                //CancelOTDraft(ID, FSelID);
+                                if (FSelID == 2) {//validate and cancel Draft
+                                    ValidateCancelDraftData(2, 15, ID, stsID, UID);
+                                } else if (FSelID == 4) {//validate and cancel OT
+                                    ValidateCancelDraftData(2, 100, ID, stsID, UID);
+                                }
                             }
                         }
                     }
@@ -2280,7 +2295,7 @@
     $("#dvMain").hide();
     $(".FormBtField").prop("disabled", true);
     $("#txtPMPTotal,#txtPMPBalance,#txtPMPBalance").prop("disabled", true);
-     var UID = '@Session["LoginUserID"]';
+
  var RoleID = '@Session["RoleID"]';
  var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
@@ -6332,7 +6347,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     if (nTransMode != 3) {
                         $("#lblDocID").text(items.DocId).attr("docprefix", items.DocPrefix);
                     }
-                    $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), $("#txtStatus").val(items.Status),
+                    $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), //$("#txtStatus").val(items.Status),
                         $("#cmbBeat").val(items.BeatID), $("#cmbSalesman").val(items.SalesmanID);
                     updateInputColumn("txtFright", items.FrightAmt); updateInputColumn("txtOtherChargPern", items.OtherChargePern); updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
                     updateInputColumn("txtProdDiscAmt", items.TotalProdDiscAmt);updateInputColumn("txtTradeDiscPern", items.TradeDiscPern); updateInputColumn("txtAddnlDiscPern", items.AddnlDiscPern);
@@ -6815,10 +6830,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var rdo2 = $("#rdoDraftTableData").is(":checked");
         var rdo3 = $("#rdoQTNTableData").is(":checked");
         var rdo4 = $("#rdoOrdertakenData").is(":checked");
+        var stsID = rowData.CurrentStatus;
+        if (rdo2 && !ValidateCancelDraftData(1, 15, rowData.ID, stsID)) {//VALIDATE DRAFT
+            return;
+        }
+        if (rdo4 && !ValidateCancelDraftData(1, 100, rowData.ID, stsID)) {//VALIDATE OT
+            return;
+        }
         //setTimeout(() => {
         GetProductViewData(rdo1 ? 7 : rdo2 ? 11 : rdo3 ? 17 : 21, rowData.ID);
         //}, 300);
         nTransMode = rdo1 ? 2 : 1;
+        $("#txtStatus").val(stsID);
         $(".FormclrField,.FormclrcmbField,#btnNewProd").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
@@ -6873,7 +6896,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
     function CancelActionTrigger(rowData) {
         $("#MainHeading").text("Cancel Invoice");
         nTransMode = 4;
+
         GetProductViewData(7, rowData.ID);
+        var stsID = rowData.CurrentStatus;
+        $("#txtStatus").val(stsID);
         $(".FormclrField,.FormclrcmbField,#btnNewProd").prop("disabled", true);
         $("#txtNarration,#txtRemarks").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnClear,#btnDraft,#btnPrint").prop("disabled", true);
@@ -6907,6 +6933,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         setTimeout(() => {
             GetProductViewData(7, ID);
         }, 300);
+        $("#txtStatus").val(1);
         $("#dvMain,#btnAddNewProduct").show();
         $("#dvDocuments").hide();
         $("#MainHeading").text("Variant Invoice");

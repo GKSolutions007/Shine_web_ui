@@ -801,8 +801,8 @@
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value, meta) {
                                         var rowIndex = meta.row;
-                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID
-                                        var _action = value.StatusID == "1" || value.StatusID == "3" ? '<input type="checkbox" id="' + checkboxId + '"  name="CustomerCheck" style="" />': '';
+                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID                                        
+                                        var _action = value.StatusID == "1" || value.StatusID == "3" ? '<input type="checkbox" id="' + checkboxId + '" data-statusid = "' + value.StatusID + '" data-id="' + value.ID +'"  name="CustomerCheck" style="" />': '';
                                         return _action;
                                     },
                                 },
@@ -912,16 +912,26 @@
         GetFilterData(3)
     });
 
-    $("#btnCancel").click(function () {
+    $("#btnCancel").click(function () {        
         var checkeditems = $('#tblCollectionData tbody input[type=checkbox]:checked');
+        var validateitems = [];
         if (checkeditems.length > 0) {
             var SelIDs = "";
-            checkeditems.each(function () {
+            const validateitems = checkeditems.map(function () {
+                return {
+                    ID: $(this).data("id"),
+                    Status: $(this).data("statusid")
+                };
+            }).get();
+
+            checkeditems.each(function (i,items) {
+               
                 var row = $(this).closest('tr'); // Find the parent row
                 var rowData = $('#tblCollectionData').DataTable().row(row).data(); // Get full row data
                 //CheckedInvoices.push(rowData);
                 SelIDs += rowData.ID + ",";
             });
+            console.log("validateitems", validateitems);
             var conf = confirm("Do you want to cancel?");
             if (conf) {
                 var TrimID = SelIDs.substring(0, SelIDs.length - 1);
