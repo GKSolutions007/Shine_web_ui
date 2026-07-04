@@ -22,7 +22,12 @@ function refreshAccessToken(callback) {
         },
         error: function () {
             //console.log("Refresh token expired, redirecting to login.");
-            window.location.href = UIURL;// "/";
+            showUnauthorizedPopup({ redirectUrl: UIURL, seconds: 5 });
+
+            //showErrorSnackbar("Unauthorized request detected. Redirecting to login")
+            //setTimeout(() => { 
+            //    window.location.href = UIURL;// "/";
+            //}, 3200)
         }
     }); 
 }
@@ -36,13 +41,13 @@ $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
             $.ajax(settings);
         });
     }
-    var now = new Date();
-    var timestamp =     
-        String(now.getHours()).padStart(2, '0') +":"+
-        String(now.getMinutes()).padStart(2, '0') + ":" +
-        String(now.getSeconds()).padStart(2, '0') + ":" +
-        String(now.getMilliseconds()).padStart(3, '0');
-    console.log("Loader stop", timestamp);
+    //var now = new Date();
+    //var timestamp =     
+    //    String(now.getHours()).padStart(2, '0') +":"+
+    //    String(now.getMinutes()).padStart(2, '0') + ":" +
+    //    String(now.getSeconds()).padStart(2, '0') + ":" +
+    //    String(now.getMilliseconds()).padStart(3, '0');
+    //console.log("Loader stop", timestamp);
     $("#RepLoadersnackbar").removeClass("show");
     $("#RepLoaderOverlay").removeClass("show");
 });
@@ -93,7 +98,7 @@ $(document).ajaxStart(function () {
 
         isLoaderVisible = true;
 
-    }, 5000); // 3 seconds delay
+    }, 5000); // delay
 });
 
 $(document).ajaxStop(function () {

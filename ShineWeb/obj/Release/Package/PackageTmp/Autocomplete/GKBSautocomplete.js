@@ -40,17 +40,31 @@
 
     function positionDropdown() {
         var rect = $input[0].getBoundingClientRect();
+        var gap = 4; // small breathing room between input and dropdown
+
+        // ── Measure the ACTUAL rendered height of the dropdown ──────────────
+        // (it depends on how many items are currently loaded, so a hard-coded
+        // guess like 300 will not line up with the real box). If the dropdown
+        // is currently display:none we briefly force it visible (but hidden)
+        // to read its true height, then restore its state.
+        var wasHidden = $GKBSdropdown.css("display") === "none";
+        if (wasHidden) {
+            $GKBSdropdown.css({ visibility: "hidden", display: "block" });
+        }
+        var dropHeight = $GKBSdropdown.outerHeight() || 300;
+        if (wasHidden) {
+            $GKBSdropdown.css({ visibility: "", display: "none" });
+        }
 
         // Check if dropdown goes below viewport, if so show it ABOVE the input
-        var dropHeight = 300;
         var spaceBelow = window.innerHeight - rect.bottom;
         var showAbove = spaceBelow < dropHeight && rect.top > dropHeight;
 
         $GKBSdropdown.css({
             position: "fixed",                          // ← fixed to viewport, ignore all scroll
             top: showAbove
-                ? (rect.top - dropHeight) + "px"   // flip above input
-                : rect.bottom + "px",               // normal below input
+                ? (rect.top - dropHeight - gap) + "px"   // flip above input, hugging it
+                : (rect.bottom + gap) + "px",             // normal below input
             left: rect.left + "px",                // no scrollX needed with fixed
             width: rect.width + "px",
             zIndex: 99999

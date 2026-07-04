@@ -26,6 +26,7 @@
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_Grid/js/gridui.js"></script>
 <script src="~/dropdown/script.js"></script>
+<script src="~/Autocomplete/GKBSautocompleteMultiCol.js"></script>
 <style>
 
     /* Status Badge with Circle */
@@ -216,9 +217,10 @@
     <div style="padding-bottom:10px" hidden>
         <button id="btnAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>
     </div>
+    <input type="text" id="productInput" placeholder="Search product..." hidden>
     <div id="dvMainTable">
         <div id="my-grid" style="height: 600px; width: 100%;"></div>
-    </div>    
+    </div>
     <div class="modal fade" id="myModalfg" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
@@ -278,7 +280,7 @@
             className: 'dg-action-view',
             displayType: 'single_icon',
             visible: $("#txtViewID").val() == 1,
-            handler: (rowData) => {                
+            handler: (rowData) => {
                 var ID = rowData.ID;//[0];
                 var Name = rowData.Name;//[1];
                 var Active = rowData.Active;//[2];
@@ -295,7 +297,7 @@
         {
             icon: '✏️',
             title: 'Edit Data',
-            className: 'dg-action-edit',            
+            className: 'dg-action-edit',
             visible: $("#txtModifyID").val() == 1,
             displayType: 'single_icon',
             handler: (rowData, gridInstance) => {
@@ -343,11 +345,11 @@
         GetData();
     }, 500);
     var grid;
-    
+
     //~Grid Data
     function GetData() {
         $.ajax({
-            url: Aurl + "singlemaster/get",            
+            url: Aurl + "singlemaster/get",
             type: 'get',
             contentType: 'json',
             data: { FormID: FID, Mode: 3, Name: "" },
@@ -381,7 +383,7 @@
                     enableAddRow: false,
                     enableRemoveRow: false,
                     enableSorting: true,
-                    searchTerm: currentSearchValue, singleIconAction: singleIconAction, 
+                    searchTerm: currentSearchValue, singleIconAction: singleIconAction,
                     rowActionsMenu: menuActions,
                     customCellRenderer: (el, col, rowData) => {
                         if (col.field === 'Active') {
@@ -425,10 +427,10 @@
                         },
                     ],
                     onCellClick: (rowData, fieldName, cellValue, column) => {
-                        
+
                     },
                     onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                       
+
                     },
                     onColumnResize: (colIndex, field, header, newWidth) => {
                         UpdateColumnWidth(1, 1, 0, colIndex, field, newWidth)
@@ -465,8 +467,8 @@
                 }
             }
         });
-    }   
-    
+    }
+
     var modal = new bootstrap.Modal(document.getElementById('myModalfg'));// document.getElementById("myModalfg");
     //document.getElementById('myModalfg').addEventListener('shown.bs.modal', function () {
     //    $("#txtName").focus();
@@ -546,16 +548,16 @@
             success: function (data) {
                 $("#btnSave").prop("disabled", false);
                 $.each(data, function (i, items) {
-                    if (items.MsgID == 0) {                        
+                    if (items.MsgID == 0) {
                         //alert(items.Message);
-                        showSuccessSnackbar(items.Message);                        
+                        showSuccessSnackbar(items.Message);
                         if (window.opener && !window.opener.closed) {
                             //window.opener.GetData(1);
                             //window.opener.$('#txtReason').val(name)
                             //window.opener.$('#txtReasonID').val(items.ID)
                             window.opener.postMessage({
                                 source: $("#txtFormName").val(),// "CustomerMaster",
-                                id: items.ID,   // adjust to your actual field names                                
+                                id: items.ID,   // adjust to your actual field names
                                 name: name
                             }, "*");
                             window.close();
@@ -608,4 +610,37 @@
             }, 1000);
         }
     }
+    var productAC = PaginatedAutocompleteMultiCol({
+        inputId: "productInput",
+
+        // your product records — any extra fields are ignored unless listed in columns
+        data: [
+            {id:43, code: "P001", name: "Paracetamol 500mg", hsn: "30049099", mrp: "25.00",abs:"1650.00" },
+            { id: 75, code: "P002", name: "Amoxicillin 250mg", hsn: "30042010", mrp: "45.00", abs: "151.00" }
+            // ...
+        ],
+
+        // columns shown in the dropdown, in order
+        columns: [            
+            { key: "code", label: "Code", width: "15%" },
+            { key: "name", label: "Name", width: "35%" },
+            { key: "hsn", label: "HSN", width: "20%" },
+            { key: "mrp", label: "MRP", width: "10%" },
+            { key: "abs", label: "Stock", width: "10%" }
+        ],
+
+        // which fields typing filters against
+        searchFields: ["code", "name", "hsn"],
+
+        // which field goes into the input box when a row is picked
+        // change to "name" if you want the product Name to fill instead of Code
+        selectField: "name",
+
+        onSelect: function (item) {
+            console.log("Selected product:", item);
+            // e.g. populate other fields on the form:
+            // $("#hsnInput").val(item.hsn);
+            // $("#mrpInput").val(item.mrp);
+        }
+    });
 </script>

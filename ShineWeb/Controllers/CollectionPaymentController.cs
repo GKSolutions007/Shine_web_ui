@@ -12,7 +12,7 @@ namespace ShineWeb.Controllers
     public class CollectionPaymentController : Controller
     {
         clsBusinessLayer objBL = new clsBusinessLayer();
-        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID)
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string WebCollSts = "1")
         {
             if (Session["LoginUserID"] == null)
             {
@@ -40,6 +40,7 @@ namespace ShineWeb.Controllers
                 dam.Modify = ModPerm;
                 dam.View = ViewPerm;
                 dam.Cancel = CanPerm;
+                dam.StatusID = WebCollSts;
                 return View(dam);
             }
         }

@@ -287,7 +287,49 @@ function sanitizeAlphaNumeric(input, errordiv) {
         $(errordiv).html('*Invalid special character(_@. ,%|*~&()\/- only allowed)');
     }
 }
+// Allow only letters and numbers (no spaces or special characters)
+function AlphaNumericOnlyBeforeInput(e, input, errordiv) {
+    $(errordiv).html('');
+    input.style.borderColor = '';
 
+    // Allow delete, backspace, undo, redo, etc.
+    if (!e.data) return true;
+
+    // Allow paste/drop (sanitized in input event)
+    if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+        return true;
+    }
+
+    var regex = /^[a-zA-Z0-9]$/;
+
+    if (!regex.test(e.data)) {
+        if (errordiv) {
+            $(errordiv).html('*Only alphabets and numbers are allowed.');
+            input.style.borderColor = 'red';
+        }
+        return false;
+    }
+
+    return true;
+}
+
+// Sanitize pasted/autofill text
+function sanitizeAlphaNumericOnly(input, errordiv) {
+    var oldValue = input.value;
+
+    // Remove everything except A-Z, a-z, 0-9
+    input.value = input.value.replace(/[^a-zA-Z0-9]/g, '');
+
+    $(errordiv).html('');
+    input.style.borderColor = '';
+
+    if (oldValue !== input.value) {
+        if (errordiv) {
+            $(errordiv).html('*Only alphabets and numbers are allowed.');
+            input.style.borderColor = 'red';
+        }
+    }
+}
 ////
 function NumericWithHyphenSlashBeforeInput(e, input, errordiv) {
     $(errordiv).html('');

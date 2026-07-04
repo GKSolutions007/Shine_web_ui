@@ -939,7 +939,6 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        
     }
 
     .remark-tooltip {
@@ -1957,11 +1956,11 @@
                  '</td>' +
                 '<td data-label="Cash ₹" class="cell-input">' +
                 '<div class="pay-cell">' +
-                '<input type="number" inputmode="decimal" class="inp-cashamt" value="0.00" step="1">' +
+                '<input type="text" inputmode="decimal" autocomplete="off" class="inp-cashamt" value="0.00">' +
                 '</div>' +
                 '</td>' +
                 '<td data-label="Chq/BT ₹" class="cell-input">' +
-                '<input type="number" inputmode="decimal" class="inp-chqbtamt" value="0.00" step="1">' +
+                '<input type="text" inputmode="decimal" autocomplete="off" class="inp-chqbtamt" value="0.00">' +
                 '</td>' +
                 '<td data-label="Pay Info" class="text-start">' +
                 '<div class="pay-cell">' +
@@ -2061,6 +2060,91 @@
             $cash.prop('disabled', false).removeClass('bc-field-disabled');
             $chq.prop('disabled', false).removeClass('bc-field-disabled');
         }
+    }
+
+    // Rewrites an <input>'s value while keeping the caret at the same
+    // relative position. Plain $input.val(x) always snaps the caret to the
+    // end, which is what made it impossible to type into the middle of the
+    // Cash ₹ / Chq-BT ₹ boxes (on both negative- and positive-balance rows)
+    // every time the field was live-reformatted on keystroke.
+    function setValuePreservingCursor($input, newVal) {
+        var el = $input.get(0);
+        if (!el) { $input.val(newVal); return; }
+        var oldVal = el.value;
+        if (oldVal === newVal) return;
+        var isFocused = (document.activeElement === el);
+        var start = el.selectionStart, end = el.selectionEnd;
+        $input.val(newVal);
+        if (isFocused && start !== null && typeof el.setSelectionRange === 'function') {
+            var diff = newVal.length - oldVal.length;
+            var pos = Math.max(0, Math.min(newVal.length, start + diff));
+            try { el.setSelectionRange(pos, pos); } catch (e) { /* ignore */ }
+        }
+    }
+
+    // Restricts free typing in Cash ₹ / Chq-BT ₹ to a valid, partially-typed
+    // decimal (digits, a single '.', and — only on negative-balance rows —
+    // a single leading '-'). Runs on every keystroke, before the live clamp.
+    function sanitizeAmountInput($input, allowNegative) {
+        var val = $input.val();
+        var cleaned = val.replace(allowNegative ? /[^0-9.\-]/g : /[^0-9.]/g, '');
+
+        // Only a single leading minus sign is allowed.
+        cleaned = allowNegative
+            ? cleaned.charAt(0).replace('-', '-') + cleaned.slice(1).replace(/-/g, '')
+            : cleaned.replace(/-/g, '');
+        if (cleaned.charAt(0) !== '-') cleaned = cleaned.replace(/-/g, '');
+
+        // Only a single decimal point is allowed.
+        var firstDot = cleaned.indexOf('.');
+        if (firstDot !== -1) {
+            cleaned = cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, '');
+        }
+
+        if (cleaned !== val) setValuePreservingCursor($input, cleaned);
+    }
+
+    // Lightweight version of clampCashChq run on every keystroke ('input').
+    // It only rewrites the field's value when the number is genuinely out
+    // of the allowed range, and does so via setValuePreservingCursor, so the
+    // caret never jumps to the end while the user is still typing. Full
+    // 2-decimal formatting is deferred to clampCashChq on blur/change.
+    function liveClampCashChq($tr, which) {
+        var balance = parseFloat($tr.attr('data-balance')) || 0;
+        var $cash = $tr.find('.inp-cashamt');
+        var $chq = $tr.find('.inp-chqbtamt');
+        var $active = which === 'cash' ? $cash : $chq;
+        var rawVal = $active.val();
+
+        // Mid-typing states ("", "-", "1.", "-1.") — leave the text alone.
+        if (rawVal === '' || rawVal === '-' || /[.\-]$/.test(rawVal)) {
+            applyCashChqMutualExclusion($tr);
+            return;
+        }
+
+        var v = parseFloat(rawVal);
+        if (isNaN(v)) { applyCashChqMutualExclusion($tr); return; }
+
+        if (balance < 0) {
+            var corrected = v;
+            if (corrected > 0) corrected = 0;
+            else if (corrected < balance) corrected = balance;
+            if (corrected !== v) setValuePreservingCursor($active, corrected.toFixed(DecVal));
+            applyCashChqMutualExclusion($tr);
+            return;
+        }
+
+        var discamt = parseFloat($tr.find('.inp-discamt').val()) || 0;
+        var otheramt = parseFloat($tr.find('.inp-otheramt').val()) || 0;
+        var otherSettlement = otheramt < 0 ? Math.abs(otheramt) : 0;
+        var available = Math.max(0, balance - discamt - otherSettlement);
+
+        var corrected2 = v;
+        if (corrected2 < 0) corrected2 = 0;
+        if (corrected2 > available) corrected2 = available;
+        if (corrected2 !== v) setValuePreservingCursor($active, corrected2.toFixed(DecVal));
+
+        applyCashChqMutualExclusion($tr);
     }
 
     // Clamps whichever of Cash / Chq-BT the user just edited so the pair
@@ -2412,7 +2496,19 @@
     $('#tblBody').on('input change', '.inp-otherpct', function () { otherPctChanged($(this).closest('tr')); });
     $('#tblBody').on('input change', '.inp-otheramt', function () { otherAmtChanged($(this).closest('tr')); });
 
-    $('#tblBody').on('input change', '.inp-cashamt', function () {
+    $('#tblBody').on('input', '.inp-cashamt', function () {
+        var $tr = $(this).closest('tr');
+        var balance = parseFloat($tr.attr('data-balance')) || 0;
+        sanitizeAmountInput($(this), balance < 0);
+        liveClampCashChq($tr, 'cash');
+        // When both Cash and Chq/BT are 0, reset disc/other fields to 0
+        if (!hasCashOrChq($tr)) {
+            $tr.find('.inp-discpct, .inp-discamt, .inp-otherpct, .inp-otheramt').val('0.00');
+            $tr.find('.lbl-adjusted').text('0.00');
+        }
+        recalcRow($tr);
+    });
+    $('#tblBody').on('change', '.inp-cashamt', function () {
         var $tr = $(this).closest('tr');
         clampCashChq($tr, 'cash');
         // When both Cash and Chq/BT are 0, reset disc/other fields to 0
@@ -2422,7 +2518,19 @@
         }
         recalcRow($tr);
     });
-    $('#tblBody').on('input change', '.inp-chqbtamt', function () {
+    $('#tblBody').on('input', '.inp-chqbtamt', function () {
+        var $tr = $(this).closest('tr');
+        var balance = parseFloat($tr.attr('data-balance')) || 0;
+        sanitizeAmountInput($(this), balance < 0);
+        liveClampCashChq($tr, 'chqbt');
+        // When both Cash and Chq/BT are 0, reset disc/other fields to 0
+        if (!hasCashOrChq($tr)) {
+            $tr.find('.inp-discpct, .inp-discamt, .inp-otherpct, .inp-otheramt').val('0.00');
+            $tr.find('.lbl-adjusted').text('0.00');
+        }
+        recalcRow($tr);
+    });
+    $('#tblBody').on('change', '.inp-chqbtamt', function () {
         var $tr = $(this).closest('tr');
         clampCashChq($tr, 'chqbt');
         // When both Cash and Chq/BT are 0, reset disc/other fields to 0
@@ -2783,10 +2891,10 @@
         }
 
         // Clamp to cumulative FAID balance
-        if (amount > Math.abs(cumulativeBalance)) {
-            amount = Math.abs(cumulativeBalance);
-            toast('Amount adjusted to the FAID cumulative balance (₹' + formatNum(amount) + ').', 'warning');
-        }
+        //if (amount > Math.abs(cumulativeBalance)) {
+        //    amount = Math.abs(cumulativeBalance);
+        //    toast('Amount adjusted to the FAID cumulative balance (₹' + formatNum(amount) + ').', 'warning');
+        //}
 
         var entry = { mode: mode, amount: amount, displaypmmode: (mode === '2' ? "CHQ" : "BT"), paymentmode: selpaymode };
         if (mode === '2') {
@@ -3613,7 +3721,7 @@
             toast('Save completed with errors. ' + errCount + ' row(s) highlighted — hover the \u26a0 badge for details.', 'warning');
         }
     }
-    //row-save-error row-save-success 
+    //row-save-error row-save-success
     // Attaches a red/green error badge with hover tooltip to a row's Doc ID cell.
     // If a badge already exists on that row (e.g. multiple error entries), appends message.
     // respType - "Error" or "Success"

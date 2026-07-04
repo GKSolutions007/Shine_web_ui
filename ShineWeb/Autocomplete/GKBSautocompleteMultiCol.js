@@ -1,28 +1,73 @@
-﻿function PaginatedAutocomplete(options) {
+﻿function PaginatedAutocompleteMultiCol(options) {
 
     var inputId = options.inputId;
     var fullData = options.data || [];
-    var pageSize = 20;// options.pageSize || 50;
+    var pageSize = 20; // options.pageSize || 50;
     var onSelect = options.onSelect || function () { };
+
+    // ── Multi-column config ──────────────────────────────────────────────
+    // columns: [{ key:'code', label:'Code', width:'18%' }, ...]
+    var columns = options.columns || [
+        { key: 'code', label: 'Code', width: '20%' },
+        { key: 'name', label: 'Name', width: '40%' },
+        { key: 'hsn', label: 'HSN', width: '20%' },
+        { key: 'mrp', label: 'MRP', width: '20%' }
+    ];
+
+    // Which field(s) to search against. Defaults to all column keys.
+    var searchFields = options.searchFields || columns.map(function (c) { return c.key; });
+
+    // Which field's value gets written into the input on selection.
+    // Configurable — pass options.selectField = 'name' etc.
+    var selectField = options.selectField || columns[0].key;
+
+    // Optional fixed pixel width for the whole dropdown. If not given,
+    // it's derived from the columns (each px/% width, or a default share).
+    var dropdownWidth = options.dropdownWidth || null;
 
     var dropId = "pac_drop_" + inputId;
     var listId = "pac_list_" + inputId;
+    var headId = "pac_head_" + inputId;
     var statId = "pac_stat_" + inputId;
     var spinId = "pac_spin_" + inputId;
 
     var $input = $("#" + inputId);
     $("#" + dropId).remove();
 
+    // ── Build header cell HTML (labels, fixed, does not scroll) ─────────────
+    function colStyle(col) {
+        var w = col.width;
+        var flex;
+        if (w && /%$/.test(w)) flex = "0 0 " + w;
+        else if (w && /px$/.test(w)) flex = "0 0 " + w;
+        else flex = "1 1 0";
+        return 'flex:' + flex + ';min-width:0;padding:0 6px;overflow:hidden;' +
+            'text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;';
+    }
+
+    var headerCellsHtml = columns.map(function (col) {
+        return '<div style="' + colStyle(col) + 'font-weight:600;font-size:11px;color:#555;">' +
+            col.label + '</div>';
+    }).join('');
+
     var $GKBSdropdown = $([
         '<div class="gkbsautocomplete" id="' + dropId + '" style="',
-        'display:none;position:fixed;z-index:99999;',   /* ← fixed, not absolute */
+        'display:none;position:fixed;z-index:99999;',
         'background-color:var(--dynamic-bg);border:1px solid #ccc;',
         'border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);',
-        'min-width:300px;width:350px;',                                  /* set a sensible fixed width */
-        'max-height:340px;overflow:hidden;">',
+        'min-width:300px;max-height:380px;overflow:hidden;">',
+
+        // header row — sits outside the scrollable <ul>, so it stays put
+        '<div id="' + headId + '" style="',
+        'display:flex;align-items:center;padding:6px 6px;',
+        'background:#f3f3f3;border-bottom:1px solid #ddd;">',
+        headerCellsHtml,
+        '</div>',
+
         '<ul id="' + listId + '" style="',
         'list-style:none;margin:0;padding:0;',
         'max-height:250px;overflow-y:auto;color:var(--acitemname)"></ul>',
+
         '<div style="',
         'padding:6px 12px;font-size:12px;color:#888;',
         'border-top:1px solid #eee;background:#fafafa;',
@@ -36,56 +81,72 @@
     // ── Append to BODY, not after input ────────────────────────────────────
     $("body").append($GKBSdropdown);
 
-    // ── Position dropdown using getBoundingClientRect (works inside tables) ─
+    // ── Compute the dropdown's target width ──────────────────────────────
+    function computeWidth(inputWidth) {
+        if (dropdownWidth) return dropdownWidth;
 
+        // Sum any px widths given; treat % / flex columns as ~120px each
+        var sum = 0;
+        columns.forEach(function (col) {
+            if (col.width && /px$/.test(col.width)) {
+                sum += parseFloat(col.width);
+            } else {
+                sum += 120;
+            }
+        });
+        // Never shrink below the input's own width
+        return Math.max(sum, inputWidth);
+    }
+
+    // ── Position dropdown using getBoundingClientRect (works inside tables) ─
     function positionDropdown() {
         var rect = $input[0].getBoundingClientRect();
-        var gap = 4; // small breathing room between input and dropdown
+        var gap = 4;
+        var targetWidth = computeWidth(rect.width);
 
-        // ── Measure the ACTUAL rendered height of the dropdown ──────────────
-        // (it depends on how many items are currently loaded, so a hard-coded
-        // guess like 300 will not line up with the real box). If the dropdown
-        // is currently display:none we briefly force it visible (but hidden)
-        // to read its true height, then restore its state.
         var wasHidden = $GKBSdropdown.css("display") === "none";
         if (wasHidden) {
             $GKBSdropdown.css({ visibility: "hidden", display: "block" });
         }
+        // Set width before measuring height, since column wrapping affects it
+        $GKBSdropdown.css("width", targetWidth + "px");
         var dropHeight = $GKBSdropdown.outerHeight() || 300;
         if (wasHidden) {
             $GKBSdropdown.css({ visibility: "", display: "none" });
         }
 
-        // Check if dropdown goes below viewport, if so show it ABOVE the input
         var spaceBelow = window.innerHeight - rect.bottom;
         var showAbove = spaceBelow < dropHeight && rect.top > dropHeight;
 
+        // Keep the wider dropdown from overflowing the right edge of the
+        // viewport; clamp it back to the left instead of running off-screen.
+        var left = rect.left;
+        var maxLeft = window.innerWidth - targetWidth - 8;
+        if (left > maxLeft) left = Math.max(8, maxLeft);
+
         $GKBSdropdown.css({
-            position: "fixed",                          // ← fixed to viewport, ignore all scroll
+            position: "fixed",
             top: showAbove
-                ? (rect.top - dropHeight - gap) + "px"   // flip above input, hugging it
-                : (rect.bottom + gap) + "px",             // normal below input
-            left: rect.left + "px",                // no scrollX needed with fixed
-            width: rect.width + "px",
+                ? (rect.top - dropHeight - gap) + "px"
+                : (rect.bottom + gap) + "px",
+            left: left + "px",
+            width: targetWidth + "px",
             zIndex: 99999
         });
     }
+
     // ── Reposition on ANY scroll or resize ─────────────────────────────────
     function bindRepositionEvents() {
         var ns = ".pac_" + inputId;
 
-        // Unbind old listeners first
         $(window).off("scroll" + ns + " resize" + ns);
         $(document).off("scroll" + ns);
 
-        // Window scroll + resize
         $(window).on("scroll" + ns + " resize" + ns, function () {
             if ($GKBSdropdown.is(":visible")) positionDropdown();
             else closeDropdown();
         });
 
-        // Every scrollable ancestor of the input (covers form scroll, 
-        // datatable scroll body, modal scroll, etc.)
         $input.parents().each(function () {
             var el = this;
             var overflow = $(el).css("overflow") + $(el).css("overflow-y");
@@ -96,6 +157,7 @@
             }
         });
     }
+
     var state = {
         page: 0,
         query: '',
@@ -111,6 +173,7 @@
     function $items() { return $("#" + listId).find("li"); }
 
     function highlight(text, q) {
+        text = (text === undefined || text === null) ? '' : String(text);
         if (!q) return text;
         var esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         return text.replace(new RegExp('(' + esc + ')', 'gi'),
@@ -150,6 +213,15 @@
         );
     }
 
+    // ── Build one row's inner HTML from the column config ───────────────────
+    function buildRowHtml(item) {
+        return columns.map(function (col) {
+            return '<div style="' + colStyle(col) + 'font-size:11px;">' +
+                highlight(item[col.key], state.query) +
+                '</div>';
+        }).join('');
+    }
+
     function loadNext(afterLoad) {
         if (state.loading || !state.hasMore) {
             if (typeof afterLoad === "function" && !state.hasMore) afterLoad();
@@ -166,14 +238,12 @@
 
             slice.forEach(function (item) {
                 var $li = $("<li>").css({
-                    padding: "2px 5px",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "4px 6px",
                     cursor: "pointer",
-                    borderBottom: "1px solid #666565",
-                    fontSize: "11px"
-                }).html(
-                    '<div style="font-weight:500;">' + highlight(item.label, state.query) + '</div>' +
-                    '<div style="font-size:12px;color:var(--acitemdesc);margin-top:2px;">' + (item.line2 || '') + '</div>'
-                );
+                    borderBottom: "1px solid #ececec"
+                }).html(buildRowHtml(item));
 
                 $li.on("mousemove", function () {
                     if (state.mouseBlock) return;
@@ -209,39 +279,45 @@
         state.activeIdx = -1;
         state.hasMore = true;
         state.loading = false;
+
         state.filtered = query
             ? fullData.filter(function (d) {
                 var q = query.toLowerCase();
-                return (d.label && d.label.toLowerCase().indexOf(q) > -1) ||
-                    (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                return searchFields.some(function (key) {
+                    var val = d[key];
+                    return val !== undefined && val !== null &&
+                        String(val).toLowerCase().indexOf(q) > -1;
+                });
             })
             : fullData.slice();
+
         state.hasMore = state.filtered.length > 0;
         $list().empty();
 
         if (!state.filtered.length) {
-            $list().append(
-                $("<li>").css({ padding: "10px 12px", color: "#aaa" }).text("No results found")
-            );
+            var $li = $("<li>").css({
+                padding: "10px 12px",
+                color: "#aaa",
+                display: "block"
+            }).text("No results found");
+            $list().append($li);
             $("#" + statId).text("0 results");
             return;
         }
-        //loadNext();
-        // ← pass callback: after first page renders, highlight item 0
         loadNext(function () {
             setActive(0);
         });
     }
 
     function selectItem(item) {
-        $input.val(item.code || item.label);
+        $input.val(item[selectField] !== undefined && item[selectField] !== null ? item[selectField] : '');
         $GKBSdropdown.hide();
         state.activeIdx = -1;
         onSelect(item);
     }
 
     function openDropdown() {
-        positionDropdown();       // ← recalculate position every time it opens
+        positionDropdown();
         $GKBSdropdown.show();
     }
 
@@ -250,20 +326,8 @@
         state.activeIdx = -1;
     }
 
-    //// ── Reposition if window scrolls or resizes ─────────────────────────────
-    //$(window).off("scroll.pac_" + inputId + " resize.pac_" + inputId)
-    //    .on("scroll.pac_" + inputId + " resize.pac_" + inputId, function () {
-    //        if ($GKBSdropdown.is(":visible")) positionDropdown();
-    //    });
-
-    //// ── Also reposition when DataTable scrolls ──────────────────────────────
-    //$(".dataTables_scrollBody, .dataTables_wrapper")
-    //    .off("scroll.pac_" + inputId)
-    //    .on("scroll.pac_" + inputId, function () {
-    //        if ($GKBSdropdown.is(":visible")) positionDropdown();
-    //    });
-    // ── Replace with single call ────────────────────────────────────────────
     bindRepositionEvents();
+
     // ── Scroll list → load more ─────────────────────────────────────────────
     $("#" + listId).on("scroll", function () {
         if (this.scrollTop + this.clientHeight >= this.scrollHeight - 40) {
@@ -334,7 +398,6 @@
 
     $input.on("focus.pac", function () {
         if (!$input.val()) reset("");
-        //openDropdown();
     });
 
     $input.on("blur.pac", function () {
@@ -353,6 +416,9 @@
             fullData = newData;
             reset($input.val().trim());
         },
+        setSelectField: function (key) {
+            selectField = key;
+        },
         destroy: function () {
             var ns = ".pac_" + inputId;
             $input.off(".pac");
@@ -361,7 +427,6 @@
             $(document).off("mousemove" + ns);
             $(window).off("scroll" + ns);
             $(window).off("resize" + ns);
-            // clean ancestor scroll listeners
             $input.parents().each(function () {
                 $(this).off("scroll" + ns);
             });

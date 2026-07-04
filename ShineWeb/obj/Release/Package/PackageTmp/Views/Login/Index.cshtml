@@ -639,9 +639,9 @@
                     <span class="close-modal closeDeviceOTP" style="font-size: 28px; transition: transform 0.3s; display: inline-block;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform='rotate(0deg)'">&times;</span>
                 </div>
                 <div class="modal-content-body">                    
-                    <h3 style="margin:0 0 12px 0; font-weight:800; color: #2c3e50;">Device Verification</h3>
+                    <h3 style="margin:0 0 12px 0; font-weight:800; color: #2c3e50;" id="lblOTPHead">Device Verification</h3>
                     <p style="font-size: 15px; color: #7f8c8d; margin-bottom: 35px; line-height: 1.6;">
-                        We've detected a sign-in attempt from a new device. Please enter the 6-digit verification code sent to your registered email to continue.
+                        <label id="lblOTPContent"> We've detected a sign-in attempt from a new device.</label> Please enter the 6-digit verification code sent to your registered email to continue.
                     </p>
 
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
@@ -761,7 +761,7 @@
             }
             return deviceId;
         }
-        
+        var objOTPType = "";
         var Aurl = '@Session["APIurl"]';
         var url = '@Session["url"]';
         var modal = document.getElementById("myModalfg");
@@ -862,7 +862,7 @@
                     $("#dvErrorFGConfirmPassword").html("Passwords do not match.");
                 }
                 else {
-                    $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Password Update... Please wait</div></div>');
+                    //$('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Password Update... Please wait</div></div>');
                     var strusername = $("#txtFGUserName").val();
                     var strEmail = $("#txtFGEmail").val();
                     var strpwd = $("#txtFGPassword").val();
@@ -924,7 +924,7 @@
         }        
         $("#btnSignup").click(function () {
             if (VALIDATION()) {
-                $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Account Creating... Please wait</div></div>');
+                //$('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Account Creating... Please wait</div></div>');
                 var mail = $("#SignupEmail").val();
                 var lstMaster = {
                     "Mode" : 1,
@@ -974,7 +974,7 @@
             var Lat = $("#txtLatitude").val();
             var Long = $("#txtLongtitude").val();
             var Pinc = $("#txtPincode").val();
-            $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Validating User... Please wait</div></div>');
+            //$('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Validating User... Please wait</div></div>');
             $.ajax({
                 url: Aurl + "login/get",
                 type: 'get',
@@ -1004,9 +1004,13 @@
                             else if (item.Mode == "2") {//New Device Detect
                                 $("#loadingDiv").remove();
                                 document.getElementById("myModalDeviceOTP").style.display = "flex";
+                                objOTPType = "device";
+                                $("#lblOTPHead").html("Device Verification");
+                                $("#lblOTPContent").text("We've detected a sign-in attempt from a new device");
+                                $("#txtDeviceOTP").val("");
                                 $("#txtDeviceOTP").focus();
                                 $("#txtOTPID").val(item.ID);
-                                $("#txtUserID").val(item.UserID);                                
+                                $("#txtUserID").val(item.UserID);
                                 showSuccessSnackbar(item.ResponseMessage);
                             }
                             else if (item.Mode == "3") {//E-Mail Failed
@@ -1016,6 +1020,14 @@
                             else if (item.Mode == "4") {//Lisense Expired
                                 $("#loadingDiv").remove();
                                 showErrorSnackbar(item.ResponseMessage);
+                            }
+                            else if (item.Mode == "5") {//Duplicate Login
+                                $("#loadingDiv").remove();
+                                //showErrorSnackbar(item.ResponseMessage);
+                                var cnf = confirm(item.ResponseMessage + ". Do you want to continue and terminate the existing session?");
+                                if (cnf) {
+                                    validateuser(item.ID);
+                                }
                             }
                         });
                     }
@@ -1030,47 +1042,89 @@
                 },
             });
         }
+        function validateuser(nUID) {
+            var Lat = $("#txtLatitude").val();
+            var Long = $("#txtLongtitude").val();
+
+            $.ajax({
+                url: Aurl + "validateuser",
+                type: 'get',
+                contentType: 'json',
+                data: {
+                    ID: nUID, Latitude: Lat, Longitude: Long
+                },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (response) {
+                    $.each(response, function (i, item) {
+                        if (item.Mode == "2") {
+                            $("#loadingDiv").remove();
+                            document.getElementById("myModalDeviceOTP").style.display = "flex";
+                            objOTPType = "user";                            
+                            $("#lblOTPHead").html("User Verification");
+                            $("#lblOTPContent").text("We've detected a another login attempt from a same user");
+                            $("#txtDeviceOTP").val("");
+                            $("#txtDeviceOTP").focus();
+                            $("#txtOTPID").val(item.ID);
+                            $("#txtUserID").val(item.UserID);
+                            showSuccessSnackbar(item.ResponseMessage);
+
+                            //We've detected a sign-in attempt from a new device
+                        }
+                        else if (item.Mode == "3") {
+                            showErrorSnackbar(item.Message);
+                        }
+                    });
+                }
+            });
+        }
         $("#btnVerifyDeviceOTP").click(function () {
-            $("#dvErrorDeviceOTP").html("");
-            var IsValid = true, CheckValidation = true;
-            CheckValidation = MandatoryValidation($("#txtDeviceOTP"), $("#dvErrorDeviceOTP"));
-            if (!CheckValidation) {
-                IsValid = false;
-            }
-            else {
-                var OID = $("#txtOTPID").val();
-                var UID = $("#txtUserID").val();
-                var Lat = $("#txtLatitude").val();
-                var Long = $("#txtLongtitude").val();
-                var nOTP = $("#txtDeviceOTP").val();
-                var Pinc = $("#txtPincode").val();
-                var devid = getDeviceId();
-                $.ajax({
-                    url: Aurl + "login/otpverify",
-                    type: 'get',
-                    contentType: 'json',
-                    data: {
-                        OTPID: OID, UserID: UID, DeviceID: devid, OTP: nOTP, Latitude: Lat, Longitude: Long, Pincode: Pinc
-                    },
-                    xhrFields: {
-                        withCredentials: true
-                    },
-                    success: function (response) {
-                        $.each(response, function (i, item) {
-                            if (item.MsgID == "0") {
-                                localStorage.setItem("ThemeData", item.ThemeData);
-                                localStorage.setItem("FilterDatelist", item.FilterDatelist);
-                                window.location.href = url + '/ValidatePermission?ID=' + item.ID;
-                            }
-                            else if (item.MsgID == "1") {
-                                showErrorSnackbar(item.Message);
-                            }
-                        });
-                    }
-                });
-            }
-            
-        });
+                $("#dvErrorDeviceOTP").html("");
+                var IsValid = true, CheckValidation = true;
+                CheckValidation = MandatoryValidation($("#txtDeviceOTP"), $("#dvErrorDeviceOTP"));
+                if (!CheckValidation) {
+                    IsValid = false;
+                }
+                else {
+                    var OID = $("#txtOTPID").val();
+                    var UID = $("#txtUserID").val();
+                    var Lat = $("#txtLatitude").val();
+                    var Long = $("#txtLongtitude").val();
+                    var nOTP = $("#txtDeviceOTP").val();
+                    var Pinc = $("#txtPincode").val();
+                    var devid = getDeviceId();
+                    $.ajax({
+                        url: Aurl + "login/otpverify",
+                        type: 'get',
+                        contentType: 'json',
+                        data: {
+                            OTPID: OID, UserID: UID, DeviceID: devid, OTP: nOTP, Latitude: Lat,
+                            Longitude: Long, Pincode: Pinc, OTPType: objOTPType
+                        },
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        success: function (response) {
+                            $.each(response, function (i, item) {
+                                if (item.MsgID == "0") {
+                                    localStorage.setItem("ThemeData", item.ThemeData);
+                                    localStorage.setItem("FilterDatelist", item.FilterDatelist);
+                                    window.location.href = url + '/ValidatePermission?ID=' + item.ID;
+                                }
+                                else if (item.MsgID == "1") {
+                                    showErrorSnackbar(item.Message);
+                                }
+                                else if (item.MsgID == "2")
+                                {
+                                    validateuser(item.ID);
+                                }
+                            });
+                        }
+                    });
+                }
+
+            });
         function SendActivationmail(To,AAK) {
             $.ajax({
                 url: '@Url.Action("SendMail", "Login")',
@@ -1200,7 +1254,13 @@
                 }
             });
         }
+        $(document).ajaxStart(function () {
+            $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Validating User... Please wait</div></div>');
+        });
 
+        $(document).ajaxStop(function () {
+            $("#loadingDiv").remove();
+        });
     </script>
 </body>
 </html>

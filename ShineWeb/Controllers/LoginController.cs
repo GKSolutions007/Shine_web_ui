@@ -124,13 +124,29 @@ namespace ShineWeb.Controllers
             string url = Session["url"].ToString();
             char isslash = url[url.Length - 1];
             url = isslash == '/' ? url : url + "/";
-            string ALink = url + "Login/AACM?AAlk=" + Url.Encode(clsEncryptDecrypt.Encrypt(ID));
+            //string ALink = url + "Login/AACM?AAlk=" + Url.Encode(clsEncryptDecrypt.Encrypt(ID));
 
-            string subject = "Activate Your Account";
-            string body = BuildActivationEmailBody(ALink);
+            //string subject = "Activate Your Account";
+            //string body = BuildActivationEmailBody(ALink);
 
-            bool Issend = bl.SendEmail(subject, body, ToMail); // ensure IsBodyHtml = true inside SendEmail
-            return Json(Issend ? 0 : 1, JsonRequestBehavior.AllowGet);
+            //bool Issend = bl.SendEmail(subject, body, ToMail); // ensure IsBodyHtml = true inside SendEmail
+            string sitelink = Url.Encode(clsEncryptDecrypt.Encrypt(url));
+            string EncID = Url.Encode(clsEncryptDecrypt.Encrypt(ID));
+            string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
+            HttpClient _client = new HttpClient();
+            _client.BaseAddress = new Uri(APIurl);// APILink from app config
+            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            HttpResponseMessage result = _client.GetAsync("signup/sendaam?SiteLink=" + sitelink + "&ToEmailID=" + ToMail + "&ID=" + EncID).Result;
+            if (result.IsSuccessStatusCode)
+            {
+                var jsonString = result.Content.ReadAsStringAsync();
+                if (jsonString.Result != null)
+                {
+                    return Json(jsonString.Result.ToLower() == "true" ? 0 : 1, JsonRequestBehavior.AllowGet);
+                }
+            }
+            return Json(null, JsonRequestBehavior.AllowGet);
         }
 
         private string BuildActivationEmailBody(string activationLink)
@@ -177,10 +193,7 @@ namespace ShineWeb.Controllers
 
               <p style='font-size:13px;color:#9ca3af;line-height:1.5;margin:0 0 8px 0;'>
                 If the button above doesn't work, please contact our support team for assistance.
-              </p>
-              <p style='font-size:13px;color:#9ca3af;line-height:1.5;margin:0;'>
-                If you didn't create this account, you can safely ignore this email.
-              </p>
+              </p>              
             </td>
           </tr>
 
@@ -261,6 +274,16 @@ namespace ShineWeb.Controllers
         }
         public ActionResult LogOff()
         {
+            string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
+            HttpClient _client = new HttpClient();
+            _client.BaseAddress = new Uri(APIurl);// APILink from app config
+            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            var authcookie = HttpContext.Request.Cookies["AuthToken"];
+            if (authcookie != null)
+            {
+                HttpResponseMessage result = _client.GetAsync("resetlogin?token=" + authcookie.Value).Result;
+            }
+
             HttpContext.Response.Cache.SetExpires(DateTime.UtcNow.AddMinutes(-1));
             HttpContext.Response.Cache.SetCacheability(HttpCacheability.NoCache);
             HttpContext.Response.Cache.SetNoStore();

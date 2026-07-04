@@ -24,6 +24,7 @@
 <script src="~/Scripts/js/mrptaxcall.js"></script>
 <script src="~/Autocomplete/GKBSautocomplete.js"></script>
 <script src="~/Scripts/multiselect/GKBSmultiselectiondropdown.js"></script>
+<script src="~/Autocomplete/GKBSautocompleteMultiCol.js"></script>
 <header>
     <link rel="stylesheet" href="~/Content/index.css">
 </header>
@@ -1431,6 +1432,7 @@
             }
         });
     }
+    var ItemALTheme = 1;
     var arrPurchaseTaxDetails = [];
     //~Preload Data
     function GetData(nMode, strName = null, strID = null) {
@@ -1511,24 +1513,46 @@
                                 "name": items.Name,
                                 "code": items.Code,
                                 "id": items.ID,
-                                "ABS": "Qty:<label style='color:" + clr + "'> " + items.ABSQty + " </label>",
-                                "line2": "₹ : " + items.PurchasePrice + " | Qty : <label style='color:" + clr + "'> " + items.ABSQty + " </label>"
+                                "ABS": "<label style='color:" + clr + "'> " + items.ABSQty + " </label>",
+                                "line2": "₹ : " + items.PurchasePrice + " | Qty : <label style='color:" + clr + "'> " + items.ABSQty + " </label>",
+                                "price": items.PurchasePrice
                             }
                             TempAL.push(al);
                         });
-                        if (TempAL)
-                            console.log(TempAL);
-                        PaginatedAutocomplete({
-                            inputId:"txtHProds",// "txtProdName",
-                            data: TempAL,
-                            onSelect: function (item) {
-                                $("#txtHProds").val(item.code);
-                                $("#lblABS").html(item.ABS);
-                                $("#clrdivs").html("");
-                                GetData(4, item.code);
-                                return false;
-                            }
-                        });
+                        if (ItemALTheme == 1) {
+                            PaginatedAutocomplete({
+                                inputId: "txtHProds",// "txtProdName",
+                                data: TempAL,
+                                onSelect: function (item) {
+                                    $("#txtHProds").val(item.code);
+                                    $("#lblABS").html(item.ABS);
+                                    $("#clrdivs").html("");
+                                    GetData(4, item.code);
+                                    return false;
+                                }
+                            });
+                        } else {
+                            PaginatedAutocompleteMultiCol({
+                                inputId: "txtHProds",
+                                data: TempAL,
+                                columns: [
+                                    { key: "code", label: "Code", width: "15%" },
+                                    { key: "name", label: "Name", width: "35%" },
+                                    { key: "price", label: "Price", width: "20%" },
+                                    { key: "ABS", label: "Stock", width: "20%" }
+                                ],
+                                searchFields: ["code", "name", "price"],
+                                selectField: "name",
+                                onSelect: function (item) {
+                                    console.log("Selected product:", item);
+                                    $("#txtHProds").val(item.code);
+                                    $("#lblABS").html(item.abs);
+                                    $("#clrdivs").html("");
+                                    GetData(4, item.code);
+                                    return false;
+                                }
+                            });
+                        }
                     }
                     else {
                         //showErrorSnackbar("No Records Found in Product list");

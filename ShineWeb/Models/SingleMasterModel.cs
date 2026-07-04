@@ -31,6 +31,7 @@ namespace ShineWeb.Models
         public string EnablePriceEditInTransaction { get; set; }
         public string TransType { get; set; }
         public string TransID { get; set; }
+        public string StatusID { get; set; }
         public string ViewDocID { get; set; }
         public string PartyID { get; set; }
         public string TransVariantID { get; set; }
