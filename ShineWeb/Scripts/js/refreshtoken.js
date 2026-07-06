@@ -20,7 +20,8 @@ function refreshAccessToken(callback) {
                 callback();
             }
         },
-        error: function () {
+        error: function (response) {
+            console.log("err response", response);
             //console.log("Refresh token expired, redirecting to login.");
             showUnauthorizedPopup({ redirectUrl: UIURL, seconds: 5 });
 

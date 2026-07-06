@@ -1,0 +1,175 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutWithoutheader.cshtml";
+}
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
+
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/GKBS_Grid/js/gridui.js"></script>
+<style>
+    .copy-toast {
+        position: fixed;
+        bottom: 30px;
+        right: 50%;
+        background: #198754;
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 5px 15px rgba(0,0,0,.2);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(30px);
+        transition: all .3s ease;
+        z-index: 99999;
+    }
+
+        .copy-toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        .copy-toast i {
+            font-size: 16px;
+        }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    @Html.HiddenFor(model => model.FormID, new { @autocomplete = "off", @class = "form-control", @id = "txtFormID" })
+    <div class="d-flex align-items-center gap-2">
+        <!-- Larger heading -->
+        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    </div>
+    <hr />
+    <div class="toastBox"></div>
+    <div id="copyToast" class="copy-toast">
+        <i class="fas fa-check-circle"></i>
+        Copied to clipboard.
+    </div>
+    <div id="dvMainTable">
+        <div id="my-grid" style="height: 600px; width: 100%;"></div>
+    </div>
+</body>
+<script>
+    var Aurl = '@Session["APIurl"]';
+    var grid;
+    var sccolumnsettings = [];
+    var fid = $("#txtFormID").val();
+    GetData(fid);
+    function GetData(nFormID) {
+        $.ajax({
+            url: Aurl + "shinecode/masterdata",
+            type: 'get',
+            contentType: 'json',
+            data: { mastertype: nFormID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    let allcolumns = Object.keys(data[0]);
+                    console.log(" allcolumns ", allcolumns, "alldata", data);
+                    for (var i = 0; i < allcolumns.length; i++) {
+                        var coldata = {
+                            "field": allcolumns[i],
+                            "header": allcolumns[i],
+                            "type": "label",
+                            "width": 135,
+                            "align": "left",
+                            "visible": true,
+                            "EnableColumnMenu": true,
+                            "ShowinColumnOption": true,
+                            "Total": true,
+                            "TotalYN": "1",
+                            "EnableSum": true,
+                            "EnableAvg": false,
+                            "precision": "2",
+                            "ClickPopup": false,
+                            PrintColumnName: allcolumns[i],
+                            PrintYN: true,
+                            Printwidth: 20,
+                            "EnableCount": true,
+                            "EnableUnique": true
+                        }
+                        sccolumnsettings.push(coldata)
+                    }
+
+                    grid = new GKBSDynamicGrid('#my-grid', sccolumnsettings, data, {
+                        enablePagination: true,
+                        pageSize: ItemsperPage,
+                        enableSearch: true,
+                        stickyToWindow: true,
+                        enableExport: false,
+                        enablePrint: false,
+                        enableColumnsBtn: false,
+                        enableAddRow: false,
+                        enableRemoveRow: false,
+                        enableSorting: true,
+                        searchTerm: "", singleIconAction: [],
+                        rowActionsMenu: [],
+                        customCellRenderer: (el, col, rowData) => {
+                            if (col.field === 'Active') {
+                                const val = rowData[col.field];
+                                if (val == "Yes") {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-active">
+      <span class="dg-status-circle"></span> Active
+  </div>`;
+                                } else {// if (!val)
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+      <span class="dg-status-circle"></span> In-Active
+  </div>`;
+                                }
+                            }
+                        },
+                        customButtons: [
+                            
+                        ],
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
+                        },
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+                            navigator.clipboard.writeText(cellValue);
+                            showCopyToast(fieldName +" Copied successfully!");
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                           
+                        },
+                    });
+                    setTimeout(() => {
+                        grid.autoFitAllColumns();
+                    }, 500)
+                } else {
+                    showErrorSnackbar("No records found")
+                }
+            }
+        });
+    }
+    function showCopyToast(message = "copied to clipboard.") {
+        const toast = $("#copyToast");
+
+        toast.html(`<i class="fas fa-check-circle"></i> ${message}`);
+        toast.addClass("show");
+
+        clearTimeout(toast.data("timer"));
+
+        const timer = setTimeout(function () {
+            toast.removeClass("show");
+        }, 2000);
+
+        toast.data("timer", timer);
+    }
+</script>
