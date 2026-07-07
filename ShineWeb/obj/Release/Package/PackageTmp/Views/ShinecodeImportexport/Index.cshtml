@@ -1,0 +1,631 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/jquery-ui.css" rel="stylesheet" />
+
+@*<script src="~/Scripts/bootstrap.min.js"></script>*@
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery.dataTables.min.js"></script>
+<script src="~/Scripts/dataTables.bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-ui.min.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+
+<style>
+    /* Global Overrides */
+    body {
+        background-color: #f7f9fb;
+        color: #333;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Card Box */
+    .card-box {
+        background: #fff;
+        padding: 20px 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-top: 10px;
+        border: 1px solid #eaeaea;
+    }
+
+    /* Material Forms */
+    .form-group-material {
+        position: relative;
+        margin-bottom: 15px;
+    }
+
+    .form-control-material {
+        border: none;
+        border-bottom: 2px solid #eee;
+        border-radius: 0;
+        padding: 10px 5px;
+        background: transparent;
+        box-shadow: none;
+        height: 45px;
+        /*width: 100%;*/
+        transition: border-color 0.3s;
+        background: #fff url("data:image/svg+xml;utf8,<svg fill='black' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>") no-repeat right 10px center;
+    }
+
+        .form-control-material:focus {
+            border-bottom-color: #007bff;
+            box-shadow: none;
+            outline: none;
+        }
+
+    .label-material {
+        position: absolute;
+        top: 12px;
+        left: 5px;
+        font-size: 14px;
+        color: #999;
+        pointer-events: none;
+        transition: 0.2s ease all;
+    }
+
+    .form-control-material:focus ~ .label-material,
+    .form-control-material:not(:placeholder-shown) ~ .label-material,
+    .form-control-material.has-value ~ .label-material {
+        top: -10px;
+        font-size: 12px;
+        color: #007bff;
+        font-weight: 600;
+    }
+
+    /* Drag and Drop Zone */
+    .upload-drop-zone {
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        background-color: #fafafa;
+        color: #777;
+        text-align: center;
+        padding: 110px 50px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+        .upload-drop-zone:hover, .upload-drop-zone.dragover {
+            border-color: #007bff;
+            background-color: #eaf4ff;
+            color: #007bff;
+        }
+
+        .upload-drop-zone i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .upload-drop-zone span {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+    .file-name-display {
+        margin-top: 10px;
+        color: #28a745;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    /* Date Range */
+    .daterange-box {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 5px;
+        background: #fff;
+    }
+
+        .daterange-box input[type="date"] {
+            border: none;
+            outline: none;
+            padding: 5px;
+            font-size: 13px;
+            color: #555;
+        }
+
+    .daterange-separator {
+        margin: 0 10px;
+        color: #999;
+        font-size: 12px;
+    }
+
+    /* Error Text */
+    .clrdiv {
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    /* Buttons */
+    .btn-action {
+        padding: 10px 20px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: none;
+        transition: transform 0.1s;
+        margin-left: 5px;
+    }
+
+        .btn-action:active {
+            transform: scale(0.98);
+        }
+
+        .btn-action i {
+            margin-right: 5px;
+        }
+
+    /* Stats Cards */
+    .stat-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        text-align: center;
+        margin-bottom: 10px;
+        border: 1px solid #f0f0f0;
+    }
+
+    .stat-title {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+    }
+</style>
+
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Larger heading -->
+                    <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+                </div>
+                <hr />
+                <div class="toastBox"></div>
+
+                <div class="card-box">
+                    <div class="row pb-4">
+                        <div class="alert alert-info d-flex align-items-center gap-2" role="alert">
+                            <span class="fa fa-info-circle fs-2"></span>
+                            <div style="font-size:14px">
+                                Download the given template to enter the Selected Transaction details and upload the same here.
+                                <a href="javascript:void(0)" id="btnTemplate" class="alert-link fw-bolder" title="Click to download"><i class="fa fa-file-download"></i> Download</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        @*<div class="col-lg-3 col-md-3 col-12"></div>*@
+                        <!-- Import Type Selection -->
+                        <div class="col-lg-4 col-md-12 col-12">
+                            <div class="form-group-material">
+                                <select class="form-control form-control-material has-value" id="cmbTransaction">
+                                    <option value="1">Customer</option>
+                                    <option value="2">Product</option>
+                                    <option value="3">Vendor</option>
+                                </select>
+                                <label class="label-material">Import Type *</label>
+                                <div class="clrdiv" id="dvErrorTrans" style="color:red"></div>
+
+                            </div>
+                            <!-- Date Range -->
+                            <div id="tdDateRange" hidden>
+
+                                <label style="font-size: 12px; color: #007bff; margin-bottom: 5px;">Select Date Range *</label>
+
+                                <div class="d-flex align-items-center gap-2">
+
+                                    <input type="date" id="dtpFrom" class="form-control px-2" style="width:auto; height:30px;" />
+
+                                    <span class="daterange-separator">to</span>
+
+                                    <input type="date" id="dtpTo" class="form-control px-2" style="width:auto; height:30px;" />
+                                    
+                                </div>
+
+                                <div class="clrdiv" id="dvErrorDates" style="color:red"></div>
+
+                            </div>
+                            <div align="right">
+                                <button class="btn btn-primary btn-action" id="btnShinecodeExportData">
+                                    <i class="bi bi-download"></i> Export Shinecode Data
+                                </button>
+                                <button class="btn btn-warning btn-action" id="btnExportData">
+                                    <i class="bi bi-download"></i> Export My Data
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-lg-8 col-md-12 col-12">
+
+                            <div class="upload-drop-zone text-center" id="drop-zone">
+
+                                <i class="bi bi-cloud-upload fs-2"></i>
+
+                                <span id="spDragDropfileInfo">Drag & Drop <code style="font-size:18px"> Sales</code> file here and click to upload</span>
+
+                                <div id="file-name-display" class="file-name-display"></div>
+
+                                <input type="file" accept=".xls,.xlsx" id="file" style="display:none;" />
+
+                            </div>
+
+                            <div class="clrdiv text-center" id="dvErrorFiles" style="color:red;"></div>
+
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row mt-4 border-top pt-3">
+                        <div class="col-12 " style="display:flex; justify-content:center; margin-bottom:20px;">
+                            <div id="progressWrapper" style="display:none; width:350px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                    <span style="font-size:14px; font-weight:500;" id="lblExportmsg">Exporting...</span>
+                                    <span id="progressText" style="font-size:14px; font-weight:600;">0%</span>
+                                </div>
+
+                                <div style="width:100%; background:#e5e7eb; border-radius:10px; overflow:hidden; height:14px;">
+                                    <div id="progressBar"
+                                         style="width:0%; height:100%;
+                    background:linear-gradient(90deg, #4f46e5, #3b82f6);
+                    transition:width 0.4s ease;
+                    border-radius:10px;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 text-center">
+
+                            <button class="btn btn-success btn-action" id="btnLoadData">
+                                <i class="bi bi-upload"></i> Import Data
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Progress Section -->
+                <div class="row">
+
+                    <div class="col-12">
+
+                        <div class="text-center mt-3" id="dvProgImg" style="display:none;" hidden>
+
+                            <div class="alert alert-info d-inline-block px-4 py-3">
+
+                                <img src="~/dist/themes/default/throbber.gif" style="height:20px; vertical-align:middle;" />
+
+                                <span class="ms-2 fw-medium">Processing import data. Please wait...</span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Results Section -->
+                <div class="row mt-3" id="dvmsg" style="display:none;" hidden>
+
+                    <div class="col-12">
+
+                        <div class="alert alert-success text-center fw-bold fs-6" id="dvImpComp">
+                            Data Imported Successfully.
+                        </div>
+
+                        <div class="row mt-4">
+
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+
+                                <div class="stat-card text-center">
+
+                                    <div class="stat-title">Total Records</div>
+
+                                    <div class="stat-value text-primary" id="lblTotCount">0</div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+
+                                <div class="stat-card text-center">
+
+                                    <div class="stat-title">Saved Successfully</div>
+
+                                    <div class="stat-value text-success" id="lblsaved">0</div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+
+                                <div class="stat-card text-center">
+
+                                    <div class="stat-title">Failed / Invalid</div>
+
+                                    <div class="stat-value text-danger" id="lblnotsaved">0</div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <input id="txtDwldefile" hidden />
+
+            </div>
+        </div>
+    </div>
+</body>
+
+
+<script type="text/javascript">
+    var UID = '@Session["LoginUserID"]';
+    var Aurl = '@Session["APIurl"]';
+
+    $(document).ready(function() {
+         setDate("dtpFrom", 0);
+         setDate("dtpTo", 0);
+
+         // Initial UI State check
+         var initialTrans = $("#cmbTransaction").val();
+         handleTransChange(initialTrans);
+    });
+
+    // --- Drag & Drop Logic ---
+    var dropZone = document.getElementById('drop-zone');
+    var fileInput = document.getElementById('file');
+    var fileNameDisplay = document.getElementById('file-name-display');
+
+    dropZone.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.textContent = fileInput.files[0].name;
+            $("#dvErrorFiles").html("");
+        } else {
+            fileNameDisplay.textContent = "";
+        }
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files; // Assign dropped files to input
+            fileNameDisplay.textContent = e.dataTransfer.files[0].name;
+            $("#dvErrorFiles").html("");
+        }
+    });
+    // -------------------------
+
+    $("#btnLoadData").click(function () {
+        var fileUpload = $("#file").get(0);
+        var files = fileUpload.files;
+        var File = new FormData();
+
+        if (files.length > 0) {
+            $("#btnLoadData").prop("disabled", true);
+            var Trans = $("#cmbTransaction").val();
+            var TName = $("#cmbTransaction option:selected").text();
+            File.append(Trans, files[0]);
+            File.append(TName, files[0]);
+            File.append(UID, files[0]);
+            for (var i = 0; i < files.length; i++) {
+                File.append(files[i].name, files[i]);
+            }
+            $('#dvProgImg').show();
+            $('#dvmsg').hide(); // Hide previous results
+            $('#dvImpComp').html("");
+
+            $.ajax({
+                url: Aurl + "shinecode/startimport",
+                type: 'POST',
+                datatype: "JSON",
+                data: File,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (jobId) {
+                    var interval = setInterval(function () {
+                        $.get(Aurl + "shinecode/progress?jobId=" + jobId, function (res) {
+                            console.log("job res ", res);
+                            updateProgress(res.progressMessage, res.progress);
+                            if (res.progress === 100 && res.completed) {
+                                clearInterval(interval);
+                                $("#btnLoadData").prop("disabled", false);
+                                //window.location = Aurl + "transactionimport/download?jobId=" + jobId;
+
+                                setTimeout(function () {
+                                    $("#progressContainer").hide();
+                                }, 2000);
+                            }
+                            else if (res.completed) {
+                                clearInterval(interval);
+                                $("#btnLoadData").prop("disabled", false);
+                                if (res.ErrorID == 0) {
+                                    window.location = Aurl + "shinecode/download?jobId=" + jobId;
+                                }
+                                else {
+                                    showErrorSnackbar(res.ErrorMessage);
+                                }
+                            }
+                            if (res.progress === -1) {//res.progress === -1
+                                clearInterval(interval);
+                                alert("Import failed");
+                            }
+                        });
+                    }, 1000);
+                },
+                error: function (data) {
+                    updateProgress("Error while import", 0);
+                    $("#btnLoadData").prop("disabled", false);
+                }               
+            });
+        } else {
+            $("#btnLoadData").prop("disabled", false);
+            $('#dvProgImg').hide();
+            showErrorSnackbar("Choose valid file");
+            $("#dvErrorFiles").html("Please choose or drag a file here.");
+        }
+    });
+    //spDragDropfileInfo
+    //<span id="spDragDropfileInfo">Drag & Drop <code style="font-size:18px"> Sales</code> file here and click to upload</span>
+    $("#spDragDropfileInfo").html('Select/Drag & Drop <code style="font-size:18px"> ' + $("#cmbTransaction option:selected").text() +'</code> file here and click Import Data');
+    $("#btnTemplate").html('<i class="fa fa-file-download"></i> Download ' + $("#cmbTransaction option:selected").text());
+    $("#cmbTransaction").change(function (e) {
+        var Transname = $("#cmbTransaction option:selected").text();
+        $("#spDragDropfileInfo").html('Select/Drag & Drop <code style="font-size:18px"> ' + Transname + '</code> file here and click  Import Data');
+        $("#btnTemplate").html('<i class="fa fa-file-download"></i> Download ' + Transname);
+    });
+
+    function handleTransChange(val) {
+
+        if (val == 1) {
+            $("#tdDateRange").slideDown();
+        }
+        else {
+            $("#tdDateRange").slideUp();
+        }
+
+    }
+
+    $("#btnTemplate").click(function () {
+        var Trans = $("#cmbTransaction").val();
+        var TName = $("#cmbTransaction option:selected").text();
+        location.href = Aurl + 'shinecode/template?TransID=' + Trans + "&TransName=" + TName;
+    });
+
+    $("#btnExportData,#btnShinecodeExportData").click(function (e) {
+
+        var Trans = $("#cmbTransaction").val();
+        var TName = $("#cmbTransaction option:selected").text();
+        var From = $("#dtpFrom").val();
+        var To = $("#dtpTo").val();
+        var exptype = e.target.id == "btnExportData" ? 2 : 1;
+        $("#progressContainer").show();
+        $("#progressBar").css("width", "0%");
+        $.ajax({
+            url: Aurl + "shinecode/startexport",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                TransID: Trans,
+                TransName: TName,
+                FromDate: From,
+                ToDate: To,
+                ExportType: exptype
+            }),
+            success: function (jobId) {
+                var interval = setInterval(function () {
+                    $.get(Aurl + "shinecode/progress?jobId=" + jobId, function (res) {
+                        updateProgress(res.progressMessage, res.progress);
+                        if (res.progress === 100 && res.completed) {
+                            clearInterval(interval);
+
+                            window.location = Aurl + "shinecode/download?jobId=" + jobId;
+
+                            setTimeout(function () {
+                                $("#progressContainer").hide();
+                            }, 2000);
+                        }
+                        if (res.progress === -1) {
+                            clearInterval(interval);
+                            alert("Export failed");
+                        }
+                    });
+                }, 1000);
+            }
+        });
+    });
+    function updateProgress(progmsg,percent) {
+        percent = Math.round(percent);
+
+        $("#progressWrapper").show();
+        $("#progressBar").css("width", percent + "%");
+        $("#progressText").text(percent + "%");
+        $("#lblExportmsg").text(progmsg);
+
+        if (percent === 100) {
+            $("#progressBar").css("background", "linear-gradient(90deg, #16a34a, #22c55e)");
+            $("#progressText").text("Completed");
+            $("#file").val();
+            //setTimeout(() => {
+            //    $("#progressWrapper").hide();
+            //}, 5000);
+        }
+    }
+    const fromDate = document.getElementById('dtpFrom');
+    const toDate = document.getElementById('dtpTo');
+    const errorMsg = document.getElementById('dvErrorDates');
+
+    function validateDates() {
+        errorMsg.textContent = "";
+        if (fromDate.value && toDate.value) {
+            const from = new Date(fromDate.value);
+            const to = new Date(toDate.value);
+
+            if (from > to) {
+                errorMsg.textContent = "❌ From Date cannot be greater than To Date!";
+                toDate.value = "";
+                toDate.focus();
+                return;
+            }
+        }
+    }
+
+    fromDate.addEventListener('change', () => {
+        if (fromDate.value) {
+            toDate.min = fromDate.value;
+            toDate.focus();
+        }
+        validateDates();
+    });
+
+    toDate.addEventListener('change', validateDates);
+</script>
