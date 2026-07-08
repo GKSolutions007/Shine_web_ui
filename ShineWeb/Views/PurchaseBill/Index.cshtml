@@ -1616,7 +1616,8 @@
     var actions = {}, OtherActions = {};
 
     function LoadPermissions() {
-        var Permrdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : "3";
+        var Permrdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" :
+            $("#rdoPOTableData").is(":checked") ? "3" : "4";
         var cancelperm = !mapusersRole.canCancel ? false : Permrdo1 == "1" ? true : Permrdo1 == "2" || Permrdo1 == "3" ? true : false;
         var ViewPerm = mapusersRole.canView && Permrdo1 == "1" ? true : false;
         allGridActions = [
@@ -1723,7 +1724,7 @@
                                 isVisible = false;
                         }
                         else {
-                            if (mapusersRole.canCancel && Permrdo1 == "1")
+                            if (mapusersRole.canCancel && (Permrdo1 == "1" || Permrdo1 == "4"))
                                 isVisible = true;
                             else
                                 isVisible = false;
@@ -1738,6 +1739,7 @@
                     $("#lblProdCodeAS,#lblABSLoc").text("");
                     $('#cmbUOM').find("option").remove();
                     var rdo1 = $("#rdoMainTableData").is(":checked");
+                    var rdo4 = $("#rdoInvoiceTableData").is(":checked");
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[10];
                     var stsID = rowdata.CurrentStatus;
@@ -1745,6 +1747,18 @@
                         $("#txtID").val(ID);
                         if (rdo1) {
                             CancelActionTrigger(rowdata);
+                        }
+                        else if (rdo4) {
+                            var sender = rowdata.VendorID;
+                            var conf = confirm("Do you want to cancel Invoice Transfer data?");
+                            if (conf) {
+                                //GetData(15, ID);
+                                var isSuccess = ValidateCancelInvoiceTransferData(15, ID, stsID, sender);
+                                if (isSuccess) {
+                                    GetFilterData();
+                                }
+                            }
+                            
                         }
                         else {
                             var conf = confirm("Do you want to remove draft data?");
@@ -2001,6 +2015,7 @@
             if (TablePaymode) TablePaymode.columns.adjust().draw();
         });
     var UID = '@Session["LoginUserID"]';
+    var nRoleID = '@Session["RoleID"]';
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
 
@@ -4796,7 +4811,7 @@ var Url = '@Session["url"].ToString()';
                 else {
                     showErrorSnackbar("Select Vendor");
                 }
-            }            
+            }
         }
     });
     var arrProdCode = [], arrProdName = [], arrProdCodeName = [], TempProd = [], TempAL = [], arrBankAcc = [], arrAllPaymode = [];
@@ -5373,7 +5388,8 @@ var Url = '@Session["url"].ToString()';
                 });
                 var UVP = '@Session["UpdateVendorinProduct"].ToString()';
                 $("#chkUpdateVendor").prop("checked", UVP == "1");
-            }, error: function (data) {
+            },
+            error: function (data) {
                 if (data.status == "401") {
                     var msg = data.responseJSON.Message;
                     //showErrorSnackbar(msg + " Logout and Login again.");
@@ -5381,6 +5397,238 @@ var Url = '@Session["url"].ToString()';
             }
         });
     }
+    //~Assign Data from Invoice Transfer
+    function GetInvoiceTransferData(nID, nStatusID) {
+    $.ajax({
+        url: Aurl + "purchasebill/invoicedata",
+        type: 'get',
+        contentType: 'json',
+        data: { ID: nID, StatusID: nStatusID, RoleID: nRoleID },
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function (data) {
+            ProductTable.draw().clear(); ProductTable.draw().clear();
+            var rdo1 = $("#rdoMainTableData").is(":checked");
+            if (data.length > 0) {
+                var Resultdata = data[0];
+                var ResultID = Resultdata.MsgID;
+                if (ResultID == 1) {
+                    showErrorSnackbar(Resultdata.Message);
+                } else if (ResultID == 2) {
+                    showErrorSnackbar(Resultdata.Message);
+                    var Errorinfo = "<code><b><h5>" + Resultdata.Message +"</h5></b></code></br></br>";
+                    $.each(Resultdata.NoItemShinecodes, function (i, items) {
+                        Errorinfo += "<label style='font-size:12px;'> * " + items.Shinecode +"</label></br>";
+                    });
+                    InfoDialogMsg(Errorinfo, 'Error Info');
+                } else if (ResultID == 0) {
+                    nTransMode = rdo1 ? 2 : 1;
+                    $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+                    $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
+                    $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+                    $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+                    $("#btnSave,#PaymentInfoPopup,#btnDraft").show();
+                    $("#btnSave,#btnClose,#btnDraft").prop("disabled", false);
+                    $("#dvMain,#dvUpdateVendor,#dvSelectItems").show();
+                    $("#dvDocuments").hide();
+                    $("#btnEmail,#btnWhatsapp").hide();
+                    $("#balanceContainer").show();
+                    if ($("#txtEnableBranch").val() == 1) {
+                        $("#cmbBranch").prop("disabled", true);
+                    }
+                    $("#MainHeading").text(rdo1 ? "Modify Purchase Bill" : "Create Purchase Bill");
+                    var InvoiceData = Resultdata.ResponseData;
+                    $.each(InvoiceData, function (i, items) {
+                        var rdo1 = $("#rdoMainTableData").is(":checked");
+                        if (rdo1) {
+                            $("#txtID").val(items.ID);
+                        } else {
+                            $("#txtDraftID").val(items.ID);
+                        }
+                        $("#cmbCreditTerm").val(items.PaymentTermID),
+                            $("#cmbPaymode").val(items.PaymentModeID),
+                            $("#txtVendorID").val(items.VendorID);
+
+                        //$("#dtpDate").val(items.Date),
+                        $("#cmbBranch").val(items.BranchID);
+                        if (nTransMode != 3) {
+                            $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
+                        }
+                        if (rdo1) {
+                            $("#dtpDate").val(items.Date);
+                        }
+                        else {
+                            if (RetainDate == 0) {
+                                setDate("dtpDate", 0);
+                            } else {
+                                $("#dtpDate").val(items.Date);
+                            }
+                        }
+                        $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);//, $("#txtStatus").val(items.Status)
+                        updateInputColumn("txtFright", items.Frieght); updateInputColumn("txtOtherChargPern", items.OtherChargePern); updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
+                        updateInputColumn("txtProdDiscPern", items.ProdDiscPern); updateInputColumn("txtTradeDiscPern", items.TradeDiscPern); updateInputColumn("txtAddnlDiscPern", items.AddnlDiscPern);
+                        updateInputColumn("txtProdDiscAmt", items.TotalProdDiscAmt); updateInputColumn("txtTradeDiscAmt", items.TotalTradeDiscAmt); updateInputColumn("txtAddnlDiscAmt", items.TotalAddnlDiscAmt);
+                        updateInputColumn("txtWriteoff", items.WriteOffAmt); updateInputColumn("txtRoundOff", items.RoundOffAmt);
+                        updateLabelColumn("lblPTGross", parseFloat(items.GrossAmt)); updateLabelColumn("lblPTTax", parseFloat(items.TaxAmt));
+                        updateLabelColumn("lblRoundNet", parseFloat(items.NetAmt));
+                        updateLabelColumn("lblRoundNetFooter", parseFloat(items.NetAmt));
+                        updateInputColumn("txtTCS", items.TCSTaxAmt); updateInputColumn("txtTDS", items.TDSAmount); $("#lblRoundBalanceFooter").text(items.Balance);
+                        $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
+                        updateInputColumn("txtDiffExcl", items.DiffValueGross); updateInputColumn("txtDiffIncl", items.DiffValueNet);
+                        $("#txtRefNo").prop("disabled", true);
+                        $.each(items.lstPartyInfo, function (i, itemsParty) {
+                            $("#txtSearch").val(itemsParty.Name),
+                                $("#lblName").text(itemsParty.Code),
+                                $("#cmbRating").text(itemsParty.Ratings),
+                                $("#lblMob1").text(itemsParty.Mob1),
+                                $("#lblGSTIN").text(itemsParty.GSTIN),
+                                $("#txtBAdd1").val(itemsParty.Billadd1),
+                                $("#txtBAdd2").val(itemsParty.Billadd2),
+                                $("#txtBAdd3").val(itemsParty.Billadd3),
+                                $("#txtSAdd1").val(itemsParty.Shipadd1),
+                                $("#txtSAdd2").val(itemsParty.shipadd2),
+                                $("#txtSAdd3").val(itemsParty.Shipadd3),
+                                $("#txtPincode").val(itemsParty.Pincode);
+                        });
+                        ProductRID = 0;
+                        var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
+                        var hdnfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
+                        var dataSet = items.lstProdGrid.map(function (itemsProd, nRowIndex) {
+                            var gross = parseFloat(itemsProd.GrossAmt);
+                            var goods = parseFloat(itemsProd.GoodsAmt);
+                            var ProdDiscPern = itemsProd.ProdPern != "" ? parseFloat(itemsProd.ProdPern) : 0;
+                            var ProdDiscAmt = parseFloat((gross * ProdDiscPern) / 100);
+                            var TradeDiscPern = itemsProd.TradePern != "" ? parseFloat(itemsProd.TradePern) : 0;
+                            var TradeDiscAmt = parseFloat((gross * TradeDiscPern) / 100);
+                            var AddnlDiscPern = itemsProd.AddnlPern != "" ? parseFloat(itemsProd.AddnlPern) : 0;
+                            var AddnlDiscAmt = parseFloat((gross * AddnlDiscPern) / 100);
+                            var ReasonoptionsHtml = strReasons.replace(
+                                new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
+                                'value="' + itemsProd.ReasonID + '" selected'
+                            );
+                            var Reasons = "<select name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
+
+                            var Diffval = parseFloat(itemsProd.DiffAmt);
+                            var DiffClr = Diffval >= 0 ? "green" : "red";
+                            var DiffField = '<label name="DiffValue" style="color:' + DiffClr + '" lbltag="' + Diffval + '" title="' + Diffval + '" class="lblsettag" id="dgvProdDiffValue' + nRowIndex + '">' + parseFloat(Diffval).toFixed(DecVal) + '</label><br/>' + Reasons;
+                            var LocationoptionsHtml = strLocation.replace(
+                                new RegExp('value="' + itemsProd.LocationID + '"', 'g'),
+                                'value="' + itemsProd.LocationID + '" selected'
+                            );
+                            var LocationField = "<select name= 'Location' " + disbfields + " class='gdInput dgvcmbLocation' id='dgvLocation" + nRowIndex + "'>" + LocationoptionsHtml + "</select>";
+                            $('#dgvReasons' + nRowIndex).val(itemsProd.ReasonID);
+                            $('#dgvLocation' + nRowIndex).val(itemsProd.LocationID);
+                            // Modify sel to add 'selected' to the matching option
+                            var forItemUOM = items.lstBatchInfo.filter(bt => bt.ProdID == itemsProd.ProdID);
+                            var CFValue = 1;
+                            if (forItemUOM.length > 0) {
+                                CFValue = parseFloat(forItemUOM[0].ConversionRate) || 1;
+                            }
+                            var dTransactionPrice = parseFloat(itemsProd.TransactionPrice) * CFValue
+                            return [
+                                itemsProd.ProdID,
+                                itemsProd.Code,///'<label name="ProdCode">' +
+                                itemsProd.UomID,//'<label name="UOMID">' +
+                                itemsProd.TaxPern,
+                                '<span ' + hdnfields + ' style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/> <span style="font-size:16px;" class="glyphicon glyphicon-edit clseditprod"  title="Edit Product"></span>' +
+                                '&ensp;<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
+                                '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
+                                '<input name = "ProName" class="gdInput" value="' + itemsProd.Name + '" disabled title="' + itemsProd.Name + '"/><br/>' + itemsProd.Code,
+                                '<input type="number" step="any" class="gdInput" name="HSN" value="' + itemsProd.HSNCode + '" disabled title="' + itemsProd.HSNCode + '"/>',
+                                itemsProd.UOM,
+                                '<input type="number" txttag ="' + itemsProd.Qty + '" title ="' + itemsProd.Qty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.Qty).toFixed(DecVal) + '" disabled  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input type="number" txttag ="' + itemsProd.FreeQty + '" title ="' + itemsProd.FreeQty + '" step="any" id="dgvProdFreeQty' + nRowIndex + '" name="FreeQty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.FreeQty).toFixed(DecVal) + '" disabled  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<input type="number" txttag ="' + itemsProd.DmgQty + '" title ="' + itemsProd.DmgQty + '" step="any" id="dgvProdDmgQty' + nRowIndex + '" name="DmgQty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.DmgQty).toFixed(DecVal) + '" disabled  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+
+                                '<input type="number" txttag ="' + ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                                '<input type="number" txttag ="' + ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="' + parseFloat(ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + '  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+
+                                '<input type="number" txttag ="' + TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvTradediscPernchange" value="' + parseFloat(TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                                '<input type="number" txttag ="' + TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvTradediscAmtchange" value="' + parseFloat(TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + '  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+
+                                '<input type="number" txttag ="' + AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvAddnldiscPernchange" value="' + parseFloat(AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
+                                '<input type="number" txttag ="' + AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + '  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                                '<label class="lblsettag" name="Goods" lbltag=' + goods + ' id="dgvProdGoods' + nRowIndex + '" title="' + goods + '">' + parseFloat(goods).toFixed(DecVal) + '</label>',
+                                '<label class="lblsettag" name="Gross" lbltag=' + gross + ' id="dgvProdGross' + nRowIndex + '" title="' + gross + '">' + parseFloat(gross).toFixed(DecVal) + '</label>',
+                                '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>' +
+                                '<label hidden name="ApponMRPCum" class="lblsettag" lbltag="' + itemsProd.CumMRPonTax + '"  title="' + itemsProd.CumMRPonTax + '" id="dgvProdApponMRPCum' + ProductRID + '">' + parseFloat(itemsProd.CumMRPonTax).toFixed(DecVal) + '</label>' +
+                                '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + itemsProd.MRPonTax + '"   title="' + itemsProd.MRPonTax + '"id="dgvProdTotalMRPonTax' + ProductRID + '">' + parseFloat(itemsProd.MRPonTax).toFixed(DecVal) + '</label>',
+                                '<label class="lblsettag" name="NetAmt" lbltag=' + itemsProd.NetAmt + ' id="dgvProdNet' + nRowIndex + '" title="' + itemsProd.NetAmt + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
+                                DiffField, dTransactionPrice, LocationField
+                            ];
+
+                        });
+                        //{ "targets": [15, 16, 18, 17, 19], "class": "text-end" }
+                        $('#tblProductData').DataTable({
+                            scrollY: "450px",
+                            scrollX: true,
+                            scrollCollapse: true,
+                            paging: false,
+                            destroy: true,
+                            data: dataSet,
+                            fixedColumns: false,
+                            searching: false,
+                            ordering: false,
+                            sorting: false,
+                            info: false,
+                            columns: [
+                                { title: "ProdID", visible: false, className: "dt-body-left" },
+                                { title: "ProdCode", visible: false, className: "dt-body-left" },
+                                { title: "UOMID", visible: false, className: "dt-body-left" },
+                                { title: "TaxPern", visible: false, className: "dt-body-left" },
+                                { title: "Action", orderable: false, className: "dt-body-left", width: "5%" },
+                                { title: "#", className: "dt-body-left", width: "3%" },
+                                { title: "Item Names", className: "dt-body-left", width: "40%" },
+                                { title: "HSN Code", className: "text-end", width: "7%" },
+                                { title: "UOM", className: "text-end", width: "7%" },
+                                { title: "Quantity", className: "text-end", width: "6%" },
+                                { title: "Free Qty", className: "dt-body-left", width: "6%" },
+                                { title: "Dmg Qty", className: "dt-body-left", width: "6%" },
+                                { title: "Prod % / ₹", className: "text-end", width: "7%" },
+                                { title: "Trade %/ ₹", className: "text-end", width: "7%" },
+                                { title: "Addnl % / ₹", className: "text-end", width: "6%" },
+                                { title: "Goods ₹", className: "text-end", width: "9%" },
+                                { title: "Gross ₹", className: "text-end", width: "9%" },
+                                { title: "Tax ₹ / %", className: "dt-body-left", width: "9%" },
+                                { title: "Net ₹", className: "text-end", width: "9%" },
+                                { title: 'Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span>', className: "text-end", width: "9%" },
+                                { title: "TransPrice", visible: false, className: "dt-body-left", width: "9%" },
+                                { title: "Location", className: "text-end", width: "9%" }
+                            ]
+                        });
+                        ProductTable = $('#tblProductData').DataTable();
+                        ProductRID = ProductTable.rows().count() + 1;
+                        BatchAcceptArray = items.lstBatchInfo;
+                        if (nTransMode != 5 && nTransMode != 4)
+                            CalculateDiffPrice();
+
+                        setTimeout(() => {
+                            calculateProdGrid();
+                        }, 1000);
+                        setupArrowKeyNavigation();
+                    });
+                    var UVP = '@Session["UpdateVendorinProduct"].ToString()';
+                    $("#chkUpdateVendor").prop("checked", UVP == "1");
+                    setTimeout(() => {
+                        var DocDate = $("#dtpDate").val();
+                        var Branch = $("#cmbBranch").val();
+                        GetDocumentID(DocDate, Branch, 1);
+                    }, 1000);
+                }
+            }
+
+
+
+        },
+        error: function (data) {
+            if (data.status == "401") {
+                var msg = data.responseJSON.Message;
+                //showErrorSnackbar(msg + " Logout and Login again.");
+            }
+        }
+    });
+}
     $('#btnTEdit').click(function (e) {
         var Did = $("#txtID").val();
         var Currsts = $("#txtStatus").val();
@@ -5414,27 +5662,33 @@ var Url = '@Session["url"].ToString()';
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
         var rdo3 = $("#rdoPOTableData").is(":checked");
+        var rdo4 = $("#rdoInvoiceTableData").is(":checked");
         var stsID = rowData.CurrentStatus;
         if (rdo2 && !ValidateCancelDraftData(1, 1, rowData.ID, stsID)) {
             return;
         }
-        GetProductViewData(rdo1 ? 7 : rdo2 ? 11 : 17, rowData.ID);
-        $("#txtStatus").val(stsID);
-        nTransMode = rdo1 ? 2 : 1;
-        $(".FormclrField,.FormclrcmbField").prop("disabled", false);
-        $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
-        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
-        $("#btnSave,#PaymentInfoPopup,#btnDraft").show();
-        $("#btnSave,#btnClose,#btnDraft").prop("disabled", false);
-        $("#dvMain,#dvUpdateVendor,#dvSelectItems").show();
-        $("#dvDocuments").hide();
-        $("#btnEmail,#btnWhatsapp").hide();
-        $("#balanceContainer").show();
-        if ($("#txtEnableBranch").val() == 1) {
-            $("#cmbBranch").prop("disabled", true);
+        if (rdo4) {
+            GetInvoiceTransferData(rowData.ID, stsID);
+        } else {
+            GetProductViewData(rdo1 ? 7 : rdo2 ? 11 : 17, rowData.ID);
+            nTransMode = rdo1 ? 2 : 1;
+            $(".FormclrField,.FormclrcmbField").prop("disabled", false);
+            $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
+            $("#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+            $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+            $("#btnSave,#PaymentInfoPopup,#btnDraft").show();
+            $("#btnSave,#btnClose,#btnDraft").prop("disabled", false);
+            $("#dvMain,#dvUpdateVendor,#dvSelectItems").show();
+            $("#dvDocuments").hide();
+            $("#btnEmail,#btnWhatsapp").hide();
+            $("#balanceContainer").show();
+            if ($("#txtEnableBranch").val() == 1) {
+                $("#cmbBranch").prop("disabled", true);
+            }
+            $("#MainHeading").text(rdo1 ? "Modify Purchase Bill" : "Create Purchase Bill");
         }
-        $("#MainHeading").text(rdo1 ? "Modify Purchase Bill" : "Create Purchase Bill");
+        $("#txtStatus").val(stsID);
+
     }
     $('#btnTCancel').click(function (e) {
         var Did = $("#txtID").val();
@@ -5521,7 +5775,7 @@ var Url = '@Session["url"].ToString()';
     }
     function CalculateDiffPrice() {
         var Q1 = 0, Q2 = 0, Q3 = 0, gross = 0, TAmt = 0, NAmt = 0;
-        
+
         $("#tblProductData tbody tr").each(function () {
             Q1 = 0, Q2 = 0, Q3 = 0, gross = 0, TAmt = 0, NAmt = 0;
             rowdata = ProductTable.row($(this)).data();
@@ -5580,7 +5834,7 @@ var Url = '@Session["url"].ToString()';
         }
         if (IsValid) {//rdoDraftTableData,rdoPOTableData,rdoInvoiceTableData
             var rdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : $("#rdoPOTableData").is(":checked") ? "3" : "4";
-            var strBranch = $("#cmbFilterBranch").val(), strParty = $("#txtFilterParty").val(), dFrom = $("#dtpFFrom").val(),
+            var strBranch = rdo1 != "4" ? $("#cmbFilterBranch").val() : '@Session["CompanyCode"]' , strParty = $("#txtFilterParty").val(), dFrom = $("#dtpFFrom").val(),
                 dTo = $("#dtpFTo").val(), chkshow = $("#chkShowAll").is(":checked") ? "1" : "0";
             $.ajax({
                 url: Aurl + "purchasebill/getfilterdata",
@@ -5686,7 +5940,7 @@ var Url = '@Session["url"].ToString()';
     }
     var arrselvalus = [];
 
-    $("#rdoMainTableData,#rdoPOTableData,#rdoDraftTableData").click(function () {
+    $("#rdoMainTableData,#rdoPOTableData,#rdoDraftTableData,#rdoInvoiceTableData").click(function () {
 
         LoadPermissions();
         GetColumnSettingsData(2, 25, 1, true);
@@ -5751,7 +6005,8 @@ var Url = '@Session["url"].ToString()';
         BatchAcceptArray = [];
         TempProd = [];
         PaymodeArray = [];
-        if (nTransMode != 1) {
+        var rdo1 = $("#rdoMainTableData").is(":checked");
+        if (nTransMode != 1 || !rdo1) {
             $("#dvMain").hide();
             $("#dvDocuments").show();
         }
@@ -5831,7 +6086,7 @@ var Url = '@Session["url"].ToString()';
                     break;
 
             }
-        }   
+        }
         if (event.altKey && event.key === '1') {
             var nPartyID = $("#txtVendorID").val() != "" ? $("#txtVendorID").val() : 0;
             OpenOneView(nPartyID, 2, true);
@@ -6371,7 +6626,7 @@ var Url = '@Session["url"].ToString()';
                 "Remarks": $("#txtRemarks").val(),
                 "Narration": $("#txtNarration").val(),
                 "DraftID": $("#txtDraftID").val() == "" ? 0 : $("#txtDraftID").val(),
-                "FilterTypeID": $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : "3",
+                "FilterTypeID": $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : $("#rdoPOTableData").is(":checked") ? "3" : "4",
                 "UpdateVendor": $("#chkUpdateVendor").is(":checked") ? 1 : 0,
                 "lstBatchInfo": BatchAcceptArray,
                 "lstProdInfo": ProductArray,

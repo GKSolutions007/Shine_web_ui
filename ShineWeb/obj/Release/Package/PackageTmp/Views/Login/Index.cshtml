@@ -1045,7 +1045,7 @@
         function validateuser(nUID) {
             var Lat = $("#txtLatitude").val();
             var Long = $("#txtLongtitude").val();
-
+            $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Sending OTP... Please wait</div></div>');
             $.ajax({
                 url: Aurl + "validateuser",
                 type: 'get',
@@ -1073,9 +1073,13 @@
                             //We've detected a sign-in attempt from a new device
                         }
                         else if (item.Mode == "3") {
+                            $("#loadingDiv").remove();
                             showErrorSnackbar(item.Message);
                         }
                     });
+                },
+                error: function (resp) {
+                    $("#loadingDiv").remove();
                 }
             });
         }
@@ -1087,6 +1091,7 @@
                     IsValid = false;
                 }
                 else {
+                    $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">OTP validating... Please wait</div></div>');
                     var OID = $("#txtOTPID").val();
                     var UID = $("#txtUserID").val();
                     var Lat = $("#txtLatitude").val();
@@ -1106,6 +1111,7 @@
                             withCredentials: true
                         },
                         success: function (response) {
+                            
                             $.each(response, function (i, item) {
                                 if (item.MsgID == "0") {
                                     localStorage.setItem("ThemeData", item.ThemeData);
@@ -1113,25 +1119,32 @@
                                     window.location.href = url + '/ValidatePermission?ID=' + item.ID;
                                 }
                                 else if (item.MsgID == "1") {
+                                    $("#loadingDiv").remove();
                                     showErrorSnackbar(item.Message);
                                 }
                                 else if (item.MsgID == "2")
                                 {
+                                    $("#loadingDiv").remove();
                                     validateuser(item.ID);
                                 }
                             });
+                        },
+                        error: function (RES) {
+                            $("#loadingDiv").remove();
                         }
                     });
                 }
 
             });
-        function SendActivationmail(To,AAK) {
+        function SendActivationmail(To, AAK) {
+            $('body').append('<div style="" id="loadingDiv"><div class="loader"></div><div class="LoaderMsg">Activation Mail Sending... Please wait</div></div>');
             $.ajax({
                 url: '@Url.Action("SendMail", "Login")',
                 type: 'get',
                 datatype: 'json',
                 data: { ToMail: To, ID: AAK },
                 success: function (data) {
+                    $("#loadingDiv").remove();
                     if (data == "0") {
                         showSuccessSnackbar("Activation email sent. Please verify your account.");
                     }
@@ -1140,6 +1153,7 @@
                     }
                 },
                 error: function (data) {
+                    $("#loadingDiv").remove();
                     showErrorSnackbar("Mail error: " + data.statusText);
                 },
             });
