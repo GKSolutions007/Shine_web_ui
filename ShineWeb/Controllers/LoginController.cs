@@ -245,7 +245,7 @@ namespace ShineWeb.Controllers
                 if (!string.IsNullOrEmpty(AAlk))
                 {
                     string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
-                    string uid =  clsEncryptDecrypt.Decrypt(HttpUtility.UrlDecode(AAlk));
+                    string uid =  clsEncryptDecrypt.Decrypt((AAlk));//HttpUtility.UrlDecode
                     HttpClient _client = new HttpClient();
                     _client.BaseAddress = new Uri(APIurl);// APILink from app config
                     _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
