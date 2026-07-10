@@ -290,6 +290,31 @@
         .shinecode-link i {
             font-size: 11px;
         }
+    .navigate-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: #0d6efd;
+        color: #fff;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all .25s ease;
+        box-shadow: 0 2px 8px rgba(13,110,253,.25);
+    }
+
+        .navigate-btn:hover {
+            background: #0b5ed7;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(13,110,253,.35);
+        }
+
+        .navigate-btn i {
+            font-size: 16px;
+        }
 </style>
 <body>
 
@@ -621,6 +646,16 @@
                                                             <label class="labelup" for="txtDistance">Distance</label>
                                                         </span>
                                                         <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrorOnDistance" class="clrdivs"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgclrfortr">
+                                                <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
+                                                    <div>
+                                                        <button type="button" id="gotolocation" class="navigate-btn">
+                                                            <i class="fa-solid fa-location-dot"></i>
+                                                            Navigate
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -1067,6 +1102,8 @@
                 $("#txtOSValue").prop("disabled", true);
                 $(".clrdivs").html("");
                 $("#dvErrorDetail,#btnBSAddBeat,#btnBSAddSalesman,#btnBSAddRow").hide();
+                $("#btnClear,#btnSave").hide();
+                $("#btnClose").show();
                 $("#lblSaveError").html("");
                 modal.show();
             }
@@ -1092,6 +1129,8 @@
                 $("input[type=checkbox],#chkActive,#btnSave").prop("disabled", false);
                 $("#txtOSValue,#txtOSCount").prop("disabled", true);
                 $("#btnClear").prop("disabled", true);
+                $("#btnClear").hide();
+                $("#btnClose,#btnSave").show();
                 $(".clrdivs").html("");
                 $("#dvErrorDetail").hide();
                 $("#btnBSAddBeat,#btnBSAddSalesman,#btnBSAddRow").show();
@@ -1233,9 +1272,11 @@
                                 modal.show();
                                 TableBS.draw().clear();
                                 openTabs(null, 'CustomerDetails', 1);
+                                $("#btnClear,#btnClose,#btnSave").show();
                                 ClearForm();
                                 $(".modal-title#lblPopupheading").text("Add Customer");
                                 $("#btnBSAddBeat,#btnBSAddSalesman,#btnBSAddRow").show();
+                                $("#gotolocation").hide();
                             }
                         },
                     ],
@@ -1385,6 +1426,8 @@
                             //$("#txtDiscPern").val(items.DiscountPern),
                             $("#chkShowTP").prop("checked", items.TrackPoint == "True"),
                             $("#chkApplyTCS").prop("checked", items.TCSTax == "True"),
+                            
+                        
                             $("#txtLocation").val(items.Latitude),
                             $("#txtDistance").val(items.Distance),
                             $("#txtRemarks").val(items.Remark),
@@ -1411,6 +1454,14 @@
                         } else {
                             $("#lblShowTrackPointData").hide();
                         }
+                        var customerlocation = "";
+                        if (items.Latitude != "") {
+                            customerlocation = items.Latitude.trim() + "," + items.Longtitude.trim();
+                            $("#gotolocation").show();
+                        } else {
+                            $("#gotolocation").hide();
+                        }
+                        $("#gotolocation").attr("data-location", customerlocation);
                         $.each(items.BSM, function (j, bsmitems) {
                             LoadBeatsalesmangridata(bsmitems.BeatName, bsmitems.SalesmanName);
                         });
@@ -1506,6 +1557,16 @@
             }
         });
     }
+    $(document).on("click", ".gotolocation, #gotolocation", function () {
+        var location = $(this).data("location");
+        if (!location) {
+            //alert("Location not available.");
+            showErrorSnackbar("Location not available.");
+            return;
+        }
+        var url = "https://www.google.com/maps?q=" + encodeURIComponent(location);
+        window.open(url, "_blank");
+    });
     var gridbeatid, gridsmid;
     function LoadDependData(DependModeID,AssignValue) {
         $.ajax({

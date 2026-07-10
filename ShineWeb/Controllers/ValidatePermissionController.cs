@@ -87,6 +87,7 @@ namespace ShineWeb.Controllers
                 Session["CloseConfirmFocus"] = dtAppconfig.Rows[0]["CloseConfirmpopup"].ToString();
                 Session["AllowPrint"] = dtAppconfig.Rows[0]["AllowPrint"].ToString();
                 Session["ThemeID"] = dtAppconfig.Rows[0]["ThemeID"].ToString();
+                Session["UPIID"] = dtAppconfig.Rows[0]["UPIID"].ToString();
                 Session["Showallstatus"] = dtAppconfig.Rows[0]["Showallstatus"].ToString();
                 Session["DecimalValues"] = dtAppconfig.Rows[0]["DecimalValues"].ToString();
                 Session["ItemOrderby"] = dtAppconfig.Rows[0]["ItemOrderby"].ToString();

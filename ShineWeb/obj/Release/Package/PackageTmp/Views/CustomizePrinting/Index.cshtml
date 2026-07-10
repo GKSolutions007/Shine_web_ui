@@ -1581,7 +1581,7 @@
                                     <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrQRBarcodeTypes" class="clrdiv"></div>
                                 </td>
                             </tr>
-                            <tr id="trQRText" hidden>
+                            <tr id="trQRText">
                                 <td style="padding-left:30px;border:none">
                                     <span class="form-label">
                                         <input class="form-control FormclrField" type="text" id="txtQRTextValue">
@@ -1772,6 +1772,8 @@
         scrollX: true,
         scrollCollapse: true,
     });
+    var UPIID = '@Session["UPIID"]';
+    var ProfileUPIID = "";
     const editBtn = document.getElementById('editBtn');
     const editcontextMenu = document.getElementById('editcontextMenu');
 
@@ -1795,6 +1797,7 @@
     //spanQRBarcodeClose.onclick = function () {
     //    modalQRBarcode.style.display = "none";
     //}
+    
     $('#btnClosemodalQRBarcode').click(function (e) {
         //modalQRBarcode.style.display = "none";
         modalQRBarcode.hide();
@@ -1909,10 +1912,22 @@
             if (SelID == 2) {
                 $("#txtQRTextValue").val("");
                 $("#trQRText").show();
+            } else if (SelID == 5 || SelID == 4) {
+                var assignupi = ProfileUPIID == "" ? UPIID : ProfileUPIID;
+                $("#txtQRTextValue").val(assignupi);
+                $("#trQRText").show();
             } else {
                 $("#txtQRTextValue").val("");
                 $("#trQRText").hide();
             }
+        }
+    });
+    $("#mymodalQRBarcode").on("shown.bs.modal", function () {
+        var SelID = $('#cmbQRBarcodeTypes').val();
+        if (SelID == 5 || SelID == 4) {
+            var assignupi = ProfileUPIID == "" ? UPIID : ProfileUPIID;
+            $("#txtQRTextValue").val(assignupi);
+            $("#trQRText").show();
         }
     });
     $('#rdoQRCode,#rdoBarCode').click(function (e) {
@@ -2260,6 +2275,14 @@ const paperType = document.getElementById('paperType');
                 else {
                     showErrorSnackbar("Text value should not be empty");
                 }
+            } else if (qrCheck && (selval == 4 || selval == 5)) {
+                if ($("#txtQRTextValue").val() != "") {
+                    addElement('qrbarcode');
+                }
+                else {
+                    $("#txtQRTextValue").trigger("focus");
+                    showErrorSnackbar("UPI value should not be empty");
+                }
             } else {
                 addElement('qrbarcode');
             }
@@ -2351,8 +2374,9 @@ const paperType = document.getElementById('paperType');
                 if (qrCheck) {
                     el.className = "qrcodeheader";
                     el.style.width = '100px'; el.style.height = '100px';
-                    el.dataset.qrbarid = SelValue == 1 || SelValue == 2 ? 'NQR12' : SelValue == 3 ? 'SQR3' : SelValue == 4 ? 'UWA4' :
-                        SelValue == 5 ? 'UWO5' : 'NQR12';
+                    el.dataset.qrbarid = SelValue == 1 || SelValue == 2 ? 'NQR12' : SelValue == 3 ? 'SQR3' :
+                        SelValue == 4 ? 'UWA4' : SelValue == 5 ? 'UWO5' : 'NQR12';
+                    
                 }
                 else {
                     el.className = "barcodeheader";
@@ -2361,8 +2385,15 @@ const paperType = document.getElementById('paperType');
                 }
                 if (qrCheck && SelValue == 2) {
                     el.dataset.qrcodetext = $("#txtQRTextValue").val();
+                    SelText += " : " + $("#txtQRTextValue").val();
+                    //txtQRTextValue
                 } else {
-                    el.dataset.qrcodetext = "";
+                    if (qrCheck && (SelValue == 4 || SelValue == 5)) {
+                        el.dataset.qrcodetext = $("#txtQRTextValue").val();
+                        SelText += " : " + $("#txtQRTextValue").val();
+                    } else {
+                        el.dataset.qrcodetext = "";
+                    }
                 }
             }
             else if (nPlaceType == 3) {
@@ -2371,6 +2402,10 @@ const paperType = document.getElementById('paperType');
                     el.style.width = '100px'; el.style.height = '100px';
                     el.dataset.qrbarid = SelValue == 1 || SelValue == 2 ? 'NQR12' : SelValue == 3 ? 'SQR3' : SelValue == 4 ? 'UWA4' :
                         SelValue == 5 ? 'UWO5' : 'NQR12';
+                    if (SelValue == 4 || SelValue == 5) {
+                        el.dataset.qrcodetext = $("#txtQRTextValue").val();
+                        SelText += " : " + $("#txtQRTextValue").val();
+                    }
                 }
                 else {
                     el.className = "barcodefooter";
@@ -2379,6 +2414,7 @@ const paperType = document.getElementById('paperType');
                 }
                 if (qrCheck && SelValue == 2) {
                     el.dataset.qrcodetext = $("#txtQRTextValue").val();
+                    SelText += " : " + $("#txtQRTextValue").val();
                 } else {
                     el.dataset.qrcodetext = "";
                 }
@@ -3208,12 +3244,18 @@ const paperType = document.getElementById('paperType');
                     },
                     success: function (data) {
                         //showSuccessSnackbar(data);
-                        console.log(data);
+                        console.log("data : ", data);
+                        ProfileUPIID = "";
                         const controls = data[0].PrintConfigDeatils;
                         if (!controls || !controls.length) {
                             alert('No saved controls found.');
                             return;
                         }
+                        const distinctqrText = [...new Set(controls.map(x => x.QRText).filter(x => x && x.trim() !== ""))];
+                        if (distinctqrText.length > 0) {
+                            ProfileUPIID = distinctqrText[0].trim();
+                        }
+                        //console.log("distinctqrText ", distinctqrText);
                         $("#paperType").val(data[0].PaperTypeID);
                         $("#customWidth").val(data[0].Width);
                         $("#customHeight").val(data[0].Height);
@@ -3325,16 +3367,16 @@ const paperType = document.getElementById('paperType');
                                         titletext = "Document ID";
                                     }
                                     if (QRBarID.includes('NQR') && el.dataset.qrcodetext != "") {
-                                        titletext = "Text";
+                                        titletext = "Text : " + el.dataset.qrcodetext;
                                     }
                                     if (QRBarID.includes('SQR')) {
                                         titletext = "Signed QR";
                                     }
                                     if (QRBarID.includes('UWA')) {
-                                        titletext = "UPI With Amount";
+                                        titletext = "UPI With Amount : " + el.dataset.qrcodetext;
                                     }
                                     if (QRBarID.includes('UWO')) {
-                                        titletext = "UPI Without Amount";
+                                        titletext = "UPI Without Amount : " + el.dataset.qrcodetext;
                                     }
                                     el.title = titletext;
                                     el.className = ctrl.PlaceType == "Header" ? 'qrcodeheader' : ctrl.PlaceType == "Footer" ? 'qrcodefooter' : 'qrcodeheader';
