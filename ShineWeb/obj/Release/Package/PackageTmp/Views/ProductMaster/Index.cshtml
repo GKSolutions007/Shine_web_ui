@@ -1407,6 +1407,7 @@
     </div>
 </body>
 <script>
+    var Removeitems = "";
     //(function () {
         const input = document.getElementById('txtProductImages');
         const dropzone = document.getElementById('dropzone');
@@ -1421,11 +1422,11 @@
         const previewSize = document.getElementById('previewSize');
         const previewClose = document.getElementById('previewClose');
     let existingImages = [];
-        function openPreview(src, name, size) {
+    function openPreview(src, name, size, sizeLabel) {
             previewImg.src = src;
             previewImg.alt = name;
             previewName.textContent = name;
-            previewSize.textContent = formatSize(size);
+        previewSize.textContent = size == null ? sizeLabel : formatSize(size);
             previewOverlay.classList.add('open');
             document.body.style.overflow = 'hidden';
         }
@@ -1447,12 +1448,13 @@
         let files = [];
         let uid = 0;
 
-        function refreshUI() {
+    function refreshUI() {
+        
             const total = files.length + existingImages.length;
             emptyHint.style.display = total ? 'none' : 'block';
             countBadge.textContent = total;
-            countBadge.classList.toggle('show', total > 0);
-            clearAllBtn.classList.toggle('show', total > 0);
+        countBadge.classList.toggle('show', total > 0);
+        clearAllBtn.classList.toggle('show', total > 0);
         }
 
         function syncInputFiles() {
@@ -1506,6 +1508,10 @@
             item.className = 'preview-item';
             item.dataset.id = id;
             item.dataset.existing = '1';
+            item.dataset.filename = name;
+            var ishdn = nMode == 5 ? "d-none" : "";
+           
+
             item.innerHTML = `
       <img src="${src}" alt="${escapeHtml(name)}">
       <div class="existing-badge">Saved</div>
@@ -1513,7 +1519,7 @@
         <button type="button" class="prodimgaction-btn preview-btn" title="Preview image" aria-label="Preview image">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
-        <button type="button" class="prodimgaction-btn remove-btn" title="Remove image" aria-label="Remove image">
+        <button type="button" class="prodimgaction-btn remove-btn ${ishdn}" title="Remove image" aria-label="Remove image">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
@@ -1547,6 +1553,10 @@
                 existingImages.push({ id, name, sizeLabel, src });
                 renderExistingItem(id, name, sizeLabel, src);
             });
+            if (nMode == 5)
+                $("#clearAll,#dropzone").hide();
+            else
+                $("#clearAll,#dropzone").show();
             refreshUI();
         }
 
@@ -1554,9 +1564,11 @@
             const el = imggrid.querySelector(`[data-id="${id}"]`);
             if (el) {
                 el.classList.add('removing');
+                Removeitems += el.dataset.filename + ",";
                 el.addEventListener('animationend', () => el.remove(), { once: true });
             }
             files = files.filter(f => f.id !== id);
+            //Removeitems += rfilename + ",";
             syncInputFiles();
             refreshUI();
         }
@@ -1565,15 +1577,19 @@
         const el = imggrid.querySelector(`[data-id="${id}"]`);
         if (el) {
             el.classList.add('removing');
+            Removeitems += el.dataset.filename + ",";
             el.addEventListener('animationend', () => el.remove(), { once: true });
         }
         if (img) removedExisting.push(img.name);
         existingImages = existingImages.filter(f => f.id !== id);
+        //Removeitems += rfilename + ",";
         refreshUI();
     }
     function clearAll() {
+        Removeitems = "";
             Array.from(imggrid.children).forEach(el => {
                 el.classList.add('removing');
+                Removeitems += el.dataset.filename + ",";
                 el.addEventListener('animationend', () => el.remove(), { once: true });
             });
             existingImages.forEach(img => removedExisting.push(img.name));
@@ -1582,8 +1598,17 @@
             refreshUI();
         
         }
-
-        function formatSize(bytes) {
+    function clearAllSelections() {
+        Array.from(imggrid.children).forEach(el => {
+            el.classList.add('removing');
+            Removeitems += el.dataset.filename + ",";
+            el.addEventListener('animationend', () => el.remove(), { once: true });
+        });
+        existingImages.forEach(img => removedExisting.push(img.name));
+        files = [];
+        existingImages = [];
+    }
+    function formatSize(bytes) {
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
             return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -1624,9 +1649,17 @@
                 dropzone.classList.remove('dragover');
             });
         });
-        dropzone.addEventListener('drop', e => {
-            if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
-        });
+    dropzone.addEventListener('drop', e => {
+        const droppedFiles = e.dataTransfer.files; // capture synchronously, before it's cleared
+        if (droppedFiles.length == 1) {
+            clearAllSelections();
+            setTimeout(() => {
+                addFiles(droppedFiles); // use the captured reference, not e.dataTransfer.files
+            }, 500);
+        } else {
+            showErrorSnackbar("Select anyone image only");
+        }
+    });
 
         refreshUI();
     //})();
@@ -1643,6 +1676,7 @@
             displayType: 'single_icon',
             visible: $("#txtViewID").val() == 1,
             handler: (rowData) => {
+                nMode = 5;
                 $(".clrdiv").html("");
                 $(".modal-title#lblPopupheading").text("View " + $("#MainHeading").text());
                 var ID = rowData.ID;//[0];
@@ -1858,6 +1892,7 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                                 $("#chkActive").prop("disabled", true);
                                 $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
                                 $("#btnClear,#btnClose,#btnSave").show();
+                                $("#clearAll,#dropzone").show();
                                 modal.show();
                                 openTabs(null, 'ProductDetails', 1);
                                 $("#dvABSQty").hide();
@@ -1947,7 +1982,6 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                     clearAll();
                     arrPurchaseTaxDetails = [], arrSalesTaxDetails = [];
                     TableLocationMapping.draw().clear();
-                    console.log("Item data", data);
                     $.each(data, function (i, items) {
                         $("#txtID").val(items.ID);
                         if (!IsVariant) {
@@ -2052,8 +2086,9 @@ var EnableReturn = '@Session["EnableReturnPrice"]';
                             ]).draw(false);
                             $("#cmbLoc" + j).val(locid);
                         });
-                        loadExistingImages(items.ProductImages);
-
+                        if (!IsVariant) {
+                            loadExistingImages(items.ProductImages);
+                        }
                     });
                 }
                 else if (nMode == 5) {
@@ -3639,7 +3674,8 @@ function updateInputColumn(inputID, netValue) {
             "InvoicePrice": document.getElementById("txtInvoicePrice").getAttribute("txttag"),
             "SalesReturnPrice": document.getElementById("txtSaleRtnPrice").getAttribute("txttag"),
             "CBy": UID,
-            lstProdLocMapping: objItemLocDetails
+            lstProdLocMapping: objItemLocDetails,
+            "RemoveProducts" : Removeitems
         };
         // Build multipart form data instead of raw JSON
         var formData = new FormData();

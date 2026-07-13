@@ -234,8 +234,6 @@
         </table>
     </div>
 </body>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.0/jquery-confirm.min.js"></script>
 <script type="text/javascript">
     var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
         "bFilter": true,
@@ -248,12 +246,7 @@
         scrollCollapse: true,
         "columnDefs": [{ "targets": [6,7], "visible": false }],
     });
-    function ShowMsgPopup(content) {
-        $.alert({
-            title: "Device Approval",
-            content: content,
-        });
-    }
+    
     var Aurl = '@Session["APIurl"]';
     var arrData = [];
     var UID = '@Session["LoginUserID"]';
@@ -268,6 +261,9 @@
             type: 'GET',
             datatype: 'json',
             data: { Mode: 1 },//, nMode: 4, nDeviceID: "", nUserID: "", nDBs: ""   Connection: StrCon
+            xhrFields: {
+                withCredentials: true
+            },
             success: function (data) {
                 $.each(data, function (i, items) {
                     var IsAct = items.Activate == "False" ? "" : "Disabled";
@@ -288,6 +284,7 @@
     }
     $('#tblMasterData tbody').on('click', 'button.btnActivates', function () {
         rowdata = Table.row($(this).parents('tr')).data();
+        showSuccessSnackbar("ACTIVATE CLICK");
         ActiveandDeActivateUser(5, rowdata[6], rowdata[7]);
         //alert("Activate\nDevice ID : " + rowdata[5] + "\nUserID : " + rowdata[6] + "\nDB Name : " + rowdata[7]);
     });
@@ -304,16 +301,21 @@
             type: 'GET',
             datatype: 'json',
             data: { nMode: Mode, nDeviceID: DeviceID, nUserID: UserID },//
+            xhrFields: {
+                withCredentials: true
+            },
             success: function (data) {
                 if (Mode == 5) {
-                    ShowMsgPopup("<label style='color:green'>Activated Successfully.!!!</label>")
+                    showSuccessSnackbar("Activated Successfully.!!!");
                 }
                 else {
-                    ShowMsgPopup("<label style='color:red'>De-Activated Successfully.!!!</label>")
+                    showSuccessSnackbar("De-Activated Successfully.!!!");
                 }
             }
         });
-        InitiateData();
+        setTimeout(() => {
+            InitiateData();
+        }, 300);
     }
 
 </script>
