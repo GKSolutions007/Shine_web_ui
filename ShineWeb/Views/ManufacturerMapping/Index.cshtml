@@ -1,0 +1,758 @@
+﻿@{
+    ViewBag.Title = "Manufacturer Mapping";
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/datatable/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<!-- FontAwesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/datatable/1.13.6/jquery.dataTables.min.js"></script>
+<script src="~/datatable/1.13.6/dataTables.bootstrap5.min.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+
+<style>
+    :root {
+        --primary-color: #4a90e2;
+        --secondary-color: #f5f6fa;
+        --text-color: #2f3640;
+        --accent-color: #00d2d3;
+        --danger-color: #ff6b6b;
+        --success-color: #1dd1a1;
+        --border-color: #e3e6ec;
+        --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.06);
+        --hover-shadow: 0 6px 14px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.05);
+        --radius-sm: 6px;
+        --radius-md: 8px;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Roboto', sans-serif;
+        color: var(--text-color);
+    }
+
+    .modern-container {
+        margin-top: 5px;
+        background: white;
+        border-radius: var(--radius-md);
+        box-shadow: var(--card-shadow);
+        padding: 14px 16px;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    /* ============ PAGE HEADER ============ */
+    .page-header {
+        display: flex;
+        align-items: center;
+        padding-bottom: 8px !important;
+        margin: 0 0 14px !important;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+        .page-header i {
+            margin-right: 8px;
+            color: var(--primary-color);
+            font-size: 1.05em;
+            background: rgba(74, 144, 226, 0.1);
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+        }
+
+        .page-header h4 {
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+    /* ============ COMPACT / SHARP FORM CONTROLS ============ */
+    .form-control,
+    select.form-control,
+    input.form-control,
+    textarea.form-control,
+    .form-select,
+    .gdInput,
+    select.gdInput,
+    input.gdInput {
+        padding: 3px 8px !important;
+        font-size: 12px !important;
+        height: 26px !important;
+        line-height: 1.4 !important;
+        margin-bottom: 1px !important;
+        border-radius: var(--radius-sm) !important;
+        border: 1px solid #d7dbe3 !important;
+        box-shadow: none !important;
+    }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.15) !important;
+        }
+
+    textarea.form-control {
+        height: auto !important;
+        min-height: 56px !important;
+    }
+
+    .input-group-addon {
+        padding: 3px 8px !important;
+        font-size: 12px !important;
+    }
+
+    select.form-control {
+        padding-right: 20px !important;
+    }
+
+    .Role-drpdwn {
+        width: 250px;
+        margin: 8px 0;
+    }
+
+        .Role-drpdwn select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+        }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -60%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.78em;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+        padding: 0 4px;
+    }
+
+    .branch-container {
+        text-align: left;
+    }
+
+        .branch-container .form-label {
+            display: inline-block;
+            width: 260px;
+            max-width: 100%;
+            margin: 0;
+        }
+
+    /* ============ TABLE STYLES ============ */
+    .table-responsive {
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .table {
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+
+        .table thead th {
+            border: none;
+            padding: 8px 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.4px;
+            background-color: #fafbfc;
+            white-space: nowrap;
+        }
+
+        .table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+            .table tbody tr:hover {
+                background-color: #f5f8fc;
+            }
+
+        .table td {
+            vertical-align: middle !important;
+            border-top: 1px solid #eee;
+            padding: 5px 6px;
+            font-size: 12px !important;
+            color: #555;
+        }
+
+    .th-select-all {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+        .th-select-all span {
+            font-size: 0.68rem;
+            letter-spacing: 0.3px;
+        }
+
+    /* Stabilize the DataTables scroll container so the scrollbar
+       does not cause the layout to shake/jump when it appears on hover/focus */
+    div.dataTables_scrollBody {
+        scrollbar-gutter: stable;
+        overflow-anchor: none;
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+    }
+
+    div.dataTables_scrollHead,
+    div.dataTables_scrollHeadInner,
+    div.dataTables_scrollHeadInner table {
+        width: 100% !important;
+    }
+
+    /* Thin, stable, always-reserved scrollbar (Webkit) */
+    div.dataTables_scrollBody::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    div.dataTables_scrollBody::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    div.dataTables_scrollBody::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+        div.dataTables_scrollBody::-webkit-scrollbar-thumb:hover {
+            background: #a3a3a3;
+        }
+
+    /* Firefox */
+    div.dataTables_scrollBody {
+        scrollbar-width: thin;
+        scrollbar-color: #c1c1c1 #f1f1f1;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        font-size: 12px;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: var(--radius-sm) !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 3px 8px !important;
+        font-size: 12px !important;
+        border-radius: var(--radius-sm) !important;
+    }
+
+    /* ============ CUSTOM SWITCH CHECKBOXES (smaller & sharper) ============ */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 36px;
+        height: 18px;
+        margin-bottom: 0;
+        vertical-align: middle;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .3s;
+        border-radius: 4px;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 3px;
+        }
+
+    input:checked + .slider {
+        background-color: var(--success-color);
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 0 2px rgba(29, 209, 161, 0.25);
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(18px);
+        -ms-transform: translateX(18px);
+        transform: translateX(18px);
+    }
+
+    .slider.round {
+        border-radius: 20px;
+    }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+    /* Select-all switch sits in the header, keep it distinguishable but same size language */
+    .switch-select-all {
+        width: 34px;
+        height: 17px;
+    }
+
+        .switch-select-all .slider:before {
+            height: 11px;
+            width: 11px;
+        }
+
+        .switch-select-all input:checked + .slider:before {
+            transform: translateX(17px);
+        }
+
+    /* ============ ACTION BUTTONS (smaller & sharper) ============ */
+    .action-bar {
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+        .btn-custom {
+            border-radius: var(--radius-sm);
+            padding: 6px 16px;
+            font-size: 12.5px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+
+            .action-bar .btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            }
+
+            .action-bar .btn i,
+            .action-bar .btn span {
+                font-size: 12.5px;
+            }
+
+    .toastBox {
+        font-size: 12px;
+    }
+
+    /* ============ Keyframes ============ */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ============ Input Tweaks ============ */
+    input[type=number] {
+        text-align: right;
+        border-radius: var(--radius-sm);
+        border: 1px solid #ddd;
+        padding: 4px;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    /* ============ RESPONSIVE: TABLET & MOBILE ============ */
+    @@media (max-width: 991.98px) {
+        .modern-container {
+            padding: 12px;
+        }
+
+        .branch-container .form-label {
+            width: 100%;
+        }
+
+        .Role-drpdwn {
+            width: 100%;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .container {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        .page-header h4 {
+            font-size: 0.9rem;
+        }
+
+        .action-bar {
+            justify-content: stretch;
+        }
+
+            .action-bar .btn {
+                flex: 1 1 auto;
+                justify-content: center;
+            }
+
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_length {
+            width: 100%;
+            text-align: left !important;
+            margin-bottom: 6px;
+        }
+
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100% !important;
+                margin-left: 0 !important;
+            }
+    }
+
+    @@media (max-width: 575.98px) {
+        .table thead th,
+        .table td {
+            font-size: 11px !important;
+            padding: 5px 4px;
+        }
+
+        .page-header i {
+            width: 26px;
+            height: 26px;
+            font-size: 0.9em;
+        }
+    }
+</style>
+
+<body>
+    <div class="container">
+        <div class="modern-container">
+
+            <!-- Page Header -->
+            <div class="page-header d-flex align-items-center gap-2">
+                <i class="fa-solid fa-building"></i>
+                <h3 id="MainHeading" class="mb-0">Manufacturer Mapping</h3>
+            </div>
+
+            <!-- Role Dropdown -->
+            <div class="branch-container mb-4">
+                <span class="form-label">
+                    <select id="userDropdown" name="userDropdown" class="form-select">
+                        <option value="0">--Select--</option>
+                    </select>
+                    <label class="labelup" for="txtCode">User</label>
+                </span>
+
+                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrBranch"></div>
+            </div>
+
+            <!-- Toast -->
+            <div class="toastBox"></div>
+
+            <!-- Table -->
+            <div id="dvMainTable" class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered w-100" id="tblManufData">
+                            <thead>
+                                <tr class="trclrforcolheader">
+                                    <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;display:none;">RoleID</th>
+                                    <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;display:none;">BranchID</th>
+                                    <th class="text-center trclrforcolheader" style="font-size:12px;width:5%;">#</th>
+
+                                    <th class="text-center trclrforcolheader" style="font-size:12px;width:35%;">
+                                        <i class="fa-solid fa-building"></i> Manufacturer Name
+                                    </th>
+
+                                    <th class="text-center trclrforcolheader" style="font-size:12px;width:15%;">
+                                        <div class="th-select-all">
+
+                                            <span style="font-size:12px;"><i class="fa-solid fa-check"></i> Active</span>
+                                            <label class="switch switch-select-all" title="Select / Unselect All">
+                                                <input type="checkbox" id="chkSelectAll" />
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-bar d-flex justify-content-end gap-2 mt-3">
+                <button type="button" class="btn btn-danger" id="btnClear">
+                    <span class="glyphicon glyphicon-refresh"> Refresh</span>
+                </button>
+
+                <button type="button" class="btn btn-success" id="btnSave">
+                    <span class="glyphicon glyphicon-saved"> Save</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+    var Table = $('#tblManufData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "315px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0, 1], "visible": false }, { "targets": [2,4], "class": "text-center" },],
+        "language": {
+            "search": "_INPUT_",
+            "searchPlaceholder": "Search records..."
+        }
+    });
+    if (Table) Table.columns.adjust().draw();
+    // Style DataTables Search Box
+    $('.dataTables_filter input').addClass('form-control').css({'border-radius':'6px', 'padding':'4px 12px', 'width':'220px'});
+    $('.dataTables_length select').addClass('form-control').css({'border-radius':'6px', 'display':'inline-block', 'width':'auto'});
+
+    var Aurl = '@Session["APIurl"]';
+    var arrData = [];
+    var UID = '@Session["LoginUserID"]';
+    var RID = '@Session["RoleID"]';
+    GetUsers();
+
+    function LoadData() {
+        var userID = $("#userDropdown").val();
+
+        if (userID == "0") {
+            Table.clear().draw();
+            $("#chkSelectAll").prop("checked", false);
+            return;
+        }
+        Table.clear().draw();
+        $.ajax({
+            url: Aurl + "mfrmap/usersmfrdata",
+            type: 'GET',
+            dataType: 'json',
+            data: { UserID: userID },
+            xhrFields: {
+                withCredentials: true
+            },
+                success: function (data) {
+                    $.each(data, function (i, items) {
+                        var IsActive = items.Active == 1 ? "checked" : "";
+                        Table.row.add([
+                            items.UserID,
+                            items.MfrID,
+                            (i + 1),
+                            '<label style="font-weight: normal; cursor:pointer;">' + items.MfrName + '</label>',
+                            '<label class="switch"><input type="checkbox" class="chkActive" ' + IsActive + '/><span class="slider round"></span></label>',
+                        ]).draw(false);
+
+                    });
+                    UpdateSelectAllState();
+                }
+        });
+    }
+    function GetUsers() {
+        $.ajax({
+            url: Aurl + "mfrmap/getusers",
+            type: 'GET',
+            contentType: 'json',
+            data: { UserID:  UID },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#userDropdown").empty();
+                $("#userDropdown").append('<option value="0">--Select--</option>');
+
+                // Add each role as an option
+                $.each(data, function (i, role) {
+                    $("#userDropdown").append(
+                        $('<option>', {
+                            value: role.ID,
+                            text: role.Name
+                        })
+                    );
+                });
+
+            },
+            error: function (err) {
+                console.log("Error:", err);
+            }
+        });
+    }
+    $("#userDropdown").change(function () {
+
+        var userID = $(this).val();
+
+        if (userID == "0") {
+            Table.clear().draw();
+            $("#chkSelectAll").prop("checked", false);
+            return;
+        }
+
+        LoadData(userID);
+    });
+
+    // ============ SELECT ALL CHECKBOX BEHAVIOUR ============
+    // When "Select All" is toggled, apply the same state to every row checkbox
+    $(document).on('change', '#chkSelectAll', function () {
+        var isChecked = $(this).is(':checked');
+        $('#tblManufData tbody .chkActive').prop('checked', isChecked);
+    });
+
+    // If any row checkbox is unchecked, uncheck "Select All".
+    // "Select All" is only checked when every row checkbox is checked.
+    $(document).on('change', '#tblManufData tbody .chkActive', function () {
+        UpdateSelectAllState();
+    });
+
+    function UpdateSelectAllState() {
+        var total = $('#tblManufData tbody .chkActive').length;
+        var checked = $('#tblManufData tbody .chkActive:checked').length;
+        $('#chkSelectAll').prop('checked', total > 0 && total === checked);
+    }
+
+    $('#btnClear').click(function (e) {
+        if (ClearcfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $("#userDropdown").val(0);
+        $("#userDropdown").focus();
+        $("#chkSelectAll").prop("checked", false);
+        Table.clear().draw(); Table.clear().draw();
+    }
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+        if (cfFocus != 3) {
+            ConfirmDialogMsg("Do you want to save data?");
+        } else {
+            SaveData();
+        }
+    });
+    function SaveData()
+    {
+        $("#btnSave").prop("disabled", true);
+        var lstMfr = [];
+        $("#tblManufData tbody tr").each(function () {
+            rowdata = Table.row($(this)).data();
+            var nUserID = rowdata[0];
+            var nMfrID = rowdata[1];
+            var IsActive = $(this).find(".chkActive").is(":checked") ? 1 : 0;
+
+            var prof = {
+                "MapUserID": nUserID,
+                "MfrID": nMfrID,
+                "Active": IsActive,
+                "UserID": UID
+            }
+            lstMfr.push(prof);
+        });
+        $.ajax({
+            url: Aurl + "mfrmap/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(lstMfr),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        ClearForm();
+                    }
+                    else {
+                        $("#dvErrorName").html(items.Message);
+                        showErrorSnackbar(items.Message);
+                        //alert(items.Message);
+                    }
+                });
+            }, error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+        //LoadData();
+    }
+
+</script>

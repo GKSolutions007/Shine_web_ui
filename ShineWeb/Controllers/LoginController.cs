@@ -25,7 +25,7 @@ namespace ShineWeb.Controllers
         public ActionResult Index(string Msg=null)
         {
             //272,273,274,275,276
-            //string plain = "";
+            //string plain = "Order Taken,No Order,Feedback,Manufacturer Filter,Category Filter,Product Filter";
             //string[] strplain = plain.Split(',');
             //string EncVal = "";
             //for (int i = 0; strplain.Length > i; i++)
