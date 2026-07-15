@@ -1664,6 +1664,9 @@ class GKBSDynamicGrid {
      */
     selectAllRows() {
         // Add every processed row's _gridId to the selected set
+        //
+        //console.log(`[GKBSGrid] processedData: ${this.state.processedData.size} row(s) selected.`);
+
         this.state.processedData.forEach(row => {
             this.state.selectedRows.add(row._gridId);
             row.Select = true;
@@ -1726,8 +1729,12 @@ class GKBSDynamicGrid {
     getSelectedRows() {
         // Filter originalData by membership in the selectedRows Set.
         // Also ensure Select flag stays in sync on each matched row.
-        const selected = this.originalData.filter(row => row.Select == true);
-
+        let selected = []
+        if (this.state.processedData) {
+            selected = this.state.processedData.filter(row => row.Select == true);
+        } else {
+            selected = this.originalData.filter(row => row.Select == true);
+        }
         console.log(`[GKBSGrid] getSelectedRows: ${selected.length} row(s) selected.`);
         return selected;
     }
