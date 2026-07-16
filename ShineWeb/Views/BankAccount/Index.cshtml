@@ -218,11 +218,14 @@
 
                                 <tr>
                                     <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
-                                        <span class="form-label">
-                                            <select tabindex="3" id="cmbBank" class="form-control"></select>
-                                            <label class="labelup">Bank Name *</label>
-                                        </span>
-                                        <div class="clrdiv text-danger" id="dvErrorBank"></div>
+                                        <div class="input-group">
+                                            <span id="openbankname" class="input-group-text" title="New Bank Name"><span class="fas fa-arrow-up-right-from-square"></span></span>
+                                            <span class="form-label flex-fill">
+                                                <select tabindex="3" id="cmbBank" class="form-control"></select>
+                                                <label class="labelup">Bank Name *</label>
+                                            </span>
+                                            <div class="clrdiv text-danger" id="dvErrorBank"></div>
+                                        </div>
                                     </td>
                                 </tr>
 
@@ -394,12 +397,12 @@
     };
 </script>
 
-<script type="text/javascript">       
+<script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function () {
         allowAlphanumericOnly('.alphanumeric-only');
     });
     var Aurl = '@Session["APIurl"]';
-   
+
     var grid, BankAccount;
     GetColumnSettingsData(2, 9, 1);
     var UID = '@Session["LoginUserID"]';
@@ -409,7 +412,7 @@
     GetData(5);
     var arrData = [];
     //~Grid Data
-    function GetData(dMode) {
+    function GetData(dMode, selectID) {
         $.ajax({
             url: Aurl + "bankaccount/get",
             type: 'get',
@@ -431,7 +434,7 @@
                                 "label": items.AccountNo,
                                 "id": items.ID,
                             }
-                            arrData.push(al);                            
+                            arrData.push(al);
                         });
 
                         var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, BankAccount, {
@@ -469,7 +472,7 @@
                                     text: '',
                                     title: 'Settings',
                                     visible: true,
-                                    onClick: (gridInstance, event) => {                                       
+                                    onClick: (gridInstance, event) => {
                                         modalGenColumnSettings.show();
                                         GendralColumnSettings(1, 9, 1, 0);
                                     }
@@ -479,7 +482,7 @@
                                     text: 'New',
                                     title: 'New Bank Account',
                                     visible: $("#txtAddID").val() == 1,
-                                    onClick: (gridInstance, event) => {                                        
+                                    onClick: (gridInstance, event) => {
                                         nMode = 1;
                                         $("#chkActive,#btnSave,#btnClear,.FormclrField,#cmbBank,#chkDefault").prop("disabled", false);
                                         $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
@@ -490,7 +493,7 @@
                                 },
                             ],
                             onCellClick: (rowData, fieldName, cellValue, column) => {
-                               
+
                             },
                             onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
 
@@ -510,7 +513,7 @@
                         });
                         //$("#txtAccNo").autocomplete({
                         //    minLength: 0,
-                        //    source: arrData,                            
+                        //    source: arrData,
                         //    select: function (event, ui) {
                         //        $("#txtAccNo").val(ui.item.label);
                         //        return false;
@@ -520,7 +523,7 @@
                         //        .append("<div class='acItem'><span class='name'>" +
                         //            item.label + "</span></div>")
                         //        .appendTo(ul);
-                        //};                        
+                        //};
                     }
                     else {
                         $('#cmbBank').find("option").remove();
@@ -535,6 +538,9 @@
                                 text: items.Name,
                             }));
                         });
+                        if (selectID) {
+                            $('#cmbBank').val(selectID);
+                        }
                     }
             }, error: function (data) {
                 if (data.status == "401") {
@@ -555,7 +561,7 @@
     });
     function CloseForm() {
         modal.hide();
-    }    
+    }
     //~Clear
     $('#btnClear').click(function (e) {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
@@ -671,24 +677,60 @@
                 }
             });
     }
-    window.addEventListener('keydown', function (event) {
-        // Check if the F8 key is pressed (key code 119)
-        if (event.keyCode === 119) {
-            var url = $("#txtChildSMGrpURL").val();
-            if (url != "") {
-                var id = event.target.id;
-                if (id == "cmbBank") {
-                    $("#lbliframeheading").text("Bank");
-                    document.getElementById("ifrSMG").src = url + "&ParFFID=cmbBank";
-                    // Prevent default action if any (e.g., browser F8 behavior)
-                    event.preventDefault();
-                    // Open the modal when F8 is pressed
-                    modaliframe.style.display = "block";
-                }
-            }
-            else {
-                showErrorSnackbar("Dependancy info not found");
+    //window.addEventListener('keydown', function (event) {
+    //    // Check if the F8 key is pressed (key code 119)
+    //    if (event.keyCode === 119) {
+    //        var url = $("#txtChildSMGrpURL").val();
+    //        if (url != "") {
+    //            var id = event.target.id;
+    //            if (id == "cmbBank") {
+    //                $("#lbliframeheading").text("Bank");
+    //                document.getElementById("ifrSMG").src = url + "&ParFFID=cmbBank";
+    //                // Prevent default action if any (e.g., browser F8 behavior)
+    //                event.preventDefault();
+    //                // Open the modal when F8 is pressed
+    //                modaliframe.style.display = "block";
+    //            }
+    //        }
+    //        else {
+    //            showErrorSnackbar("Dependancy info not found");
+    //        }
+    //    }
+    //});
+
+            var Url = '@Session["url"].ToString()';
+    $("#openbankname").click(function (e) {
+        var nCustomerTypeID = $("#cmbBank").val() != "" ? $("#cmbBank").val() : 0;
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        const hasPermission = nCustomerTypeID == 0
+            ? checkAddEditPermission("3")
+            : checkAddEditPermission("4");
+        if (hasPermission) {
+            var ProdUrl = Url + "SingleMaster?name=d1SRgPH3hrsAgtGtW9Kfmw%3D%3D&strFormID=mELirpUhRYksFj7k8%2FXBcQ%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nCustomerTypeID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (nCustomerTypeID == 0 ? "Add" : "Edit") + " Bank</code></h4>");
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F8") {
+            event.preventDefault();
+            var FieldID = event.target.id;
+            var FieldName = event.target.name;
+            if (FieldID == "cmbBank") {
+                $("#openbankname").trigger("click");
             }
         }
-    });    
+    });
+    window.addEventListener("message", function (event) {
+        var data = event.data;
+        if (data && data.source === "Bank") {
+            var CrTID = data.id;
+            GetData(5, CrTID);
+        }
+
+    });
 </script>
