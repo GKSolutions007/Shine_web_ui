@@ -2622,6 +2622,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         return true;
     }
     $(".txtsettag").focusin(function (e) {
+        console.log("txt focusin");
         var id = e.target.id;
         const val = document.getElementById(id).getAttribute("txttag");
         $("#" + id).val(val);
@@ -4718,18 +4719,77 @@ if ($("#txtReurnPricePerm").val() == 0) {
          showErrorSnackbar("No batch for Inventory no product")
         }
     });
-
+    function LoadBatchdetails($celldata, controlid) {
+        ItemALEnterClicked = false;
+        SelRowIndex = $celldata.closest('tr').index();
+        nCurrentRowIndex = $celldata.closest('tr').index();
+        editingRow = ProductTable.row($celldata.closest('tr'));
+        rowdata = ProductTable.row($celldata.parents('tr')).data();
+        var TrkInv = rowdata[8];
+        var ProdID = rowdata[0];
+        var Price = rowdata[3];
+        var mrp = rowdata[15];
+        var mrpfield = $(mrp);
+        var mrpid = mrpfield[0].id;
+        mrp = document.getElementById(mrpid).getAttribute("txttag");
+        var UOMField = $(rowdata[18]);
+        //var uomval = $('option:selected', UOMField[0]).attr('name');
+        var seluomid = UOMField[0].id;
+        var sumn = $("#" + seluomid + " option:selected").text();
+        var uomval = $("#" + seluomid + " option:selected").attr('name');
+        var Prodnamefieldid = $(rowdata[14])[0].id;;
+        var prodname = document.getElementById(Prodnamefieldid).value;
+        $("#lblBatchItemName").text(prodname);
+        if (TrkInv == 1) {
+            var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
+            //modal.show();
+            GetData(20, ProdID, invid, null, uomval);
+        } else {
+            showErrorSnackbar("No batch for Inventory no product")
+        }
+        
+    }
     //$("#btnNewProd").hide();
     $(document).on("click", "#btnNewProd", function (e) {
     //$("#btnNewProd").click(function () {
         Addprodgridline();
     });
     var SelRowIndex = -1;
-    $("#tblProductData tbody").on('focusin', 'tr', function () {
+    $("#tblProductData tbody").on('focusin', 'tr', function (e) {
         SelRowIndex = $(this).closest('tr').index();
         nCurrentRowIndex = ProductTable.row(this).index();
-        editingRow = ProductTable.row($(this).closest('tr'));
+        editingRow = ProductTable.row($(this).closest('tr'));       
     });
+    $('#tblProductData123 tbody').on('focusin', 'td', function (e) {
+        // input[name="Excl"],input[name="Incl"],input[name="Qty"]
+        //console.log('focus in', e.target.name);
+        currentFocusedControl = true;
+        var $td = $(this).closest("td");
+        var tdrowdata = ProductTable.row($td.closest("tr")).data();
+        var $control = $(e.target);
+        if (tdrowdata) {
+            const RowProdID = tdrowdata[0]
+            if (RowProdID > 0) {
+                const controlname = $control.attr("name");
+                const controlid = $control.attr("id");
+                var allowfields = ["Excl", "Incl", "Qty", "UOM"]
+                if (allowfields.includes(controlname)) {
+                    //LoadBatchdetails($control, controlid);                    
+                }
+                else {
+                    modal.hide();
+                }
+            } else {
+                modal.hide();
+            }
+        } else {
+            modal.hide();
+        }
+    });
+    $('#tblProductData123 tbody').on('blur', 'td input[name="Excl"],input[name="Incl"],input[name="Qty"]', function (e) {
+        modal.hide();
+    });
+
     //~Batch Row Selection
     TableBatch.on('click', 'tbody tr', (e) => {
         let classList = e.currentTarget.classList;
@@ -5502,6 +5562,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var isedit = nTransMode == 2;
         GetDocumentID(DocDate, Branch, 15, prefix, isedit, id);
     });
+    var productTempbatches = [];
     var arrSalesTaxDetails = [];
     //~Preload Data
     function GetData(nMode, strName = null, strID = null, dtpDt = null,dConvFact = 1,nRIDx = -1,ItemMRP = 0) {
@@ -5767,6 +5828,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             btTag = 1;
                         }
                         else {
+                            // Remove existing batches for this product
+                            //if (productTempbatches) {
+                            //    productTempbatches = productTempbatches.filter(x => x.ProdID !== items.ProdID);
+                            //}
                             for (var k = 0; k < items.lstInvPopup.length; k++) {
                                 if (k == 0) {
                                     orgPrice = items.lstInvPopup[k].SalesPrice;
@@ -5793,6 +5858,22 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     parseFloat(items.lstInvPopup[k].MRP).toFixed(DecVal),
                                     parseFloat(items.lstInvPopup[k].SalesPrice * items.SalesCR).toFixed(4),
                                 ]).draw(false);
+
+                                //var btdetails = {
+                                //    "ProdID": items.ProdID,
+                                //    "QtyTag": items.lstInvPopup[k].QtyTag,
+                                //    "OrgQty": items.lstInvPopup[k].ActQty,
+                                //    "OrgPrice": items.lstInvPopup[k].SalesPrice,
+                                //    "MRP": items.lstInvPopup[k].MRP,
+                                //    "QtyType": items.lstInvPopup[k].QtyType,
+                                //    "BatchNo": items.lstInvPopup[k].BatchNo,
+                                //    "PKD": items.lstInvPopup[k].PKDDate,
+                                //    "Expiry": items.lstInvPopup[k].ExpiryDate,
+                                //    "DisplayQty": parseFloat(items.lstInvPopup[k].ActQty / items.SalesCR).toFixed(DecVal),
+                                //    "DisplayPrice": parseFloat(items.lstInvPopup[k].SalesPrice * items.SalesCR).toFixed(DecVal),
+                                //    "PricewithCF": parseFloat(items.lstInvPopup[k].SalesPrice * items.SalesCR).toFixed(4),
+                                //}
+                                //productTempbatches.push(btdetails);
                             }
                         }
                         var dMRPonTax = getSalesMRPontax(btmrp);
