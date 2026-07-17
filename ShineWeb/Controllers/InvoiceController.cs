@@ -46,8 +46,8 @@ namespace ShineWeb.Controllers
                 string DrftMod = dtPermission.Select("MenuID = 388", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string DrftCan = dtPermission.Select("MenuID = 389", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string EnbPaid = dtPermission.Select("MenuID = 481", null).Length > 0 || nUID == 1 ? "1" : "0";
-                string OTPerm = dtPermission.Select("MenuID = 523", null).Length > 0 ? "1" : "0";
-                string QTNPerm = dtPermission.Select("MenuID = 522", null).Length > 0 ? "1" : "0";
+                string OTPerm = dtPermission.Select("MenuID = 523", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string QTNPerm = dtPermission.Select("MenuID = 522", null).Length > 0 || nUID == 1 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 dam.ID = TranID;
