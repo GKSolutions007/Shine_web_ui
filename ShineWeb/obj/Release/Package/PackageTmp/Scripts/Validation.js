@@ -805,6 +805,22 @@ document.addEventListener("keydown", function (event) {
         }
     }
 });
+function Gridautofocus() {
+    var rows = $("#tblProductData tbody tr");
+    var rowCount = rows.length;
+
+    if (rowCount === 1) {
+        rows.first()
+            .find("input:enabled, select:enabled, textarea:enabled")
+            .first()
+            .focus();
+    } else if (rowCount > 1) {
+        rows.last()
+            .find("input:enabled, select:enabled, textarea:enabled")
+            .first()
+            .focus();
+    }
+}
 function numberToIndianCurrencyWords(amount) {
 
     amount = parseFloat(amount);

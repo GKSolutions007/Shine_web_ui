@@ -949,7 +949,7 @@
             <div class="inv-section-body" id="sec-customer">
                 <div class="row g-2">
 
-                    <!-- Col 1: Beat / Salesman / Customer -->
+                    <!-- Col 1: Branch / Beat / Salesman / Customer -->
                     <div class="col-12 col-md-4">
                         <div class="row g-2">
                             <div class="col-12">
@@ -997,11 +997,11 @@
                             </div>
                             <label id="lblName" class="d-none"></label>
                             <label id="lblMob1" class="d-none"></label>
-                            <label id="lblGSTIN" class="d-none"></label>                            
+                            <label id="lblGSTIN" class="d-none"></label>
                         </div>
                     </div>
 
-                    <!-- Col 2: Branch / Payment / Price -->
+                    <!-- Col 2:  Payment / Price / Ref No -->
                     <div class="col-12 col-md-4">
                         <div class="row g-2">
 
@@ -1034,6 +1034,12 @@
                                     <label class="labelup">Ref No</label>
                                 </span>
                                 <div class="text-danger ps-1 clrdivs" id="divErrRefNo"></div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <span class="form-label">
+                                    <input class="form-control FormclrField" type="text" id="txtGSTIN" placeholder="" readonly disabled/>
+                                    <label class="labelup">GSTIN</label>
+                                </span>
                             </div>
                             <div hidden><a href="javascript:void(0);" id="hrefEway">E-Way Details</a></div>
                         </div>
@@ -5028,8 +5034,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             }
                             else {
-                                if (!ModalState)
-                                {
+                                if (!ModalState) {
                                     const nextRow = currentRow.nextElementSibling;
                                     if (nextRow) {
                                         const nextInputs = nextRow.querySelectorAll('input');
@@ -5059,8 +5064,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             }
                             else {
-                                if (!ModalState)
-                                {
+                                if (!ModalState) {
                                     const prevRow = currentRow.previousElementSibling;
                                     if (prevRow) {
                                         const prevInputs = prevRow.querySelectorAll('input');
@@ -5739,6 +5743,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#lblShinecode").text(items.Shinecode),                            
                             $("#cmbRating").text(items.Ratings),
                             $("#lblMob1").text(items.Mob1),
+                            $("#txtGSTIN").val(items.GSTIN),
                             $("#lblGSTIN").val(items.GSTIN),
                             $("#cmbCreditTerm").val(items.CreditTermID),
                             $("#cmbPaymode").val(items.PaymentModeID);
@@ -5904,6 +5909,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var DefQty = BatchCount > 0 ? 1 : trkivYN == 1 ? 0 : 1;
                         //ProductTable.cell(SelRowIndex, 0).data(items.ProdID); ProductTable.cell(SelRowIndex, 1).data(items.SalesTaxID);
                         $("#lblBatchItemName").text(items.Name);
+                        
                         var dgvdata = [
                             items.ProdID,
                             items.SalesTaxID,
@@ -6419,6 +6425,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                 $.each(data, function (i, items) {
                     var rdo1 = $("#rdoMainTableData").is(":checked");
+                    var rdo3 = $("#rdoQTNTableData").is(":checked");
                     if (rdo1) {
                         $("#txtID").val(items.ID);
                     } else {
@@ -6441,7 +6448,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     if (nTransMode != 3) {
                         $("#lblDocID").text(items.DocId).attr("docprefix", items.DocPrefix);
                     }
-                    $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), //$("#txtStatus").val(items.Status),
+                    if (rdo3) {
+                        $("#txtRefNo").val(items.DocId);
+                        
+                    } else {
+                        $("#txtRefNo").val(items.RefNo);
+                    }
+                    
+                        $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), //$("#txtStatus").val(items.Status),
                         $("#cmbBeat").val(items.BeatID), $("#cmbSalesman").val(items.SalesmanID);
                     updateInputColumn("txtFright", items.FrightAmt); updateInputColumn("txtOtherChargPern", items.OtherChargePern); updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
                     updateInputColumn("txtProdDiscAmt", items.TotalProdDiscAmt);updateInputColumn("txtTradeDiscPern", items.TradeDiscPern); updateInputColumn("txtAddnlDiscPern", items.AddnlDiscPern);
@@ -6476,6 +6490,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#cmbRating").text(itemsParty.Ratings),
                             $("#lblShinecode").text(itemsParty.Shinecode),     
                             $("#lblMob1").text(itemsParty.Mob1),
+                            $("#txtGSTIN").val(itemsParty.GSTIN),
                             $("#lblGSTIN").text(itemsParty.GSTIN),
                             $("#txtBAdd1").val(itemsParty.Billadd1),
                             $("#txtBAdd2").val(itemsParty.Billadd2),
@@ -6958,7 +6973,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#balanceContainer").show();
         //setTimeout(() => {
         Addprodgridline();
-        //}, 500);
+        //}, 500);       
+        if (!rdo1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#cmbBranch").val();
+                if (rdo4)
+                    DocDate = getCurrentDate();
+                GetDocumentID(DocDate, Branch, 15);
+            }, 1000);
+        }
     }
     $('#btnTCancel').click(function (e) {
         var Did = $("#txtID").val();
