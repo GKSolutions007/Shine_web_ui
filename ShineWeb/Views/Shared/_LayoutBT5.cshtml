@@ -4557,44 +4557,71 @@ function CloseConfirmDialogMsg_old(message) {
     });
     function WhatsappDocument(ID, strTransID, nConfigID) {
 
-            let sb = document.getElementById("RepLoadersnackbar");
-            sb.classList.add("show");
-            var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
-            $.ajax({
-                url: Aurl + "invoice/WhatsappGenerate",
-                type: 'GET',
-                datatype: 'json',
-                data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID, Copies: strcopy, APIURL: Aurl },
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function (data) {
-                    sb.classList.remove("show");
-                    if (data.length > 0) {
-                        $.each(data, function (i, items) {
-                            if (items.MsgID == 0) {
-                                //showSuccessSnackbar(items.Message);
-                                var phone = items.RowID
-                                var message = items.Message;
-                                var url = "https://api.whatsapp.com/send?phone=" + phone + "&text=" + encodeURIComponent(message);
-                                //console.log("url : ", url);
-                                window.open(url, "_blank");
-                            }
-                            else if (items.MsgID == 1) {
-                                showErrorSnackbar(items.Message);
-                            }
-                        });
-                    } else {
-                        showErrorSnackbar('Message Not Send. Try Again');
-                    }
-                }, error: function (data) {
-                    sb.classList.remove("show");
-                    if (data.status == "401") {
-                        var msg = data.responseJSON.Message;
-                        //showErrorSnackbar(msg + " Logout and Login again.");
-                    }
+        let sb = document.getElementById("RepLoadersnackbar");
+        sb.classList.add("show");
+        var strcopy = $("#txtNoofCopies").val() == "" || $("#txtNoofCopies").val() == "0" || $("#txtNoofCopies").val() == null ? 1 : $("#txtNoofCopies").val();
+        $.ajax({
+            url: Aurl + "invoice/WhatsappGenerate",
+            type: 'GET',
+            datatype: 'json',
+            data: { DocID: ID, TransID: strTransID, ConfigID: nConfigID, Copies: strcopy, APIURL: Aurl },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                sb.classList.remove("show");
+                if (data.length > 0) {
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            //showSuccessSnackbar(items.Message);
+                            var phone = items.RowID
+                            var message = items.Message;
+                            var url = "https://api.whatsapp.com/send?phone=" + phone + "&text=" + encodeURIComponent(message);
+                            //url = "whatsapp://send?phone=" + phone + "&text=" + encodeURIComponent(message);                                
+                            //window.open(url, "_blank");
+                            openWhatsApp(phone, message);
+                        }
+                        else if (items.MsgID == 1) {
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                } else {
+                    showErrorSnackbar('Message Not Send. Try Again');
                 }
-            });
+            }, error: function (data) {
+                sb.classList.remove("show");
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    function openWhatsApp(phone, message) {
+        var encodedMsg = encodeURIComponent(message);
+        var appUrl = "whatsapp://send?phone=" + phone + "&text=" + encodedMsg;
+        var webUrl = "https://wa.me/" + phone + "?text=" + encodedMsg;
+
+        var appOpened = false;
+
+        function markOpened() {
+            appOpened = true;
+        }
+
+        document.addEventListener("visibilitychange", function handler() {
+            if (document.hidden) markOpened();
+        });
+        window.addEventListener("blur", markOpened, { once: true });
+
+        // Attempt to open the desktop app
+        window.location.href = appUrl;
+
+        // Only fall back if the page never lost focus (app didn't open)
+        setTimeout(function () {
+            if (!appOpened) {
+                window.location.href = webUrl; // same tab, no new tab
+            }
+        }, 1500);
     }
     var myurl = '@Session["url"]';
     function printEmbedDocument(testlink) {
