@@ -375,6 +375,7 @@
 
     @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
     @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
+    @Html.HiddenFor(model => model.Variant, new { @autocomplete = "off", @class = "form-control", @id = "txtVariantID" })
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
@@ -482,7 +483,7 @@
 
                         <div class="text-danger pt-1 ps-1 clrdivs" id="divErrBranch"></div>
                     </div>
-                    
+
                     <!-- Price Type -->
                     <div class="mb-3">
                         <span class="form-label w-100">
@@ -535,7 +536,7 @@
                                     <span id="openvehicle" class="input-group-text d-none" title="Add/Edit Vehicle">
                                         <span class="fas fa-arrow-up-right-from-square"></span>
                                     </span>
-                                   
+
                                     <span class="form-label flex-fill">
                                         <select class="form-control FormclrcmbField" id="cmbVehicleNo"><option value="0">Select Vehicle No</option></select>
                                         <label class="labelup">Vehicle No</label>
@@ -901,6 +902,20 @@
                         $("#cmbBranch").prop("disabled", true);
                     }
                     //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
+                }
+            },
+            {
+                icon: '📄',
+                title: 'Variant',
+                className: 'dg-action-edit',
+                visible: mapusersRole.canVariant,
+                displayType: 'menu_item',
+                handler: (rowdata, gridInstance) => {
+                    $(".clrdivs").html("");
+                    var ID = rowdata.ID;//[0];
+                    var sts = rowdata.Status;//[10];
+                    $("#txtID").val(ID);
+                    VariantActionTrigger(rowdata);
                 }
             },
             {
@@ -1529,6 +1544,7 @@
                 TableBatch.draw().clear(); TableBatch.draw().clear();
                 var trkbat = "False", trkpkd = "False";
                 //showErrorSnackbar("Track Inv : "+trkInv);
+                console.log("dConvFact ", dConvFact);
                 $.each(data, function (i, items) {
                     trkbat = items.TrackBatch;
                     trkpkd = items.TrackPKD;
@@ -1560,9 +1576,9 @@
                     //5,6,7
                     var PID = Prodrowdata[0];
                     var Price = Prodrowdata[3];
-                    var prbat = Prodrowdata[5];
-                    var prpkd = Prodrowdata[6];
-                    var prexp = Prodrowdata[7];
+                    var prbat = Prodrowdata[5] == null ? "" : Prodrowdata[5];
+                    var prpkd = Prodrowdata[6] == null ? "" : Prodrowdata[6];
+                    var prexp = Prodrowdata[7] == null ? "" : Prodrowdata[7];
                     var prmrp = Prodrowdata[17];
                     var mrpattr = $(prmrp);
                     var fmrpid = mrpattr[0].id;
@@ -2470,7 +2486,44 @@
             }
         }
     });
-
+    $('#btnTVariant').click(function (e) {
+        var Did = $("#txtID").val();
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        VariantActionTrigger(rowinfo);
+    });
+    function VariantActionTrigger(rowData) {
+        var ID = rowData.ID;
+        GetProductList();
+        nTransMode = 3;
+        GetData();
+        //GetProductViewData(7, ID);
+        setTimeout(() => {
+            GetProductViewData(ID,1);
+        }, 300);
+        $("#txtStatus").val(1);
+        $("#dvMain,#btnAddNewProduct").show();
+        $("#dvDocuments").hide();
+        $("#MainHeading").text("Variant Van Loading Slip");
+        $(".FormclrField,.FormclrcmbField,#btnNewProd").prop("disabled", false);
+        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnSave,#btnClear,#btnDraft").show();                
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }        
+        setTimeout(() => {
+            Addprodgridline();
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 24);
+            Gridautofocus();
+        }, 1000);
+    }
     function GetProductViewData(nID,nStatus) {
         let sb = document.getElementById("RepLoadersnackbar");
         sb.classList.add("show");
@@ -2493,8 +2546,12 @@
                     $("#cmbBranch").val(items.BranchID);
                     $("#cmbPriceType").val(items.PriceType);
                     var dt = items.DocDate.substring(0, 10);//"2026-07-18T00:00:00"
-                    $("#dtpDate").val(dt);
-                    $("#lblDocID").text(items.DocId).attr("docprefix", items.DocPrefix);
+                    if (nTransMode == 3) {
+                        setDate("dtpDate", 0);
+                    } else {
+                        $("#dtpDate").val(dt);
+                    }                    
+                    $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     $("#txtRefNo").val(items.RefNo);
                     $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);
                     $("#cmbVehicleNo").val(items.VehicleNo).trigger('change'), $("#txtDistance").val(items.Distance),
@@ -2511,8 +2568,9 @@
                 ProductRID = 0;
                 var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                 var visbfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
+                console.log("ProductData ", ProductData);
                 var dataSet = ProductData.map(function (itemsProd, nRowIndex) {
-                    var strUOMs = '<option selected value="' + itemsProd.UOMID + '" name="' + itemsProd.UOMCF + '">' + itemsProd.UOMName + '</option>';                    
+                    var strUOMs = '<option selected value="' + itemsProd.UOMID + '" name="' + itemsProd.UomCF + '">' + itemsProd.UOMName + '</option>';                    
                     var uomfield = "<select name= 'UOM' class='gdInput dgvcmbUOM' " + disbfields + " id='dgvUOM" + nRowIndex + "' >" + strUOMs + "</select>";
                     //ID	InventoryID	AdjustQty	ProdID	BaseUomPrice	UOMID	UomQty	UomPrice	UomCF	MRP	TaxID	
                     //TaxValue	GrossAmt	TaxAmt	NetAmt	QtyType	SERIAL	ProductCode	ProductName	HSNCode	UOMName	
@@ -2535,7 +2593,7 @@
                         '<label class="lblsettag" name="Gross" lbltag=' + itemsProd.GrossAmt + ' id="dgvProdGross' + nRowIndex + '" title="' + itemsProd.GrossAmt + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
                         '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>' +
                         '<label hidden name="ApponMRPCum" class="lblsettag" lbltag="' + itemsProd.CumMRPonTax + '"  title="' + itemsProd.CumMRPonTax + '" id="dgvProdApponMRPCum' + nRowIndex + '">' + parseFloat(itemsProd.CumMRPonTax).toFixed(DecVal) + '</label>' +
-                        '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + itemsProd.MRPonTax + '"   title="' + itemsProd.MRPonTax + '"id="dgvProdTotalMRPonTax' + nRowIndex + '">' + parseFloat(itemsProd.MRPonTax).toFixed(DecVal) + '</label>',
+                        '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + itemsProd.MRPonTaxAmt + '"   title="' + itemsProd.MRPonTaxAmt + '"id="dgvProdTotalMRPonTax' + nRowIndex + '">' + parseFloat(itemsProd.MRPonTaxAmt).toFixed(DecVal) + '</label>',
                         '<label class="lblsettag" name="NetAmt" lbltag=' + itemsProd.NetAmt + ' id="dgvProdNet' + nRowIndex + '" title="' + itemsProd.NetAmt + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
                         (parseFloat(itemsProd.UomQty) + 10000), itemsProd.QtyType
                     ];
@@ -2565,7 +2623,7 @@
                         { title: "BatchYN", visible: false, className: "dt-body-left" },
                         { title: "PKDYN", visible: false, className: "dt-body-left" },
                         { title: "TrkkSerYN", visible: false, className: "dt-body-left" },
-                        { title: '<button hidden class="btn-primary" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-center", width: "3%" },
+                        { title: '<button hidden class="btn-primary" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-left", width: "3%" },
                         { title: "#", className: "dt-body-left", width: "2%" },
                         { title: "Item Names", className: "dt-body-left", width: "20%" },
                         { title: "Qty", className: "dt-body-right", width: "8%" },
@@ -2910,7 +2968,7 @@
                 "IsDraft": 0,
                 "ID": $("#txtID").val(),
                 "DocDate": $("#dtpDate").val(),
-                "TransMode": nTransMode,
+                "TransMode": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode,
                 "TransID": 24,
                 "BranchID": $("#cmbBranch").val(),
                 "DocID": $("#lblDocID").val(),                
@@ -2969,10 +3027,12 @@
                                 $("#txtDraftID").val(items.ID);
                             }                           
                         }
-                        else if (items.Message == "13") {
+                        else if (items.Message == "13") {//Qty Mismatched
                             var ErrorRowID = parseInt(items.RowID);
                             $("#tblProductData tbody tr").each(function () {
                                 var RowIndex = ProductTable.row($(this)).index();
+                                var dRowData = ProductTable.row($(this)).data();
+                                var ProdID = dRowData[0];
                                 if (RowIndex == (ErrorRowID - 1)) {
                                     $(this).find('td').css("background-color", "red");
                                 }
