@@ -1843,17 +1843,7 @@
     // ---------------------------------------------------------------
     function getDemoRows() {
         return [
-            { TransID: 1, ID: 101, FAID: 9001, PartyName: 'Sri Ganesh Traders', DocID: 'INV-2607',TransName:"Invoice", DocDate: '2026-Jun-02', RefNo: 'PO-3321', NetAmt: 18500, Balance: 18500 },
-            { TransID: 2, ID: 102, FAID: 9002, PartyName: 'Annapurna Stores', DocID: 'INV-2611', TransName: "Invoice", DocDate: '2026-Jun-05', RefNo: 'PO-3325', NetAmt: 9200, Balance: 6200 },
-            { TransID: 3, ID: 103, FAID: 9003, PartyName: 'Velan Super Market', DocID: 'INV-2620', TransName: "Invoice", DocDate: '2026-Jun-08', RefNo: 'PO-3340', NetAmt: 45200, Balance: 45200 },
-            { TransID: 4, ID: 104, FAID: 9004, PartyName: 'Murugan Agencies', DocID: 'INV-2622', TransName: "Sales Return", DocDate: '2026-Jun-09', RefNo: 'PO-3342', NetAmt: 12750, Balance: 4500 },
-            { TransID: 5, ID: 105, FAID: 9005, PartyName: 'Lakshmi Provisions', DocID: 'INV-2630', TransName: "Invoice", DocDate: '2026-Jun-11', RefNo: 'PO-3360', NetAmt: 27800, Balance: 27800 },
-            { TransID: 6, ID: 106, FAID: 9006, PartyName: 'Sakthi Distributors', DocID: 'INV-2635', TransName: "Debit Note", DocDate: '2026-Jun-13', RefNo: 'PO-3372', NetAmt: 2800, Balance: 2800 },
-            { TransID: 4, ID: 104, FAID: 9004, PartyName: 'Murugan Agencies', DocID: 'INV-2622', TransName: "Invoice", DocDate: '2026-Jun-09', RefNo: 'PO-3342', NetAmt: 12750, Balance: 4500 },
-            { TransID: 5, ID: 105, FAID: 9005, PartyName: 'Lakshmi Provisions', DocID: 'INV-2630', TransName: "Receivable Voucher", DocDate: '2026-Jun-11', RefNo: 'PO-3360', NetAmt: 27800, Balance: 27800 },
-            { TransID: 6, ID: 106, FAID: 9006, PartyName: 'Sakthi Distributors', DocID: 'INV-2635', TransName: "Invoice", DocDate: '2026-Jun-13', RefNo: 'PO-3372', NetAmt: 6400, Balance: 6400 },
-            { TransID: 7, ID: 107, FAID: 9007, PartyName: 'Kovai Hardware Mart', DocID: 'CN-1042', TransName: "Credit Note", DocDate: '2026-Jun-14', RefNo: 'PO-3380', NetAmt: 1600, Balance: -1600 },
-            { TransID: 6, ID: 106, FAID: 9006, PartyName: 'Sakthi Distributors', DocID: 'SR-223', TransName: "Sales Return", DocDate: '2026-Jun-13', RefNo: 'PO-3372', NetAmt: 2000, Balance: -2000 },
+            { TransID: 1, ID: 101, FAID: 9001, PartyName: 'Sri Ganesh Traders', DocID: 'INV-2607',TransName:"Invoice", DocDate: '2026-Jun-02', RefNo: 'PO-3321', NetAmt: 18500, Balance: 18500 }            
         ];
     }
 
@@ -1897,15 +1887,17 @@
                 $('#dvLoading').hide();
                 console.log("Pending docs ",rows);
                 if (!rows || !rows.length) {
-                    toast('No live records found for this filter — showing sample preview rows. Connect your API in fetchCollectionData().', 'warning');
-                    rows = getDemoRows();
+                    //toast('No live records found for this filter — showing sample preview rows. Connect your API in fetchCollectionData().', 'warning');
+                    //rows = getDemoRows();
+                    toast('No records found');
                 }
                 renderRows(rows);
             },
             error: function () {
                 $('#dvLoading').hide();
-                toast('Could not reach the API — showing sample preview rows. Check the endpoint URL in fetchCollectionData().', 'warning');
-                renderRows(getDemoRows());
+                //toast('Could not reach the API — showing sample preview rows. Check the endpoint URL in fetchCollectionData().', 'warning');
+                //renderRows(getDemoRows());
+                toast('Cannot fetch the data. Try again');
             }
         });
     }
@@ -2280,11 +2272,24 @@
         $input.blur();
     }
 
-    function discPctChanged($tr) {
+    // NOTE: isFinal = true on 'change' (blur/Enter/spinner) -> full clamp + reformat (toFixed) on BOTH
+    //                 the field the user edited and its counterpart, plus validation/reconcile.
+    //       isFinal = false on 'input' (live keystrokes) -> only refresh the *counterpart* field so
+    //                 totals/preview stay live; the field the user is actively typing into is left
+    //                 completely untouched so the cursor never jumps and every keystroke is kept.
+    //       Defaults to true so any other/older call site keeps the original (full) behaviour.
+    function discPctChanged($tr, isFinal) {
+        if (isFinal === undefined) isFinal = true;
         var balance = parseFloat($tr.attr('data-balance')) || 0;
-        if (balance < 0) { $tr.find('.inp-discpct, .inp-discamt').val('0.00'); recalcRow($tr); return; }
+        if (balance < 0) {
+            $tr.find('.inp-discamt').val('0.00');
+            if (isFinal) $tr.find('.inp-discpct').val('0.00');
+            recalcRow($tr); return;
+        }
         if (!hasCashOrChq($tr)) {
-            flashDiscOtherError($tr.find('.inp-discpct'), 'Enter Cash or Chq/BT amount first before applying Disc %.');
+            if (isFinal) {
+                flashDiscOtherError($tr.find('.inp-discpct'), 'Enter Cash or Chq/BT amount first before applying Disc %.');
+            }
             $tr.find('.inp-discamt').val('0.00');
             recalcRow($tr); return;
         }
@@ -2293,16 +2298,25 @@
         if (pct > 100) pct = 100;
         var amt = balance * pct / 100;
         $tr.find('.inp-discamt').val(amt.toFixed(DecVal));
-        $tr.find('.inp-discpct').val(pct.toFixed(2));
-        reconcileCashChqAfterDiscOther($tr);
+        if (isFinal) {
+            $tr.find('.inp-discpct').val(pct.toFixed(2));
+            reconcileCashChqAfterDiscOther($tr);
+        }
         recalcRow($tr);
     }
 
-    function discAmtChanged($tr) {
+    function discAmtChanged($tr, isFinal) {
+        if (isFinal === undefined) isFinal = true;
         var balance = parseFloat($tr.attr('data-balance')) || 0;
-        if (balance < 0) { $tr.find('.inp-discpct, .inp-discamt').val('0.00'); recalcRow($tr); return; }
+        if (balance < 0) {
+            $tr.find('.inp-discpct').val('0.00');
+            if (isFinal) $tr.find('.inp-discamt').val('0.00');
+            recalcRow($tr); return;
+        }
         if (!hasCashOrChq($tr)) {
-            flashDiscOtherError($tr.find('.inp-discamt'), 'Enter Cash or Chq/BT amount first before applying Disc ₹.');
+            if (isFinal) {
+                flashDiscOtherError($tr.find('.inp-discamt'), 'Enter Cash or Chq/BT amount first before applying Disc ₹.');
+            }
             $tr.find('.inp-discpct').val('0.00');
             recalcRow($tr); return;
         }
@@ -2310,19 +2324,28 @@
         if (isNaN(amt) || amt < 0) amt = 0;
         if (amt > balance) amt = balance;
         var pct = balance > 0 ? (amt / balance * 100) : 0;
-        $tr.find('.inp-discamt').val(amt.toFixed(DecVal));
         $tr.find('.inp-discpct').val(pct.toFixed(2));
-        reconcileCashChqAfterDiscOther($tr);
+        if (isFinal) {
+            $tr.find('.inp-discamt').val(amt.toFixed(DecVal));
+            reconcileCashChqAfterDiscOther($tr);
+        }
         recalcRow($tr);
     }
 
-    function otherPctChanged($tr) {
+    function otherPctChanged($tr, isFinal) {
+        if (isFinal === undefined) isFinal = true;
         var balance = parseFloat($tr.attr('data-balance')) || 0;
         // Other % allows negative values (negative = discount, reduces balance;
         // positive = no balance reduction). Only block if balance itself is negative.
-        if (balance < 0) { $tr.find('.inp-otherpct, .inp-otheramt').val('0.00'); recalcRow($tr); return; }
+        if (balance < 0) {
+            $tr.find('.inp-otheramt').val('0.00');
+            if (isFinal) $tr.find('.inp-otherpct').val('0.00');
+            recalcRow($tr); return;
+        }
         if (!hasCashOrChq($tr)) {
-            flashDiscOtherError($tr.find('.inp-otherpct'), 'Enter Cash or Chq/BT amount first before applying Other %.');
+            if (isFinal) {
+                flashDiscOtherError($tr.find('.inp-otherpct'), 'Enter Cash or Chq/BT amount first before applying Other %.');
+            }
             $tr.find('.inp-otheramt').val('0.00');
             recalcRow($tr); return;
         }
@@ -2334,21 +2357,30 @@
         if (pct > 100) pct = 100;
         var amt = balance * pct / 100;
         $tr.find('.inp-otheramt').val(amt.toFixed(DecVal));
-        $tr.find('.inp-otherpct').val(pct.toFixed(2));
-        // Only reconcile Cash/Chq when Other is positive (no reduction when positive)
-        if (amt > 0) {
-            reconcileCashChqAfterDiscOther($tr);
+        if (isFinal) {
+            $tr.find('.inp-otherpct').val(pct.toFixed(2));
+            // Only reconcile Cash/Chq when Other is positive (no reduction when positive)
+            if (amt > 0) {
+                reconcileCashChqAfterDiscOther($tr);
+            }
         }
         recalcRow($tr);
     }
 
-    function otherAmtChanged($tr) {
+    function otherAmtChanged($tr, isFinal) {
+        if (isFinal === undefined) isFinal = true;
         var balance = parseFloat($tr.attr('data-balance')) || 0;
         // Other ₹ allows negative values (negative = discount, reduces balance;
         // positive = no balance reduction). Only block if balance itself is negative.
-        if (balance < 0) { $tr.find('.inp-otherpct, .inp-otheramt').val('0.00'); recalcRow($tr); return; }
+        if (balance < 0) {
+            $tr.find('.inp-otherpct').val('0.00');
+            if (isFinal) $tr.find('.inp-otheramt').val('0.00');
+            recalcRow($tr); return;
+        }
         if (!hasCashOrChq($tr)) {
-            flashDiscOtherError($tr.find('.inp-otheramt'), 'Enter Cash or Chq/BT amount first before applying Other ₹.');
+            if (isFinal) {
+                flashDiscOtherError($tr.find('.inp-otheramt'), 'Enter Cash or Chq/BT amount first before applying Other ₹.');
+            }
             $tr.find('.inp-otherpct').val('0.00');
             recalcRow($tr); return;
         }
@@ -2358,11 +2390,13 @@
         if (amt > balance) amt = balance;
         if (amt < -balance) amt = -balance;
         var pct = balance > 0 ? (amt / balance * 100) : 0;
-        $tr.find('.inp-otheramt').val(amt.toFixed(DecVal));
         $tr.find('.inp-otherpct').val(pct.toFixed(2));
-        // Only reconcile Cash/Chq when Other is positive (no reduction when positive)
-        if (amt > 0) {
-            reconcileCashChqAfterDiscOther($tr);
+        if (isFinal) {
+            $tr.find('.inp-otheramt').val(amt.toFixed(DecVal));
+            // Only reconcile Cash/Chq when Other is positive (no reduction when positive)
+            if (amt > 0) {
+                reconcileCashChqAfterDiscOther($tr);
+            }
         }
         recalcRow($tr);
     }
@@ -2491,10 +2525,14 @@
     // ---------------------------------------------------------------
     // Event wiring (delegated, since rows are added dynamically)
     // ---------------------------------------------------------------
-    $('#tblBody').on('input change', '.inp-discpct', function () { discPctChanged($(this).closest('tr')); });
-    $('#tblBody').on('input change', '.inp-discamt', function () { discAmtChanged($(this).closest('tr')); });
-    $('#tblBody').on('input change', '.inp-otherpct', function () { otherPctChanged($(this).closest('tr')); });
-    $('#tblBody').on('input change', '.inp-otheramt', function () { otherAmtChanged($(this).closest('tr')); });
+    $('#tblBody').on('input', '.inp-discpct', function () { discPctChanged($(this).closest('tr'), false); });
+    $('#tblBody').on('change', '.inp-discpct', function () { discPctChanged($(this).closest('tr'), true); });
+    $('#tblBody').on('input', '.inp-discamt', function () { discAmtChanged($(this).closest('tr'), false); });
+    $('#tblBody').on('change', '.inp-discamt', function () { discAmtChanged($(this).closest('tr'), true); });
+    $('#tblBody').on('input', '.inp-otherpct', function () { otherPctChanged($(this).closest('tr'), false); });
+    $('#tblBody').on('change', '.inp-otherpct', function () { otherPctChanged($(this).closest('tr'), true); });
+    $('#tblBody').on('input', '.inp-otheramt', function () { otherAmtChanged($(this).closest('tr'), false); });
+    $('#tblBody').on('change', '.inp-otheramt', function () { otherAmtChanged($(this).closest('tr'), true); });
 
     $('#tblBody').on('input', '.inp-cashamt', function () {
         var $tr = $(this).closest('tr');
