@@ -161,13 +161,23 @@
     <hr />
     <div class="toastBox"></div>
     <div id="dvMainTable">       
-        <div class="container mt-3">
+        <div class="mt-3">
 
             <div>
                 <div class="row g-3 align-items-end bgclrfortr">
-
                     <!-- Branch -->
-                    <div class="col-12 col-md-4 col-lg-3">
+                    <div class="col-12 col-md-3 col-lg-3">
+                        <div class="form-group-modern">
+                            <i class="bi bi-person input-icon"></i>
+                            <select class="form-control FormclrcmbField" id="cmbUserName">
+                                <option value="0">Select</option>
+                            </select>
+                            <label class="labelup">User Name *</label>
+                        </div>
+                        <div id="divErrUserName" class="clrdiv text-danger mt-1"></div>
+                    </div>
+                    <!-- Branch $("#cmbTodayRoutePrintProfile").val(), $("#txtUPIID").val()-->
+                    <div class="col-12 col-md-3 col-lg-3">
                         <div class="form-group-modern">
                             <i class="bi bi-diagram-3 input-icon"></i>
                             <select class="form-control FormclrcmbField" id="cmbBrach">
@@ -179,7 +189,7 @@
                     </div>
 
                     <!-- Beat -->
-                    <div class="col-12 col-md-4 col-lg-3">
+                    <div class="col-12 col-md-3 col-lg-3">
                         <div class="form-group-modern">
                             <i class="bi bi-geo-alt input-icon"></i>
                             <select class="form-control FormclrcmbField" id="cmbBeat">
@@ -191,7 +201,7 @@
                     </div>
 
                     <!-- Salesman -->
-                    <div class="col-12 col-md-4 col-lg-3">
+                    <div class="col-12 col-md-3 col-lg-3">
                         <div class="form-group-modern">
                             <i class="bi bi-person-badge input-icon"></i>
                             <select class="form-control FormclrcmbField" id="cmbSalesman">
@@ -201,9 +211,28 @@
                         </div>
                         <div id="divErrSalesman" class="clrdiv text-danger mt-1"></div>
                     </div>
-
+                    <!-- Print Profile -->
+                    <div class="col-12 col-md-3 col-lg-3">
+                        <div class="form-group-modern">
+                            <i class="bi bi-printer input-icon"></i>
+                            <select class="form-control FormclrcmbField" id="cmbTodayRoutePrintProfile">
+                                <option value="0">Select</option>
+                            </select>
+                            <label class="labelup">Invoice Profile</label>
+                        </div>
+                        <div id="divErrPrintProfile" class="clrdiv text-danger mt-1"></div>
+                    </div>
+                    <!-- UPI -->
+                    <div class="col-12 col-md-3 col-lg-3">
+                        <div class="form-group-modern">
+                            <i class="bi bi-credit-card input-icon"></i>
+                            <input type="text" id="txtUPIID" class="form-control FormclrcmbField"/>                           
+                            <label class="labelup">UPI ID</label>
+                        </div>
+                        <div id="divErrUPIID" class="clrdiv text-danger mt-1"></div>
+                    </div>
                     <!-- Save Button -->
-                    <div class="col-12 col-md-12 col-lg-3 d-flex align-items-end">
+                    <div class="col-12 col-md-2 col-lg-2 d-flex align-items-end">
                         <button type="button" class="btn btn-success w-100" id="btnSave">
                             <i class="bi bi-check-circle me-1"></i> Save
                         </button>
@@ -228,21 +257,24 @@
     var Aurl = '@Session["APIurl"]';
 
     GetData(1);
-    GetData(2);
+    GetTodayRouteData(2, UID);
     function GetData(nMode, nBID = 0, nSMID = 0,nBranchID = 0) {
         $.ajax({
             url: Aurl + "todayroute/getpost",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, UserID: UID, BeatID: nBID, SalesmanID: nSMID, BranchID: nBranchID },
+            data: {
+                Mode: nMode, UserID: UID, BeatID: nBID, SalesmanID: nSMID, BranchID: nBranchID,
+                ProfileID: "0", UPIID:""
+            },
             xhrFields: {
                 withCredentials: true
             },
             async: false,
             success: function (data) {
                 if (nMode == 1) {
-                    $('#cmbBeat,#cmbSalesman,#cmbBrach').find("option").remove();
-                    $('#cmbBeat,#cmbSalesman,#cmbBrach').append($('<option/>', {
+                    $('#cmbBeat,#cmbSalesman,#cmbBrach,#cmbUserName,#cmbTodayRoutePrintProfile').find("option").remove();
+                    $('#cmbBeat,#cmbSalesman,#cmbBrach,#cmbTodayRoutePrintProfile').append($('<option/>', {
                         value: 0,
                         text: "-- Select --",
                         class: ""
@@ -266,28 +298,24 @@
                                 text: items.Name,
                             }));
                         }
+                        else if (items.FType == 4) {
+                            $('#cmbUserName').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                            $('#cmbUserName').val(UID);
+                        }
+                        else if (items.FType == 5) {
+                            $('#cmbTodayRoutePrintProfile').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                        }
                     });
-                    //$('#cmbBrach').val(DefBranch);
                 }
                 else if (nMode == 2) {
-                    $.each(data, function (i, items) {
-                        $('#cmbBeat').val(items.BeatID);
-                        $('#cmbSalesman').val(items.SalesmanID);
-                        $('#cmbBrach').val(items.BranchID);
-                    });
-                }
-                else if (nMode == 3) {
-                    $("#btnSave").prop("disabled", false);
-                    $.each(data, function (i, items) {
-                        if (items.MsgID == 0) {
-                            showSuccessSnackbar(items.Message);
-                            //ClearForm();
-                        }
-                        else {
-                            showErrorSnackbar(items.Message);
-                        }
-                    });
-                }
+                    
+                }                
             },
             error: function (data) {
                 $("#btnSave").prop("disabled", false);
@@ -298,7 +326,62 @@
             }
         });
     }
-
+    function GetTodayRouteData(nMode, nUID) {
+        $.ajax({
+            url: Aurl + "todayroute/getpost",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                Mode: nMode, UserID: nUID, BeatID: 0, SalesmanID: 0, BranchID: 0,
+                ProfileID: "0", UPIID:"" },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                $('#cmbBeat,#cmbSalesman,#cmbBrach,#cmbTodayRoutePrintProfile').val(0);
+                $("#txtUPIID").val("");
+                $.each(data, function (i, items) {
+                    $('#cmbBeat').val(items.BeatID);
+                    $('#cmbSalesman').val(items.SalesmanID);
+                    $('#cmbBrach').val(items.BranchID);
+                    $('#cmbTodayRoutePrintProfile').val(items.PrintProfileID);
+                    $('#txtUPIID').val(items.UPIID);
+                });
+            }
+        });
+    }
+    $("#cmbUserName").change(function (e) {
+        var selval = e.target.value;
+        if (selval > 0)
+            GetTodayRouteData(2, selval);
+    });
+    function UpdateTodayRoute(nMode, nBID = 0, nSMID = 0, nBranchID = 0, UID = 0, nProfileID = 0, strUPIID= "") {
+        $.ajax({
+            url: Aurl + "todayroute/getpost",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                Mode: nMode, UserID: UID, BeatID: nBID, SalesmanID: nSMID, BranchID: nBranchID,
+                ProfileID: nProfileID, UPIID:strUPIID },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        //ClearForm();
+                    }
+                    else {
+                        showErrorSnackbar(items.Message);
+                    }
+                });
+            }
+        });
+    }
     $('#btnClear').click(function (e) {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
@@ -318,6 +401,11 @@
     function SaveData() {
         $(".clrdiv").html("");
         var IsValid = true;//cmbSalesman
+        if ($("#cmbUserName").val() == 0) {
+            $("#divErrUserName").html("Select User Name");
+            showErrorSnackbar("Select User Name");
+            IsValid = false;
+        }
         if ($("#cmbBeat").val() == 0 && $("#cmbSalesman").val() > 0) {
             $("#divErrBeat").html("Select Beat Name");
             showErrorSnackbar("Select Beat Name");
@@ -328,9 +416,10 @@
             showErrorSnackbar("Select Salesman Name");
             IsValid = false;
         }
-        if (IsValid) {
+        if (IsValid) {            
             $("#btnSave").prop("disabled", true);
-            GetData(3, $("#cmbBeat").val(), $("#cmbSalesman").val(), $("#cmbBrach").val());
+            UpdateTodayRoute(3, $("#cmbBeat").val(), $("#cmbSalesman").val(),
+                $("#cmbBrach").val(), $("#cmbUserName").val(), $("#cmbTodayRoutePrintProfile").val(), $("#txtUPIID").val());
         }
     }
 </script>
