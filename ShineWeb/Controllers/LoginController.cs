@@ -24,7 +24,7 @@ namespace ShineWeb.Controllers
         // GET: Login
         public ActionResult Index(string Msg=null)
         {
-            //string plain = "Van Loading Slip,Create Van Loading Slip,View Van Loading Slip";
+            //string plain = "546,547";// "Van Loading Slip,Create Van Loading Slip,View Van Loading Slip";
             //string[] strplain = plain.Split(',');
             //string EncVal = "";
             //for (int i = 0; strplain.Length > i; i++)
@@ -32,6 +32,7 @@ namespace ShineWeb.Controllers
             //    string val = strplain[i].ToString();
             //    EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
             //}
+
 
             string nv = Convert.ToString(Session["NavBarVisible"]);
             string userAgent = Request.UserAgent;

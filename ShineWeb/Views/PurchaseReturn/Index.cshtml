@@ -1335,7 +1335,7 @@
                                             <span title="Product Info" id="btnBatchProdInfo" class="bi bi-info-circle"></span>
                                         </th>
 
-                                        <th colspan="7"></th>
+                                        <th colspan="8"></th>
                                     </tr>
 
                                     <tr>
@@ -1347,12 +1347,15 @@
                                         <th style="width:8%">Actual Qty</th>
                                         <th style="width:7%">Actual Free</th>
                                         <th style="width:7%">Actual Dmg</th>
-                                        <th style="width:10%">MRP</th>
-                                        <th style="width:12%">Qty</th>
-                                        <th style="width:10%">Free</th>
-                                        <th style="width:10%">Dmg</th>
-                                        <th style="width:12%">
+                                        <th style="width:9%">MRP</th>
+                                        <th style="width:9%">Qty</th>
+                                        <th style="width:9%">Free</th>
+                                        <th style="width:9%">Dmg</th>
+                                        <th style="width:10%">
                                             <label id="lblPriceType">Price</label>
+                                        </th>
+                                        <th style="width:10%">
+                                            <label id="lblInclPriceType">Incl Price</label>
                                         </th>
                                     </tr>
 
@@ -2347,11 +2350,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var dPurchasePrice = 0, dActQty = 0, dActFreeQty = 0, dActDmgQty = 0, MRP = 0, dReturnPrice = 0;
             if (BatchMode == 0)// New Product
             {
+                var TaxPern = parseFloat((TempProd[0].GSTPern / 100) + 1);
+                console.log("TempBatch ", TempBatch, "TempProd", TempProd[0]);
                 for (var i = 0; i < TempBatch.length; i++) {
                     dPurchasePrice = (parseFloat(TempBatch[i].ReturnPrice)) * parseFloat(ConvFact);
                     dActQty = (parseFloat(TempBatch[i].ActQty)) / parseFloat(ConvFact);
                     dActFreeQty = (parseFloat(TempBatch[i].ActFreeQty)) / parseFloat(ConvFact);
                     dActDmgQty = (parseFloat(TempBatch[i].ActDmgQty)) / parseFloat(ConvFact);
+
+                    let RowMRP = TempBatch[i].MRP;
+                    dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+                    dMRPonTax = getPurchaseMRPontax(RowMRP);
+                    var InclPrice = dApponMRPCum > 0 ? (dPurchasePrice + dMRPonTax) : dPurchasePrice * TaxPern;
                     TableBatch.row.add([
                         TempBatch[i].InventoryID,
                         TempBatch[i].ReturnPrice,
@@ -2362,10 +2372,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         '<label id="dgvbtActFreeAct' + BatchRID + '" lbltag="' + dActFreeQty + '" title="' + dActFreeQty + '" class="lblsettag" name="ActFreeQty">' + parseFloat(dActFreeQty).toFixed(DecVal) + '</label>',
                         '<label id="dgvbtActDmgAct' + BatchRID + '" lbltag="' + dActDmgQty + '" title="' + dActDmgQty + '" class="lblsettag" name="ActDmgQty">' + parseFloat(dActDmgQty).toFixed(DecVal) + '</label>',
                         '<label id="dgvbtMRP' + BatchRID + '" lbltag="' + TempBatch[i].MRP + '" title="' + TempBatch[i].MRP + '" class="lblsettag" name="MRP">' + parseFloat(TempBatch[i].MRP).toFixed(DecVal) + '</label>',
-                        '<input id="dgvbtQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag" name="Qty" min="0" max="' + dActQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                        '<input id="dgvbtFreeQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="FreeQty" min="0" max="' + dActFreeQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                        '<input id="dgvbtDmgQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag"  name="DmgQty" min="0" max="' + dActDmgQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                        '<input ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="ReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>'
+                        '<input id="dgvbtQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag dgvQty" name="Qty" min="0" max="' + dActQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input id="dgvbtFreeQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvQty" name="FreeQty" min="0" max="' + dActFreeQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input id="dgvbtDmgQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvQty"  name="DmgQty" min="0" max="' + dActDmgQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvExclPrice" name="ReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        '<input ' + isEnable + ' id="dgvbtInclPPrice' + BatchRID + '" txttag="' + InclPrice + '" title="' + InclPrice + '" value ="' + parseFloat(InclPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvInclPrice" name="InclReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>'
                     ]).draw(false);
                     BatchRID++;
                 }
@@ -2394,6 +2405,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var Filterdata = BatchAcceptArray.filter(a => a.ProdID == PID);
                 if (Filterdata.length > 0) {
                     for (var i = 0; i < Filterdata.length; i++) {
+                        var TaxPern = parseFloat((TempProd.GSTPern / 100) + 1);
+                        let RowMRP = Filterdata[i].MRP;
+                        dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+                        dMRPonTax = getPurchaseMRPontax(RowMRP);
+                        var InclPrice = dApponMRPCum > 0 ? (Filterdata[i].ReturnPrice + dMRPonTax) : Filterdata[i].ReturnPrice * TaxPern;
+
                         TableBatch.row.add([
                             Filterdata[i].InventoryID,
                             Filterdata[i].OrgRTNPrice,
@@ -2404,10 +2421,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             '<label id="dgvbtActFreeAct' + BatchRID + '" lbltag="' + Filterdata[i].ActFreeQty + '" title="' + Filterdata[i].ActFreeQty + '" class="lblsettag" name="ActFreeQty">' + parseFloat(Filterdata[i].ActFreeQty).toFixed(DecVal) + '</label>',
                             '<label id="dgvbtActDmgAct' + BatchRID + '" lbltag="' + Filterdata[i].ActDmgQty + '" title="' + Filterdata[i].ActDmgQty + '" class="lblsettag" name="ActDmgQty">' + parseFloat(Filterdata[i].ActDmgQty).toFixed(DecVal) + '</label>',
                             '<label id="dgvbtMRP' + BatchRID + '" lbltag="' + Filterdata[i].MRP + '" title="' + Filterdata[i].MRP + '" class="lblsettag" name="MRP">' + parseFloat(Filterdata[i].MRP).toFixed(DecVal) + '</label>',
-                            '<input id="dgvbtQty' + BatchRID + '" txttag="' + Filterdata[i].Qty + '" title="' + Filterdata[i].Qty + '" value ="' + parseFloat(Filterdata[i].Qty).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag"  name="Qty" min="0" max="' + Filterdata[i].ActQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input id="dgvbtFreeQty' + BatchRID + '" txttag="' + Filterdata[i].FreeQty + '" title="' + Filterdata[i].FreeQty + '" value ="' + parseFloat(Filterdata[i].FreeQty).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag"  name="FreeQty" min="0" max="' + Filterdata[i].ActFreeQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input id="dgvbtDmgQty' + BatchRID + '" txttag="' + Filterdata[i].DmgQty + '" title="' + Filterdata[i].DmgQty + '" value ="' + parseFloat(Filterdata[i].DmgQty).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag"  name="DmgQty" min="0" max="' + Filterdata[i].ActDmgQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + Filterdata[i].ReturnPrice + '" title="' + Filterdata[i].ReturnPrice + '" value ="' + parseFloat(Filterdata[i].ReturnPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag"  name="ReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>'
+                            '<input id="dgvbtQty' + BatchRID + '" txttag="' + Filterdata[i].Qty + '" title="' + Filterdata[i].Qty + '" value ="' + parseFloat(Filterdata[i].Qty).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag dgvQty"  name="Qty" min="0" max="' + Filterdata[i].ActQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<input id="dgvbtFreeQty' + BatchRID + '" txttag="' + Filterdata[i].FreeQty + '" title="' + Filterdata[i].FreeQty + '" value ="' + parseFloat(Filterdata[i].FreeQty).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvQty"  name="FreeQty" min="0" max="' + Filterdata[i].ActFreeQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<input id="dgvbtDmgQty' + BatchRID + '" txttag="' + Filterdata[i].DmgQty + '" title="' + Filterdata[i].DmgQty + '" value ="' + parseFloat(Filterdata[i].DmgQty).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvQty"  name="DmgQty" min="0" max="' + Filterdata[i].ActDmgQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<input ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + Filterdata[i].ReturnPrice + '" title="' + Filterdata[i].ReturnPrice + '" value ="' + parseFloat(Filterdata[i].ReturnPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvExclPrice"  name="ReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                            '<input ' + isEnable + ' id="dgvbtInclPPrice' + BatchRID + '" txttag="' + InclPrice + '" title="' + InclPrice + '" value ="' + parseFloat(InclPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvInclPrice"  name="InclReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>'
                         ]).draw(false);
                         BatchRID++;
                     }
@@ -2446,6 +2464,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
             dActQty = (parseFloat(TempBatch[i].ActQty)) / parseFloat(ConvFact);
             dActFreeQty = (parseFloat(TempBatch[i].ActFreeQty)) / parseFloat(ConvFact);
             dActDmgQty = (parseFloat(TempBatch[i].ActDmgQty)) / parseFloat(ConvFact);
+            var TaxPern = parseFloat((TempProd[0].GSTPern / 100) + 1);
+            let RowMRP = Filterdata[i].MRP;
+            dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+            dMRPonTax = getPurchaseMRPontax(RowMRP);
+            var InclPrice = dApponMRPCum > 0 ? (Filterdata[i].ReturnPrice + dMRPonTax) : Filterdata[i].ReturnPrice * TaxPern;
+
             TableBatch.row.add([
                 TempBatch[i].InventoryID,
                 TempBatch[i].ReturnPrice,
@@ -2456,10 +2480,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 '<label id="dgvbtActFreeAct' + BatchRID + '" lbltag="' + dActFreeQty + '" title="' + dActFreeQty + '" class="lblsettag" name="ActFreeQty">' + parseFloat(dActFreeQty).toFixed(DecVal) + '</label>',
                 '<label id="dgvbtActDmgAct' + BatchRID + '" lbltag="' + dActDmgQty + '" title="' + dActDmgQty + '" class="lblsettag" name="ActDmgQty">' + parseFloat(dActDmgQty).toFixed(DecVal) + '</label>',
                 '<label id="dgvbtMRP' + BatchRID + '" lbltag="' + TempBatch[i].MRP + '" title="' + TempBatch[i].MRP + '" class="lblsettag" name="MRP">' + parseFloat(TempBatch[i].MRP).toFixed(DecVal) + '</label>',
-                '<input id="dgvbtQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag" name="Qty" min="0" max="' + dActQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                '<input id="dgvbtFreeQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="FreeQty" min="0" max="' + dActFreeQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                '<input id="dgvbtDmgQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag"  name="DmgQty" min="0" max="' + dActDmgQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                '<input ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="ReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>'
+                '<input id="dgvbtQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag dgvQty" name="Qty" min="0" max="' + dActQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                '<input id="dgvbtFreeQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvQty" name="FreeQty" min="0" max="' + dActFreeQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                '<input id="dgvbtDmgQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvQty"  name="DmgQty" min="0" max="' + dActDmgQty + '" oninput="maxCheck(this)" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                '<input ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvExclPrice" name="ReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                '<input ' + isEnable + ' id="dgvbtInclPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvInclPrice" name="InclReturnPrice" onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>'
             ]).draw(false);
             BatchRID++;
         }
@@ -2488,8 +2513,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         calculateProdGrid();
         ReorderSerialNo();
     });
-    $("#tblBatch").change(function (e) {
-        //showErrorSnackbar(e.target.value)
+    $('#tblBatch tbody').on('change', '.dgvQty', function (e) {
         var id = e.target.id;
         var val = e.target.value
         //setTagValue(id, "BatchChange", val);
@@ -2497,6 +2521,58 @@ if ($("#txtReurnPricePerm").val() == 0) {
         CalculateBatchGrid();
         batgridchanges = true;
     });
+    $('#tblBatch tbody').on('change', '.dgvExclPrice', function (e) {
+        var id = e.target.id;
+        var val = e.target.value
+        //setTagValue(id, "BatchChange", val);
+        updateInputColumn(id, val);
+        //CalculateBatchGrid();
+        batgridchanges = true;
+        var $input = $(this);
+        var $r = $input.closest('tr');
+        var BatchTaxPern = $("#txtBatchTaxPern").val() ?? 1;
+        rowdata = TableBatch.row($(this).parents('tr')).data();
+        let RowMRP = $(this).find("label[name='MRP']").attr("lbltag");
+        var TaxPern = parseFloat((BatchTaxPern / 100) + 1);
+        dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+        dMRPonTax = getPurchaseMRPontax(RowMRP);
+        var InclPrice = dApponMRPCum > 0 ? (val + dMRPonTax) : val * TaxPern;
+
+        updateInput($r, "input[name='InclReturnPrice']", InclPrice);
+
+        CalculateBatchGrid();
+    });
+    $('#tblBatch tbody').on('change', '.dgvInclPrice', function (e) {
+        var id = e.target.id;
+        var val = e.target.value
+        //setTagValue(id, "BatchChange", val);
+        updateInputColumn(id, val);
+        //CalculateBatchGrid();
+        batgridchanges = true;
+        var $input = $(this);
+        var $r = $input.closest('tr');
+        var BatchTaxPern = $("#txtBatchTaxPern").val() ?? 1;
+        rowdata = TableBatch.row($(this).parents('tr')).data();
+        let RowMRP = $(this).find("label[name='MRP']").attr("lbltag");
+        var TaxPern = parseFloat((BatchTaxPern / 100) + 1);
+        dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+        dMRPonTax = getPurchaseMRPontax(RowMRP);
+        var ExclPrice = dApponMRPCum > 0 ? (val - dMRPonTax) : val / TaxPern;
+
+        updateInput($r, "input[name='ReturnPrice']", ExclPrice);
+
+        CalculateBatchGrid();
+    });
+    //dgvQty
+    //$("#tblBatch").change(function (e) {
+    //    //showErrorSnackbar(e.target.value)
+    //    var id = e.target.id;
+    //    var val = e.target.value
+    //    //setTagValue(id, "BatchChange", val);
+    //    updateInputColumn(id, val);
+    //    CalculateBatchGrid();
+    //    batgridchanges = true;
+    //});
     //~Calculate Batch Grid
     function CalculateBatchGrid() {
         let result = [];
@@ -2529,6 +2605,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     GridVal = $(this).attr("txttag");
                     //setTagValue(fieldID, fieldName, $(this).val());
                 }
+                    //txtBatchTaxPern
+                //else if (fieldName == "InclReturnPrice") {
+                //    dPPrice = parseFloat($(this).attr("txttag"));
+                //    GridVal = $(this).attr("txttag");
+                //    //setTagValue(fieldID, fieldName, $(this).val());
+                //}
                 allValues[fieldName] = GridVal;
             });
             dQtyTotValue += (dQty * dPPrice);
@@ -3819,6 +3901,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 dActQty = (parseFloat(TempBatch[i].ActQty)) / parseFloat(ConvFact);
                 dActFreeQty = (parseFloat(TempBatch[i].ActFreeQty)) / parseFloat(ConvFact);
                 dActDmgQty = (parseFloat(TempBatch[i].ActDmgQty)) / parseFloat(ConvFact);
+
+                var TaxPern = parseFloat((TempProd[0].GSTPern / 100) + 1);
+                let RowMRP = TempBatch[i].MRP;
+                dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+                dMRPonTax = getPurchaseMRPontax(RowMRP);
+                var InclPrice = dApponMRPCum > 0 ? (dPurchasePrice + dMRPonTax) : dPurchasePrice * TaxPern;
+
+
                 TableBatch.row.add([
                     TempBatch[i].InventoryID,
                     TempBatch[i].ReturnPrice,
@@ -3829,10 +3919,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     '<label id="dgvbtActFreeAct' + BatchRID + '" lbltag="' + dActFreeQty + '" title="' + dActFreeQty + '" class="lblsettag" name="ActFreeQty">' + parseFloat(dActFreeQty).toFixed(DecVal) + '</label>',
                     '<label id="dgvbtActDmgAct' + BatchRID + '" lbltag="' + dActDmgQty + '" title="' + dActDmgQty + '" class="lblsettag" name="ActDmgQty">' + parseFloat(dActDmgQty).toFixed(DecVal) + '</label>',
                     '<label id="dgvbtMRP' + BatchRID + '" lbltag="' + TempBatch[i].MRP + '" title="' + TempBatch[i].MRP + '" class="lblsettag" name="MRP">' + parseFloat(TempBatch[i].MRP).toFixed(DecVal) + '</label>',
-                    '<input ' + disbfield +' id="dgvbtQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag" name="Qty" min="0" max="' + dActQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + disbfield +' id="dgvbtFreeQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="FreeQty" min="0" max="' + dActFreeQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + disbfield +' id="dgvbtDmgQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag"  name="DmgQty" min="0" max="' + dActDmgQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                    '<input ' + disbfield +' ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag" name="ReturnPrice" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>'
+                    '<input ' + disbfield + ' id="dgvbtQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsBPrice clsdgvTag txtsettag dgvQty" name="Qty" min="0" max="' + dActQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                    '<input ' + disbfield + ' id="dgvbtFreeQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvQty" name="FreeQty" min="0" max="' + dActFreeQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                    '<input ' + disbfield + ' id="dgvbtDmgQty' + BatchRID + '" txttag="0" title="0" value ="0" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvQty"  name="DmgQty" min="0" max="' + dActDmgQty + '" oninput="maxCheck(this)" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                    '<input ' + disbfield + ' ' + isEnable + ' id="dgvbtPPrice' + BatchRID + '" txttag="' + dPurchasePrice + '" title="' + dPurchasePrice + '" value ="' + parseFloat(dPurchasePrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvExclPrice" name="ReturnPrice" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
+                    '<input ' + disbfield + ' ' + isEnable + ' id="dgvbtInclPPrice' + BatchRID + '" txttag="' + InclPrice + '" title="' + InclPrice + '" value ="' + parseFloat(InclPrice).toFixed(DecVal) + '" type="number" step="any" class="gdInput clsdgvTag txtsettag dgvInclPrice" name="InclReturnPrice" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>'
                 ]).draw(false);
                 BatchRID++;
             }
@@ -3856,7 +3947,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             var SelBatchBatchNo = Filterdata[i].BatchNo !== undefined ? Filterdata[i].BatchNo : "";
                             var SelBatchPKD = Filterdata[i].PKDDate !== undefined ? Filterdata[i].PKDDate : "";
                             var SelBatchExp = Filterdata[i].ExpiryDate !== undefined ? Filterdata[i].ExpiryDate : "";
-
+                            var price = 0;
                             if (OrgPrice == parseFloat(Filterdata[i].OrgRTNPrice) && parseFloat(Orgmrp) == parseFloat(Filterdata[i].MRP)
                                 && BTbat == SelBatchBatchNo && BTpkd == SelBatchPKD && BTexp == SelBatchExp) {
                                 $(this).find("input").each(function (index) {
@@ -3873,7 +3964,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         //console.log("DmgQty : " + i, Filterdata[i].DmgQty);
                                     }
                                     else if (fieldName == "ReturnPrice") {
-                                        updateInputColumn(fieldID, Filterdata[i].UOMPrice)//ReturnPrice
+                                        price = Filterdata[i].UOMPrice ?? Filterdata[i].ReturnPrice;
+                                        updateInputColumn(fieldID, price)//ReturnPrice
+                                    }
+                                    else if (fieldName == "InclReturnPrice") {
+                                        var Inclprice = dApponMRPCum > 0 ? (price + dMRPonTax) : price * TaxPern;
+                                        updateInputColumn(fieldID, Inclprice)
                                     }
                                 });
                             }

@@ -376,6 +376,10 @@
     @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
     @Html.HiddenFor(model => model.View, new { @autocomplete = "off", @class = "form-control", @id = "txtViewID" })
     @Html.HiddenFor(model => model.Variant, new { @autocomplete = "off", @class = "form-control", @id = "txtVariantID" })
+
+    @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
+    @Html.HiddenFor(model => model.Cancel, new { @autocomplete = "off", @class = "form-control", @id = "txtCancelID" })
+
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
@@ -569,7 +573,7 @@
                                     </select>
                                     <label class="labelup">Transport Type</label>
                                 </span>
-                            </div>                           
+                            </div>
                         </div>
                     </div>
                     <div class="row mt-3">
@@ -591,7 +595,7 @@
                                 <span class="form-label">
                                     <label style="font-size: 14px; font-weight: 500; padding-left: 35px; padding-top: 3px" id="lblEWBNo">548132165655</label>
                                     <label class="labelup">E-Way Bill No :</label>
-                                </span>                                
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -824,8 +828,9 @@
                 <button type="button" title="PDF" class="btn clrforpdf" id="btnPDF"><i class='fa-regular fa-file-pdf'></i> </button>
                 <button type="button" class="btn clrforpreview" id="btnPreview"><span class="glyphicon glyphicon-print"> Preview</span></button>
                 <button type="button" class="btn clrforpreview" id="btnPrint"><span class="glyphicon glyphicon-print"> Print</span></button>
-                @*<button type="button" class="btn btn-edit-style" id="btnTEdit"><span class="glyphicon glyphicon-pencil"> Edit</span></button>
-                    <button type="button" class="btn btn-cancel-style" id="btnTCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>*@
+                <button type="button" class="btn btn-edit-style" id="btnTEdit"><span class="glyphicon glyphicon-pencil"> Edit</span></button>
+                <button type="button" class="btn btn-cancel-style" id="btnTCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>
+                <button type="button" class="btn btn-variant-style" id="btnTVariant"><span class="bi bi-copy"> Variant</span></button>
                 <button type="button" class="btn btn-danger" id="btnClear"><span class="glyphicon glyphicon-refresh"> Clear</span></button>
                 <button type="button" class="btn btn-success" id="btnSave"><span class="glyphicon glyphicon-saved"> Save</span></button>
                 <button type="button" class="btn btn-warning" id="btnClose"><i class="bi bi-x-circle"></i> Close</button>
@@ -898,15 +903,12 @@
                     nTransMode = 5;
                     $("#txtID").val(ID);
                     ViewActionButtonPermission();
-                    GetProductViewData(ID, stsid);
+                    GetProductViewData(ID, stsid); 
                     $("#txtStatus").val(stsid);
-                    $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-                    $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-                    $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
-                    $("#btnPDF,#btnPreview").prop("disabled", false);
-                    $("#btnPreview,#btnPDF,#btnPrint").show();
+                    $(".FormclrField,.FormclrcmbField,#txtRemarks,#txtNarration").prop("disabled", true);
+                    $("#btnSave,#btnClear,#btnDraft,#btnClear,#btnNewProd").hide();
+                    $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").show();
                     $("#dvMain").show();
-                    $("#btnEmail,#btnWhatsapp").show();
                     $("#dvDocuments,.dvclsforhdview").hide();
                     $("#MainHeading").text("View " + $("#txtFormName").val() + "_" + sts);
                     if ($("#txtEnableBranch").val() == 1) {
@@ -974,23 +976,12 @@
                 displayType: 'menu_item',
                 handler: (rowdata, gridInstance) => {
                     $(".clrdivs").html("");
-                    var rdo1 = $("#rdoMainTableData").is(":checked") ? "1" : $("#rdoDraftTableData").is(":checked") ? "2" : $("#rdoAITableData").is(":checked") ? "3" : "4";
-
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[9];
                     var stsID = rowdata.CurrentStatus;
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
-                        if (rdo1 == "1") {
-                            CancelActionTrigger(rowdata);
-                        }
-                        else {
-                            var conf = confirm("Do you want to remove draft data?");
-                            if (conf) {
-                                //GetData(12, ID);
-                                ValidateCancelDraftData(2, 3, ID, stsID)
-                            }
-                        }
+                        CancelActionTrigger(rowdata);
                     }
                     else {
                         showErrorSnackbar("This document already cancelled");
@@ -1098,6 +1089,8 @@
             $("#btnTEdit").show();
         if (mapusersRole.canCancel)
             $("#btnTCancel").show();
+        if (mapusersRole.canVariant)
+            $("#btnTVariant").show();
     }
 </script>
 
@@ -1930,6 +1923,10 @@
     });
     //~New prod line
     function Addprodgridline() {
+        if (nTransMode == 2) {
+            showErrorSnackbar("Cannot add new item row in Edit mode");
+            return;
+        }
         ProductRID++;
         var pid = "dgvProdName" + ProductRID;
         var sno = ProductTable.rows().count();
@@ -2340,7 +2337,6 @@
             //setTagValue("txtExclPrice", "", 0); setTagValue("txtInclPrice", "", 0); setTagValue("txtQty", "", 0);
             updateInputColumn("txtExclPrice", 0); updateInputColumn("txtInclPrice", 0); updateInputColumn("txtQty", 0);
             //$("#lblPTCount").val(ProductTable.rows().count());
-            //$("#cmbUOMType").prop("disabled", parseInt(ProductTable.rows().count()) > 0);
             startAutoDraftSave();
             $("#lblRoundNet").css("color", "black");
             var $scrollBody = $(ProductTable.table().node()).parent();
@@ -2518,12 +2514,10 @@
         $("#dvMain,#btnAddNewProduct").show();
         $("#dvDocuments").hide();
         $("#MainHeading").text("Variant Van Loading Slip");
-        $(".FormclrField,.FormclrcmbField,#btnNewProd").prop("disabled", false);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
-        $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
+        $(".FormclrField,.FormclrcmbField,#txtRemarks,#txtNarration").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
-        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
-        $("#btnSave,#btnClear,#btnDraft").show();              
+        $("#btnTEdit,#btnTCancel,#btnTVariant,#btnDraft,#btnClear").hide();
+        $("#btnSave,#btnNewProd").show();              
         $("#lblEWBNo").text("");
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
@@ -2535,6 +2529,102 @@
             GetDocumentID(DocDate, Branch, 24);
             Gridautofocus();
         }, 1000);
+    }
+    $('#btnTEdit').click(function (e) {
+        var Did = $("#txtID").val();
+        var Currsts = $("#txtStatus").val();
+        $(".clrdivs").html("");
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        $.ajax({
+            url: Aurl + "validatedocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: 1, TransID: 16, ID: Did, Status: Currsts },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        EditActionTrigger(rowinfo);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message)
+                    }
+                });
+            }
+        });
+    });
+    function EditActionTrigger(rowData) {
+        GetProductList();
+        nTransMode = 2;
+        var stsID = rowData.CurrentStatus;
+        var ID = rowData.ID
+        setTimeout(() => {
+            GetProductViewData(ID, 1);
+        }, 300);
+        $("#txtStatus").val(1);
+        $("#dvMain,#btnAddNewProduct").show();
+        $("#dvDocuments").hide();
+        $("#MainHeading").text("Edit Van Loading Slip");
+        $(".FormclrField,.FormclrcmbField,#txtRemarks,#txtNarration").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant,#btnDraft,#btnClear").hide();
+        $("#btnSave").show();
+        $("#dtpDate,#cmbBranch").prop("disabled", true);
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }        
+    }
+    $('#btnTCancel').click(function (e) {
+        var Did = $("#txtID").val();
+        var Currsts = $("#txtStatus").val();
+        $(".clrdivs").html("");
+        var rowinfo = {
+            ID: Did,
+            CurrentStatus: $("#txtStatus").val()
+        }
+        $.ajax({
+            url: Aurl + "validatedocument",
+            type: 'get',
+            contentType: 'json',
+            data: { ActionType: 2, TransID: 24, ID: Did, Status: Currsts },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        CancelActionTrigger(rowinfo);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message)
+                    }
+                });
+            }
+        });
+    });
+    function CancelActionTrigger(rowData) {
+        $("#MainHeading").text("Cancel " + $("#txtFormName").val());
+        nTransMode = 4;        
+        var ID = rowData.ID;
+        var stsid = rowData.StatusID;
+        GetProductViewData(ID, stsid);
+        $("#txtStatus").val(stsid);
+        $(".FormclrField,.FormclrcmbField,#cmbBranch").prop("disabled", true);
+        $("#txtRemarks,#txtNarration").prop("disabled", false);        
+        $("#btnSave,#btnClear,#btnDraft,#btnClear,#btnAddNewProduct").hide();
+        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant,#btnNewProd").hide();
+        $("#dvMain,#btnSave").show();        
+        $("#dvDocuments,.dvclsforhdview").hide();
+        $("#MainHeading").text("Cancel " + $("#txtFormName").val());
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
     }
     function GetProductViewData(nID,nStatus) {
         let sb = document.getElementById("RepLoadersnackbar");
@@ -2580,7 +2670,8 @@
                 GetProductList();
                 ProductRID = 0;
                 var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
-                var visbfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
+                var visbfields = nTransMode == 4 || nTransMode == 5 || nTransMode == 2 ? "hidden" : "";
+                var disbprod = nTransMode == 2 ? "disabled" : "";
                 console.log("ProductData ", ProductData);
                 var dataSet = ProductData.map(function (itemsProd, nRowIndex) {
                     var strUOMs = '<option selected value="' + itemsProd.UOMID + '" name="' + itemsProd.UomCF + '">' + itemsProd.UOMName + '</option>';                    
@@ -2597,7 +2688,7 @@
                         '<span style="font-size:16px;" ' + visbfields + ' class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/>' +
                         ' <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>&ensp;<span style="font-size:16px;" ' + visbfields + ' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
                         '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
-                        '<input name = "ProdName"  autocomplete="off" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.ProductName + '" title="' + itemsProd.ProductName + '"' + disbfields + '/><br/>' + itemsProd.ProductCode,
+                        '<input ' + disbprod +' name = "ProdName"  autocomplete="off" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.ProductName + '" title="' + itemsProd.ProductName + '"' + disbfields + '/><br/>' + itemsProd.ProductCode,
                         '<input min="0" type="number" txttag ="' + itemsProd.UomQty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + parseFloat(itemsProd.UomQty).toFixed(DecVal) + '" title="' + itemsProd.UomQty + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
                         uomfield,
                         '<input disabled min="0" type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" title="' + itemsProd.MRP + '"' + disbfields + '/>',
@@ -2636,7 +2727,7 @@
                         { title: "BatchYN", visible: false, className: "dt-body-left" },
                         { title: "PKDYN", visible: false, className: "dt-body-left" },
                         { title: "TrkkSerYN", visible: false, className: "dt-body-left" },
-                        { title: '<button hidden class="btn-primary" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-left", width: "3%" },
+                        { title: '<button class="btn-primary" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-left", width: "3%" },
                         { title: "#", className: "dt-body-left", width: "2%" },
                         { title: "Item Names", className: "dt-body-left", width: "20%" },
                         { title: "Qty", className: "dt-body-right", width: "8%" },
@@ -2845,16 +2936,12 @@
         $("#lblRoundNet,#lblPTQty").text("0.00");
         $("#lblPTCount,#lblOpenAICount,#lblOpenPOCount").text("0");        
         $("#lblEWBNo").text("");
-        $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
-        $("#btnPreview,#btnPDF").prop("disabled", true);
-        $("#txtProdDiscAmt").prop("disabled", true);
+        $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose,#txtRemarks,#txtNarration").prop("disabled", false);        
         $("#btnPreview,#btnPDF,#btnPrint").hide();
         $("#btnEmail,#btnWhatsapp").hide();
-        $("#btnSave,#btnClose,#btnDraft,#btnClear").show();
+        $("#btnSave,#btnClose,#btnDraft,#btnClear,#btnNewProd").show();
         ProductTable.draw().clear();
-        ProductTable.draw().clear();
-        $("#cmbUOMType").prop("disabled", false);
-        $("#cmbUOMType").val(1);
+        ProductTable.draw().clear();       
         $("#txtNoofCopies").val("1");
         GetData();
         SetTagZero();
@@ -2932,7 +3019,8 @@
         const getNum = (el, attr) => parseFloat($(el).attr(attr)) || 0;
 
         $("#tblProductData tbody tr").each(function () {
-
+            $(this).css("color", "black");
+            $(this).find("p,label,input, select").animate({ color: 'black' }, 100);
             const rowData = ProductTable.row(this).data();
             if (!rowData || !rowData[0]) return;
 
@@ -3040,23 +3128,13 @@
                                 $("#txtDraftID").val(items.ID);
                             }                           
                         }
-                        else if (items.Message == "13") {//Qty Mismatched
-                            var ErrorRowID = parseInt(items.RowID);
-                            $("#tblProductData tbody tr").each(function () {
-                                var RowIndex = ProductTable.row($(this)).index();
-                                var dRowData = ProductTable.row($(this)).data();
-                                var ProdID = dRowData[0];
-                                if (RowIndex == (ErrorRowID - 1)) {
-                                    $(this).find('td').css("background-color", "red");
-                                }
-                                else {
-                                    $(this).find('td').css("background-color", "white");
-                                }
-                            });
-                            showErrorSnackbar("No Qty in Inventory");
-                        }
-                        else {                            
+                        else if (items.ID == "0") {//Qty Mismatched
                             showErrorSnackbar(items.Message);
+                        }                        
+                        else {//Qty Mismatched
+                            showErrorSnackbar(items.Message);
+                            var errorids = items.ID.split(',');
+                            console.log("errorids : ", errorids);
                             $("#tblProductData tbody tr").each(function () {
                                 var rowdata = ProductTable.row($(this)).data();
                                 var ProdID = rowdata[0];
@@ -3065,10 +3143,10 @@
                                 var RIndex = (ProductTable.row($(this)).index()) + 1;
                                 $(this).css("color", "black");
                                 $(this).find("p,label,input, select").animate({ color: 'black' }, 100);
-                                if (ProdID == items.RowID) {
+                                if (errorids.includes(ProdID.toString())) {// ProdID == items.RowID
                                     $(this).css("color", "red");
                                     $(this).find("p,label,input, select").animate({ color: 'red' }, 1000);
-                                    showErrorSnackbar("Error in Product : " + itemname);
+                                    //showErrorSnackbar("Error in Product : " + itemname);
                                 }
                             });
                         }

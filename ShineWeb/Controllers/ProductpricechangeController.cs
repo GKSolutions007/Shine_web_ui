@@ -1,4 +1,5 @@
-﻿using ShineWeb.BuisnessLayer;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
 using System.Collections.Generic;
@@ -24,13 +25,16 @@ namespace ShineWeb.Controllers
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
                 ViewData["FormName"] = Name;
+                int nUID = Convert.ToInt32(Session["LoginUserID"]);
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string EnableReturn = dtPermission.Select("MenuName = 'Enable Return Price'", null).Length > 0 ? "1" : "0";
+                string EnbleVLSBatch = dtPermission.Select("MenuID IN (535,536,546,547,539)").Length > 0 || nUID == 1 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 dam.ID = TranID;
                 dam.TransType = TypeID;
                 dam.EnableReturnPrice = EnableReturn;
+                dam.Modify = EnbleVLSBatch;
                 return View(dam);
             }
         }

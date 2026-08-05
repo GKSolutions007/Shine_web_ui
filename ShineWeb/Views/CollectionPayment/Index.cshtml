@@ -4401,6 +4401,7 @@ ${$("#txtSAdd3").val()}
                     var HeaderData = data[0].Header;
                     var InvoiceData = data[0].Invoices;
                     var PartyData = data[0].PartyInfo;
+                    console.log("HeaderData ", HeaderData, "InvoiceData ", InvoiceData);
                     $.each(HeaderData, function (i, items) {
 
                         $("#txtID").val(items.ID),
@@ -4432,7 +4433,7 @@ ${$("#txtSAdd3").val()}
                             $("#trVisa").hide();
                         }
                         var lPMID = $("#cmbPaymode").val();
-                        PaymodeChangeFieldValidation(lPMID);
+                        //PaymodeChangeFieldValidation(lPMID);
 
                         if (lPMID != 1) {
                             $("#txtNEFT").val(lPMID == 4 ? items.NEFTNo : items.ChequeNo);
@@ -4441,12 +4442,13 @@ ${$("#txtSAdd3").val()}
                             $("#txtIFSC").val(items.IFSC);
                             $("#cmbBankName").val(items.BankID);
                             $("#txtBranchName").val(items.Branch);
+
                         }
-                        var selval = $("#cmbPaymode").val();
-                        PaymodeChangeFieldValidation(selval);
-                        setTimeout(() => {
-                            PaymodeConfig();
-                        }, 1000)
+                        //var selval = $("#cmbPaymode").val();
+                        //PaymodeChangeFieldValidation(selval);
+                        //setTimeout(() => {
+                        //    PaymodeConfig();
+                        //}, 1000)
                     });
                     $.each(PartyData, function (i, itemsParty) {
                         $("#txtSearch").val(itemsParty.Name),
@@ -4628,9 +4630,24 @@ ${$("#txtSAdd3").val()}
                         }, 300);
 
                         SumG2FooterLabels();
-                        
+                       
                     });
-                    
+                    setTimeout(() => {
+                        var selval = $("#cmbPaymode").val();
+                        //PaymodeChangeFieldValidation(selval);
+
+                        if (selval == 2 && nDocPrefix == 19) {
+                            var cid = $("#txtCustomerID").val();
+                            GetData(7, null, cid);
+                        }
+                        if ($("#cmbPaymode").val() == 1) {//cash
+                            GetClosingBalance(6, 13, $("#dtpDate").val());
+                        } else {
+                            $("#lblBalance").text("0.00");
+                        }
+                        //PaymodeConfig();
+                        ApplyPaymodeVisibilityRules(selval);
+                    }, 1000)
                 }
                 else {
                     showErrorSnackbar("Document already Processed or Cancelled");
@@ -5272,6 +5289,11 @@ ${$("#txtSAdd3").val()}
                         }
                         if ($("#txtTransType").val() == 3) {
                             setTimeout(() => {
+                                window.opener.postMessage({
+                                    source: nDocPrefix == "19" ? "Collection" : "Payment",// "Collection/Payment",
+                                    id: items.ID,   // adjust to your actual field names
+                                    name: ""
+                                }, "*");
                                 window.close();
                             }, 3000);
                         }

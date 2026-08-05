@@ -359,6 +359,28 @@
                         </div>
                     </div>
                 </div>
+                <!-- Stock In Hand -->
+                <div class="modern-card" id="dvChequeDetail">
+                    <div class="card-title widget-header">
+                        <span class="glyphicon glyphicon-home" title="Stock In Hand"></span>
+                        <select class="form-control" id="cmbBranch">
+                            <option value="0">Select</option>
+                        </select>
+                        <select class="form-control" id="cmbManuf">
+                            <option value="0">Select</option>
+                        </select>
+                    </div>
+                    <table class="table" id="tblStockInHand">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th style="text-align:right;">Qty</th>
+                                <th style="text-align:right;">Gross</th>
+                                <th style="text-align:right;">Net</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
                 <!-- Quick Access -->
                 <div class="sidebar-widget" id="dvQuickAccess">
                     <div class="widget-header">
@@ -687,7 +709,17 @@
         "ordering": false,
         scrollY: "400px",
         scrollCollapse: true,
-});
+    });
+    var tblStockInHand = $('#tblStockInHand').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "400px",
+        scrollCollapse: true,
+    });
+    
     var collectionChart = null;
     //$('#cmbTransactionTimeFilter,#cmbTimeFilter').val(HomePeriod);
     function updateCollectionChart(data) {
@@ -861,6 +893,7 @@
     if ($("#txtTransactionSummaryEnable").val() == 0) {
         $("#dvTransSummaryDetail").hide();
     }
+    LoadBranchByRoles('#cmbBranch');
     GetData(1, 0);
     GetData(5, 0);
     GetData(8, 0);
@@ -931,12 +964,12 @@
         );
         //","
     });
-    function GetData(nMode, ID) {
+    function GetData(nMode, ID,ManufID = "1") {
         $.ajax({
             url: Aurl + "homescreendraft/get",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, Trans: ID },
+            data: { Mode: nMode, Trans: ID, ID: ManufID },
             xhrFields: {
                 withCredentials: true
             },
@@ -991,12 +1024,12 @@
                 }
                 if (nMode == 6) {
                     arrTrans = [];
-                    $('#cmbQAtransaction').find("option").remove();
+                    $('#cmbQAtransaction,#cmbManuf').find("option").remove();
                     $('#cmbQAtransaction').append($('<option/>', {
                         value: 0,
                         text: "-- Select --",
                     }));
-                    var transdata = eval(data);
+                    var transdata = data.Table;
                     if (transdata.length > 0) {
                         $.each(transdata, function (i, items) {
                             $('#cmbQAtransaction').append($('<option/>', {
@@ -1009,6 +1042,16 @@
                     } else {
                         //showErrorSnackbar("You dont have any Transaction permissions");
                     }
+                    var Mfrs = data.Table1;
+                    $.each(Mfrs, function (i, items) {
+                        $('#cmbManuf').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                    });
+                    var BranchID = $('#cmbBranch').val();
+                    var firstmfrid = Mfrs[0].ID;
+                    GetData(12, BranchID, firstmfrid);
                 }
                 if (nMode == 8) {
                     $("#dvStockvalue").html("₹ 0.00");
@@ -1045,9 +1088,29 @@
                     $("#dvMobCheque").html(webdata[0].CheqValue || "&#8377; 0.00 / 0");
                     $("#dvMonBankTransfer").html(webdata[0].BTValue || "&#8377; 0.00 / 0");
                 }
+                if (nMode == 12) {
+                    tblStockInHand.draw().clear(); tblStockInHand.draw().clear();
+                    console.log("data", data);
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            tblStockInHand.row.add([
+                                items.Type,
+                                items.ActualQty,
+                                items.Price,
+                                items.InclPrice                                
+                            ]).draw(false);
+                        });
+                        
+                    }
+                }
             }
         });
     }
+    $('#cmbManuf,#cmbBranch').change(function (e) {
+        var MfrID = $("#cmbManuf").val();
+        var BranchID = $("#cmbBranch").val();
+        GetData(12, BranchID, MfrID);
+    });
     $('#cmbQAtransaction').change(function (e) {
         var selval = e.target.value;
         if (selval > 0) {
