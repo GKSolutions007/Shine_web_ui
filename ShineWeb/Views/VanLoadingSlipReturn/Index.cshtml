@@ -1,0 +1,902 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+@*<link href="~/Content/surroundingcustomerstyle.css" rel="stylesheet" />*@
+
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="~/Scripts/Validation.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<header>
+    <link rel="stylesheet" href="~/Content/index.css">
+</header>
+<style>
+    :root {
+        --brand-primary: #4f46e5;
+        --brand-primary-light: #eef2ff;
+        --brand-success: #16a34a;
+        --brand-danger: #dc2626;
+        --brand-danger-light: #ffe4e4;
+        --brand-return: #f97316;
+        --brand-return-light: #fff1e6;
+        --card-radius: 14px;
+        --field-radius: 10px;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #f6f7fb;
+    }
+
+    .ssr-col-avail {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2px;
+    }
+
+    .avail-green-badge {
+        background: linear-gradient(135deg, #ffedd5, #ffe0b2);
+        color: var(--brand-return);
+        font-weight: 700;
+        padding: 5px 14px;
+        border-radius: 20px;
+        border: 1px solid #ffcf9e;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 1rem;
+        box-shadow: 0 2px 6px rgba(249, 115, 22, 0.15);
+        animation: popIn 0.35s ease;
+    }
+
+    @@keyframes popIn {
+        0% {
+            transform: scale(0.7);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    input[type=number]::placeholder {
+        text-align: left;
+    }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .mobile-delivery-container {
+        padding: 10px 14px 40px;
+        animation: fadeIn 0.4s ease-in-out;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modern-card {
+        border-radius: var(--card-radius);
+        border: none;
+        box-shadow: 0 4px 18px rgba(31, 41, 55, 0.06);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        /* margin-bottom: 1rem;*/
+        background: #fff;
+    }
+
+        .modern-card:hover {
+            box-shadow: 0 10px 28px rgba(31, 41, 55, 0.09);
+        }
+
+    /* ---------- Header ---------- */
+    #MainHeading {
+        font-size: 1.25rem;
+        letter-spacing: 0.2px;
+    }
+
+    /* ---------- Filters (single line / column aligned) ---------- */
+    #dvFilters .filter-card {
+        padding: 16px 18px;
+    }
+
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 14px;
+    }
+
+    .filter-field {
+        display: flex;
+        flex-direction: column;
+        /* flex: 0 1 200px;*/
+        min-width: 200px;
+    }
+
+        .filter-field label {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            color: var(--brand-primary);
+        }
+
+        .filter-field .form-select,
+        .filter-field .form-control {
+            border-radius: var(--field-radius);
+            font-size: 0.85rem;
+            padding: 0.4rem 0.65rem;
+            border: 1px solid #e2e5ee;
+            background-color: #f9fafc;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+
+            .filter-field .form-select:disabled,
+            .filter-field .form-control:disabled {
+                background-color: #eef0f4;
+                color: #8a8f9a;
+                cursor: not-allowed;
+                opacity: 0.85;
+            }
+
+            .filter-field .form-select:focus,
+            .filter-field .form-control:focus {
+                border-color: var(--brand-primary);
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+                background-color: #fff;
+            }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        flex: 0 0 auto;
+    }
+
+    .btn-modern {
+        border-radius: var(--field-radius);
+        font-size: 0.85rem;
+        padding: 0.45rem 1.1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        border: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+        .btn-modern:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .btn-modern.btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+        }
+
+            .btn-modern.btn-danger:hover {
+                filter: brightness(1.05);
+                box-shadow: 0 6px 16px rgba(220, 38, 38, 0.32);
+            }
+
+        .btn-modern.btn-success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+        }
+
+            .btn-modern.btn-success:hover {
+                filter: brightness(1.05);
+                box-shadow: 0 6px 16px rgba(22, 163, 74, 0.32);
+            }
+
+        .btn-modern.btn-primary-save {
+            background: linear-gradient(135deg, var(--brand-primary), #6366f1);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+        }
+
+            .btn-modern.btn-primary-save:hover {
+                filter: brightness(1.05);
+                box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+            }
+
+    /* ---------- Product Table ---------- */
+    #dvProductdetails {
+        padding: 14px 16px 18px;
+    }
+
+    .table-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-weight: 700;
+        color: #374151;
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+    }
+
+        .table-title .title-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+    .selected-count-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--brand-primary-light);
+        color: var(--brand-primary);
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+        border: 1px solid #d9deff;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+        .selected-count-badge.has-selection {
+            background: var(--brand-danger-light);
+            color: var(--brand-danger);
+            border-color: #ffc9c9;
+        }
+
+    .table-search-wrap {
+        position: relative;
+        flex: 0 0 auto;
+        width: 220px;
+        max-width: 100%;
+    }
+
+        .table-search-wrap i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+    #txtProductSearch {
+        width: 100%;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 400;
+        padding: 0.35rem 0.65rem 0.35rem 30px;
+        border: 1px solid #e2e5ee;
+        background-color: #f9fafc;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+        #txtProductSearch:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+            background-color: #fff;
+        }
+
+    /* ---------- Sticky Save bar ---------- */
+    .sticky-save-bar {
+        display: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -6px 20px rgba(31, 41, 55, 0.08);
+        padding: 10px 14px;
+    }
+
+        .sticky-save-bar.show {
+            display: flex;
+            justify-content: flex-end;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+    .sticky-save-bar-inner {
+        width: 100%;
+        max-width: 1400px;
+        display: flex;
+        justify-content: flex-end;
+        margin: 0 auto;
+    }
+
+    .sticky-save-bar .btn-modern {
+        padding: 0.6rem 2rem;
+        font-size: 0.95rem;
+    }
+
+    .save-bar-spacer {
+        height: 76px;
+    }
+
+    table#tblProducts {
+        font-size: 1rem;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+
+        table#tblProducts thead th {
+            background: linear-gradient(135deg, var(--brand-primary), #6366f1);
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 10px 8px;
+            border: none;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+            table#tblProducts thead th:first-child {
+                border-top-left-radius: 8px;
+            }
+
+            table#tblProducts thead th:last-child {
+                border-top-right-radius: 8px;
+            }
+
+        table#tblProducts tbody td {
+            padding: 8px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f1f5;
+            background: #fff;
+            transition: background-color 0.2s ease;
+        }
+
+        table#tblProducts tbody tr {
+            transition: background-color 0.2s ease, transform 0.15s ease;
+        }
+
+            table#tblProducts tbody tr:hover td {
+                background-color: #f8f9ff;
+            }
+
+            table#tblProducts tbody tr.row-selected td {
+                background-color: var(--brand-danger-light) !important;
+            }
+
+            table#tblProducts tbody tr.row-selected {
+                box-shadow: inset 3px 0 0 var(--brand-danger);
+            }
+
+    .item-name-cell {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        
+        font-size: 1.2rem;
+    }
+
+    .price-cell, .mrp-cell {
+        font-variant-numeric: tabular-nums;        
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+        .price-cell::before {
+            content: "\20B9";
+            color: #9ca3af;
+            margin-right: 2px;
+            font-weight: 400;
+        }
+
+        .mrp-cell::before {
+            content: "\20B9";
+            color: #9ca3af;
+            margin-right: 2px;
+            font-weight: 400;
+        }
+
+    input[name="ItemCheck"], #chkSelectAll {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        accent-color: var(--brand-danger);
+    }
+
+    /* Responsive */
+    @@media (max-width: 767.98px) {
+        .filter-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-field {
+            min-width: 100%;
+        }
+
+        .filter-actions {
+            width: 100%;
+        }
+
+            .filter-actions .btn-modern {
+                flex: 1 1 0;
+                justify-content: center;
+            }
+
+        table#tblProducts {
+            font-size: 0.75rem;
+        }
+
+        #MainHeading {
+            font-size: 1.05rem;
+        }
+
+        .table-title {
+            justify-content: flex-start;
+        }
+
+        .table-search-wrap {
+            width: 100%;
+            order: 3;
+        }
+
+        .sticky-save-bar .btn-modern {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+<body>
+    <div class="mobile-delivery-container">
+        @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+        @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+        @Html.HiddenFor(model => model.TransID, new { @autocomplete = "off", @class = "form-control", @id = "txtTransID" })
+        @Html.HiddenFor(model => model.UserID, new { @autocomplete = "off", @class = "form-control", @id = "txtSwitchSMID" })
+
+        <div class="d-flex align-items-center mb-3">
+            <h4 id="MainHeading" class="m-0 fw-bold text-primary"><i class="bi bi-truck me-2"></i>@ViewData["FormName"]</h4>
+        </div>
+
+
+        <div class="toastBox"></div>
+
+        <div class="row g-3">
+            <div class="col-12" id="dvFilters">
+                <div class="modern-card card filter-card">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label for="cmbBranch"><i class="bi bi-building me-2"></i>Branch</label>
+                            <select id="cmbBranch" class="form-select shadow-sm"><option value="0">Select Branch</option></select>
+                            <div class="text-danger small mt-1 clrdivserror" id="divErrorOnBranch"></div>
+                        </div>
+                        <div class="filter-field">
+                            <label for="cmbSalesman"><i class="bi bi-person-badge me-2"></i>Salesman</label>
+                            <select id="cmbSalesman" class="form-select shadow-sm"><option value="0">Select Salesman</option></select>
+                            <div class="text-danger small mt-1 clrdivserror" id="divErrorOnSalesman"></div>
+                        </div>
+                        <div class="filter-actions">
+                            <button id="btnReset" type="button" class="btn btn-modern btn-danger text-white">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset
+                            </button>
+                            <button id="btnLoadVLSData" type="button" class="btn btn-modern btn-primary-save text-white">
+                                <i class="bi bi-cloud-download"></i> Load
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="modern-card card" id="dvProductdetails" style="display:none;">
+                <div class="table-title">
+                    <span class="title-left">
+                        <span><i class="bi bi-box-seam"></i> Product Details</span>
+                        <span class="selected-count-badge" id="dvSelectedCount"><i class="bi bi-check2-square"></i> 0 Selected</span>
+                    </span>
+                    <span class="table-search-wrap">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="txtProductSearch" class="form-control" placeholder="Search item...">
+                    </span>
+                </div>
+                <div class="text-danger small mb-2 clrdivserror" id="divErrorOnItems"></div>
+                <div class="table-responsive">
+                    <table class="table" id="tblProducts">
+                        <thead>
+                            <tr>
+                                <th>ProductID</th>
+                                <th style="text-align:center;"><input type="checkbox" name="SelectAll" id="chkSelectAll" title="Select All"></th>
+                                <th>Item Name</th>
+                                <th style="text-align:right;">Price</th>
+                                <th style="text-align:right;">MRP</th>
+                                <th style="text-align:right;">Return Qty</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Sticky Save bar: only shown once product data is loaded -->
+        <div class="sticky-save-bar" id="dvSaveBar">
+            <div class="sticky-save-bar-inner">
+                <button id="btnSave" type="button" class="btn btn-modern btn-success text-white">
+                    <i class="bi bi-check2-circle"></i> Save
+                </button>
+            </div>
+        </div>
+
+        <a href="javascript:" id="return-to-top" class="btn btn-primary shadow-lg" style="position: fixed; bottom: 35px; right: 5px; border-radius: 50%; width: 45px; height: 45px; display: none; align-items: center; justify-content: center; z-index: 999; ">
+            <i class="bi bi-chevron-up" style="top: 0px !important; left: 0px !important;"></i>
+        </a>
+    </div>
+</body>
+
+<script>
+        var UID = '@Session["LoginUserID"]';
+var Aurl = '@Session["APIurl"]';
+   var DecVal = '@Session["DecimalValues"]';
+    var strBatchType = '@Session["SpotSalesPriceMode"]'
+    var DefSMID = 0;
+    var PrintTransID = 4, PrintConfigID = 0;
+    LoadBranchByRoles('#cmbBranch');
+    var TableProducts = $('#tblProducts').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "400px",
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
+    });
+
+    // Initially hide VLS Summary / Product Details / Save-Clear panels until
+    // LoadVLSData() successfully loads a VLS document
+    $("#dvInvoicesummary,#dvProductdetails,#dvReceiverInfo,#btnReset,#dvSaveBar").hide();
+
+        $(window).scroll(function () {
+            if ($(this).scrollTop() >= 200) {
+                $('#return-to-top').fadeIn(200);
+                $('#return-to-top').css("display", "flex");
+            } else {
+                $('#return-to-top').fadeOut(200);
+            }
+        });
+
+        $('#return-to-top').click(function () {
+            $('body,html').animate({
+                scrollTop: 0
+            }, 500);
+        });
+    function ClearForm() {
+        TableData = [];
+        TableProducts.draw().clear();
+        TableProducts.draw().clear();
+        LoadBranchByRoles('#cmbBranch');
+        $('#cmbSalesman').val(0);
+        $('#chkSelectAll').prop('checked', false);
+        // Re-enable Branch / Salesman - only locked while a loaded batch is being worked on
+        $('#cmbBranch, #cmbSalesman').prop('disabled', false);
+        updateSelectedCount();
+        $('#txtProductSearch').val('');
+        // Summary / Product Details / Save-Clear panels should only be visible
+        // after VLS data has been successfully loaded
+        $("#dvInvoicesummary,#dvProductdetails,#dvReceiverInfo,#btnReset").hide();
+        $('#dvSaveBar').removeClass('show').hide();
+        $('#dvSaveBarSpacer').hide();
+    }
+    GetInitialData();
+    function GetInitialData() {
+        $.ajax({
+            url: Aurl + "vlsreturn/initialdata",
+            type: 'get',
+            contentType: 'json',
+            data: {},
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                Customerlist = [];
+                var Salesmans = data.Table;
+                $('#cmbSalesman').find("option").remove();
+                $('#cmbSalesman').append($('<option/>', {
+                    value: 0,
+                    text: "-- Select --",
+                }));
+                $.each(Salesmans, function (i, items) {
+                    $('#cmbSalesman').append($('<option/>', {
+                        value: items.ID,
+                        text: items.Name,
+                    }));
+                });
+
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+
+    var VLSData = [],VLSProductData = [];
+    function LoadVLSData() {
+        var NSalesmanID = $('#cmbSalesman').val();
+        var nBranch = $('#cmbBranch').val();
+        $.ajax({
+            url: Aurl + "vlsreturn/products",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                BranchID: nBranch, SalesmanID: NSalesmanID, BatchType: strBatchType
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                VLSData = [], VLSProductData = [];
+                var invoicedata = data.Table;
+                console.log(invoicedata)
+                if (invoicedata.length > 0) {
+                    // Bind the TableData variable - the Product Details card
+                    // view (and Export to Excel) both read from TableData.
+                    TableData = data.Table;
+                    if (TableData.length == 0) {
+                        showErrorSnackbar("No items found");
+                    }
+                    $('#tblProducts').DataTable({
+                        scrollY: "325px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: false,
+                        destroy: true,
+                        dom: 'rt',
+                        data: TableData,
+                        fixedColumns: false,
+                        searching: true,
+                        ordering: false,
+                        sorting: false,
+                        columns: [
+                            { "data": "ProdID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                            {
+                                className: "dt-body-center",
+                                "mRender": function (data, type, value, meta) {
+                                    var rowIndex = meta.row;
+                                    var checkboxId = 'chkCustomerCheck_' + rowIndex;
+                                    var _action = '<input type="checkbox" id="' + checkboxId + '" data-prodid="' + value.ProdID + '" data-mrp="' + value.MRP + '" '
+                                    _action += ' data-price="' + value.UomPrice + '" data-returnqty="' + value.AvlVLS + '" name="ItemCheck" /> ';
+                                    return _action;
+                                },
+                            },
+                            {
+                                "data": "ProductName", "autoWidth": true, className: "dt-body-left",
+                                "mRender": function (data, type, value) {
+                                    return '<div class="item-name-cell"><span>' + data + '</span></div>';
+                                }
+                            },
+                            {
+                                "data": "InclPrice", "autoWidth": true, className: "dt-body-right",
+                                "mRender": function (data, type, value) {
+                                    return '<span class="price-cell">' + parseFloat(data).toFixed(2) + '</span>';
+                                }
+                            },
+                            {
+                                "data": "MRP", "autoWidth": true, className: "dt-body-right",
+                                "mRender": function (data, type, value) {
+                                    return '<span class="mrp-cell">' + parseFloat(data).toFixed(2) + '</span>';
+                                }
+                            },
+                            {
+                                className: "dt-body-right",
+                                mRender: function (data, type, value) {
+                                    return '<div class="ssr-col-avail"><span class="avail-green-badge">' + value.AvlVLS + '</span></div>';
+                                }
+                            },
+                        ],
+                    });
+                    TableProducts = $('#tblProducts').DataTable();
+                    // VLS data loaded successfully - reveal the summary,
+                    // product details, and save/clear panels
+                    $("#dvInvoicesummary,#dvProductdetails,#dvReceiverInfo,#btnReset").show();
+                    $('#chkSelectAll').prop('checked', false);
+                    // Lock Branch / Salesman once a batch is loaded - only Reset or a
+                    // successful Save should unlock them again
+                    $('#cmbBranch, #cmbSalesman').prop('disabled', true);
+                    updateSelectedCount();
+                    $('#txtProductSearch').val('');
+                    // Save button only appears once table data is loaded, pinned to bottom
+                    $('#dvSaveBar').addClass('show').show();
+                    $('#dvSaveBarSpacer').show();
+
+                }
+                else {
+                    showErrorSnackbar("No records found")
+                    TableData = [];
+                    $("#dvInvoicesummary,#dvProductdetails,#dvReceiverInfo,#btnReset").hide();
+                    $('#dvSaveBar').removeClass('show').hide();
+                    $('#dvSaveBarSpacer').hide();
+                }
+
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }    
+    $('#btnLoadVLSData').click(function () {
+        var IsValid = true;
+        $(".clrdivserror").html("");
+        if ($('#cmbBranch').val() == '' || $('#cmbBranch').val() == 0 || $('#cmbBranch').val() == null) {
+            IsValid = false;
+            $('#divErrorOnBranch').html('* Select Branch');
+            $('#cmbBranch').focus();
+        }
+        if ($('#cmbSalesman').val() == '' || $('#cmbSalesman').val() == 0 || $('#cmbSalesman').val() == null) {
+            IsValid = false;
+            $('#divErrorOnSalesman').html('* Select Salesman');
+            $('#cmbSalesman').focus();
+        }
+        if (IsValid) {
+            LoadVLSData();
+        }
+    });
+    // ----- Reset button: simply reset the whole form -----
+    $('#btnReset').click(function () {
+        ClearForm();
+    });
+    function isNullOrEmpty(val) {
+        return val === null || val === undefined || val === "" || val == 0;
+    }
+
+    // ----- Select All checkbox: check/uncheck every row and toggle red highlight -----
+    $(document).on('change', '#chkSelectAll', function () {
+        var isChecked = $(this).is(':checked');
+        $('#tblProducts tbody input[name="ItemCheck"]').each(function () {
+            $(this).prop('checked', isChecked);
+            $(this).closest('tr').toggleClass('row-selected', isChecked);
+        });
+        updateSelectedCount();
+    });
+
+    // ----- Individual row checkbox: highlight row + keep Select All in sync -----
+    $(document).on('change', '#tblProducts tbody input[name="ItemCheck"]', function () {
+        $(this).closest('tr').toggleClass('row-selected', $(this).is(':checked'));
+
+        var totalBoxes = $('#tblProducts tbody input[name="ItemCheck"]').length;
+        var checkedBoxes = $('#tblProducts tbody input[name="ItemCheck"]:checked').length;
+
+        $('#chkSelectAll').prop('checked', totalBoxes > 0 && totalBoxes === checkedBoxes);
+        $('#chkSelectAll').prop('indeterminate', checkedBoxes > 0 && checkedBoxes < totalBoxes);
+        updateSelectedCount();
+    });
+
+    // ----- Keeps the "N Selected" badge above the table in sync -----
+    function updateSelectedCount() {
+        var checkedBoxes = $('#tblProducts tbody input[name="ItemCheck"]:checked').length;
+        var $badge = $('#dvSelectedCount');
+        $badge.html('<i class="bi bi-check2-square"></i> ' + checkedBoxes + ' Selected');
+        $badge.toggleClass('has-selection', checkedBoxes > 0);
+    }
+
+    // ----- Custom search box (replaces the default DataTables search UI) -----
+    $(document).on('keyup', '#txtProductSearch', function () {
+        if (TableProducts && typeof TableProducts.search === 'function') {
+            TableProducts.search($(this).val()).draw();
+        }
+    });
+
+    // ----- Save button: validate Branch, Salesman and at least one selected item -----
+    $('#btnSave').click(function () {
+        var IsValid = true;
+        $(".clrdivserror").html("");
+
+        if ($('#cmbBranch').val() == '' || $('#cmbBranch').val() == 0 || $('#cmbBranch').val() == null) {
+            IsValid = false;
+            $('#divErrorOnBranch').html('* Select Branch');
+        }
+        if ($('#cmbSalesman').val() == '' || $('#cmbSalesman').val() == 0 || $('#cmbSalesman').val() == null) {
+            IsValid = false;
+            $('#divErrorOnSalesman').html('* Select Salesman');
+        }
+        var checkedBoxes = $('#tblProducts tbody input[name="ItemCheck"]:checked').length;
+        if (checkedBoxes == 0) {
+            IsValid = false;
+            $('#divErrorOnItems').html('* Select at least one item to return');
+        }
+
+        if (IsValid) {
+            if (cfFocus != 3) {
+                ConfirmDialogMsg("Do you want to save data?");
+            } else {
+                SaveData();
+            }
+        }
+    });    
+    // ----- Persists the checked rows. Replace the URL below with the actual save endpoint. -----
+    function SaveData() {
+        var SelectedItems = [];
+        $('#tblProducts tbody input[name="ItemCheck"]:checked').each(function () {
+            var itemdata = {
+                "ProdID": $(this).data('prodid'),
+                "Price": $(this).data('price'),
+                "MRP": $(this).data('mrp'),
+                "ReturnQty": $(this).data('returnqty'),
+            }
+            SelectedItems.push(itemdata);
+        });
+
+        $.ajax({
+            url: Aurl + "vlsreturn/save",
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                BranchID: $('#cmbBranch').val(),
+                SalesmanID: $('#cmbSalesman').val(),
+                VLSPriceMode:strBatchType,
+                UserID: UID,
+                lstProducts: SelectedItems
+            }),
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        //alert(items.Message);
+                        showSuccessSnackbar(items.Message);
+                        ClearForm();
+                    }
+                    else {
+                        showErrorSnackbar(items.Message);
+                    }
+                });               
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+</script>

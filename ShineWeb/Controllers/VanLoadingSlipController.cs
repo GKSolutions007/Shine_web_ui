@@ -31,7 +31,7 @@ namespace ShineWeb.Controllers
                 string AddPerm = dtPermission.Select("MenuID = 535", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuID = 536", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string CancelPerm = dtPermission.Select("MenuID = 546", null).Length > 0 || nUID == 1 ? "1" : "0";
-                string ModifyPerm = dtPermission.Select("MenuID = 547", null).Length > 0 || nUID == 1 ? "1" : "0";
+                string ModifyPerm = "0";// dtPermission.Select("MenuID = 547", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string VarPerm = dtPermission.Select("MenuID = 539", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string EnbBranch = nUID == 1 ? "0" : dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
