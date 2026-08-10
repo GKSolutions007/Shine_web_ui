@@ -279,9 +279,10 @@ namespace ShineWeb.Controllers
             _client.BaseAddress = new Uri(APIurl);// APILink from app config
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             var authcookie = HttpContext.Request.Cookies["AuthToken"];
+            var Sessionidcookie = HttpContext.Request.Cookies["ASP.NET_SessionId"];
             if (authcookie != null)
             {
-                HttpResponseMessage result = _client.GetAsync("resetlogin?token=" + authcookie.Value).Result;
+                HttpResponseMessage result = _client.GetAsync("resetlogin?token=" + authcookie.Value + "&sessionid=" + Sessionidcookie.Value).Result;
             }
 
             HttpContext.Response.Cache.SetExpires(DateTime.UtcNow.AddMinutes(-1));
