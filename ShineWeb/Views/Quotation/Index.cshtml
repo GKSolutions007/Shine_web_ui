@@ -1331,25 +1331,6 @@
             header: true,
             footer: true       // keeps tfoot visible while scrolling
         },
-        /*
-        <th style="text-align:center;width:2%;" class="trclrforcolheader">
-    <button class="btn-primary" style="color:white" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>
-</th>4
-<th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>5
-<th style="text-align:center;font-size: 12px;width:30%;padding-right:100px;" class="trclrforcolheader">Item Names</th>6
-<th style="text-align: center; font-size: 12px; width: 8%; padding-right: 25px;" class="trclrforcolheader">MRP</th>7
-<th style="text-align: center; font-size: 12px; width: 8%; padding-right: 25px;" class="trclrforcolheader">Excl ₹</th>8
-<th style="text-align: center; font-size: 12px; width: 8%; padding-right: 25px;" class="trclrforcolheader">Incl ₹</th>9
-<th style="text-align: center; font-size: 12px; width: 8%; padding-right: 10px;" class="trclrforcolheader">Quantity</th>10
-<th style="text-align: center; font-size: 12px; width: 10%; padding-right: 30px;" class="trclrforcolheader">UOM</th>11
-<th style="text-align: center; font-size: 12px; width: 8%; padding-right: 10px;" title="Product Discount Percentage & Amount" class="trclrforcolheader">Prod %/ ₹</th>12
-<th style="text-align: center; font-size: 12px; width: 8%; padding-right: 10px;" title="Trade Discount Percentage & Amount" class="trclrforcolheader">Trade %/ ₹</th>13
-<th style="text-align: center; font-size: 12px; width: 8%; padding-right: 10px;" title="Additional Discount Percentage & Amount" class="trclrforcolheader">Addnl %/ ₹</th>14
-<th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Goods ₹</th>15
-<th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Gross ₹</th>16
-<th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader" title="Tax Amount & Percentage">Tax ₹ / %</th>17
-<th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Net ₹</th>18
-        */
         "columnDefs": [{ "targets": [0, 1, 2, 3], "visible": false, searchable: false, ordering: false },
         { "targets": [18], "class": "text-end" },
             { "targets": [6], "width": "20%" }, { "targets": [7, 8, 9, 10], "width": "7%" }, { "targets": [11], "width": "6%" }, { "targets": [12, 13, 14], "width": "5%" }],
@@ -1444,8 +1425,15 @@
     LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
     var ConfigRoundtype = '@Session["RoundoffType"]';
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
+
+    //var PurAddnlDiscb4Prod = '@Session["PurchaseAddnlDiscbeforeProdDisc"]';
+    //var PurTrdDiscb4Prod = '@Session["PurchaseTradeDiscbeforeProdDisc"]';
+
+    var SaleAddnlDiscb4Prod = '@Session["SalesAddnlDiscbeforeProdDisc"]' == '1';
+    var SaleTrdDiscb4Prod = '@Session["SalesTradeDiscbeforeProdDisc"]' == '1';
+
     var BatchMode = 0; // 0 - New product, 1 - Edit Product
-    var nTransMode = 1, nIsDraft = 0;    
+    var nTransMode = 1, nIsDraft = 0;
     setDate("dtpDate", 0);
     setDate("dtpFFrom", 0);
     setDate("dtpFTo", 0);
@@ -1696,14 +1684,19 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         });
         updateLabelColumn("lblPTQty", dPTQty);
-        updateLabelColumn("lblPTPDiscAmt", TotProdDisc); updateLabelColumn("lblPTTDiscAmt", TotTradeDisc); updateLabelColumn("lblPTADiscAmt", TotAddnlDisc);
-        updateInputColumn("txtProdDiscAmt", TotProdDisc); updateInputColumn("txtTradeDiscAmt", TotTradeDisc); updateInputColumn("txtAddnlDiscAmt", TotAddnlDisc);
+        updateLabelColumn("lblPTPDiscAmt", TotProdDisc);
+        updateLabelColumn("lblPTTDiscAmt", TotTradeDisc);
+        updateLabelColumn("lblPTADiscAmt", TotAddnlDisc);
+        updateInputColumn("txtProdDiscAmt", TotProdDisc);
+        updateInputColumn("txtTradeDiscAmt", TotTradeDisc);
+        updateInputColumn("txtAddnlDiscAmt", TotAddnlDisc);
         updateLabelColumn("lblPTGoods", dPTGoods); updateLabelColumn("lblPTGross", dPTGross); updateLabelColumn("lblPTTax", dPTTax); updateLabelColumn("lblPTNet", dPTNet);
         updateLabelColumn("lblTaxAmount", dPTTax);
         updateLabelColumn("lblCGST", (dPTTax / 2)); updateLabelColumn("lblSGST", (dPTTax / 2));
-        var grss = (dPTGoods - TotProdDisc);
-        var TrdPern = parseFloat((TotTradeDisc / grss) * 100);//.toFixed(DecVal)
-        var AddnlPern = parseFloat((TotAddnlDisc / grss) * 100);//.toFixed(DecVal)
+        var trdgrss = SaleTrdDiscb4Prod ? dPTGoods : (dPTGoods - TotProdDisc);
+        var addnlgrss = SaleAddnlDiscb4Prod ? dPTGoods : (dPTGoods - TotProdDisc);
+        var TrdPern = parseFloat((TotTradeDisc / trdgrss) * 100);//.toFixed(DecVal)
+        var AddnlPern = parseFloat((TotAddnlDisc / addnlgrss) * 100);//.toFixed(DecVal)
         updateInputColumn("txtTradeDiscPern", TrdPern); updateInputColumn("txtAddnlDiscPern", AddnlPern);
         // ceil - always Up value, floor - always down value
         var tofrg = parseFloat(document.getElementById("txtFright").getAttribute("txttag"));
@@ -1720,7 +1713,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
         //Gross & Tot Disc Amt
         updateLabelColumn("lblGross", dPTGross);
-        updateLabelColumn("lblTotalDiscAmt", (TotProdDisc + TotTradeDisc + TotAddnlDisc));        
+        updateLabelColumn("lblTotalDiscAmt", (TotProdDisc + TotTradeDisc + TotAddnlDisc));
 
         var ItemCount = parseInt(ProductTable.rows().count());
         $("#lblPTCount").text(ItemCount);
@@ -1797,7 +1790,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 }
                 if (fieldName == "TradeDiscAmt") {
                     $(this).prop("disabled", value > 0 ? true : false);
-                    var grsamt = (dPTGoods - Proddiscamt);
+                    var grsamt = SaleTrdDiscb4Prod ? dPTGoods : (dPTGoods - Proddiscamt);
                     var damt = parseFloat((value * grsamt) / 100);//.toFixed(DecVal);
                     updateInputColumn(fieldID, damt);
                     Tradediscamt = damt;
@@ -1859,7 +1852,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn("txtTradeDiscAmt", value);
         var goods = parseFloat(document.getElementById("lblPTGoods").getAttribute('lbltag'));
         var pdisc = parseFloat(document.getElementById("lblPTPDiscAmt").getAttribute('lbltag'));
-        dPTGross = goods - pdisc;
+        dPTGross = SaleTrdDiscb4Prod ? goods : goods - pdisc;
         var val = value != "" ? parseFloat(value) : 0;
         var damt = parseFloat((val / dPTGross) * 100);//.toFixed(DecVal)
 
@@ -1889,7 +1882,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         txtValuechanged = true;
         var goods = parseFloat(document.getElementById("lblPTGoods").getAttribute('lbltag'));
         var pdisc = parseFloat(document.getElementById("lblPTPDiscAmt").getAttribute('lbltag'));
-        dPTGross = goods - pdisc;
+        dPTGross = SaleAddnlDiscb4Prod ? goods : goods - pdisc;
         var val = value != "" ? parseFloat(value) : 0;
         var damt = parseFloat((val / dPTGross) * 100);//.toFixed(DecVal)
 
@@ -1952,7 +1945,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 if (fieldName == "AddnlDiscAmt") {
                     $(this).prop("disabled", value > 0 ? true : false);
                     var val = value != "" ? parseFloat(value) : 0;
-                    var grsamt = (dPTGoods - Proddiscamt);
+                    var grsamt = SaleAddnlDiscb4Prod ? dPTGoods : (dPTGoods - Proddiscamt);
                     var damt = parseFloat(((val * grsamt) / 100));//.toFixed(DecVal)
                     //$(this).val(damt);
                     updateInputColumn(fieldID, damt);
@@ -2188,7 +2181,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     }
                     if (fieldName == "TradeDiscAmt") {
                         //ProdDisc = parseFloat($(this).attr("txttag"));
-                        var price = ((ExclPrice * qty) - ProdDiscAmt);
+                        var price = SaleTrdDiscb4Prod ? (ExclPrice * qty) : ((ExclPrice * qty) - ProdDiscAmt);
                         TrDiscAmt = parseFloat((price * TrDisc) / 100);
                         updateInputColumn(fieldID, TrDiscAmt);
                     }
@@ -2196,7 +2189,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         AddnlDisc = parseFloat($(this).attr("txttag"));
                     }
                     if (fieldName == "AddnlDiscAmt") {
-                        var price = ((ExclPrice * qty) - ProdDiscAmt);
+                        var price = SaleAddnlDiscb4Prod ? (ExclPrice * qty) : ((ExclPrice * qty) - ProdDiscAmt);
                         AddnlDiscAmt = parseFloat((price * AddnlDisc) / 100);
                         updateInputColumn(fieldID, AddnlDiscAmt);
                     }
@@ -2359,7 +2352,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 //console.log("TradeDiscPern calc prd");
                                 if (CurrentFieldname == "TradeDiscAmt") {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var price = (dPTGoods - dProdDiscAmt);
+                                    var price = SaleTrdDiscb4Prod ? dPTGoods : (dPTGoods - dProdDiscAmt);
                                     //console.log("Price: " + price + " , Disc Amt : " + Proddiscamt + " , Val : " + val);
                                     var damt = ((val / price) * 100);//dPTGoods
                                     //$(this).val(damt);
@@ -2388,7 +2381,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     //$(this).val(val);
                                     //updateInputColumn(fieldID, val);
                                     //Tradediscamt = val;
-                                    var price = (dPTGoods - dProdDiscAmt);
+                                    var price = SaleTrdDiscb4Prod ? dPTGoods : (dPTGoods - dProdDiscAmt);
                                     var damt = ((val / price) * 100);//dPTGoods
                                     if (damt <= 100) {
                                         updateInputColumn(fieldID, val);
@@ -2400,7 +2393,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                                 else {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var price = (dPTGoods - dProdDiscAmt);
+                                    var price = SaleTrdDiscb4Prod ? dPTGoods : (dPTGoods - dProdDiscAmt);
                                     var damt = ((val * price) / 100);//dPTGoods
                                     //$(this).val(damt);
                                     //updateInputColumn(fieldID, damt);
@@ -2419,7 +2412,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 //console.log("AddnlDiscPern calc prd");
                                 if (CurrentFieldname == "AddnlDiscAmt") {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var price = (dPTGoods - dProdDiscAmt);
+                                    var price = SaleAddnlDiscb4Prod ? dPTGoods : (dPTGoods - dProdDiscAmt);
                                     var damt = ((val / price) * 100);//dPTGoods
                                     //updateInputColumn(fieldID, damt);
                                     //Addnldiscamt = damt;
@@ -2444,7 +2437,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     //$(this).val(val);
                                     //updateInputColumn(fieldID, val);
                                     //Addnldiscamt = val;
-                                    var price = (dPTGoods - dProdDiscAmt);
+                                    var price = SaleAddnlDiscb4Prod ? dPTGoods : (dPTGoods - dProdDiscAmt);
                                     var damt = ((val / price) * 100);//dPTGoods
                                     if (damt <= 100) {
                                         updateInputColumn(fieldID, val);
@@ -2456,7 +2449,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                                 else {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var price = (dPTGoods - dProdDiscAmt);
+                                    var price = SaleAddnlDiscb4Prod ? dPTGoods : (dPTGoods - dProdDiscAmt);
                                     var damt = ((val * price) / 100);//;dPTGoods
                                     //$(this).val(damt);
                                     updateInputColumn(fieldID, damt);
@@ -2775,7 +2768,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
                             const currentInputIndex = allInputsList.indexOf(input);
                             const nextInput = allInputsList[currentInputIndex + 1];
-                            console.log("Item row select enter 0", nextInput);                            
+                            console.log("Item row select enter 0", nextInput);
                             if (nextInput) {
                                 //console.log("Item row select enter 1");dvFooterRow
                                 var nm = nextInput.name;
@@ -2795,7 +2788,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     if (QtyFieldValue > 0) {
                                         nextInput.focus();
                                     }
-                                    else {                                       
+                                    else {
                                         const firstInput = $("#dvFooterRow")
                                             .find("input")
                                             .filter(function () {
@@ -2833,7 +2826,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             const allInputsList = Array.from(document.querySelectorAll('#tblProductData tbody input:not([disabled])'));
                             const currentInputIndex = allInputsList.indexOf(input);
                             const nextInput = allInputsList[currentInputIndex - 1];
-                            
+
                             if (nextInput) {
                                 var nm = nextInput.name;
                                 if (nm == "ProdDiscPern") {
@@ -2867,7 +2860,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 ////console.log(nextinp);
                 //console.log("Field ID ", $(this)[0].id);
                 var Field = $(this)[0];
-                
+
 
                 var FieldID = "";
                 if (Field) {
@@ -2917,7 +2910,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             } else {
                                 const isSaveDisabled = $("#btnSave").is(":disabled");
                                 const isdtpselApplyOpen = $("#btnSubmitdtpDateSelect").is(":visible"); //
-                                const QSInput = $("#myInput").is(":visible"); // 
+                                const QSInput = $("#myInput").is(":visible"); //
                                 if (isdtpselApplyOpen) {
                                     $("#btnSubmitdtpDateSelect").focus();
                                     $("#btnSubmitdtpDateSelect").select();
@@ -3521,7 +3514,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     }
                 });
             }
-        });       
+        });
     });
     function EditActionTrigger(rowData) {
         nTransMode = 2;
@@ -3550,7 +3543,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             $("#cmbBranch").prop("disabled", true);
         }
         $("#MainHeading").text(rdo1 ? "Modify Quotation" : "Create Quotation");
-        if (ProductTable) ProductTable.columns.adjust().draw();        
+        if (ProductTable) ProductTable.columns.adjust().draw();
     }
     $('#btnTCancel').click(function (e) {
         var Did = $("#txtID").val();
@@ -3599,7 +3592,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
-        if (ProductTable) ProductTable.columns.adjust().draw();       
+        if (ProductTable) ProductTable.columns.adjust().draw();
     }
     $('#btnTVariant').click(function (e) {
         var Did = $("#txtID").val();
@@ -3639,7 +3632,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $('#btnFilter').click(function (e) {
         GetFilterData(1);
     });
-    
+
     var Showall = '@Session["Showallstatus"]';
     $("#chkShowAll").prop("checked", Showall == '1');
     function GetFilterData(ClickType = 0) {//arrCustomerName,divErrFTo,divErrFFrom,divErrFParty
@@ -3694,7 +3687,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         searchTerm: currentSearchValue, singleIconAction: singleIconAction, // Pass the single View action
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
-                        customCellRenderer: (el, col, rowData) => {                            
+                        customCellRenderer: (el, col, rowData) => {
                         },
                         customButtons: [
                             {
@@ -3728,9 +3721,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             },
                         ],
-                        onCellClick: (rowData, fieldName, cellValue, column) => {                            
+                        onCellClick: (rowData, fieldName, cellValue, column) => {
                         },
-                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {                            
+                        onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(28, 1, 0, colIndex, field, newWidth)
@@ -4354,12 +4347,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if (hasPermission) {
             var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
             window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
-        }        
+        }
         else {
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nPartyID == 0 ? "Add" : "Edit") + " Customer </code></h4>");
         }
-    });   
-    
+    });
+
     // Add this once on page load in your invoice JS
     window.addEventListener("message", function (event) {
         var data = event.data;
@@ -4422,7 +4415,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 else {
                     showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (prodid == 0 ? "Add" : "Edit") + " Product</code></h4>")
                 }
-            }           
+            }
         }
     });
 </script>

@@ -118,6 +118,12 @@ namespace ShineWeb.Controllers
                 Session["CTPPerPointAmount"] = dtAppconfig.Rows[0]["CTPPerPointAmount"].ToString();
                 Session["UpdateVendorinProduct"] = dtAppconfig.Rows[0]["UpdateVendorinProduct"].ToString();
                 Session["SpotSalesPriceMode"] = dtAppconfig.Rows[0]["SpotSalesPriceMode"].ToString();
+
+                Session["PurchaseAddnlDiscbeforeProdDisc"] = dtAppconfig.Rows[0]["PurchaseAddnlDiscbeforeProdDisc"].ToString();
+                Session["PurchaseTradeDiscbeforeProdDisc"] = dtAppconfig.Rows[0]["PurchaseTradeDiscbeforeProdDisc"].ToString();
+                Session["SalesAddnlDiscbeforeProdDisc"] = dtAppconfig.Rows[0]["SalesAddnlDiscbeforeProdDisc"].ToString();
+                Session["SalesTradeDiscbeforeProdDisc"] = dtAppconfig.Rows[0]["SalesTradeDiscbeforeProdDisc"].ToString();
+
                 Session["F_SD"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_SD"].ToString()).ToString("yyyy-MM-dd");//,dtCompReg.Rows[0]["F_SD"].ToString();
                 Session["F_ED"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_ED"].ToString()).ToString("yyyy-MM-dd");//dtCompReg.Rows[0]["F_ED"].ToString();
                 Session["CompanyCode"] = dtCompReg.Rows[0]["CompanyCode"].ToString();
