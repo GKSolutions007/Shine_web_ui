@@ -2019,6 +2019,9 @@
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
 
+    var PurAddnlDiscb4Prod = '@Session["PurchaseAddnlDiscbeforeProdDisc"]' == '1';
+    var PurTrdDiscb4Prod = '@Session["PurchaseTradeDiscbeforeProdDisc"]' == '1';
+
     LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
      var ConfigRoundtype = '@Session["RoundoffType"]';
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
@@ -2397,7 +2400,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         PurchasePrice = dApponMRPCum > 0 ? parseFloat(TempProd.PurchasePrice) + dMRPonTax : (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
                         SalesPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SalesPrice) + dMRPonTax : (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
                         ECP = dApponMRPCum > 0 ? parseFloat(TempProd.ECP) + dMRPonTax : (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
-                        SPLPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SPLPrice) + dMRPonTax : (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);                        
+                        SPLPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SPLPrice) + dMRPonTax : (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
                         ReturnPrice = dApponMRPCum > 0 ? parseFloat(TempProd.ReturnPrice) + dMRPonTax : (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
                     } else {
                         PurchasePrice = (parseFloat(TempProd.PurchasePrice)) * parseFloat(ConvFact);
@@ -3070,8 +3073,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                 var goods = isChk == "0" ? Calcgross : dApponMRPCum > 0 ? (Calcgross - TotalMRPonTax) : (Calcgross / (1 + (TPren / 100)));
                 var PDiscAmt = (PDiscPren * goods) / 100;
-                var TDiscAmt = (TDPern * (goods - PDiscAmt)) / 100;
-                var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
+                var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
+                var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
 
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
                 var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
@@ -3124,12 +3127,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 ProductRID++;
             }
             else if (BatchMode == 1) {
+                //var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
+                //var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
                 var PDPern = parseFloat($("#txtGridProdDisc").val());
                 var PDiscAmt = (PDPern * goods) / 100;
                 var TDPern = parseFloat($("#txtGridTradeDisc").val());
-                var TDiscAmt = (TDPern * (goods - PDiscAmt)) / 100;
+                var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
                 var ADPern = parseFloat($("#txtGridAddnlDisc").val());
-                var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
+                var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
                 var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
                 var NAmt = gross + TAmt;
@@ -3412,9 +3417,10 @@ var Url = '@Session["url"].ToString()';
         updateLabelColumn("lblPTGoods", dPTGoods); updateLabelColumn("lblPTGross", dPTGross); updateLabelColumn("lblPTTax", dPTTax); updateLabelColumn("lblPTNet", dPTNet);
         updateLabelColumn("lblTaxAmount", dPTTax);
         updateLabelColumn("lblCGST", (dPTTax / 2)); updateLabelColumn("lblSGST", (dPTTax / 2));
-        var grss = (dPTGoods - TotProdDisc);
-        var TrdPern = parseFloat(grss) > 0 ?parseFloat((TotTradeDisc / grss) * 100) : 0;//.toFixed(DecVal)
-        var AddnlPern = parseFloat(grss) > 0 ? parseFloat((TotAddnlDisc / grss) * 100) : 0;//.toFixed(DecVal)
+        var trdgrss = PurTrdDiscb4Prod ? dPTGoods : (dPTGoods - TotProdDisc);
+        var addnlgrss = PurAddnlDiscb4Prod ? dPTGoods : (dPTGoods - TotProdDisc);
+        var TrdPern = parseFloat(trdgrss) > 0 ? parseFloat((TotTradeDisc / trdgrss) * 100) : 0;//.toFixed(DecVal)
+        var AddnlPern = parseFloat(addnlgrss) > 0 ? parseFloat((TotAddnlDisc / addnlgrss) * 100) : 0;//.toFixed(DecVal)
         updateInputColumn("txtTradeDiscPern", TrdPern); updateInputColumn("txtAddnlDiscPern", AddnlPern);
         // ceil - always Up value, floor - always down value
         var tofrg = parseFloat(document.getElementById("txtFright").getAttribute("txttag"));
@@ -3531,7 +3537,7 @@ var Url = '@Session["url"].ToString()';
                     $(this).prop("disabled", value > 0 ? true : false);
                     //var val = value != "" ? parseFloat(value) : 0;
                     //var val = ReturnTagValue(fieldID, fieldName);
-                    var grsamt = (dPTGoods - Proddiscamt);
+                    var grsamt = PurTrdDiscb4Prod ? dPTGoods : (dPTGoods - Proddiscamt);
                     var damt = parseFloat((value * grsamt) / 100);//.toFixed(DecVal);
                     updateInputColumn(fieldID, damt);
                     //$(this).val(damt);
@@ -3615,7 +3621,7 @@ var Url = '@Session["url"].ToString()';
 
             var goods = parseFloat(document.getElementById("lblPTGoods").getAttribute('lbltag'));
             var pdisc = parseFloat(document.getElementById("lblPTPDiscAmt").getAttribute('lbltag'));
-            dPTGross = goods - pdisc;
+            dPTGross = PurTrdDiscb4Prod ? goods : (goods - pdisc);
             var val = value != "" ? parseFloat(value) : 0;
             var damt = parseFloat((val / dPTGross) * 100);//.toFixed(DecVal)
 
@@ -3885,14 +3891,15 @@ var Url = '@Session["url"].ToString()';
         var ProdDiscAmt = (existGoodsAmt * val) / 100;
         updateInput($r, "input[name='ProdDiscAmt']", ProdDiscAmt);
 
-        var price = (existGoodsAmt - ProdDiscAmt);
-        var trdamt = ((existTradeDiscPern * price) / 100);
+        //var price = (existGoodsAmt - ProdDiscAmt);
+        var trdprice = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var trdamt = ((existTradeDiscPern * trdprice) / 100);
         updateInput($r, "input[name='TradeDiscAmt']", trdamt);
         if (trdamt <= 0) {
             updateInput($r, "input[name='TradeDiscPern']", 0);
         }
-        //
-        var addnlamt = ((existAddnlDiscPern * price) / 100);
+        var addnlprice = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var addnlamt = ((existAddnlDiscPern * addnlprice) / 100);
         updateInput($r, "input[name='AddnlDiscAmt']", addnlamt);
         if (addnlamt <= 0) {
             updateInput($r, "input[name='AddnlDiscPern']", 0);
@@ -3902,7 +3909,7 @@ var Url = '@Session["url"].ToString()';
         updateLbl($r, "label[name='Gross']", dGross);
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty * 
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -3957,14 +3964,15 @@ var Url = '@Session["url"].ToString()';
         ProdDiscAmt = (existGoodsAmt * ProdDiscPern) / 100;
 
 
-        var price = (existGoodsAmt - ProdDiscAmt);
-        var trdamt = ((existTradeDiscPern * price) / 100);
+        //var price = (existGoodsAmt - ProdDiscAmt);
+        var trdprice = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var trdamt = ((existTradeDiscPern * trdprice) / 100);
         updateInput($r, "input[name='TradeDiscAmt']", trdamt);
         if (trdamt <= 0) {
             updateInput($r, "input[name='TradeDiscPern']", 0);
         }
-        //
-        var addnlamt = ((existAddnlDiscPern * price) / 100);
+        var addnlprice = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var addnlamt = ((existAddnlDiscPern * addnlprice) / 100);
         updateInput($r, "input[name='AddnlDiscAmt']", addnlamt);
         if (addnlamt <= 0) {
             updateInput($r, "input[name='AddnlDiscPern']", 0);
@@ -3974,7 +3982,7 @@ var Url = '@Session["url"].ToString()';
         updateLbl($r, "label[name='Gross']", dGross);
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty * 
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4019,7 +4027,7 @@ var Url = '@Session["url"].ToString()';
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         if ((parseFloat(val) + existAddnlDiscPern) > 100) {
             updateInputColumn(id, 0);
             val = 0;
@@ -4035,7 +4043,7 @@ var Url = '@Session["url"].ToString()';
 
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty * 
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4079,7 +4087,7 @@ var Url = '@Session["url"].ToString()';
         let existGoodsAmt = getTagEl($r, "label[name='Goods']");
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         var TradeDiscAmt = 0;
 
         var TradeDiscPern = ((val / price) * 100);
@@ -4100,7 +4108,7 @@ var Url = '@Session["url"].ToString()';
 
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty * 
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4145,7 +4153,7 @@ var Url = '@Session["url"].ToString()';
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         if ((parseFloat(val) + existTradeDiscPern) > 100) {
             updateInputColumn(id, 0);
             val = 0;
@@ -4161,7 +4169,7 @@ var Url = '@Session["url"].ToString()';
 
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty * 
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4206,7 +4214,7 @@ var Url = '@Session["url"].ToString()';
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         var AddnlDiscAmt = 0;
 
         var AddnlDiscPern = ((val / price) * 100);
@@ -4226,7 +4234,7 @@ var Url = '@Session["url"].ToString()';
 
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty * 
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4353,7 +4361,7 @@ var Url = '@Session["url"].ToString()';
                             if (fieldName == "TradeDiscPern") {
                                 if (CurrentFieldname == "TradeDiscAmt") {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var damt = ((val / (dPTGoods - RowProdDiscAmt)) * 100);
+                                    var damt = PurTrdDiscb4Prod ? ((val / dPTGoods) *100) :  ((val / (dPTGoods - RowProdDiscAmt)) * 100);
                                     //$(this).val(damt);
                                     if (damt <= 100) {
                                         updateInputColumn(fieldID, damt);
@@ -4380,7 +4388,7 @@ var Url = '@Session["url"].ToString()';
                                 }
                                 else {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var damt = ((val * (dPTGoods - RowProdDiscAmt)) / 100);
+                                    var damt = PurTrdDiscb4Prod ? ((val * dPTGoods) / 100) : ((val * (dPTGoods - RowProdDiscAmt)) / 100);
                                     //$(this).val(damt);
                                     //$(this).val(damt);
                                     if (damt <= 100) {
@@ -4396,7 +4404,7 @@ var Url = '@Session["url"].ToString()';
                             if (fieldName == "AddnlDiscPern") {
                                 if (CurrentFieldname == "AddnlDiscAmt") {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var damt = ((val / (dPTGoods - RowProdDiscAmt)) * 100);
+                                    var damt = PurAddnlDiscb4Prod ? ((val / dPTGoods) * 100) : ((val / (dPTGoods - RowProdDiscAmt)) * 100);
                                     //$(this).val(damt);
                                     if (damt <= 100) {
                                         updateInputColumn(fieldID, damt);
@@ -4421,7 +4429,7 @@ var Url = '@Session["url"].ToString()';
                                 }
                                 else {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var damt = ((val * (dPTGoods - RowProdDiscAmt)) / 100);//;
+                                    var damt = PurAddnlDiscb4Prod ? ((val * dPTGoods) / 100) : ((val * (dPTGoods - RowProdDiscAmt)) / 100);//;
                                     //$(this).val(damt);
                                     if (damt <= 100) {
                                         updateInputColumn(fieldID, damt);
@@ -4563,7 +4571,7 @@ var Url = '@Session["url"].ToString()';
                 if (fieldName == "AddnlDiscAmt") {
                     $(this).prop("disabled", value > 0 ? true : false);
                     var val = value != "" ? parseFloat(value) : 0;
-                    var grsamt = (dPTGoods - Proddiscamt);
+                    var grsamt = PurAddnlDiscb4Prod ? dPTGoods : (dPTGoods - Proddiscamt);
                     var damt = parseFloat(((val * grsamt) / 100));//.toFixed(DecVal)
                     //$(this).val(damt);
                     updateInputColumn(fieldID, damt);
@@ -5295,12 +5303,16 @@ var Url = '@Session["url"].ToString()';
                     var dataSet = items.lstProdGrid.map(function (itemsProd, nRowIndex) {
                         var gross = parseFloat(itemsProd.GrossAmt);
                         var goods = parseFloat(itemsProd.GoodsAmt);
+
+                        var trdgross = PurTrdDiscb4Prod ? goods : gross;
+                        var addnlgross = PurTrdDiscb4Prod ? goods : gross;
+
                         var ProdDiscPern = itemsProd.ProdPern != "" ? parseFloat(itemsProd.ProdPern) : 0;
                         var ProdDiscAmt = parseFloat((goods * ProdDiscPern) / 100);
                         var TradeDiscPern = itemsProd.TradePern != "" ? parseFloat(itemsProd.TradePern) : 0;
-                        var TradeDiscAmt = parseFloat((gross * TradeDiscPern) / 100);
+                        var TradeDiscAmt = parseFloat((trdgross * TradeDiscPern) / 100);
                         var AddnlDiscPern = itemsProd.AddnlPern != "" ? parseFloat(itemsProd.AddnlPern) : 0;
-                        var AddnlDiscAmt = parseFloat((gross * AddnlDiscPern) / 100);
+                        var AddnlDiscAmt = parseFloat((addnlgross * AddnlDiscPern) / 100);
                         var ReasonoptionsHtml = strReasons.replace(
                             new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
                             'value="' + itemsProd.ReasonID + '" selected'
@@ -5518,12 +5530,14 @@ var Url = '@Session["url"].ToString()';
                         var dataSet = items.lstProdGrid.map(function (itemsProd, nRowIndex) {
                             var gross = parseFloat(itemsProd.GrossAmt);
                             var goods = parseFloat(itemsProd.GoodsAmt);
+                            var trdgross = PurTrdDiscb4Prod ? goods : gross;
+                            var addnlgross = PurTrdDiscb4Prod ? goods : gross;
                             var ProdDiscPern = itemsProd.ProdPern != "" ? parseFloat(itemsProd.ProdPern) : 0;
                             var ProdDiscAmt = parseFloat((goods * ProdDiscPern) / 100);
                             var TradeDiscPern = itemsProd.TradePern != "" ? parseFloat(itemsProd.TradePern) : 0;
-                            var TradeDiscAmt = parseFloat((gross * TradeDiscPern) / 100);
+                            var TradeDiscAmt = parseFloat((trdgross * TradeDiscPern) / 100);
                             var AddnlDiscPern = itemsProd.AddnlPern != "" ? parseFloat(itemsProd.AddnlPern) : 0;
-                            var AddnlDiscAmt = parseFloat((gross * AddnlDiscPern) / 100);
+                            var AddnlDiscAmt = parseFloat((addnlgross * AddnlDiscPern) / 100);
                             var ReasonoptionsHtml = strReasons.replace(
                                 new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
                                 'value="' + itemsProd.ReasonID + '" selected'

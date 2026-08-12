@@ -1375,9 +1375,9 @@
 
                     <div class="text-end w-100">
 
-                        <button tabindex="4" type="button" class="btn btn-danger" id="btnBatchClear">
+                        @*<button tabindex="4" type="button" class="btn btn-danger" id="btnBatchClear">
                             <i class="bi bi-arrow-clockwise"></i> Clear
-                        </button>
+                        </button>*@
 
                         <button tabindex="3" type="button" class="btn btn-success" id="btnBatchAccept">
                             <i class="bi bi-check-circle"></i> Accept
@@ -1858,7 +1858,7 @@
     $("#txtDocID").prop("disabled", true);
     $("#dvMain").hide();
     $("#txtProdDiscAmt").prop("disabled", true);
-    $(".FormBtField").prop("disabled", true);    
+    $(".FormBtField").prop("disabled", true);
     var ProductTable = $('#tblProductData').DataTable({
         paging: false,
         searching: false,
@@ -1894,7 +1894,7 @@
         drawCallback: function () {
             this.api().columns.adjust();
         }
-    });    
+    });
     var TableProductInfo = $('#tblProductInfo').DataTable({
         bFilter: false,
         bSearchable: false,
@@ -1917,7 +1917,7 @@
             if (TableProductInfo) TableProductInfo.columns.adjust().draw();
         });
     $("#VendInfo").click(function () {
-        if ($("#txtVendorID").val() != "") {           
+        if ($("#txtVendorID").val() != "") {
             var htmlTable = `
 <table style="width:100%; border-collapse:collapse; font-family:Arial, sans-serif; font-size:14px;">
   <tr>
@@ -1962,11 +1962,11 @@
             showErrorSnackbar("Select Vendor");
         }
     });
-    var modalSchema = new bootstrap.Modal(document.getElementById('myModalSchema'));// document.getElementById("myModalSchema");   
+    var modalSchema = new bootstrap.Modal(document.getElementById('myModalSchema'));// document.getElementById("myModalSchema");
     $('#btnReasonClose').click(function (e) {
         modalSchema.style.display = "none";
     });
-    var modaliframePreview = new bootstrap.Modal(document.getElementById('myiframePreview'));// document.getElementById("myiframePreview");    
+    var modaliframePreview = new bootstrap.Modal(document.getElementById('myiframePreview'));// document.getElementById("myiframePreview");
     $('#btnclosefgmodaliframePreview').click(function (e) {
         modaliframePreview.hide();
     });
@@ -1975,7 +1975,9 @@
     var DecVal = '@Session["DecimalValues"]';
     LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
      var ConfigRoundtype = '@Session["RoundoffType"]';
- var ConfigRoundvalue = '@Session["RoundoffValue"]';
+    var ConfigRoundvalue = '@Session["RoundoffValue"]';
+ var PurAddnlDiscb4Prod = '@Session["PurchaseAddnlDiscbeforeProdDisc"]' == '1';
+var PurTrdDiscb4Prod = '@Session["PurchaseTradeDiscbeforeProdDisc"]' == '1';
     var BatchMode = 0; // 0 - New product, 1 - Edit Product
     var nTransMode = 1, nIsDraft = 0;
     var ApplyReturnPrice = '@Session["EnableReturnPrice"]';// 1 - apply
@@ -2100,9 +2102,9 @@
                 var PDPern = parseFloat(dProdDiscPern);
                 var PDiscAmt = (PDPern * goods) / 100;
                 var TDPern = parseFloat(dTradeDiscPern);
-                var TDiscAmt = (TDPern * (goods - PDiscAmt)) / 100;
+                var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
                 var ADPern = parseFloat(dAddnlDiscPern);
-                var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
+                var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
                 var TAmt = (gross * TPren) / 100;
                 var NAmt = gross + TAmt;
@@ -2173,17 +2175,17 @@
             }
         });
     }
-    
+
 if ($("#txtReurnPricePerm").val() == 0) {
     $("#trRetPrice").hide();
 }
     if ($("#txtEnableSaveButton").val() == 0) {
         $("#btnSave").hide();
-    }    
+    }
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
-    var modal = new bootstrap.Modal(document.getElementById('myModalfg'));// document.getElementById("myModalfg");    
+    var modal = new bootstrap.Modal(document.getElementById('myModalfg'));// document.getElementById("myModalfg");
     $('#btnBatchClose, #btnBatchCloseTop').click(function (e) {
        modal.hide();
         BatchMode = 0;
@@ -2197,7 +2199,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         TempProd = [];
     });
     var modalPinfo = new bootstrap.Modal(document.getElementById('myModalPinfo'));// document.getElementById("myModalPinfo");
-    
+
     $('#btnPinfoClose').click(function (e) {
         modalPinfo.hide();
     });
@@ -2687,8 +2689,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                 var goods =  Calcgross;
                 var PDiscAmt = (PDiscPren * goods) / 100;
-                var TDiscAmt = (TDPern * (goods - PDiscAmt)) / 100;
-                var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
+                var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
+                var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
 
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
                 var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
@@ -2744,9 +2746,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var PDPern = parseFloat($("#txtGridProdDisc").val());
                 var PDiscAmt = (PDPern * goods) / 100;
                 var TDPern = parseFloat($("#txtGridTradeDisc").val());
-                var TDiscAmt = (TDPern * (goods - PDiscAmt)) / 100;
+                var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
                 var ADPern = parseFloat($("#txtGridAddnlDisc").val());
-                var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
+                var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
                 var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
                 var NAmt = gross + TAmt;
@@ -2935,7 +2937,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         dQty = parseFloat(Value);
                     }
                     if (fieldName == "FreeQty") {
-                        Value = $(this).attr("txttag"); 
+                        Value = $(this).attr("txttag");
                         dPTFreeQty += parseFloat(Value);
                     }
                     if (fieldName == "DmgQty") {
@@ -3006,9 +3008,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateLabelColumn("lblPTGoods", dPTGoods);
         updateLabelColumn("lblPTGross", dPTGross); updateLabelColumn("lblPTTax", dPTTax); updateLabelColumn("lblPTNet", dPTNet);
         updateLabelColumn("lblCGST", (dPTTax / 2)); updateLabelColumn("lblSGST", (dPTTax / 2)); updateLabelColumn("lblIGST", dPTTax); updateLabelColumn("lblTaxAmount", dPTTax);
-        var grss = (dPTGoods - TotProdDisc);
-        var TrdPern = parseFloat(grss) > 0 ?  parseFloat((TotTradeDisc / grss) * 100) : 0;
-        var AddnlPern = parseFloat(grss) > 0 ? parseFloat((TotAddnlDisc / grss) * 100) : 0;
+        var trdgrss = PurTrdDiscb4Prod ? dPTGoods :(dPTGoods - TotProdDisc);
+        var addnlgrss = PurAddnlDiscb4Prod ? dPTGoods : (dPTGoods - TotProdDisc);
+        var TrdPern = parseFloat(trdgrss) > 0 ? parseFloat((TotTradeDisc / trdgrss) * 100) : 0;
+        var AddnlPern = parseFloat(addnlgrss) > 0 ? parseFloat((TotAddnlDisc / addnlgrss) * 100) : 0;
         updateInputColumn("txtAddnlDiscPern", AddnlPern); updateInputColumn("txtTradeDiscPern", TrdPern);
         console.log("2. Tr Disc : " + TrdPern);
         // ceil - always Up value, floor - always down value
@@ -3058,7 +3061,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         txtValuechanged = true;
         //setTagValue("txtTradeDiscPern", "", value);
         updateInputColumn("txtTradeDiscPern", value);
-        console.log("1. Tr Disc : " + value);
         CalculateTradediscpern(value);
 
     });
@@ -3117,7 +3119,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 }
                 if (fieldName == "TradeDiscAmt") {
                     $(this).prop("disabled", value > 0 ? true : false);
-                    var damt = parseFloat((value * dPTGoods) / 100);
+                    var damt = PurTrdDiscb4Prod ? parseFloat((value * dPTGoods) / 100) :
+                        parseFloat((value * (dPTGoods - Proddiscamt)) / 100);
                     updateInputColumn(fieldID, damt);
                     Tradediscamt = damt;
                 }
@@ -3139,7 +3142,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 }
             });
             var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
-            var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 0;  
+            var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
             $(this).find("label").each(function (index) {
                 const fieldName = $(this).attr("name");
                 const fieldID = $(this).attr("id");
@@ -3185,7 +3188,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
         var goods = parseFloat(document.getElementById("lblPTGoods").getAttribute('lbltag'));
         var pdisc = parseFloat(document.getElementById("lblPTPDiscAmt").getAttribute('lbltag'));
-        dPTGross = goods - pdisc;
+        dPTGross = PurTrdDiscb4Prod ? goods : goods - pdisc;
         var val = value != "" ? parseFloat(value) : 0;
         var damt = parseFloat((val / dPTGross) * 100);
 
@@ -3230,14 +3233,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var ProdDiscAmt = (existGoodsAmt * val) / 100;
         updateInput($r, "input[name='ProdDiscAmt']", ProdDiscAmt);
 
-        var price = (existGoodsAmt - ProdDiscAmt);
-        var trdamt = ((existTradeDiscPern * price) / 100);
+        //var price = (existGoodsAmt - ProdDiscAmt);
+        var trdprice = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var trdamt = ((existTradeDiscPern * trdprice) / 100);
         updateInput($r, "input[name='TradeDiscAmt']", trdamt);
         if (trdamt <= 0) {
             updateInput($r, "input[name='TradeDiscPern']", 0);
         }
-        //
-        var addnlamt = ((existAddnlDiscPern * price) / 100);
+        var addnlprice = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var addnlamt = ((existAddnlDiscPern * addnlprice) / 100);
         updateInput($r, "input[name='AddnlDiscAmt']", addnlamt);
         if (addnlamt <= 0) {
             updateInput($r, "input[name='AddnlDiscPern']", 0);
@@ -3303,14 +3307,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
         ProdDiscAmt = (existGoodsAmt * ProdDiscPern) / 100;
 
 
-        var price = (existGoodsAmt - ProdDiscAmt);
-        var trdamt = ((existTradeDiscPern * price) / 100);
+        //var price = (existGoodsAmt - ProdDiscAmt);
+        var trdprice = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var trdamt = ((existTradeDiscPern * trdprice) / 100);
         updateInput($r, "input[name='TradeDiscAmt']", trdamt);
         if (trdamt <= 0) {
             updateInput($r, "input[name='TradeDiscPern']", 0);
         }
-        //
-        var addnlamt = ((existAddnlDiscPern * price) / 100);
+        var addnlprice = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var addnlamt = ((existAddnlDiscPern * addnlprice) / 100);
         updateInput($r, "input[name='AddnlDiscAmt']", addnlamt);
         if (addnlamt <= 0) {
             updateInput($r, "input[name='AddnlDiscPern']", 0);
@@ -3366,7 +3371,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         if ((parseFloat(val) + existAddnlDiscPern) > 100) {
             updateInputColumn(id, 0);
             val = 0;
@@ -3425,7 +3430,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         let existGoodsAmt = getTagEl($r, "label[name='Goods']");
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         var TradeDiscAmt = 0;
 
         var TradeDiscPern = ((val / price) * 100);
@@ -3490,7 +3495,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         if ((parseFloat(val) + existTradeDiscPern) > 100) {
             updateInputColumn(id, 0);
             val = 0;
@@ -3550,7 +3555,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         var AddnlDiscAmt = 0;
 
         var AddnlDiscPern = ((val / price) * 100);
@@ -3605,7 +3610,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
         var goods = parseFloat(document.getElementById("lblPTGoods").getAttribute('lbltag'));
         var pdisc = parseFloat(document.getElementById("lblPTPDiscAmt").getAttribute('lbltag'));
-        dPTGross = goods - pdisc;
+        dPTGross = PurAddnlDiscb4Prod ? goods : goods - pdisc;
         var val = value != "" ? parseFloat(value) : 0;
         var damt = parseFloat((val / dPTGross) * 100);
         if (damt > 100 || damt < 0) {
@@ -3659,7 +3664,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 if (fieldName == "AddnlDiscAmt") {
                     $(this).prop("disabled", value > 0 ? true : false);
                     var val = value != "" ? parseFloat(value) : 0;
-                    var damt = parseFloat(((val * dPTGross) / 100));
+                    var damt = PurAddnlDiscb4Prod ? parseFloat(((val * dPTGross) / 100)) :
+                        parseFloat(((val * (dPTGross - Proddiscamt)) / 100));
                     //$(this).val(damt);
                     updateInputColumn(fieldID, damt)
                     Addnldiscamt = damt;
@@ -3685,7 +3691,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 }
             });
             var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
-            var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 0;  
+            var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
             $(this).find("label").each(function (index) {
                 const fieldName = $(this).attr("name");
                 const fieldID = $(this).attr("id");
@@ -4010,7 +4016,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $('#tblProductData tbody').on('click', '.clsinfoprod', function () {
         rowdata = ProductTable.row($(this).parents('tr')).data();
         var ProdName = "";
-        if ($("#txtVendorID").val() != "") {            
+        if ($("#txtVendorID").val() != "") {
             modalPinfo.show();
             var ProdID = rowdata[0];
             GetData(14, $("#txtVendorID").val(), ProdID)
@@ -4032,13 +4038,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     showErrorSnackbar("Select Vendor");
                 }
             }
-        }        
+        }
     });
     document.addEventListener("keydown", function (event) {
         if (event.key == "F8") {
             event.preventDefault();
         }
-        
+
     });
     $('#txtHProds').change(function (e) {
         if ($("#cmbBranch").val() > 0) {
@@ -4047,7 +4053,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             if (sdf.length > 1) {
                 var pcode = sdf[0].trim();
                 var ID = $("#txtID").val() == "" ? 0 : $("#txtID").val();
-                GetData(4, pcode, ID);                
+                GetData(4, pcode, ID);
                 $("#btnBatch").focus();
             }
         }
@@ -4074,7 +4080,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             calculateProdGrid();
         }, 500)
     });
-    
+
     function GetReasons() {
         $.ajax({
             url: Aurl + "singlemaster/getactivedata",
@@ -4154,7 +4160,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         $("#btnBatch").focus();
                         return false;
                     }
-                });               
+                });
             }
         });
     }
@@ -4405,10 +4411,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 var gross = parseFloat(itemsProd.GrossAmt);
                                 var ProdDiscPern = itemsProd.ProdPern != "" ? parseFloat(itemsProd.ProdPern) : 0;
                                 var ProdDiscAmt = parseFloat((gross * ProdDiscPern) / 100);
+                                var addnlgross = PurAddnlDiscb4Prod ? gross : (gross - ProdDiscAmt);
+                                var trdgross = PurTrdDiscb4Prod ? gross : (gross - ProdDiscAmt);
                                 var TradeDiscPern = itemsProd.TradePern != "" ? parseFloat(itemsProd.TradePern) : 0;
-                                var TradeDiscAmt = parseFloat((gross * TradeDiscPern) / 100);
+                                var TradeDiscAmt = parseFloat((trdgross * TradeDiscPern) / 100);
                                 var AddnlDiscPern = itemsProd.AddnlPern != "" ? parseFloat(itemsProd.AddnlPern) : 0;
-                                var AddnlDiscAmt = parseFloat((gross * AddnlDiscPern) / 100);
+                                var AddnlDiscAmt = parseFloat((addnlgross * AddnlDiscPern) / 100);
                                 //var Reasons = "<select name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + strReasons + "</select>";
                                 var ReasonoptionsHtml = strReasons.replace(
                                     new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
@@ -4595,10 +4603,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var gross = parseFloat(itemsProd.GrossAmt);
                         var ProdDiscPern = itemsProd.ProdPern != "" ? parseFloat(itemsProd.ProdPern) : 0;
                         var ProdDiscAmt = parseFloat((gross * ProdDiscPern) / 100);
+                        var addnlgross = PurAddnlDiscb4Prod ? gross : (gross - ProdDiscAmt);
+                        var trdgross = PurTrdDiscb4Prod ? gross : (gross - ProdDiscAmt);
                         var TradeDiscPern = itemsProd.TradePern != "" ? parseFloat(itemsProd.TradePern) : 0;
-                        var TradeDiscAmt = parseFloat((gross * TradeDiscPern) / 100);
+                        var TradeDiscAmt = parseFloat((trdgross * TradeDiscPern) / 100);
                         var AddnlDiscPern = itemsProd.AddnlPern != "" ? parseFloat(itemsProd.AddnlPern) : 0;
-                        var AddnlDiscAmt = parseFloat((gross * AddnlDiscPern) / 100);
+                        var AddnlDiscAmt = parseFloat((addnlgross * AddnlDiscPern) / 100);
                         //var Reasons = "<select name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + strReasons + "</select>";
                         var ReasonoptionsHtml = strReasons.replace(
                             new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
@@ -4871,7 +4881,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             //    CFValue = parseFloat(forItemUOM[0].ConversionRate) || 1;
             //}
             var val = parseFloat(gross) / (parseFloat(Q1) + parseFloat(Q3));
-            var Diff = val - (TBillPrice * CFValue);           
+            var Diff = val - (TBillPrice * CFValue);
             var AbsDiff = Diff;// Math.abs(Diff);
             updateLabelColumn(difffieldid, AbsDiff);
             var clrcolor = Diff >= 0 ? "green" : "red";
@@ -4943,7 +4953,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     text: '',
                                     title: 'Settings',
                                     visible: true,
-                                    onClick: (gridInstance, event) => {                                       
+                                    onClick: (gridInstance, event) => {
                                         modalGenColumnSettings.show();
                                         GendralColumnSettings(1, 26, 1, 0);
                                     }
@@ -4953,7 +4963,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     text: 'New',
                                     title: 'New Purchase Return',
                                     visible: $("#txtAddID").val() == 1 && rdo1 == 1,
-                                    onClick: (gridInstance, event) => {                                        
+                                    onClick: (gridInstance, event) => {
                                         nTransMode = 1;
                                         $("#dvMain,.dvSelectItems").show();
                                         $("#dvDocuments").hide();
@@ -4977,7 +4987,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 }
                             },
                             onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                                
+
                             },
                             onColumnResize: (colIndex, field, header, newWidth) => {
                                 UpdateColumnWidth(26, 1, 0, colIndex, field, newWidth)
@@ -5212,7 +5222,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     //~Clear
     $("#btnClear").click(function () {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
-    });    
+    });
     function ClearForm() {
         stopAutoDraftSave();
         $(".FormclrField").val("");
@@ -5600,7 +5610,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             SaveData();
         }
     });
-      
+
 
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to New PR
         $("#txtDraftID").val($("#txtID").val())
