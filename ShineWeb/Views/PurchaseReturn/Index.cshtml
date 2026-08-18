@@ -749,31 +749,36 @@
             <div class="row mt-2">
                 <!-- Return Type -->
                 <div class="col-12 col-md-3 mb-2">
-                    <span class="form-label">
-                        <select class="form-control FormclrcmbField" id="cmbReturnType">
-                            <option value="0">Select Return Type</option>
-                        </select>
-                        <label class="labelup">Return Type</label>
-                    </span>
-                    <div class="text-danger ps-1 clrdivs" id="divErrReturnType"></div>
-                </div>
-
-                <!-- Manufacturer -->
-                <div class="col-12 col-md-3 mb-2 dvSelectItems">
                     <div class="input-group">
-                        <span class="form-label flex-grow-1">
-                            <select class="form-control FormclrcmbField" id="cmbManuf">
-                                <option value="0">Select Mfr Name</option>
-                            </select>
-                            <label class="labelup">Mfr Name</label>
+                        <span id="openreturntype" class="input-group-text" title="New Return Type" style="cursor:pointer;">
+                            <i class="fas fa-arrow-up-right-from-square"></i>
                         </span>
-
-                        <span id="iManufLoad" class="input-group-text" style="cursor:pointer;">
-                            Load
+                        <span class="form-label">
+                            <select class="form-control FormclrcmbField" id="cmbReturnType">
+                                <option value="0">Select Return Type</option>
+                            </select>
+                            <label class="labelup">Return Type</label>
                         </span>
                     </div>
+                        <div class="text-danger ps-1 clrdivs" id="divErrReturnType"></div>
+                    </div>
+
+                    <!-- Manufacturer -->
+                    <div class="col-12 col-md-3 mb-2 dvSelectItems">
+                        <div class="input-group">
+                            <span class="form-label flex-grow-1">
+                                <select class="form-control FormclrcmbField" id="cmbManuf">
+                                    <option value="0">Select Mfr Name</option>
+                                </select>
+                                <label class="labelup">Mfr Name</label>
+                            </span>
+
+                            <span id="iManufLoad" class="input-group-text" style="cursor:pointer;">
+                                Load
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
         </div>
         <!-- RIGHT SIDE -->
         <div class="col-12 col-md-3 d-flex justify-content-end">
@@ -5225,6 +5230,165 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $("#btnClear").click(function () {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
+
+    window.addEventListener("message", function (event) {
+        var data = event.data;
+        console.log("depend data", data);
+        if (data && data.source === "CustomerMaster") {
+            var customerID = data.customerid;
+            var code = data.customercode;
+            var name = data.customername;
+
+            // ✅ Use the returned values — example:
+            GetData(3, code);
+            var BeatID = $("#cmbBeat").val();
+            var SalesmanID = $("#cmbSalesman").val();
+            GetData(33, BeatID, SalesmanID);
+        }
+        else if (data && data.source === "ProductMaster") {
+            var ProductID = data.productid;
+            var code = data.productcode;
+            var name = data.productname;
+
+            GetProductList()
+            setTimeout(() => {
+                ReLoadProductAutolists(name);
+            }, 1000);
+            if (gridprodfieldid) {
+                var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                GetData(4, code, CustID);
+            }
+        }
+        else if (data && data.source === "Return Type") {
+            var ReturnTypeID = data.id;
+            var ReturnTypeName = data.name;
+
+            console.log("Return Type received:", ReturnTypeID, ReturnTypeName);
+
+            ReloadF8Autolistdata("returntype", null, null, ReturnTypeID);
+        }
+    });
+
+    $("#openreturntype").click(function (e) {
+        var nvhID = $("#cmbReturnType").val() != "" ? $("#cmbReturnType").val() : 0;
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        //var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+        //window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        const hasPermission = nvhID == 0
+            ? checkAddEditPermission("31")
+            : checkAddEditPermission("32");
+        if (hasPermission) {
+            var ProdUrl = Url + "SingleMaster?name=GN98nHEfhTQXGt73jXp5pfOnlepY6%2BX6xvbkh%2BN5XBY%3D&strFormID=jdLumi2w7Hxz4%2BVktNGHzA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nvhID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nvhID == 0 ? "Add" : "Edit") + " Return Type </code></h4>");
+        }
+    });
+
+
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F8") {
+            event.preventDefault();
+            var FieldID = event.target.id;
+            var FieldName = event.target.name;
+            if (FieldID == "txtSearch") {
+                $("#opencustomer").trigger("click");
+            }
+            if (FieldID == "cmbReturnType") {
+                $("#openreturntype").trigger("click");
+            }
+            if (FieldName == "ProdName") {
+                //console.log("editingRow ", editingRow.data());
+                gridprodfieldid = FieldID;
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                vw = window.innerWidth;
+                vh = window.innerHeight;
+                const hasPermission = prodid == 0
+                    ? checkAddEditPermission("111")
+                    : checkAddEditPermission("112");
+                if (hasPermission) {
+                    var ProdUrl = Url + "ProductMaster?name=dFLU9MS0CpfVS5wW5G17EQ%3D%3D&strFormID=RjZMX%2BX6NiPSRFI2WDoZJA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + prodid;
+                    window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                }
+                else {
+                    showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (prodid == 0 ? "Add" : "Edit") + " Product</code></h4>")
+                }
+            }
+        }
+        if (event.key === "F4") {
+            if ($("#txtCustomerID").val() != "") {
+                modalPinfo.show();
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                if (prodid > 0) {
+                    GetData(14, $("#txtCustomerID").val(), prodid)
+                }
+            }
+            else {
+                showErrorSnackbar("Select Customer");
+            }
+        }
+        //if (event.ctrlKey && (event.key === 'Insert' || event.which === 45)) {
+        //    event.preventDefault();
+        //    const dvMainisShow = $("#dvMain").is(":visible"); //
+        //    const dvMasterModels = $("#myModalfg").is(":visible");
+        //    if (dvMainisShow || dvMasterModels) {
+        //        //open current form in new tab
+        //        window.open(window.location.href, '_blank');
+        //    } else {
+        //        $("#btnGKBSGNew").trigger("click");
+        //    }
+        //}
+
+    });
+
+    function ReloadF8Autolistdata(strForm, strSub, strValue, strAssignValue) {
+        console.log("ReloadF8Autolistdata CALLED");
+        console.log("Parameters:", strForm, strSub, strValue, strAssignValue);
+            $.ajax({
+                url: Aurl + "masterlist",
+                type: 'get',
+                contentType: 'json',
+                data: {
+                    FormName: strForm, SubField: strSub, Value: strValue
+                },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    console.log("MASTERLIST RESPONSE:", data);
+                    console.log("MASTERLIST RESPONSE JSON:", JSON.stringify(data));
+                    if (strForm == "returntype") {
+                        console.log("strForm matched return type");
+                        $('#cmbReturnType').find("option").remove();
+                        $('#cmbReturnType').append($('<option/>', {
+                            value: 0,
+                            text: "-- Select --",
+                        }));
+                        $.each(data, function (i, items) {
+                            console.log("Adding item:", items);
+                            $('#cmbReturnType').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                            $('#cmbReturnType').val(strAssignValue);
+                        });
+
+                    } 
+                }
+            });
+        }
+
     function ClearForm() {
         stopAutoDraftSave();
         $(".FormclrField").val("");

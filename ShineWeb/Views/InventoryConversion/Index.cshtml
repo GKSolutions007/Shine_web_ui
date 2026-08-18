@@ -407,19 +407,24 @@
                 </span>
             </div>
             <div class="col-12 col-md-2 mb-3">
-                <span class="form-label">
-                    <select class="form-control FormclrcmbField" id="cmbReason">
-                        <option value="0">Select Reason</option>
-                    </select>
-                    <label class="labelup">Reason </label>
-                </span>
+                <div class="input-group">
+                    <span id="openreason" class="input-group-text" title="New Return Type" style="cursor:pointer;">
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                    </span>
+                    <span class="form-label">
+                        <select class="form-control FormclrcmbField" id="cmbReason">
+                            <option value="0">Select Reason</option>
+                        </select>
+                        <label class="labelup">Reason </label>
+                    </span>
+                </div>
+                </div>
+                <div class="col-12 col-md-1 mb-3">
+                    <button class="btn btn-primary" id="btnBatch">Batch</button>&ensp;@*<button class="btn btn-info" tabindex="5">Add</button>*@
+                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProductBatch" class="clrdivs"></div>
+                </div>
+                <div class="col-12 col-md-4 mb-3"></div>
             </div>
-            <div class="col-12 col-md-1 mb-3">
-                <button class="btn btn-primary" id="btnBatch">Batch</button>&ensp;@*<button class="btn btn-info" tabindex="5">Add</button>*@
-                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProductBatch" class="clrdivs"></div>
-            </div>
-            <div class="col-12 col-md-4 mb-3"></div>
-        </div>
             <div class="row">
             <table class="table table-bordered  row-border order-column" id="tblProductData" width="100%">
                 <thead>
@@ -1877,6 +1882,167 @@ function setDate1(FieldID,Type) {
             $("#cmbBranch").prop("disabled", true);
         }
     }
+
+
+    window.addEventListener("message", function (event) {
+        var data = event.data;
+        console.log("depend data", data);
+        if (data && data.source === "CustomerMaster") {
+            var customerID = data.customerid;
+            var code = data.customercode;
+            var name = data.customername;
+
+            // ✅ Use the returned values — example:
+            GetData(3, code);
+            var BeatID = $("#cmbBeat").val();
+            var SalesmanID = $("#cmbSalesman").val();
+            GetData(33, BeatID, SalesmanID);
+        }
+        else if (data && data.source === "ProductMaster") {
+            var ProductID = data.productid;
+            var code = data.productcode;
+            var name = data.productname;
+
+            GetProductList()
+            setTimeout(() => {
+                ReLoadProductAutolists(name);
+            }, 1000);
+            if (gridprodfieldid) {
+                var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                GetData(4, code, CustID);
+            }
+        }
+        else if (data && data.source === "Reason") {
+            var ReasonID = data.id;
+            var ReasonName = data.name;
+
+            console.log("Reason received:", ReasonID, ReasonName);
+
+            ReloadF8Autolistdata("reason", null, null, ReasonID);
+        }
+    });
+
+    $("#openreason").click(function (e) {
+        var nvhID = $("#cmbReason").val() != "" ? $("#cmbReason").val() : 0;
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        //var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+        //window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        const hasPermission = nvhID == 0
+            ? checkAddEditPermission("27")
+            : checkAddEditPermission("28");
+        if (hasPermission) {
+            var ProdUrl = Url + "SingleMaster?name=G9u1YxQO3q5KrxbfY7UoKw%3D%3D&strFormID=HbyPiQySlfB%2BVAWrSj70Bw%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nvhID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nvhID == 0 ? "Add" : "Edit") + " Reason </code></h4>");
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F8") {
+            event.preventDefault();
+            var FieldID = event.target.id;
+            var FieldName = event.target.name;
+            if (FieldID == "txtSearch") {
+                $("#opencustomer").trigger("click");
+            }
+            if (FieldID == "cmbReason") {
+                $("#openreason").trigger("click");
+            }
+            if (FieldName == "ProdName") {
+                //console.log("editingRow ", editingRow.data());
+                gridprodfieldid = FieldID;
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                vw = window.innerWidth;
+                vh = window.innerHeight;
+                const hasPermission = prodid == 0
+                    ? checkAddEditPermission("111")
+                    : checkAddEditPermission("112");
+                if (hasPermission) {
+                    var ProdUrl = Url + "ProductMaster?name=dFLU9MS0CpfVS5wW5G17EQ%3D%3D&strFormID=RjZMX%2BX6NiPSRFI2WDoZJA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + prodid;
+                    window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                }
+                else {
+                    showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (prodid == 0 ? "Add" : "Edit") + " Product</code></h4>")
+                }
+            }
+        }
+        if (event.key === "F4") {
+            if ($("#txtCustomerID").val() != "") {
+                modalPinfo.show();
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                if (prodid > 0) {
+                    GetData(14, $("#txtCustomerID").val(), prodid)
+                }
+            }
+            else {
+                showErrorSnackbar("Select Customer");
+            }
+        }
+        //if (event.ctrlKey && (event.key === 'Insert' || event.which === 45)) {
+        //    event.preventDefault();
+        //    const dvMainisShow = $("#dvMain").is(":visible"); //
+        //    const dvMasterModels = $("#myModalfg").is(":visible");
+        //    if (dvMainisShow || dvMasterModels) {
+        //        //open current form in new tab
+        //        window.open(window.location.href, '_blank');
+        //    } else {
+        //        $("#btnGKBSGNew").trigger("click");
+        //    }
+        //}
+
+    });
+
+    function ReloadF8Autolistdata(strForm, strSub, strValue, strAssignValue) {
+        console.log("ReloadF8Autolistdata CALLED");
+        console.log("Parameters:", strForm, strSub, strValue, strAssignValue);
+        $.ajax({
+            url: Aurl + "masterlist",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                FormName: strForm, SubField: strSub, Value: strValue
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                console.log("MASTERLIST RESPONSE:", data);
+                console.log("MASTERLIST RESPONSE JSON:", JSON.stringify(data));
+                if (strForm == "reason") {
+                    console.log("strForm matched reason");
+                    $('#cmbReason').find("option").remove();
+                    $('#cmbReason').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        console.log("Adding item:", items);
+                        $('#cmbReason').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                        $('#cmbReason').val(strAssignValue);
+                    });
+
+                }
+            }
+        });
+    }
+
+
+
+
     //~Validation
     function SaveValidation() {
         var IsValid = true;
