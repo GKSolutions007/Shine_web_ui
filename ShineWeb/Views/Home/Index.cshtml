@@ -494,6 +494,7 @@
                                 <th style="text-align:right;">DR</th>
                                 <th style="text-align:right;">NET Sales</th>
                                 <th style="text-align:right;">Closing</th>
+                                <th style="text-align:right;">Dmg Closing</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -505,7 +506,7 @@
                             <tr>
                                 <th>ManufID</th>
                                 <th>Brand</th>
-                                <th style="text-align:right;">Outstanding</th>
+                                <th style="text-align:center;">Outstanding<br />OS ₹/INV/CX</th>
                                 <th style="text-align:right;">&gt;30 days O/S</th>
                                 <th style="text-align:right;">Active CX Count</th>
                             </tr>
@@ -942,7 +943,7 @@
         scrollY: "450px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [1,2,3,4,5,6,7,8,9], "class": "dt-body-right" }],
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [1,2,3,4,5,6,7,8,9,10], "class": "dt-body-right" }],
     });
     var tblBrandOutstandings = $('#tblBrandOutstandings').DataTable({
         "bFilter": true,
@@ -1862,56 +1863,13 @@
         }
     });
 
-    // Populate the Brand dropdown inside the overlay
-    var brandOverlayLoaded = false;
-    function PopulateOverlayBrandDropdown() {
-        if (brandOverlayLoaded) return;
-
-        // Reuse the Manufacturer/Brand list already loaded in #cmbManuf if available
-        if ($('#cmbManuf option').length > 1) {
-            $('#cmbOverlayBranch').find('option').remove();
-            $('#cmbOverlayBranch').append($('<option/>', { value: 0, text: '-- All --' }));
-            $('#cmbManuf option').each(function () {
-                if ($(this).val() != 0) {
-                    $('#cmbOverlayBranch').append($('<option/>', {
-                        value: $(this).val(),
-                        text: $(this).text()
-                    }));
-                }
-            });
-            brandOverlayLoaded = true;
-        } else {
-            // Fallback: fetch brand/manufacturer list directly from the API
-            // NOTE: update the endpoint below ("manufacturer/getall") to match your actual API route.
-            $.ajax({
-                url: Aurl + "manufacturer/getall",
-                type: 'get',
-                contentType: 'json',
-                xhrFields: { withCredentials: true },
-                success: function (data) {
-                    $('#cmbOverlayBranch').find('option').remove();
-                    $('#cmbOverlayBranch').append($('<option/>', { value: 0, text: '-- All --' }));
-                    $.each(data, function (i, items) {
-                        $('#cmbOverlayBranch').append($('<option/>', {
-                            value: items.ID,
-                            text: items.Name
-                        }));
-                    });
-                    brandOverlayLoaded = true;
-                },
-                error: function () {
-                    // Silently ignore - dropdown will just keep the "All" option
-                }
-            });
-        }
-    }
 
     // Generate button - validate filters and load the Brand Summary table
     $('#btnOverlayGenerate').click(function (e) {
         e.preventDefault();
         $('#divErrOverlayFilter').html('');
 
-        var BrandID = $('#cmbOverlayBranch').val();
+        var BranchID = $('#cmbOverlayBranch').val();
         var FromDate = $('#txtOverlayFromDate').val();
         var ToDate = $('#txtOverlayToDate').val();
         var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
@@ -1933,48 +1891,188 @@
             return;
         }
 
-        GetBrandSummaryData(BrandID, FromDate, ToDate, Inclusive);
+        GetBrandSummaryData(BranchID, FromDate, ToDate, Inclusive);
     });
 
     // Fetch and bind the Brand Summary report table
-    function GetBrandSummaryData(BrandID, FromDate, ToDate, Inclusive) {
+    function GetBrandSummaryData(nBranchID, FromDate, ToDate, Inclusive) {
         tblBrandSummary.clear().draw();
-
+        tblBrandOutstandings.clear().draw();
         // NOTE: update the endpoint below ("homescreen/getbrandsummary") to match your actual API route.
         $.ajax({
-            url: Aurl + "homescreen/getbrandsummary",
+            url: Aurl + "homescreen/brandsummary",
             type: 'get',
             contentType: 'json',
             data: {
-                BrandID: BrandID,
+                BranchID: nBranchID,
                 FromDate: FromDate,
-                ToDate: ToDate,
-                Inclusive: Inclusive
+                ToDate: ToDate
             },
             xhrFields: { withCredentials: true },
             success: function (data) {
-                var result = (typeof data === "string") ? JSON.parse(data) : data;
-                if (result && result.length > 0) {
-                    $.each(result, function (i, items) {
-                        tblBrandSummary.row.add([
-                            items.Brand,
-                            formatIndianCurrency(items.Opening),
-                            formatIndianCurrency(items.Purchase),
-                            formatIndianCurrency(items.PR),
-                            formatIndianCurrency(items.NetP),
-                            formatIndianCurrency(items.Sales),
-                            formatIndianCurrency(items.SR),
-                            formatIndianCurrency(items.DR),
-                            formatIndianCurrency(items.NetSales),
-                            formatIndianCurrency(items.Closing),
-                            formatIndianCurrency(items.Outstanding),
-                            formatIndianCurrency(items.OSAbove30Days),
-                            items.ActiveCXCount
-                        ]).draw(false);
+                var Summaryresult = (typeof data === "string") ? JSON.parse(data.Table) : data.Table;
+                var OSresult = (typeof data === "string") ? JSON.parse(data.Table1) : data.Table1;
+                if (Summaryresult && Summaryresult.length > 0) {
+                    $('#tblBrandSummary').DataTable({
+                        scrollY: "350px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: false,
+                        info: false,
+                        destroy: true,
+                        data: OSresult,
+                        fixedColumns: false,
+                        searching: true,
+                        ordering: false,
+                        sorting: false,
+                        columns: [
+                            { "data": "ManufID", "autoWidth": true, visible: false, className: "dt-body-left" },
+                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },
+                            //OpenStockValue	InclOpenStockValue	GrossSalesValue	GrossSRValue	GrossDRValue	
+                            //GrossNetSales	NetSalesValue	NetSRValue	NetDRValue	NetNetSales	GrossBillValue	
+                            //GrossPRValue	GrossNetPurchase	NetBillValue	NetPRValue	NetNetPurchase	
+                            //StockValue	InclStockValue	DmgStockValue	InclDmgStockValue
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclOpening" id="exclOpen' + meta.row + '" class="exclField">' + formatIndianCurrency(value.OpenStockValue) + '</label>';
+                                    openingfield += '<label name="InclOpening" id="inclOpen' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclOpenStockValue) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            //purchae
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {                                    
+                                    var openingfield = '<label name="ExclGrossBillValue" id="exclGrossBillValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossBillValue) + '</label>';
+                                    openingfield += '<label name="InclGrossBillValue" id="inclGrossBillValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetBillValue) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclGrossPRValue" id="exclGrossPRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossPRValue) + '</label>';
+                                    openingfield += '<label name="InclGrossPRValue" id="inclGrossPRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetPRValue) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclGrossNetPurchase" id="exclGrossNetPurchase' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetPurchase) + '</label>';
+                                    openingfield += '<label name="InclGrossNetPurchase" id="inclGrossNetPurchase' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetPurchase) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            //sales
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclGrossSalesValue" id="exclGrossSalesValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSalesValue) + '</label>';
+                                    openingfield += '<label name="InclGrossSalesValue" id="inclGrossSalesValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSalesValue) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclGrossSRValue" id="exclGrossSRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSRValue) + '</label>';
+                                    openingfield += '<label name="InclGrossSRValue" id="inclGrossSRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSRValue) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclGrossDRValue" id="exclGrossDRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossDRValue) + '</label>';
+                                    openingfield += '<label name="InclGrossDRValue" id="inclGrossDRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetDRValue) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclGrossNetSales" id="exclGrossNetSales' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetSales) + '</label>';
+                                    openingfield += '<label name="InclGrossNetSales" id="inclGrossNetSales' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetSales) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            //closing
+                            //StockValue	InclStockValue
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclStockValue" id="exclStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.StockValue) + '</label>';
+                                    openingfield += '<label name="InclStockValue" id="inclStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclStockValue) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                            //DmgStockValue	InclDmgStockValue
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var openingfield = '<label name="ExclDmgStockValue" id="exclDmgStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.DmgStockValue) + '</label>';
+                                    openingfield += '<label name="InclDmgStockValue" id="inclDmgStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclDmgStockValue) + '</label>';
+                                    return value.Outstandings;
+                                },
+                            },
+                        ]
                     });
+                    tblBrandSummary = $('#tblBrandSummary').DataTable();
+                    //$.each(Summaryresult, function (i, items) {
+                    //    var openingvalue = 
+                    //    tblBrandSummary.row.add([
+                    //        items.ManufID,
+                    //        items.Name,
+                    //        formatIndianCurrency(items.Opening),
+                    //        formatIndianCurrency(items.Purchase),
+                    //        formatIndianCurrency(items.PR),
+                    //        formatIndianCurrency(items.NetP),
+                    //        formatIndianCurrency(items.Sales),
+                    //        formatIndianCurrency(items.SR),
+                    //        formatIndianCurrency(items.DR),
+                    //        formatIndianCurrency(items.NetSales),
+                    //        formatIndianCurrency(items.Closing),                           
+                    //    ]).draw(false);
+                    //});                                           
                 } else {
-                    showErrorSnackbar("No Records Found");
+                    showErrorSnackbar("No Records Found in Brand Summary");
                 }
+                if (OSresult && OSresult.length > 0) {
+
+                    $('#tblBrandOutstandings').DataTable({
+                        scrollY: "350px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: false,
+                        info: false,
+                        destroy: true,
+                        data: OSresult,
+                        fixedColumns: false,
+                        searching: true,
+                        ordering: false,
+                        sorting: false,
+                        columns: [
+                            { "data": "ManufID", "autoWidth": true,visible : false, className: "dt-body-left" },
+                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {                                    
+                                    return value.Outstandings;
+                                },
+                            },
+                            //{ "data": "Outstandings", "autoWidth": true, className: "dt-body-right" },
+                            { "data": "Last30DaysOS", "autoWidth": true, className: "dt-body-right" },
+                            { "data": "allsaleCustomers", "autoWidth": true, className: "dt-body-right" },
+                        ]                       
+                    });
+                    tblBrandOutstandings = $('#tblBrandOutstandings').DataTable();
+
+                } else {
+                    showErrorSnackbar("No Records Found in Brand Summary");
+                }
+                
             },
             error: function (data) {
                 if (data.status == "401") {
