@@ -25,10 +25,6 @@
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/GKBS_GRID_2.0/js/gridui.js"></script>
 <script src="~/Scripts/selection/select2.min.js"></script>
-
-@*<link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/5.0.4/css/fixedColumns.dataTables.min.css">
-
-    <script src="https://cdn.datatables.net/fixedcolumns/5.0.4/js/dataTables.fixedColumns.min.js"></script>*@
 <!DOCTYPE html>
 <html>
 <head>
@@ -599,6 +595,18 @@
                 width: 100%;
             }
         }
+
+        .input-group .select2-wrapped {
+            display: flex !important;
+            flex: 1 1 auto;
+            min-width: 0;
+            align-items: center;
+        }
+
+        .input-group .select2-container {
+            flex: 1 1 auto;
+            width: 100% !important;
+        }
     </style>
 </head>
 <body>
@@ -647,13 +655,34 @@
                                 </div>
                                 <!-- Vehicle No -->
                                 <div class="col-12 col-md-2">
-                                    <span class="form-label field-with-icon select2-wrapped">
-                                        <i class="bi bi-truck-front field-icon"></i>
-                                        <select id="cmbVehicleNo" style="width:100%;">
-                                        </select>
-                                        <label class="labelup">Vehicle No *</label>
-                                    </span>
-                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrVehicleNo" class="clrdivs"></div>
+
+                                    <div class="input-group flex-nowrap">
+
+                                        <!-- Open Vehicle button -->
+                                        <span id="openvehicle"
+                                              class="input-group-text"
+                                              title="Add/Edit Vehicle"
+                                              style="cursor:pointer;">
+                                            <span class="fas fa-arrow-up-right-from-square"></span>
+                                        </span>
+
+                                        <!-- Vehicle Select -->
+                                        <span class="form-label field-with-icon select2-wrapped flex-grow-1"
+                                              style="min-width:0;">
+                                            <i class="bi bi-truck-front field-icon"></i>
+
+                                            <select id="cmbVehicleNo" style="width:100%;">
+                                            </select>
+
+                                            <label class="labelup">Vehicle No *</label>
+                                        </span>
+
+                                    </div>
+
+                                    <div id="divErrVehicleNo"
+                                         class="clrdivs"
+                                         style="color:red; padding-top:5px; padding-left:5px;">
+                                    </div>
 
                                 </div>
 
@@ -1277,7 +1306,7 @@
     });
 
         // ================= Drag & Drop Import Upload =================
-        
+
     (function () {
         var dropZone = document.getElementById('dropZone');
         var fileInput = document.getElementById('txtImportFile');
@@ -1352,7 +1381,7 @@
     })();
 
     getVehicle();
-        function getVehicle() {   
+        function getVehicle() {
             $('#cmbVehicleNo').find("option").remove();
             $('#cmbVehicleNo').append($('<option/>', { value: "", text: "" }));
         $.ajax({
@@ -1366,7 +1395,7 @@
             success: function (data) {
                 console.log(data);
                 var vehicles = eval(data);
-                if (data.length > 0) {                    
+                if (data.length > 0) {
                     $.each(vehicles, function (i, items) {
                         $('#cmbVehicleNo').append($('<option/>', { value: items.ID, text: items.VehicleNo }));
                     });
@@ -1401,7 +1430,7 @@
             isvalid = false;
             $("#divErrEwayDocID").html("Enter valid Doc ID");
             showErrorSnackbar("Enter valid Doc ID");
-        }        
+        }
         if ($('#cmbVehicleNo').val() == 0) {
             $("#divErrVehicleNo").html("Select Vehicle No");
             showErrorSnackbar("Select Vehicle No");
@@ -1415,7 +1444,7 @@
             var From = $("#dtpCommonDocFilterFrom").val();
             var To = $("#dtpCommonDocFilterTo").val();
             var lst = {
-                "TypeID": $("#cmbEwayType").val(), 
+                "TypeID": $("#cmbEwayType").val(),
                 "VehicleNo": $("#cmbVehicleNo").val(),
                 "Distance": 0,
                 "TransportType": $("#cmbTransportType option:selected").text(),
@@ -1452,7 +1481,7 @@
             /*modalFilterModal.style.display = "block";*/
             modalFilterModal.show();
             $("#txtcommonfilterapplyfieldid").val("txtEwayDocID");
-            var ewaytransid = $("#cmbEwayType").val() == 1 ? 4 : 23//Invoice or Loading Slip 
+            var ewaytransid = $("#cmbEwayType").val() == 1 ? 4 : 23//Invoice or Loading Slip
             $("#txtcommonfilterapplytransid").val(ewaytransid);
 
             //$("#txtCommonDocFilterRange").val("24,3242,343");
@@ -1484,7 +1513,74 @@
 
             });
         });
+         var Url = '@Session["url"].ToString()';
+        $("#openvehicle").click(function (e) {
+            var nvhID = $("#cmbVehicleNo").val() != "" ? $("#cmbVehicleNo").val() : 0;
+            vw = window.innerWidth;
+            vh = window.innerHeight;
+            const hasPermission = nvhID == 0
+                ? checkAddEditPermission("75")
+                : checkAddEditPermission("76");
+            if (hasPermission) {
+                var ProdUrl = Url + "VehicleMaster?name=7O66uN%2FkROyeg6Gr1WYoaQ%3D%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nvhID;
+                window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+            }
+            else {
+                showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nvhID == 0 ? "Add" : "Edit") + " Vehicle </code></h4>");
+            }
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "F8") {
+                event.preventDefault();
+                var FieldID = event.target.id;
+                var FieldName = event.target.name;
+                $("#openvehicle").trigger("click");
+                //if (FieldID == "cmbVehicleNo") {
+                //    $("#openvehicle").trigger("click");
+                //}
+            }
 
+
+        });
+        window.addEventListener("message", function (event) {
+            var data = event.data;
+            if (data && data.source === "Vehicle") {
+                var VehicleID = data.vehicleid;
+                var VehicleNo = data.vehicleno;
+
+                ReloadF8Autolistdata("vehicle", null, null, VehicleID);
+            }
+        });
+        function ReloadF8Autolistdata(strForm, strSub, strValue, strAssignValue) {
+            $.ajax({
+                url: Aurl + "masterlist",
+                type: 'get',
+                contentType: 'json',
+                data: {
+                    FormName: strForm, SubField: strSub, Value: strValue
+                },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    if (strForm == "vehicle") {
+                        $('#cmbVehicleNo').find("option").remove();
+                        $('#cmbVehicleNo').append($('<option/>', {
+                            value: 0,
+                            text: "-- Select --",
+                        }));
+                        $.each(data, function (i, items) {
+                            $('#cmbVehicleNo').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                            $('#cmbVehicleNo').val(strAssignValue).trigger('change');
+                        });
+
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

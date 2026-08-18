@@ -301,9 +301,221 @@
     div.dt-container div.dt-layout-row {
         margin: 0 !important;
     }
+
+    /* ===== Brand Summary Overlay ===== */
+    /* Adjust --navbar-height to match the real height of the top menu bar
+       rendered by _LayoutBT5, so the overlay never covers the existing menus. */
+    :root {
+        --navbar-height: 15px;
+    }
+
+    .overlay-toggle-btn {
+        position: fixed;
+        top: 50px;
+        right: 0;
+        z-index: 2200;
+        width: 20px;
+        height: 65px;
+        border: none;
+        border-radius: 50% 0 0 50%;
+        background: var(--primary-color);
+        color: #fff;
+        box-shadow: -3px 4px 14px rgba(0,0,0,0.28);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: right 0.45s cubic-bezier(0.4, 0, 0.2, 1), left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.45s ease, transform 0.25s ease, background 0.25s ease;
+    }
+
+        .overlay-toggle-btn:hover {
+            transform: scale(1.08);
+            background: #3a7bc8;
+        }
+
+        .overlay-toggle-btn:active {
+            transform: scale(0.96);
+        }
+
+        .overlay-toggle-btn .toggle-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .overlay-toggle-btn .toggle-icon svg {
+                width: 100%;
+                height: 100%;
+                stroke: #fff;
+                fill: none;
+                stroke-width: 2.4;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+
+        /* Open state: button detaches from the right edge and docks on the left edge */
+        .overlay-toggle-btn.overlay-open {
+            right: auto;
+            left: 0;
+            border-radius: 0 50% 50% 0;
+            box-shadow: 3px 4px 14px rgba(0,0,0,0.28);
+        }
+
+    .brand-overlay {
+        position: fixed;
+        top: var(--navbar-height);
+        right: -100%;
+        width: 100%;
+        height: calc(100% - var(--navbar-height));
+        background: var(--bg-color);
+        z-index: 2050;
+        box-shadow: -8px 0 30px rgba(0,0,0,0.25);
+        transition: right 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        padding: 10px 10px 5px 20px;
+    }
+
+        .brand-overlay.active {
+            right: 0;
+        }
+
+    .brand-overlay-header {
+        margin-bottom: 15px;
+    }
+
+        .brand-overlay-header h4 {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 18px;
+            margin: 0;
+        }
+
+
+        .brand-overlay-filters .form-group {
+            margin-bottom: 0;
+        }
+
+    .brand-overlay-inclusive {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 5px;
+    }
+
+        .brand-overlay-inclusive label {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color:black;
+        }
+
+    #btnOverlayGenerate {
+        margin-top: 8px;
+        white-space: nowrap;
+    }
+
+    .brand-overlay-table table.dataTable tbody td {
+        text-align: right;
+    }
+
+        .brand-overlay-table table.dataTable tbody td:first-child {
+            text-align: left;
+        }
 </style>
 <body>
     <div class="toastBox"></div>
+
+    <!-- Overlay Toggle Button (docks on the right edge when closed, left edge when open) -->
+    <button type="button" id="btnToggleBrandOverlay" class="overlay-toggle-btn" title="Open Brand Summary">
+        <span class="toggle-icon" id="iconToggleOverlay">
+            <!-- Modern open (chevron) icon -->
+            <svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"></polyline></svg>
+        </span>
+    </button>
+
+    <!-- Brand Summary Overlay -->
+    <div class="brand-overlay" id="brandSummaryOverlay">
+       
+
+        <div class="modern-card brand-overlay-filters">
+            <div class="row">
+                
+                <div class="col-xs-12 col-sm-6 col-md-3 form-group form-label">
+                    <div class="brand-overlay-header">
+                        <h4><span class="glyphicon glyphicon-stats"></span> Brand Summary</h4>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-3 form-group form-label">
+                    <select class="form-control" id="cmbOverlayBranch">
+                        <option value="0">-- All --</option>
+                    </select>
+                    <label class="labelup">Branch</label>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-2 form-group form-label">
+                    <input type="date" class="form-control" id="txtOverlayFromDate" autocomplete="off" />
+                    <label class="labelup">From Date</label>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-2 form-group form-label">
+                    <input type="date" class="form-control" id="txtOverlayToDate" autocomplete="off" />
+                    <label class="labelup">To Date</label>
+                </div>
+                <div class="col-xs-6 col-sm-3 col-md-1">
+                    <div class="brand-overlay-inclusive">
+                        <input type="checkbox" id="chkOverlayInclusive" />
+                        <label for="chkOverlayInclusive">Inclusive</label>
+                    </div>
+                </div>
+                <div class="col-xs-6 col-sm-3 col-md-1">
+                    <button type="button" id="btnOverlayGenerate" class="btn btn-primary btn-block">
+                        <span class="glyphicon glyphicon-play"></span> Generate
+                    </button>
+                </div>
+            </div>
+            <div style="color: red; font-size: 11px;" id="divErrOverlayFilter"></div>
+        </div>
+
+        <div class="modern-card brand-overlay-table">
+            <div class="row">
+                <div class="col-sm-12 col-md-8 col-lg-8">
+                    <table class="table" id="tblBrandSummary" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>ManufID</th>
+                                <th>Brand</th>
+                                <th style="text-align:right;">Opening</th>
+                                <th style="text-align:right;">Purchase</th>
+                                <th style="text-align:right;">PR</th>
+                                <th style="text-align:right;">NET P</th>
+                                <th style="text-align:right;">Sales</th>
+                                <th style="text-align:right;">SR</th>
+                                <th style="text-align:right;">DR</th>
+                                <th style="text-align:right;">NET Sales</th>
+                                <th style="text-align:right;">Closing</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="col-sm-12 col-md-4 col-lg-4">
+                    <table class="table" id="tblBrandOutstandings" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>ManufID</th>
+                                <th>Brand</th>
+                                <th style="text-align:right;">Outstanding</th>
+                                <th style="text-align:right;">&gt;30 days O/S</th>
+                                <th style="text-align:right;">Active CX Count</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>                      
+        </div>
+    </div>
     @Html.HiddenFor(model => model.CollectionDetailEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtCollectionDetailEnable" })
     @Html.HiddenFor(model => model.ChequeDetailEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtChequeDetailEnable" })
     @Html.HiddenFor(model => model.TransVariantEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtTransVariantEnable" })
@@ -471,7 +683,7 @@
                             </table>
                         </div>
 
-                    </div>                    
+                    </div>
                     <!-- Details Tables Column -->
                     <div class="col-md-7 col-lg-7">
                         <div class="col-md-12 dvBalances" style="margin-bottom: 10px;">
@@ -513,7 +725,7 @@
                                     <option value="4">Quarter</option>
                                     <option value="5">All</option>
                                 </select>
-                            </div>                            
+                            </div>
                             <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 250px;">
                                     <table class="table" id="tblCollectionDetail">
@@ -721,6 +933,28 @@
         "columnDefs": [{ "targets": [1,2,3], "class": "dt-body-right" }],
 
     });
+    var tblBrandSummary = $('#tblBrandSummary').DataTable({
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "450px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [1,2,3,4,5,6,7,8,9], "class": "dt-body-right" }],
+    });
+    var tblBrandOutstandings = $('#tblBrandOutstandings').DataTable({
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "450px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [1, 2, 3], "class": "dt-body-right" }],
+    });
     
     var collectionChart = null;
     //$('#cmbTransactionTimeFilter,#cmbTimeFilter').val(HomePeriod);
@@ -895,7 +1129,7 @@
     if ($("#txtTransactionSummaryEnable").val() == 0) {
         $("#dvTransSummaryDetail").hide();
     }
-    LoadBranchByRoles('#cmbBranch');
+    LoadBranchByRoles('#cmbBranch,#cmbOverlayBranch');
     GetData(1, 0);
     GetData(5, 0);
     GetData(8, 0);
@@ -1031,6 +1265,10 @@
                         value: 0,
                         text: "-- Select --",
                     }));
+                    $('#cmbManuf').append($('<option/>', {
+                        value: 0,
+                        text: "-- All --",
+                    }));
                     var transdata = data.Table;
                     if (transdata.length > 0) {
                         $.each(transdata, function (i, items) {
@@ -1053,7 +1291,7 @@
                     });
                     var BranchID = $('#cmbBranch').val();
                     var firstmfrid = Mfrs[0].ID;
-                    GetData(12, BranchID, firstmfrid);
+                    GetData(12, BranchID, 0);
                 }
                 if (nMode == 8) {
                     $("#dvStockvalue").html("₹ 0.00");
@@ -1093,7 +1331,7 @@
                 if (nMode == 12) {
                     tblStockInHand.draw().clear(); tblStockInHand.draw().clear();
                     console.log("data", data);
-                    
+
                     if (data.length > 0) {
                         $.each(data, function (i, items) {
                             tblStockInHand.row.add([
@@ -1103,7 +1341,7 @@
                                 formatIndianCurrency(items.InclPrice)
                             ]).draw(false);
                         });
-                        
+
                     }
                 }
             }
@@ -1168,7 +1406,7 @@
             OpenTransactionDocument(dTransID, DocID);
         }
     });
-    
+
     getCollectionData(HomePeriod);
     getTransactionData(HomePeriod);
     function getCollectionData(FType) {
@@ -1594,4 +1832,158 @@
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code>Cheque In Hand</code></h4>");
         }
     });
+
+    /* ===================== Brand Summary Overlay ===================== */
+
+    // Toggle overlay open / close with animation, move the button between the
+    // right corner (closed) and left corner (open), and swap to a modern SVG icon.
+    var ICON_OPEN = '<svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"></polyline></svg>';   // chevron-left = click to open
+    var ICON_CLOSE = '<svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>'; // X = click to close
+    setDate("txtOverlayFromDate", 2);
+    setDate("txtOverlayToDate", 0);
+    $('#btnToggleBrandOverlay').click(function (e) {
+        e.preventDefault();
+        var $overlay = $('#brandSummaryOverlay');
+        var $icon = $('#iconToggleOverlay');
+        var $btn = $(this);
+
+        if ($overlay.hasClass('active')) {
+            // Collapse overlay - button returns to the right corner
+            $overlay.removeClass('active');
+            $btn.removeClass('overlay-open');
+            $icon.html(ICON_OPEN);
+            $btn.attr('title', 'Open Brand Summary');
+        } else {
+            // Expand overlay to cover the body - button docks on the left corner
+            $overlay.addClass('active');
+            $btn.addClass('overlay-open');
+            $icon.html(ICON_CLOSE);
+            $btn.attr('title', 'Close Brand Summary');            
+        }
+    });
+
+    // Populate the Brand dropdown inside the overlay
+    var brandOverlayLoaded = false;
+    function PopulateOverlayBrandDropdown() {
+        if (brandOverlayLoaded) return;
+
+        // Reuse the Manufacturer/Brand list already loaded in #cmbManuf if available
+        if ($('#cmbManuf option').length > 1) {
+            $('#cmbOverlayBranch').find('option').remove();
+            $('#cmbOverlayBranch').append($('<option/>', { value: 0, text: '-- All --' }));
+            $('#cmbManuf option').each(function () {
+                if ($(this).val() != 0) {
+                    $('#cmbOverlayBranch').append($('<option/>', {
+                        value: $(this).val(),
+                        text: $(this).text()
+                    }));
+                }
+            });
+            brandOverlayLoaded = true;
+        } else {
+            // Fallback: fetch brand/manufacturer list directly from the API
+            // NOTE: update the endpoint below ("manufacturer/getall") to match your actual API route.
+            $.ajax({
+                url: Aurl + "manufacturer/getall",
+                type: 'get',
+                contentType: 'json',
+                xhrFields: { withCredentials: true },
+                success: function (data) {
+                    $('#cmbOverlayBranch').find('option').remove();
+                    $('#cmbOverlayBranch').append($('<option/>', { value: 0, text: '-- All --' }));
+                    $.each(data, function (i, items) {
+                        $('#cmbOverlayBranch').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name
+                        }));
+                    });
+                    brandOverlayLoaded = true;
+                },
+                error: function () {
+                    // Silently ignore - dropdown will just keep the "All" option
+                }
+            });
+        }
+    }
+
+    // Generate button - validate filters and load the Brand Summary table
+    $('#btnOverlayGenerate').click(function (e) {
+        e.preventDefault();
+        $('#divErrOverlayFilter').html('');
+
+        var BrandID = $('#cmbOverlayBranch').val();
+        var FromDate = $('#txtOverlayFromDate').val();
+        var ToDate = $('#txtOverlayToDate').val();
+        var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
+
+        var isValid = true;
+        if (!FromDate) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('Select From Date');
+        } else if (!ToDate) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('Select To Date');
+        } else if (new Date(FromDate) > new Date(ToDate)) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('From Date cannot be greater than To Date');
+        }
+
+        if (!isValid) {
+            showErrorSnackbar($('#divErrOverlayFilter').html());
+            return;
+        }
+
+        GetBrandSummaryData(BrandID, FromDate, ToDate, Inclusive);
+    });
+
+    // Fetch and bind the Brand Summary report table
+    function GetBrandSummaryData(BrandID, FromDate, ToDate, Inclusive) {
+        tblBrandSummary.clear().draw();
+
+        // NOTE: update the endpoint below ("homescreen/getbrandsummary") to match your actual API route.
+        $.ajax({
+            url: Aurl + "homescreen/getbrandsummary",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                BrandID: BrandID,
+                FromDate: FromDate,
+                ToDate: ToDate,
+                Inclusive: Inclusive
+            },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                var result = (typeof data === "string") ? JSON.parse(data) : data;
+                if (result && result.length > 0) {
+                    $.each(result, function (i, items) {
+                        tblBrandSummary.row.add([
+                            items.Brand,
+                            formatIndianCurrency(items.Opening),
+                            formatIndianCurrency(items.Purchase),
+                            formatIndianCurrency(items.PR),
+                            formatIndianCurrency(items.NetP),
+                            formatIndianCurrency(items.Sales),
+                            formatIndianCurrency(items.SR),
+                            formatIndianCurrency(items.DR),
+                            formatIndianCurrency(items.NetSales),
+                            formatIndianCurrency(items.Closing),
+                            formatIndianCurrency(items.Outstanding),
+                            formatIndianCurrency(items.OSAbove30Days),
+                            items.ActiveCXCount
+                        ]).draw(false);
+                    });
+                } else {
+                    showErrorSnackbar("No Records Found");
+                }
+            },
+            error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                } else {
+                    showErrorSnackbar("Unable to load Brand Summary data");
+                }
+            }
+        });
+    }
 </script>

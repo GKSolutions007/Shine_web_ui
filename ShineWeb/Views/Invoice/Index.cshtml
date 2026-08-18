@@ -1093,10 +1093,19 @@
                                 <div class="inv-tab-panel" id="inv-panel-1" style="display:none;">
                                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 2px;padding-top:3px;">
                                         <div>
-                                            <span class="form-label">
-                                                <select class="form-control FormclrcmbField" id="cmbVehicleNo"><option value="0">Select Vehicle No</option></select>
-                                                <label class="labelup">Vehicle No *</label>
-                                            </span>
+                                            @*<span class="form-label">
+            <select class="form-control FormclrcmbField" id="cmbVehicleNo"><option value="0">Select Vehicle No</option></select>
+            <label class="labelup">Vehicle No *</label>
+        </span>*@
+                                            <div class="input-group">
+                                                <span id="openvehicle" class="input-group-text" title="New Vehicle" style="cursor:pointer;">
+                                                    <i class="fas fa-arrow-up-right-from-square"></i>
+                                                </span>
+                                                <span class="form-label">
+                                                    <select class="form-control FormclrcmbField" id="cmbVehicleNo"><option value="0">Select Vehicle No</option></select>
+                                                    <label class="labelup">Vehicle No *</label>
+                                                </span>
+                                            </div>
                                             <div class="text-danger ps-1 clrdivs" id="divErrVehicleNo"></div>
                                         </div>
                                         <div>
@@ -1845,10 +1854,19 @@
                 </div>
                 <div class="modal-body">
                     <div style="padding:10px 0;display:flex;flex-direction:column;gap:10px;">
-                        <span class="form-label">
-                            <select class="form-control FormclrcmbField" id="cmbVehicleNoModal"><option value="0">Select Vehicle No</option></select>
-                            <label class="labelup">Vehicle No *</label>
-                        </span>
+                        @*<span class="form-label">
+            <select class="form-control FormclrcmbField" id="cmbVehicleNoModal"><option value="0">Select Vehicle No</option></select>
+            <label class="labelup">Vehicle No *</label>
+        </span>*@
+                        <div class="input-group">
+                            <span id="openvehicle" class="input-group-text" title="New Vehicle" style="cursor:pointer;">
+                                <i class="fas fa-arrow-up-right-from-square"></i>
+                            </span>
+                            <span class="form-label">
+                                <select class="form-control FormclrcmbField" id="cmbVehicleNoModal"><option value="0">Select Vehicle No</option></select>
+                                <label class="labelup">Vehicle No *</label>
+                            </span>                           
+                        </div>
                         <span class="form-label">
                             <input type="number" txttag="0" class="form-control FormclrField" id="txtDistanceModal" />
                             <label class="labelup">Distance</label>
@@ -5959,8 +5977,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var excattr = $(prexc);
                         var fexclid = excattr[0].id;
 
+                        var mrponcell = Prodrowdata[24];
+                        var mrontr = $(mrponcell);
+                        var mrponcumfield = mrontr[3].id;
+                        var ApponMRPCum = parseFloat(document.getElementById(mrponcumfield).getAttribute("lbltag"));
+                        var mrpontaxamtfield = mrontr[4].id;
+                        var TotMRPonTaxAmt = parseFloat(document.getElementById(mrpontaxamtfield).getAttribute("lbltag"));
+
                         updateInputColumn(fexclid, shpri);
-                        var incl = parseFloat(shpri) * tx;
+                        var incl = ApponMRPCum > 0 ? parseFloat(shpri) + TotMRPonTaxAmt :  parseFloat(shpri) * tx;
                         //var princl = Prodrowdata[17];
                         //var incattr = $(princl);
                         var finclid = excattr[2].id;
@@ -8003,6 +8028,24 @@ if ($("#txtReurnPricePerm").val() == 0) {
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nPartyID == 0 ? "Add" : "Edit") + " Customer </code></h4>");
         }
     });
+    //openvehicle
+    $("#openvehicle").click(function (e) {
+        var nvhID = $("#cmbVehicleNo").val() != "" ? $("#cmbVehicleNo").val() : 0;
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        //var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+        //window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        const hasPermission = nvhID == 0
+            ? checkAddEditPermission("75")
+            : checkAddEditPermission("76");
+        if (hasPermission) {
+            var ProdUrl = Url + "VehicleMaster?name=7O66uN%2FkROyeg6Gr1WYoaQ%3D%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nvhID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nvhID == 0 ? "Add" : "Edit") + " Vehicle </code></h4>");
+        }
+    });
     $("#btnAddNewProduct").click(function (e) {
         vw = window.innerWidth;
         vh = window.innerHeight;
@@ -8038,6 +8081,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 GetData(4, code, CustID);
             }
         }
+        else if (data && data.source === "Vehicle") {
+            var VehicleID = data.vehicleid;
+            var VehicleNo = data.vehicleno;
+
+            ReloadF8Autolistdata("vehicle", null, null, VehicleID);
+        }
     });
     document.addEventListener("keydown", function (event) {
         if (event.key === "F8") {
@@ -8046,6 +8095,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var FieldName = event.target.name;
             if (FieldID == "txtSearch") {
                 $("#opencustomer").trigger("click");
+            }
+            if (FieldID == "cmbVehicleNo") {
+                $("#openvehicle").trigger("click");
             }
             if (FieldName == "ProdName") {
                 //console.log("editingRow ", editingRow.data());
@@ -8098,6 +8150,37 @@ if ($("#txtReurnPricePerm").val() == 0) {
         //}
 
     });
+    
+    function ReloadF8Autolistdata(strForm, strSub,strValue,strAssignValue) {
+        $.ajax({
+            url: Aurl + "masterlist",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                FormName: strForm, SubField: strSub, Value: strValue
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (strForm == "vehicle") {
+                    $('#cmbVehicleNo').find("option").remove();
+                    $('#cmbVehicleNo').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        $('#cmbVehicleNo').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                        $('#cmbVehicleNo').val(strAssignValue);
+                    });
+                    
+                }
+            }
+        });
+    }
     function invSwitchTab(idx, btn) {
         //inv-panel-0,inv-panel-1,inv-panel-2
         if (idx == 0) {
