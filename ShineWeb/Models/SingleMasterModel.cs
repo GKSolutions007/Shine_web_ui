@@ -80,6 +80,6 @@ namespace ShineWeb.Models
         public string QuickAccess { get; set; }
         public string PendingDraft { get; set; }
         public string TransactionSummary { get; set; }
-
+        public string BrandSummary { get; set; }
     }
 }

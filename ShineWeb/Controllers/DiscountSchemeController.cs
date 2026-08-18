@@ -12,7 +12,7 @@ namespace ShineWeb.Controllers
     public class DiscountSchemeController : Controller
     {
         clsBusinessLayer objBL = new clsBusinessLayer();
-        public ActionResult Index(string Name, string strFormID)
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string ID = "0")
         {
             if (Session["LoginUserID"] == null)
             {
@@ -22,8 +22,10 @@ namespace ShineWeb.Controllers
             {
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
+                TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
+                ViewData["TransType"] = TypeID;
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string AddPerm = dtPermission.Select("MenuName = 'Add " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 ? "1" : "0";
@@ -37,6 +39,8 @@ namespace ShineWeb.Controllers
                 dam.Variant = VarPerm;
                 dam.View = ViewPerm;
                 dam.EnableReturnPrice = EnableReturn;
+                dam.TransType = TypeID;
+                dam.ID = ID;
                 return View(dam);
             }
         }

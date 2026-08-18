@@ -417,13 +417,15 @@
         white-space: nowrap;
     }
 
-    .brand-overlay-table table.dataTable tbody td {
-        text-align: right;
-    }
+    
 
         .brand-overlay-table table.dataTable tbody td:first-child {
             text-align: left;
         }
+
+    .dt-input{
+        color:black !important;
+    }
 </style>
 <body>
     <div class="toastBox"></div>
@@ -438,34 +440,44 @@
 
     <!-- Brand Summary Overlay -->
     <div class="brand-overlay" id="brandSummaryOverlay">
-       
+
 
         <div class="modern-card brand-overlay-filters">
             <div class="row">
-                
-                <div class="col-xs-12 col-sm-6 col-md-3 form-group form-label">
+
+                <div class="col-xs-12 col-sm-6 col-md-4 form-group form-label">
                     <div class="brand-overlay-header">
                         <h4><span class="glyphicon glyphicon-stats"></span> Brand Summary</h4>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-6 col-md-3 form-group form-label">
-                    <select class="form-control" id="cmbOverlayBranch">
-                        <option value="0">-- All --</option>
-                    </select>
-                    <label class="labelup">Branch</label>
+                    <div class="form-group form-label">
+                        <select class="form-control" id="cmbOverlayBranch">
+                            <option value="0">-- All --</option>
+                        </select>
+                        <label class="labelup">Branch</label>
+                    </div>
+
                 </div>
-                <div class="col-xs-12 col-sm-6 col-md-2 form-group form-label">
-                    <input type="date" class="form-control" id="txtOverlayFromDate" autocomplete="off" />
-                    <label class="labelup">From Date</label>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <select class="form-control gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
                 </div>
-                <div class="col-xs-12 col-sm-6 col-md-2 form-group form-label">
-                    <input type="date" class="form-control" id="txtOverlayToDate" autocomplete="off" />
-                    <label class="labelup">To Date</label>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <div class="form-group form-label">
+                        <input type="date" class="form-control" id="dtpFFrom" autocomplete="off" />
+                        <label class="labelup">From Date</label>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <div class="form-group form-label">
+                        <input type="date" class="form-control" id="dtpFTo" autocomplete="off" />
+                        <label class="labelup">To Date</label>
+                    </div>
                 </div>
                 <div class="col-xs-6 col-sm-3 col-md-1">
                     <div class="brand-overlay-inclusive">
                         <input type="checkbox" id="chkOverlayInclusive" />
-                        <label for="chkOverlayInclusive">Inclusive</label>
+                        <label for="chkOverlayInclusive">With Tax</label>
                     </div>
                 </div>
                 <div class="col-xs-6 col-sm-3 col-md-1">
@@ -479,7 +491,7 @@
 
         <div class="modern-card brand-overlay-table">
             <div class="row">
-                <div class="col-sm-12 col-md-8 col-lg-8">
+                <div class="col-sm-12 col-md-12 col-lg-12">
                     <table class="table" id="tblBrandSummary" style="width:100%;">
                         <thead>
                             <tr>
@@ -488,33 +500,22 @@
                                 <th style="text-align:right;">Opening</th>
                                 <th style="text-align:right;">Purchase</th>
                                 <th style="text-align:right;">PR</th>
-                                <th style="text-align:right;">NET P</th>
+                                <th style="text-align:right;">NET Purchase</th>
                                 <th style="text-align:right;">Sales</th>
                                 <th style="text-align:right;">SR</th>
                                 <th style="text-align:right;">DR</th>
                                 <th style="text-align:right;">NET Sales</th>
                                 <th style="text-align:right;">Closing</th>
                                 <th style="text-align:right;">Dmg Closing</th>
+                                <th style="text-align:center;" title="Outstandings/Invoice Count/Customer Count">OS/INV/CX</th>
+                                <th style="text-align:right;">&gt;30 days</th>
+                                <th style="text-align:right;" title="Total Customer Count">Cx Count</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
-                </div>
-                <div class="col-sm-12 col-md-4 col-lg-4">
-                    <table class="table" id="tblBrandOutstandings" style="width:100%;">
-                        <thead>
-                            <tr>
-                                <th>ManufID</th>
-                                <th>Brand</th>
-                                <th style="text-align:center;">Outstanding<br />OS ₹/INV/CX</th>
-                                <th style="text-align:right;">&gt;30 days O/S</th>
-                                <th style="text-align:right;">Active CX Count</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>                      
+                </div>               
+            </div>
         </div>
     </div>
     @Html.HiddenFor(model => model.CollectionDetailEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtCollectionDetailEnable" })
@@ -525,7 +526,8 @@
     @Html.HiddenFor(model => model.QuickAccess, new { @autocomplete = "off", @class = "form-control", @id = "txtQuickAccessEnable" })
     @Html.HiddenFor(model => model.PendingDraft, new { @autocomplete = "off", @class = "form-control", @id = "txtPendingDraftEnable" })
     @Html.HiddenFor(model => model.TransactionSummary, new { @autocomplete = "off", @class = "form-control", @id = "txtTransactionSummaryEnable" })
-
+    @Html.HiddenFor(model => model.BrandSummary, new { @autocomplete = "off", @class = "form-control", @id = "txtBrandSummaryEnable" })
+    
 
     <div class="container-fluid" style="padding: 10px;">
         <div class="row">
@@ -940,22 +942,11 @@
         "bInfo": true,
         "bPaginate": true,
         "ordering": true,
-        scrollY: "450px",
+        scrollY: "425px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [1,2,3,4,5,6,7,8,9,10], "class": "dt-body-right" }],
-    });
-    var tblBrandOutstandings = $('#tblBrandOutstandings').DataTable({
-        "bFilter": true,
-        "bSearchable": true,
-        "bInfo": true,
-        "bPaginate": true,
-        "ordering": true,
-        scrollY: "450px",
-        scrollX: true,
-        scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }, { "targets": [1, 2, 3], "class": "dt-body-right" }],
-    });
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
+    });    
     
     var collectionChart = null;
     //$('#cmbTransactionTimeFilter,#cmbTimeFilter').val(HomePeriod);
@@ -1130,6 +1121,10 @@
     if ($("#txtTransactionSummaryEnable").val() == 0) {
         $("#dvTransSummaryDetail").hide();
     }
+    if ($("#txtBrandSummaryEnable").val() == 0) {
+        $("#btnToggleBrandOverlay").hide();
+    }
+    var brandsummaryfirstclick = true;
     LoadBranchByRoles('#cmbBranch,#cmbOverlayBranch');
     GetData(1, 0);
     GetData(5, 0);
@@ -1840,14 +1835,17 @@
     // right corner (closed) and left corner (open), and swap to a modern SVG icon.
     var ICON_OPEN = '<svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"></polyline></svg>';   // chevron-left = click to open
     var ICON_CLOSE = '<svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>'; // X = click to close
-    setDate("txtOverlayFromDate", 2);
-    setDate("txtOverlayToDate", 0);
+    setDate("dtpFFrom", 2);
+    setDate("dtpFTo", 0);
     $('#btnToggleBrandOverlay').click(function (e) {
         e.preventDefault();
         var $overlay = $('#brandSummaryOverlay');
         var $icon = $('#iconToggleOverlay');
         var $btn = $(this);
-
+        if (brandsummaryfirstclick) {
+            brandsummaryfirstclick = false;
+            $("#btnOverlayGenerate").trigger('click');
+        }
         if ($overlay.hasClass('active')) {
             // Collapse overlay - button returns to the right corner
             $overlay.removeClass('active');
@@ -1870,8 +1868,8 @@
         $('#divErrOverlayFilter').html('');
 
         var BranchID = $('#cmbOverlayBranch').val();
-        var FromDate = $('#txtOverlayFromDate').val();
-        var ToDate = $('#txtOverlayToDate').val();
+        var FromDate = $('#dtpFFrom').val();
+        var ToDate = $('#dtpFTo').val();
         var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
 
         var isValid = true;
@@ -1893,12 +1891,21 @@
 
         GetBrandSummaryData(BranchID, FromDate, ToDate, Inclusive);
     });
+    $('#chkOverlayInclusive').click(function (e) {
 
+        var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
+        if (Inclusive == 1) {            
+            $(".inclField").show();
+            $(".exclField").hide();
+        }
+        else {
+            $(".inclField").hide();
+            $(".exclField").show();
+        }
+    });
     // Fetch and bind the Brand Summary report table
     function GetBrandSummaryData(nBranchID, FromDate, ToDate, Inclusive) {
         tblBrandSummary.clear().draw();
-        tblBrandOutstandings.clear().draw();
-        // NOTE: update the endpoint below ("homescreen/getbrandsummary") to match your actual API route.
         $.ajax({
             url: Aurl + "homescreen/brandsummary",
             type: 'get',
@@ -1911,91 +1918,87 @@
             xhrFields: { withCredentials: true },
             success: function (data) {
                 var Summaryresult = (typeof data === "string") ? JSON.parse(data.Table) : data.Table;
-                var OSresult = (typeof data === "string") ? JSON.parse(data.Table1) : data.Table1;
                 if (Summaryresult && Summaryresult.length > 0) {
+                    console.log(" Summaryresult ", Summaryresult);
                     $('#tblBrandSummary').DataTable({
-                        scrollY: "350px",
+                        scrollY: "425px",
                         scrollX: true,
                         scrollCollapse: true,
                         paging: false,
                         info: false,
                         destroy: true,
-                        data: OSresult,
+                        data: Summaryresult,
                         fixedColumns: false,
                         searching: true,
                         ordering: false,
                         sorting: false,
                         columns: [
                             { "data": "ManufID", "autoWidth": true, visible: false, className: "dt-body-left" },
-                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },
-                            //OpenStockValue	InclOpenStockValue	GrossSalesValue	GrossSRValue	GrossDRValue	
-                            //GrossNetSales	NetSalesValue	NetSRValue	NetDRValue	NetNetSales	GrossBillValue	
-                            //GrossPRValue	GrossNetPurchase	NetBillValue	NetPRValue	NetNetPurchase	
-                            //StockValue	InclStockValue	DmgStockValue	InclDmgStockValue
+                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },                           
                             {
-                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                className: "dt-body-right", ordering: false, sorting: false,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclOpening" id="exclOpen' + meta.row + '" class="exclField">' + formatIndianCurrency(value.OpenStockValue) + '</label>';
-                                    openingfield += '<label name="InclOpening" id="inclOpen' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclOpenStockValue) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclOpening" id="exclOpen' + meta.row + '" class="exclField">' + formatIndianCurrency(value.OpenStockValue) + '</label>';
+                                    cellfield += '<label name="InclOpening" id="inclOpen' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclOpenStockValue) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             //purchae
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {                                    
-                                    var openingfield = '<label name="ExclGrossBillValue" id="exclGrossBillValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossBillValue) + '</label>';
-                                    openingfield += '<label name="InclGrossBillValue" id="inclGrossBillValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetBillValue) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclGrossBillValue" id="exclGrossBillValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossBillValue) + '</label>';
+                                    cellfield += '<label name="InclGrossBillValue" id="inclGrossBillValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetBillValue) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclGrossPRValue" id="exclGrossPRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossPRValue) + '</label>';
-                                    openingfield += '<label name="InclGrossPRValue" id="inclGrossPRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetPRValue) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclGrossPRValue" id="exclGrossPRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossPRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossPRValue" id="inclGrossPRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetPRValue) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclGrossNetPurchase" id="exclGrossNetPurchase' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetPurchase) + '</label>';
-                                    openingfield += '<label name="InclGrossNetPurchase" id="inclGrossNetPurchase' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetPurchase) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclGrossNetPurchase" id="exclGrossNetPurchase' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetPurchase) + '</label>';
+                                    cellfield += '<label name="InclGrossNetPurchase" id="inclGrossNetPurchase' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetPurchase) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             //sales
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclGrossSalesValue" id="exclGrossSalesValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSalesValue) + '</label>';
-                                    openingfield += '<label name="InclGrossSalesValue" id="inclGrossSalesValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSalesValue) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclGrossSalesValue" id="exclGrossSalesValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSalesValue) + '</label>';
+                                    cellfield += '<label name="InclGrossSalesValue" id="inclGrossSalesValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSalesValue) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclGrossSRValue" id="exclGrossSRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSRValue) + '</label>';
-                                    openingfield += '<label name="InclGrossSRValue" id="inclGrossSRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSRValue) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclGrossSRValue" id="exclGrossSRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossSRValue" id="inclGrossSRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSRValue) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclGrossDRValue" id="exclGrossDRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossDRValue) + '</label>';
-                                    openingfield += '<label name="InclGrossDRValue" id="inclGrossDRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetDRValue) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclGrossDRValue" id="exclGrossDRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossDRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossDRValue" id="inclGrossDRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetDRValue) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclGrossNetSales" id="exclGrossNetSales' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetSales) + '</label>';
-                                    openingfield += '<label name="InclGrossNetSales" id="inclGrossNetSales' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetSales) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclGrossNetSales" id="exclGrossNetSales' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetSales) + '</label>';
+                                    cellfield += '<label name="InclGrossNetSales" id="inclGrossNetSales' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetSales) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             //closing
@@ -2003,76 +2006,37 @@
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclStockValue" id="exclStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.StockValue) + '</label>';
-                                    openingfield += '<label name="InclStockValue" id="inclStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclStockValue) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclStockValue" id="exclStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.StockValue) + '</label>';
+                                    cellfield += '<label name="InclStockValue" id="inclStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclStockValue) + '</label>';
+                                    return cellfield;
                                 },
                             },
                             //DmgStockValue	InclDmgStockValue
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
                                 "mRender": function (data, type, value, meta) {
-                                    var openingfield = '<label name="ExclDmgStockValue" id="exclDmgStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.DmgStockValue) + '</label>';
-                                    openingfield += '<label name="InclDmgStockValue" id="inclDmgStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclDmgStockValue) + '</label>';
-                                    return value.Outstandings;
+                                    var cellfield = '<label name="ExclDmgStockValue" id="exclDmgStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.DmgStockValue) + '</label>';
+                                    cellfield += '<label name="InclDmgStockValue" id="inclDmgStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclDmgStockValue) + '</label>';
+                                    return cellfield;
                                 },
                             },
+                            { "data": "Outstandings", "autoWidth": true, className: "dt-body-right" },
+                            { "data": "Last30DaysOS", "autoWidth": true, className: "dt-body-right" },
+                            { "data": "allsaleCustomers", "autoWidth": true, className: "dt-body-center" },
                         ]
                     });
                     tblBrandSummary = $('#tblBrandSummary').DataTable();
-                    //$.each(Summaryresult, function (i, items) {
-                    //    var openingvalue = 
-                    //    tblBrandSummary.row.add([
-                    //        items.ManufID,
-                    //        items.Name,
-                    //        formatIndianCurrency(items.Opening),
-                    //        formatIndianCurrency(items.Purchase),
-                    //        formatIndianCurrency(items.PR),
-                    //        formatIndianCurrency(items.NetP),
-                    //        formatIndianCurrency(items.Sales),
-                    //        formatIndianCurrency(items.SR),
-                    //        formatIndianCurrency(items.DR),
-                    //        formatIndianCurrency(items.NetSales),
-                    //        formatIndianCurrency(items.Closing),                           
-                    //    ]).draw(false);
-                    //});                                           
+                    if (Inclusive == 1) {
+                        $(".inclField").show();
+                        $(".exclField").hide();
+                    }
+                    else {
+                        $(".inclField").hide();
+                        $(".exclField").show();
+                    }                                                     
                 } else {
                     showErrorSnackbar("No Records Found in Brand Summary");
-                }
-                if (OSresult && OSresult.length > 0) {
-
-                    $('#tblBrandOutstandings').DataTable({
-                        scrollY: "350px",
-                        scrollX: true,
-                        scrollCollapse: true,
-                        paging: false,
-                        info: false,
-                        destroy: true,
-                        data: OSresult,
-                        fixedColumns: false,
-                        searching: true,
-                        ordering: false,
-                        sorting: false,
-                        columns: [
-                            { "data": "ManufID", "autoWidth": true,visible : false, className: "dt-body-left" },
-                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },
-                            {
-                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
-                                "mRender": function (data, type, value, meta) {                                    
-                                    return value.Outstandings;
-                                },
-                            },
-                            //{ "data": "Outstandings", "autoWidth": true, className: "dt-body-right" },
-                            { "data": "Last30DaysOS", "autoWidth": true, className: "dt-body-right" },
-                            { "data": "allsaleCustomers", "autoWidth": true, className: "dt-body-right" },
-                        ]                       
-                    });
-                    tblBrandOutstandings = $('#tblBrandOutstandings').DataTable();
-
-                } else {
-                    showErrorSnackbar("No Records Found in Brand Summary");
-                }
-                
+                }                
             },
             error: function (data) {
                 if (data.status == "401") {

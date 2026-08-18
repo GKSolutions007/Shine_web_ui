@@ -32,6 +32,7 @@ namespace ShineWeb.Controllers
                     string QAEnable = dtPermission.Select("MenuID = 398", null).Length > 0 ? "1" : "0";
                     string PendDraftEnable = dtPermission.Select("MenuID = 399", null).Length > 0 ? "1" : "0";
                     string TranSummaryEnable = dtPermission.Select("MenuID = 400", null).Length > 0 ? "1" : "0";
+                    string BrandSummaryEnable = dtPermission.Select("MenuID = 553", null).Length > 0 ? "1" : "0";
                     Homescreen dam = new Homescreen();
                     dam.CollectionDetailEnable = ColldtlEnable;
                     dam.ChequeDetailEnable = ChqdtlEnable;
@@ -41,6 +42,7 @@ namespace ShineWeb.Controllers
                     dam.QuickAccess = QAEnable;
                     dam.PendingDraft = PendDraftEnable;
                     dam.TransactionSummary = TranSummaryEnable;
+                    dam.BrandSummary= BrandSummaryEnable;
                     return View(dam);
                 }
                 else
@@ -54,6 +56,7 @@ namespace ShineWeb.Controllers
                     dam.QuickAccess = "0";
                     dam.PendingDraft = "0";
                     dam.TransactionSummary = "0";
+                    dam.BrandSummary = "0";
                     return View(dam);
                 }
             }
