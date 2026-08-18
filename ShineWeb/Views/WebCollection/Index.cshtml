@@ -566,12 +566,13 @@
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
     var DefBranch = '@Session["DefaultBranch"]';
+    var AllowPCD = '@Session["AllowPostChequeDaysColl"]';
     var BatchMode = 0;
     var nTransMode = 1, nIsDraft = 0;
     //GetData(1);
     var RtnDisp = 1;
     var modal = new bootstrap.Modal(document.getElementById('myModalfg'));//document.getElementById("myModalfg");
-    
+
     $('#btnPopupClose').click(function (e) {
         //modal.style.display = "none";
         modal.hide();
@@ -661,7 +662,7 @@
                             $("#txtCustomerID").val(item.id);
                             return false;
                         }
-                    });                    
+                    });
                 }
                 else if (nMode == 4) {
                     showSuccessSnackbar("Cancelled successfully");
@@ -694,7 +695,7 @@
                                         else if (isChk) {
                                             //$(this).css('color', 'green').attr("title", "Saved Successfully");
                                             $(this).find("td").css("color", "green").attr("title", "Saved Successfully");
-                                        }                                       
+                                        }
                                     });
                                 }
                                 if (ErrorIDs.length == (i + 1)) {
@@ -738,6 +739,7 @@
     $("#txtCustomer").change(function (e) {
         $("#txtCustomerID").val("");
     });
+
     function GetFilterData(nMode) {//arrVendorName,divErrFTo,divErrFFrom,divErrFParty
         var IsValid = true;
         $(".clrdivs").html("");
@@ -812,7 +814,7 @@
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value, meta) {
                                         var rowIndex = meta.row;
-                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID                                        
+                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID
                                         var _action = value.StatusID == "1" || value.StatusID == "3" ? '<input type="checkbox" id="' + checkboxId + '" data-statusid = "' + value.StatusID + '" data-id="' + value.ID +'"  name="CustomerCheck" style="" />': '';
                                         return _action;
                                     },
@@ -871,7 +873,16 @@
                                         return '<label class="' + stsclass + '">' + value.Status + '</label>';
                                     }
                                 },
-                                { "data": "Chequedate", "autoWidth": true, className: "dt-body-left" },
+                                //{ "data": "Chequedate", "autoWidth": true, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-left",
+                                    mRender: function (data, type, value) {
+                                        var chqdate = value.Chequedate || '';
+                                        var clschq = parseInt(AllowPCD) < parseInt(value.ChequeAging) ? "stsCancel" : "stsClose";
+                                        var agingfield = value.Paymentmode == "CHEQUE" ? '<br/>Aging : ' + value.ChequeAging : '';
+                                        return '<label class="' + clschq + '">' + chqdate + '</label> ' + agingfield;
+                                    }
+                                },
                                 { "data": "Chequeno", "autoWidth": true, className: "dt-body-left" },
 
                                 {
@@ -940,7 +951,7 @@
     //    var checkinputitems = $('#tblCollectionData tbody input[type=checkbox]');
     //    checkinputitems.each(function (i, items) {
     //        var row = $(this).closest('tr'); // Find the parent row
-    //        var rowData = $('#tblCollectionData').DataTable().row(row).data(); // Get full row data        
+    //        var rowData = $('#tblCollectionData').DataTable().row(row).data(); // Get full row data
     //        if (tempids.filter(t => t.ID == rowData.ID).length > 0) {
     //            console.log("rowData.ID", rowData.ID);
     //            row.addClass("highlight-error-row");
@@ -948,7 +959,7 @@
     //        }
     //    });
     //}, 1000);
-    $("#btnCancel").click(function () {        
+    $("#btnCancel").click(function () {
         var checkeditems = $('#tblCollectionData tbody input[type=checkbox]:checked');
         var validateitems = [];
         if (checkeditems.length > 0) {
@@ -988,7 +999,7 @@
                                         row.removeClass("highlight-error-row"); row.removeClass("highlight-success-row");
                                         var highlightdata = data.filter(t => t.ID == rowData.ID);
                                         if (highlightdata.length > 0) {
-                                            
+
                                             if (highlightdata[0].Type == "Error")
                                                 row.addClass("highlight-error-row");
                                             else
@@ -1008,7 +1019,7 @@
                         }
                     }
                 });
-                
+
             }
         }
         else {
@@ -1083,6 +1094,6 @@
         if (data && data.source === "Collection") {
             GetFilterData(2);
             GetFilterData(3);
-        }       
+        }
     });
 </script>
