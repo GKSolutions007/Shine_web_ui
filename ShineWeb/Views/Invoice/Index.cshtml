@@ -8088,6 +8088,22 @@ if ($("#txtReurnPricePerm").val() == 0) {
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code> View Discount Scheme </code></h4>");
         }
     });
+    function openproductpricechange(ProdID, BranchID) {        
+        if (BranchID == 0) {
+            showErrorSnackbar("Select valid Branch");
+            return;
+        }
+        const hasPermission = checkAddEditPermission("229");
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        if (hasPermission) {
+            var ProdUrl = Url + "Productpricechange?name=4Kl9YhXi9emq%2F2waIZYqKJcCxg4lxysL5HFYIPpJUSRGb8w5BrcwHtmXkyz4Zc7e&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + ProdID + "&BranchID=" + BranchID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes")
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> Product Price Change </code></h4>");
+        }
+    }
     // Add this once on page load in your invoice JS
     window.addEventListener("message", function (event) {
         var data = event.data;
@@ -8120,16 +8136,32 @@ if ($("#txtReurnPricePerm").val() == 0) {
         else if (data && data.source === "Vehicle") {
             var VehicleID = data.vehicleid;
             var VehicleNo = data.vehicleno;
-
             ReloadF8Autolistdata("vehicle", null, null, VehicleID);
         }
         else if (data && data.source === "Credit Term") {
             var CreditTermID = data.id;
             var CreditTermName = data.name;
-
-            console.log("Return Type received:", CreditTermID, CreditTermName);
-
             ReloadF8Autolistdata("creditterm", null, null, CreditTermID);
+        }
+        else if (data && data.source === "ProductPricechange") {
+            modal.show();
+            var rowdata = editingRow.data();
+            var ProdID = rowdata[0];
+            var TrkInv = rowdata[8];
+            var UOMField = $(rowdata[18]);
+            //var uomval = $('option:selected', UOMField[0]).attr('name');
+            var seluomid = UOMField[0].id;
+            var sumn = $("#" + seluomid + " option:selected").text();
+            var uomval = $("#" + seluomid + " option:selected").attr('name');
+            var Prodnamefieldid = $(rowdata[14])[0].id;;
+            var prodname = document.getElementById(Prodnamefieldid).value;
+            $("#lblBatchItemName").text(prodname);
+            if (TrkInv == 1) {
+                var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
+                GetData(20, ProdID, invid, null, uomval);
+            } else {
+                showErrorSnackbar("No batch for Inventory no product")
+            }
         }
     });
     document.addEventListener("keydown", function (event) {
@@ -8191,8 +8223,12 @@ if ($("#txtReurnPricePerm").val() == 0) {
             if (gridrowdata) {
                 prodid = gridrowdata[0] || 0;
             }
-            if (prodid > 0) {
-                showSuccessSnackbar("Prod ID : " + prodid);
+            if (prodid > 0) {//
+                var BranchID = $("#cmbBranch").val() || 0;
+                openproductpricechange(prodid, BranchID)
+            }
+            else {
+                showErrorSnackbar("Select valid Product");
             }
         }
         //if (event.ctrlKey && (event.key === 'Insert' || event.which === 45)) {

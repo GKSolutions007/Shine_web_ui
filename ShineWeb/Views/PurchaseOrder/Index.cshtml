@@ -1311,7 +1311,13 @@
     var PrintTransID = 1, PrintConfigID = 0;
         var DecVal = '@Session["DecimalValues"]';
      var ConfigRoundtype = '@Session["RoundoffType"]';
- var ConfigRoundvalue = '@Session["RoundoffValue"]';
+    var ConfigRoundvalue = '@Session["RoundoffValue"]';
+    //Autolist search property
+    var itemorderby = '@Session["ItemOrderby"]';
+    var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";    
+    var autolistfilterwith = EnableALStartWith;
+    var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
+    //
     var grid, PurchaseOrder;
     GetColumnSettingsData(2, 24, 1, true);
 
@@ -1523,6 +1529,8 @@
                             PaginatedAutocomplete({
                                 inputId: "txtHProds",// "txtProdName",
                                 data: TempAL,
+                                startwitfieldname: startwithfield,
+                                enablefilterstartwith: autolistfilterwith,
                                 onSelect: function (item) {
                                     $("#txtHProds").val(item.code);
                                     $("#lblABS").html(item.ABS);
@@ -1662,7 +1670,8 @@
         PaginatedAutocomplete({
             inputId: "txtSearch",
             data: arrVendor,
-            pageSize: 50,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtSearch").val(item.code);
                 GetData(3, item.code);
@@ -1671,7 +1680,8 @@
         PaginatedAutocomplete({
             inputId: "txtFilterParty",
             data: arrVendor,
-            pageSize: 50,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 console.log("Auto List ", item);
                 $("#txtFilterParty").val(item.name);
@@ -1724,7 +1734,7 @@
                 return IsValid;
             }
         }
-        
+
         if (IsValid) {
             var UOMType = $("#cmbUOMType").val();
             $.ajax({
@@ -1739,7 +1749,7 @@
                     console.log("Items data", data);
                     ProductTable.draw().clear(); ProductTable.draw().clear();
                     ProductRID = 0;
-                    //ProdID	Code	Name	UOMID	TaxID	TaxPern	ConvValue	UomName	Qty	ExclPrice	InclPrice	TaxName	GrossAmt	TaxAmt	NetAmt	MRPonTax  
+                    //ProdID	Code	Name	UOMID	TaxID	TaxPern	ConvValue	UomName	Qty	ExclPrice	InclPrice	TaxName	GrossAmt	TaxAmt	NetAmt	MRPonTax
                     $.each(data, function (i, items) {
                         ProductTable.row.add([
                             items.ProdID,
@@ -1810,7 +1820,7 @@
         var MRP = parseFloat(rowdata[18]) || 0;
 
         arrPurchaseTaxDetails = ReturnTaxDetails(rowdata[3], 1);
-        var dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);        
+        var dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
         var dMRPonTaxAmt = getPurchaseMRPontax(MRP);
         var Incl = dApponMRPCum > 0 ? (parseFloat(val) + dMRPonTaxAmt) : (parseFloat(val) * (1 + (taxpern / 100)))
 
@@ -1899,7 +1909,7 @@
         var dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
         var dMRPonTaxAmt = getPurchaseMRPontax(MRP);
 
-        let Excl = $r.find("input[name='Excl']").attr("txttag");      
+        let Excl = $r.find("input[name='Excl']").attr("txttag");
 
         var Gross = parseFloat(Qty) * parseFloat(Excl);
         var TaxAmt = dApponMRPCum > 0 ? dMRPonTaxAmt * parseFloat(Qty) : (Gross * taxpern) / 100;
@@ -2038,13 +2048,7 @@
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
-    $('#txtFilterParty').change(function (e) {
-        var Search = e.target.value;
-        var sdf = Search.split('|');
-        //GetData(3, sdf[0]);
-        if (sdf[1].length > 0)
-            $('#txtFilterParty').val(sdf[1].trim());
-    });
+   
     $('#tblProductData tbody').on('click', '.clsremoveprod', function () {
         $(".clrdivs").html("");
         ProductTable.row($(this).parents('tr')).remove().draw();
@@ -2165,7 +2169,7 @@
     }
     //~Calculation
     function calculateProdGrid() {
-        $(".lblPT").text(0.00); 
+        $(".lblPT").text(0.00);
         var dPTQty = 0, dPTExcl = 0, dPTIncl = 0, dPTGross = 0, dPTTax = 0, dPTNet = 0, TotProdDisc = 0, TotTradeDisc = 0, TotAddnlDisc = 0, Value = 0;
         $("#tblProductData tbody tr").each(function () {
             var allValues = {};
@@ -2471,7 +2475,7 @@
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
-        
+
         //LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
     }
     $('#btnTCancel').click(function (e) {
@@ -3069,6 +3073,7 @@ $("#openproduct").click(function (e) {
             }
 
     });
+    
     // Add this once on page load in your invoice JS
     window.addEventListener("message", function (event) {
         var data = event.data;
@@ -3094,20 +3099,154 @@ $("#openproduct").click(function (e) {
     });
     document.addEventListener("keydown", function (event) {
 
-        if (event.key !== "F8") return;
+        if (event.key == "F8") {
+            event.preventDefault();
 
-        event.preventDefault();
+            switch (event.target.id) {
 
-        switch (event.target.id) {
+                case "txtHProds":
+                    $("#openproduct").trigger("click");
+                    break;
 
-            case "txtHProds":
-                $("#openproduct").trigger("click");
-                break;
+                case "txtSearch":
+                    $("#openvendor").trigger("click");
+                    break;
 
-            case "txtSearch":
-                $("#openvendor").trigger("click");
-                break;
-           
+            }
+        }
+        else if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtHProds") {
+                
+
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",// "txtProdName",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        $("#lblABS").html(item.ABS);
+                        $("#clrdivs").html("");
+                        GetData(4, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtSearch" || fieldid == "txtFilterParty") {
+                showInfoSnackbar(infomessage);
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    pageSize: 50,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                    }
+                });
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    pageSize: 50,
+                    onSelect: function (item) {
+                        console.log("Auto List ", item);
+                        $("#txtFilterParty").val(item.name);
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtHProds") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",// "txtProdName",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        $("#lblABS").html(item.ABS);
+                        $("#clrdivs").html("");
+                        GetData(4, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtSearch" || fieldid == "txtFilterParty") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    pageSize: 50,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                    }
+                });
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    pageSize: 50,
+                    onSelect: function (item) {
+                        console.log("Auto List ", item);
+                        $("#txtFilterParty").val(item.name);
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+    <div class="p-3">
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+            <i class="bi bi-info-circle-fill text-primary fs-5"></i>
+            <span class="fw-bold text-dark">Autolist Configuration</span>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3" style="background:#f0f4ff;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary" style="width:32px;height:32px;">
+                    <i class="bi bi-search"></i>
+                </span>
+                <span class="fw-semibold text-secondary" style="font-size:0.85rem;">Search Mode</span>
+            </div>
+            <span class="badge rounded-pill bg-primary px-3 py-2">
+                <h5> ${containinfo}</h5>
+            </span>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background:#f5f5f7;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary bg-opacity-10 text-secondary" style="width:32px;height:32px;">
+                    <i class="bi bi-tag"></i>
+                </span>
+                <span class="fw-semibold text-secondary" style="font-size:0.85rem;">Search Field</span>
+            </div>
+            <span class="badge rounded-pill bg-secondary px-3 py-2">
+                <h5> ${searchcolumninfo}</h5>
+            </span>
+        </div>
+    </div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
         }
     });
 </script>
