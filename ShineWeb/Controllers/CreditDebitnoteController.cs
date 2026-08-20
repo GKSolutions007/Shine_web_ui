@@ -12,7 +12,7 @@ namespace ShineWeb.Controllers
     public class CreditDebitnoteController : Controller
     {
         clsBusinessLayer objBL = new clsBusinessLayer();
-        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID)
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string ID = "")
         {
             if (Session["LoginUserID"] == null)
             {

@@ -130,6 +130,8 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.ChildURL1, new { @autocomplete = "off", @class = "form-control", @id = "txtChildBankAccURL" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.DependFrom, new { @autocomplete = "off", @class = "form-control", @id = "txtDependFrom" })
 
     <div class="d-flex align-items-center gap-2">
         <!-- Larger heading -->
@@ -251,8 +253,8 @@
 
                         </div>
 
-                        </div>
                     </div>
+                </div>
 
                 <!-- Modal footer -->
                 <div class="modal-footer">
@@ -604,7 +606,11 @@
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        modal.hide();
+        if ($("#txtTransType").val() == "2") {
+            this.close();
+        } else {
+            modal.hide();
+        }
     }
     //~Clear
     $('#btnClear').click(function (e) {
@@ -661,6 +667,7 @@
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
+        var name = $("#txtAccName").val();
         var lstvData = [];
         $('#tblChequeleaves tr td select').each(function (i, items) {
             var singlelist = {
@@ -695,9 +702,21 @@
                 $.each(data, function (i, items) {
                     if (items.MsgID == 0) {
                         showSuccessSnackbar(items.Message);
-                        ClearForm();
-                        GetData(5, "");
-                        modal.hide();
+                        var depfrom = $("#txtDependFrom").val();
+                        if (window.opener && !window.opener.closed) {
+                            window.opener.postMessage({
+                                source: "FinancialAccount",
+                                chequeid: items.ID,   // adjust to your actual field names
+                                chequename: name
+                            }, "*");
+
+                            window.close();
+                        }
+                        else {
+                            ClearForm();
+                            GetData(5, "");
+                            modal.hide();
+                        }
                     }
                     else {
                         $("#dvErrorName").html(items.Message);
