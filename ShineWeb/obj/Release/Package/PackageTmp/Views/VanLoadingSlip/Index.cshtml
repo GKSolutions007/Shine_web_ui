@@ -537,7 +537,7 @@
                         <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:13px 2px;padding-top:5px">
                             <div>
                                 <div class="input-group">
-                                    <span id="openvehicle" class="input-group-text d-none" title="Add/Edit Vehicle">
+                                    <span id="openvehicle" class="input-group-text" title="Add/Edit Vehicle">
                                         <span class="fas fa-arrow-up-right-from-square"></span>
                                     </span>
 
@@ -3223,6 +3223,23 @@
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nsmID == 0 ? "Add" : "Edit") + " Salesman </code></h4>");
         }
     });
+    $("#openvehicle").click(function (e) {
+        var nvhID = $("#cmbVehicleNo").val() != "" ? $("#cmbVehicleNo").val() : 0;
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        //var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+        //window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        const hasPermission = nvhID == 0
+            ? checkAddEditPermission("75")
+            : checkAddEditPermission("76");
+        if (hasPermission) {
+            var ProdUrl = Url + "VehicleMaster?name=7O66uN%2FkROyeg6Gr1WYoaQ%3D%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nvhID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nvhID == 0 ? "Add" : "Edit") + " Vehicle </code></h4>");
+        }
+    });
     document.addEventListener("keydown", function (event) {
         if (event.key === "F8") {
             event.preventDefault();
@@ -3230,6 +3247,9 @@
             var FieldName = event.target.name;
             if (FieldID == "cmbSalesman") {
                 $("#opensalesman").trigger("click");
+            }
+            if (FieldID == "cmbVehicleNo") {
+                $("#openvehicle").trigger("click");
             }
         }
 
@@ -3241,7 +3261,12 @@
             var SMID = data.salesmanid;
             GetData(SMID);
         }
+        else if (data && data.source === "Vehicle") {
+            var VehicleID = data.vehicleid;
+            var VehicleNo = data.vehicleno;
 
+            ReloadF8Autolistdata("vehicle", null, null, VehicleID);
+        }
     });
     // 👇 Function to apply keydown listener to all input elements in the table
     function setupArrowKeyNavigation1() {
@@ -3521,5 +3546,35 @@
                 break;
             }
         }
+    }
+    function ReloadF8Autolistdata(strForm, strSub, strValue, strAssignValue) {
+        $.ajax({
+            url: Aurl + "masterlist",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                FormName: strForm, SubField: strSub, Value: strValue
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (strForm == "vehicle") {
+                    $('#cmbVehicleNo').find("option").remove();
+                    $('#cmbVehicleNo').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        $('#cmbVehicleNo').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                        $('#cmbVehicleNo').val(strAssignValue).trigger('change');
+                    });
+
+                }
+            }
+        });
     }
 </script>

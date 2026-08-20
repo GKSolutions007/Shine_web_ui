@@ -301,9 +301,223 @@
     div.dt-container div.dt-layout-row {
         margin: 0 !important;
     }
+
+    /* ===== Brand Summary Overlay ===== */
+    /* Adjust --navbar-height to match the real height of the top menu bar
+       rendered by _LayoutBT5, so the overlay never covers the existing menus. */
+    :root {
+        --navbar-height: 15px;
+    }
+
+    .overlay-toggle-btn {
+        position: fixed;
+        top: 50px;
+        right: 0;
+        z-index: 2200;
+        width: 20px;
+        height: 65px;
+        border: none;
+        border-radius: 50% 0 0 50%;
+        background: var(--primary-color);
+        color: #fff;
+        box-shadow: -3px 4px 14px rgba(0,0,0,0.28);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: right 0.45s cubic-bezier(0.4, 0, 0.2, 1), left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.45s ease, transform 0.25s ease, background 0.25s ease;
+    }
+
+        .overlay-toggle-btn:hover {
+            transform: scale(1.08);
+            background: #3a7bc8;
+        }
+
+        .overlay-toggle-btn:active {
+            transform: scale(0.96);
+        }
+
+        .overlay-toggle-btn .toggle-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .overlay-toggle-btn .toggle-icon svg {
+                width: 100%;
+                height: 100%;
+                stroke: #fff;
+                fill: none;
+                stroke-width: 2.4;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+
+        /* Open state: button detaches from the right edge and docks on the left edge */
+        .overlay-toggle-btn.overlay-open {
+            right: auto;
+            left: 0;
+            border-radius: 0 50% 50% 0;
+            box-shadow: 3px 4px 14px rgba(0,0,0,0.28);
+        }
+
+    .brand-overlay {
+        position: fixed;
+        top: var(--navbar-height);
+        right: -100%;
+        width: 100%;
+        height: calc(100% - var(--navbar-height));
+        background: var(--bg-color);
+        z-index: 2050;
+        box-shadow: -8px 0 30px rgba(0,0,0,0.25);
+        transition: right 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        padding: 10px 10px 5px 20px;
+    }
+
+        .brand-overlay.active {
+            right: 0;
+        }
+
+    .brand-overlay-header {
+        margin-bottom: 15px;
+    }
+
+        .brand-overlay-header h4 {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 18px;
+            margin: 0;
+        }
+
+
+        .brand-overlay-filters .form-group {
+            margin-bottom: 0;
+        }
+
+    .brand-overlay-inclusive {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 5px;
+    }
+
+        .brand-overlay-inclusive label {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color:black;
+        }
+
+    #btnOverlayGenerate {
+        margin-top: 8px;
+        white-space: nowrap;
+    }
+
+    
+
+        .brand-overlay-table table.dataTable tbody td:first-child {
+            text-align: left;
+        }
+
+    .dt-input{
+        color:black !important;
+    }
 </style>
 <body>
     <div class="toastBox"></div>
+
+    <!-- Overlay Toggle Button (docks on the right edge when closed, left edge when open) -->
+    <button type="button" id="btnToggleBrandOverlay" class="overlay-toggle-btn" title="Open Brand Summary">
+        <span class="toggle-icon" id="iconToggleOverlay">
+            <!-- Modern open (chevron) icon -->
+            <svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"></polyline></svg>
+        </span>
+    </button>
+
+    <!-- Brand Summary Overlay -->
+    <div class="brand-overlay" id="brandSummaryOverlay">
+
+
+        <div class="modern-card brand-overlay-filters">
+            <div class="row">
+
+                <div class="col-xs-12 col-sm-6 col-md-4 form-group form-label">
+                    <div class="brand-overlay-header">
+                        <h4><span class="glyphicon glyphicon-stats"></span> Brand Summary</h4>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-3 form-group form-label">
+                    <div class="form-group form-label">
+                        <select class="form-control" id="cmbOverlayBranch">
+                            <option value="0">-- All --</option>
+                        </select>
+                        <label class="labelup">Branch</label>
+                    </div>
+
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <select class="form-control gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <div class="form-group form-label">
+                        <input type="date" class="form-control" id="dtpFFrom" autocomplete="off" />
+                        <label class="labelup">From Date</label>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <div class="form-group form-label">
+                        <input type="date" class="form-control" id="dtpFTo" autocomplete="off" />
+                        <label class="labelup">To Date</label>
+                    </div>
+                </div>
+                <div class="col-xs-6 col-sm-3 col-md-1">
+                    <div class="brand-overlay-inclusive">
+                        <input type="checkbox" id="chkOverlayInclusive" />
+                        <label for="chkOverlayInclusive">With Tax</label>
+                    </div>
+                </div>
+                <div class="col-xs-6 col-sm-3 col-md-1">
+                    <button type="button" id="btnOverlayGenerate" class="btn btn-primary btn-block">
+                        <span class="glyphicon glyphicon-play"></span> Generate
+                    </button>
+                </div>
+            </div>
+            <div style="color: red; font-size: 11px;" id="divErrOverlayFilter"></div>
+        </div>
+
+        <div class="modern-card brand-overlay-table">
+            <div class="row">
+                <div class="col-sm-12 col-md-12 col-lg-12">
+                    <table class="table" id="tblBrandSummary" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>ManufID</th>
+                                <th>Brand</th>
+                                <th style="text-align:right;">Opening</th>
+                                <th style="text-align:right;">Purchase</th>
+                                <th style="text-align:right;">PR</th>
+                                <th style="text-align:right;">NET Purchase</th>
+                                <th style="text-align:right;">Sales</th>
+                                <th style="text-align:right;">SR</th>
+                                <th style="text-align:right;">DR</th>
+                                <th style="text-align:right;">NET Sales</th>
+                                <th style="text-align:right;">Closing</th>
+                                <th style="text-align:right;">Dmg Closing</th>
+                                <th style="text-align:center;" title="Outstandings/Invoice Count/Customer Count">OS/INV/CX</th>
+                                <th style="text-align:right;">&gt;30 days</th>
+                                <th style="text-align:right;" title="Total Customer Count">Cx Count</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>               
+            </div>
+        </div>
+    </div>
     @Html.HiddenFor(model => model.CollectionDetailEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtCollectionDetailEnable" })
     @Html.HiddenFor(model => model.ChequeDetailEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtChequeDetailEnable" })
     @Html.HiddenFor(model => model.TransVariantEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtTransVariantEnable" })
@@ -312,7 +526,8 @@
     @Html.HiddenFor(model => model.QuickAccess, new { @autocomplete = "off", @class = "form-control", @id = "txtQuickAccessEnable" })
     @Html.HiddenFor(model => model.PendingDraft, new { @autocomplete = "off", @class = "form-control", @id = "txtPendingDraftEnable" })
     @Html.HiddenFor(model => model.TransactionSummary, new { @autocomplete = "off", @class = "form-control", @id = "txtTransactionSummaryEnable" })
-
+    @Html.HiddenFor(model => model.BrandSummary, new { @autocomplete = "off", @class = "form-control", @id = "txtBrandSummaryEnable" })
+    
 
     <div class="container-fluid" style="padding: 10px;">
         <div class="row">
@@ -471,7 +686,7 @@
                             </table>
                         </div>
 
-                    </div>                    
+                    </div>
                     <!-- Details Tables Column -->
                     <div class="col-md-7 col-lg-7">
                         <div class="col-md-12 dvBalances" style="margin-bottom: 10px;">
@@ -513,7 +728,7 @@
                                     <option value="4">Quarter</option>
                                     <option value="5">All</option>
                                 </select>
-                            </div>                            
+                            </div>
                             <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 250px;">
                                     <table class="table" id="tblCollectionDetail">
@@ -721,6 +936,17 @@
         "columnDefs": [{ "targets": [1,2,3], "class": "dt-body-right" }],
 
     });
+    var tblBrandSummary = $('#tblBrandSummary').DataTable({
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "425px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
+    });    
     
     var collectionChart = null;
     //$('#cmbTransactionTimeFilter,#cmbTimeFilter').val(HomePeriod);
@@ -895,7 +1121,11 @@
     if ($("#txtTransactionSummaryEnable").val() == 0) {
         $("#dvTransSummaryDetail").hide();
     }
-    LoadBranchByRoles('#cmbBranch');
+    if ($("#txtBrandSummaryEnable").val() == 0) {
+        $("#btnToggleBrandOverlay").hide();
+    }
+    var brandsummaryfirstclick = true;
+    LoadBranchByRoles('#cmbBranch,#cmbOverlayBranch');
     GetData(1, 0);
     GetData(5, 0);
     GetData(8, 0);
@@ -1031,6 +1261,10 @@
                         value: 0,
                         text: "-- Select --",
                     }));
+                    $('#cmbManuf').append($('<option/>', {
+                        value: 0,
+                        text: "-- All --",
+                    }));
                     var transdata = data.Table;
                     if (transdata.length > 0) {
                         $.each(transdata, function (i, items) {
@@ -1053,7 +1287,7 @@
                     });
                     var BranchID = $('#cmbBranch').val();
                     var firstmfrid = Mfrs[0].ID;
-                    GetData(12, BranchID, firstmfrid);
+                    GetData(12, BranchID, 0);
                 }
                 if (nMode == 8) {
                     $("#dvStockvalue").html("₹ 0.00");
@@ -1093,7 +1327,7 @@
                 if (nMode == 12) {
                     tblStockInHand.draw().clear(); tblStockInHand.draw().clear();
                     console.log("data", data);
-                    
+
                     if (data.length > 0) {
                         $.each(data, function (i, items) {
                             tblStockInHand.row.add([
@@ -1103,7 +1337,7 @@
                                 formatIndianCurrency(items.InclPrice)
                             ]).draw(false);
                         });
-                        
+
                     }
                 }
             }
@@ -1168,7 +1402,7 @@
             OpenTransactionDocument(dTransID, DocID);
         }
     });
-    
+
     getCollectionData(HomePeriod);
     getTransactionData(HomePeriod);
     function getCollectionData(FType) {
@@ -1594,4 +1828,224 @@
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code>Cheque In Hand</code></h4>");
         }
     });
+
+    /* ===================== Brand Summary Overlay ===================== */
+
+    // Toggle overlay open / close with animation, move the button between the
+    // right corner (closed) and left corner (open), and swap to a modern SVG icon.
+    var ICON_OPEN = '<svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"></polyline></svg>';   // chevron-left = click to open
+    var ICON_CLOSE = '<svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>'; // X = click to close
+    setDate("dtpFFrom", 2);
+    setDate("dtpFTo", 0);
+    $('#btnToggleBrandOverlay').click(function (e) {
+        e.preventDefault();
+        var $overlay = $('#brandSummaryOverlay');
+        var $icon = $('#iconToggleOverlay');
+        var $btn = $(this);
+        if (brandsummaryfirstclick) {
+            brandsummaryfirstclick = false;
+            $("#btnOverlayGenerate").trigger('click');
+        }
+        if ($overlay.hasClass('active')) {
+            // Collapse overlay - button returns to the right corner
+            $overlay.removeClass('active');
+            $btn.removeClass('overlay-open');
+            $icon.html(ICON_OPEN);
+            $btn.attr('title', 'Open Brand Summary');
+        } else {
+            // Expand overlay to cover the body - button docks on the left corner
+            $overlay.addClass('active');
+            $btn.addClass('overlay-open');
+            $icon.html(ICON_CLOSE);
+            $btn.attr('title', 'Close Brand Summary');            
+        }
+    });
+
+
+    // Generate button - validate filters and load the Brand Summary table
+    $('#btnOverlayGenerate').click(function (e) {
+        e.preventDefault();
+        $('#divErrOverlayFilter').html('');
+
+        var BranchID = $('#cmbOverlayBranch').val();
+        var FromDate = $('#dtpFFrom').val();
+        var ToDate = $('#dtpFTo').val();
+        var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
+
+        var isValid = true;
+        if (!FromDate) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('Select From Date');
+        } else if (!ToDate) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('Select To Date');
+        } else if (new Date(FromDate) > new Date(ToDate)) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('From Date cannot be greater than To Date');
+        }
+
+        if (!isValid) {
+            showErrorSnackbar($('#divErrOverlayFilter').html());
+            return;
+        }
+
+        GetBrandSummaryData(BranchID, FromDate, ToDate, Inclusive);
+    });
+    $('#chkOverlayInclusive').click(function (e) {
+
+        var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
+        if (Inclusive == 1) {            
+            $(".inclField").show();
+            $(".exclField").hide();
+        }
+        else {
+            $(".inclField").hide();
+            $(".exclField").show();
+        }
+    });
+    // Fetch and bind the Brand Summary report table
+    function GetBrandSummaryData(nBranchID, FromDate, ToDate, Inclusive) {
+        tblBrandSummary.clear().draw();
+        $.ajax({
+            url: Aurl + "homescreen/brandsummary",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                BranchID: nBranchID,
+                FromDate: FromDate,
+                ToDate: ToDate
+            },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                var Summaryresult = (typeof data === "string") ? JSON.parse(data.Table) : data.Table;
+                if (Summaryresult && Summaryresult.length > 0) {
+                    console.log(" Summaryresult ", Summaryresult);
+                    $('#tblBrandSummary').DataTable({
+                        scrollY: "425px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: false,
+                        info: false,
+                        destroy: true,
+                        data: Summaryresult,
+                        fixedColumns: false,
+                        searching: true,
+                        ordering: false,
+                        sorting: false,
+                        columns: [
+                            { "data": "ManufID", "autoWidth": true, visible: false, className: "dt-body-left" },
+                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },                           
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclOpening" id="exclOpen' + meta.row + '" class="exclField">' + formatIndianCurrency(value.OpenStockValue) + '</label>';
+                                    cellfield += '<label name="InclOpening" id="inclOpen' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclOpenStockValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            //purchae
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {                                    
+                                    var cellfield = '<label name="ExclGrossBillValue" id="exclGrossBillValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossBillValue) + '</label>';
+                                    cellfield += '<label name="InclGrossBillValue" id="inclGrossBillValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetBillValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossPRValue" id="exclGrossPRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossPRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossPRValue" id="inclGrossPRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetPRValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossNetPurchase" id="exclGrossNetPurchase' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetPurchase) + '</label>';
+                                    cellfield += '<label name="InclGrossNetPurchase" id="inclGrossNetPurchase' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetPurchase) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            //sales
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossSalesValue" id="exclGrossSalesValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSalesValue) + '</label>';
+                                    cellfield += '<label name="InclGrossSalesValue" id="inclGrossSalesValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSalesValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossSRValue" id="exclGrossSRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossSRValue" id="inclGrossSRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSRValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossDRValue" id="exclGrossDRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossDRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossDRValue" id="inclGrossDRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetDRValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossNetSales" id="exclGrossNetSales' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetSales) + '</label>';
+                                    cellfield += '<label name="InclGrossNetSales" id="inclGrossNetSales' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetSales) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            //closing
+                            //StockValue	InclStockValue
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclStockValue" id="exclStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.StockValue) + '</label>';
+                                    cellfield += '<label name="InclStockValue" id="inclStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclStockValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            //DmgStockValue	InclDmgStockValue
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclDmgStockValue" id="exclDmgStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.DmgStockValue) + '</label>';
+                                    cellfield += '<label name="InclDmgStockValue" id="inclDmgStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclDmgStockValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            { "data": "Outstandings", "autoWidth": true, className: "dt-body-right" },
+                            { "data": "Last30DaysOS", "autoWidth": true, className: "dt-body-right" },
+                            { "data": "allsaleCustomers", "autoWidth": true, className: "dt-body-center" },
+                        ]
+                    });
+                    tblBrandSummary = $('#tblBrandSummary').DataTable();
+                    if (Inclusive == 1) {
+                        $(".inclField").show();
+                        $(".exclField").hide();
+                    }
+                    else {
+                        $(".inclField").hide();
+                        $(".exclField").show();
+                    }                                                     
+                } else {
+                    showErrorSnackbar("No Records Found in Brand Summary");
+                }                
+            },
+            error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                } else {
+                    showErrorSnackbar("Unable to load Brand Summary data");
+                }
+            }
+        });
+    }
 </script>

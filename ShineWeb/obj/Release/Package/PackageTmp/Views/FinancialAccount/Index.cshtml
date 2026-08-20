@@ -145,6 +145,8 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.ChildURL1, new { @autocomplete = "off", @class = "form-control", @id = "txtChildRoleURL" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.DependFrom, new { @autocomplete = "off", @class = "form-control", @id = "txtDependFrom" })
 
     <div class="d-flex align-items-center gap-2">
         <!-- Larger heading -->
@@ -718,7 +720,11 @@ var DecVal = '@Session["DecimalValues"]';
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        modal.hide();
+        if ($("#txtTransType").val() == "2") {
+            this.close();
+        } else {
+            modal.hide();
+        }
     }
     //~Clear
     $('#btnClear').click(function (e) {
@@ -752,7 +758,7 @@ var DecVal = '@Session["DecimalValues"]';
             showErrorSnackbar("Account Group should not be empty");
         }
         else {
-            const exists = arrAccGrp.filter(acc => acc.label == $("#txtAccGrp").val().trim());
+            const exists = arrAccGrp.filter(acc => acc.label.trim() == $("#txtAccGrp").val().trim());
             if (exists.length == 0) {
                 IsValid = false;
                 $("#dvErrorAccGrp").html("Account Group select from list");
@@ -779,6 +785,7 @@ var DecVal = '@Session["DecimalValues"]';
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
+        var name = $("#txtAccName").val();
         var lstMaster = {
             "Mode": TransMode,
             "ID": $("#txtID").val(),
@@ -807,10 +814,22 @@ var DecVal = '@Session["DecimalValues"]';
                 $.each(data, function (i, items) {
                     if (items.MsgID == 0) {
                         showSuccessSnackbar(items.Message);
-                        ClearForm();
-                        AllFAData();
-                        GetData(3);
-                        modal.hide();
+                        var depfrom = $("#txtDependFrom").val();
+                        if (window.opener && !window.opener.closed) {
+                            window.opener.postMessage({
+                                source: "FinancialAccount",
+                                financialaccountid: items.ID,   // adjust to your actual field names
+                                financialaccountname: name
+                            }, "*");
+
+                            window.close();
+                        }
+                        else {
+                            ClearForm();
+                            AllFAData();
+                            GetData(3);
+                            modal.hide();
+                        }
                     }
                     else if (items.Message == "OSPending") {
                         //$("#divErrorOnName").html("Outstanding Amount Pending. Cannot Deactivate");
@@ -860,6 +879,31 @@ var DecVal = '@Session["DecimalValues"]';
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (nCustomerTypeID == 0 ? "Add" : "Edit") + " Role</code></h4>");
         }
     });*@
+
+    //~Depend Master Load
+    if ($("#txtTransType").val() == "2") {
+        if ($("#txtID").val() > 0) {
+            setTimeout(() => {
+              
+                TransMode = 2;
+                $(".clrdiv").html("");
+                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                var ID = $("#txtID").val();
+                GetData(6, ID);
+                $(".FormclrField").prop("disabled", false);
+                $("#chkActive,#btnSave,#cmbFAType").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                $("#btnClear").hide();
+                $("#btnClose,#btnSave").show();
+                modal.show();
+            }, 1000);
+        }
+        else {
+            $(".modal-title#lblPopupheading").text($("#MainHeading").text());
+            modal.hide();
+        }
+    }
+
     var Url = '@Session["url"].ToString()';
     $("#openaccountgroup").click(function (e) {
         var selectedName = $("#txtAccGrp").val().trim();

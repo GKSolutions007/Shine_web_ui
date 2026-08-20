@@ -1,7 +1,15 @@
 ﻿@model ShineWeb.Models.SingleMasterModel
 @{
     ViewBag.Title = ViewData["FormName"];
-    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+    //Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+    if (ViewData["TransType"].ToString() == "2")
+    {
+        Layout = "~/Views/Shared/_LayoutWithoutheader.cshtml";
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+    }
 }
 
 @*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
@@ -587,6 +595,7 @@
 <body>
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
+    @Html.HiddenFor(model => model.PartyID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtBranchID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
     @Html.HiddenFor(model => model.EnableReturnPrice, new { @autocomplete = "off", @class = "form-control", @id = "txtReurnPricePerm" })
     @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtShowVLSBatch" })
@@ -643,7 +652,7 @@
                         <label class="form-label ps-3" id="lblProdCodeAS"></label>
                         <div class="text-danger pt-1 ps-1 clrdivs" id="divErrProduct"></div>
                     </div>
-                    
+
                     <!-- VLS Batch -->
                     <div class="col-6 col-md-1 trItemName" id="dvVLSBatch">
                         <div class="filter-chip">
@@ -778,14 +787,17 @@
         @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
 
 
-        <div class="footerAction modal-footer p-2">
-            <button type="button" class="btn btn-danger me-2" id="btnClear">
-                <i class="bi bi-arrow-clockwise"></i> Clear
-            </button>
-            <button type="button" class="btn btn-success" id="btnSave">
-                <i class="glyphicon glyphicon-saved"></i> Save
-            </button>
-        </div>
+    <div class="footerAction modal-footer p-2">
+        <button type="button" class="btn btn-danger me-2" id="btnClose">
+            <i class="bi bi-arrow-clockwise"></i> Close
+        </button>
+        <button type="button" class="btn btn-danger me-2" id="btnClear">
+            <i class="bi bi-arrow-clockwise"></i> Clear
+        </button>
+        <button type="button" class="btn btn-success" id="btnSave">
+            <i class="glyphicon glyphicon-saved"></i> Save
+        </button>
+    </div>
     </div>
 </body>
 
@@ -832,6 +844,7 @@
     }
     //dvVLSBatch,chkVLSBatch
     $("#dvVLSBatch").hide();
+    $("#btnClose").hide();
     $("#chkVLSBatch").prop("checked", false);
     if ($("#txtShowVLSBatch").val() == 1) {
         $("#dvVLSBatch").show();
@@ -1536,6 +1549,14 @@ function updateInputColumn(inputID, netValue) {
     $("#btnClear").click(function () {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
+    $("#btnClose").click(function () {
+        if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
+    });
+    function CloseForm() {
+        if ($("#txtTransType").val() == "2") {
+            this.close(); 
+        }
+    }
     function ClearForm() {
         $(".FormclrField").val("");
         $(".FormclrcmbField").val(0);
@@ -1689,9 +1710,11 @@ function updateInputColumn(inputID, netValue) {
             $("#btnSave").prop("disabled", true);
             addProdinArray();
             var isChk = $("#chkInclusive").is(":checked") ? 1 : 0;
+            var ProdID = $("#txtID").val();
+            var nBranchID = $("#cmbBranch").val();
             var listTrans = {
-                "ID": $("#txtID").val(),
-                "BranchID": $("#cmbBranch").val(),
+                "ID": ProdID,
+                "BranchID": nBranchID,
                 "GSTPern": $("#txtHTaxPern").val(),
                 "TrackInventory": isChk,
                 "CBy": UID,
@@ -1712,7 +1735,17 @@ function updateInputColumn(inputID, netValue) {
                     $.each(data, function (i, items) {
                         if (items.MsgID == 0) {
                             showSuccessSnackbar(items.Message);
-                            ClearForm();
+                            if (window.opener && !window.opener.closed) {
+                                window.opener.postMessage({
+                                    source: "ProductPricechange",
+                                    productid: ProdID,   // adjust to your actual field names
+                                    branchid: nBranchID
+                                }, "*");
+                                window.close();
+                            }
+                            else {
+                                ClearForm();
+                            }
                         }
                         else {
                             showErrorSnackbar(items.Message);
@@ -1736,4 +1769,19 @@ function updateInputColumn(inputID, netValue) {
             SaveData();
         }
     });
+    //~Depend Master Load
+    if ($("#txtTransType").val() == "2") {
+        if ($("#txtID").val() > 0) {
+            var nBrID = $("#txtBranchID").val();
+            $("#cmbBranch").val(nBrID);
+            var nProdID = $("#txtID").val(); 
+            $("#cmbBranch,#txtProdName,#chkVLSBatch").prop("disabled", true);
+            $("#btnClear").hide();
+            $("#btnClose").show();
+            setTimeout(() => {
+                GetData(2, '', 0);
+                GetData(3, nProdID);
+            }, 1500);
+        }       
+    }
 </script>

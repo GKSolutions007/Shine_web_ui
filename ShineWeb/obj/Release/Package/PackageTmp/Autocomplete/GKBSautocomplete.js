@@ -1,10 +1,12 @@
-﻿function PaginatedAutocomplete(options) {
+﻿//var autolistfilterwith = 0;//0- contains, 1 - startwitn
+function PaginatedAutocomplete(options) {
 
     var inputId = options.inputId;
     var fullData = options.data || [];
     var pageSize = 20;// options.pageSize || 50;
     var onSelect = options.onSelect || function () { };
-
+    var startwithfieldname = options.startwitfieldname || "label";
+    var autolistfilterwith = options.enablefilterstartwith || false
     var dropId = "pac_drop_" + inputId;
     var listId = "pac_list_" + inputId;
     var statId = "pac_stat_" + inputId;
@@ -212,8 +214,21 @@
         state.filtered = query
             ? fullData.filter(function (d) {
                 var q = query.toLowerCase();
-                return (d.label && d.label.toLowerCase().indexOf(q) > -1) ||
-                    (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                if (autolistfilterwith) {//StartWith
+                    //return (d.label && d.label.toLowerCase().indexOf(q) == 0) ||
+                    //    (d.code && d.code.toLowerCase().indexOf(q) == 0);
+                    console.log("startwithfieldname ", startwithfieldname);
+                    if (d.name && startwithfieldname == "name")
+                        return (d.name && d.name.toLowerCase().indexOf(q) == 0);
+                    else if (d.code && startwithfieldname == "code")
+                        return (d.code && d.code.toLowerCase().indexOf(q) == 0);
+                    else
+                        return (d.label && d.label.toLowerCase().indexOf(q) == 0);
+                } else {//Contains
+                    return (d.label && d.label.toLowerCase().indexOf(q) > -1) ||
+                        (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                    
+                }
             })
             : fullData.slice();
         state.hasMore = state.filtered.length > 0;
