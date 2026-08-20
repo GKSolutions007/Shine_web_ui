@@ -915,25 +915,30 @@
 
                                 <!-- Cheque No -->
                                 <div class="mb-2 cp-field-row" id="trChqNo">
-                                    <span class="form-label">
-                                        <select tabindex="5" class="form-control FormclrcmbField" id="cmbChequeNo">
-                                            <option value="0">Select</option>
-                                        </select>
-                                        <label class="labelup">Cheque No</label>
-                                    </span>
-                                    <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrChequeNo" class="clrdivs"></div>
-                                </div>
+                                    <div class="input-group">
+                                        <span id="opencheque" class="input-group-text" title="New Account No" style="cursor:pointer;">
+                                            <i class="fas fa-arrow-up-right-from-square"></i>
+                                        </span>
+                                        <span class="form-label flex-grow-1">
+                                            <select tabindex="5" class="form-control FormclrcmbField" id="cmbChequeNo">
+                                                <option value="0">Select</option>
+                                            </select>
+                                            <label class="labelup">Cheque No</label>
+                                        </span>
+                                    </div>
+                                        <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrChequeNo" class="clrdivs"></div>
+                                    </div>
 
-                                <!-- Cheque Date -->
-                                <div class="mb-2 cp-field-row" id="trChqDate">
-                                    <span class="form-label">
-                                        <input class="form-control FormclrField" type="date" id="dtpChequeDate">
-                                        <label class="labelup">Cheque/Transfer Date</label>
-                                    </span>
-                                    <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrChequeDate" class="clrdivs"></div>
-                                </div>
+                                    <!-- Cheque Date -->
+                                    <div class="mb-2 cp-field-row" id="trChqDate">
+                                        <span class="form-label">
+                                            <input class="form-control FormclrField" type="date" id="dtpChequeDate">
+                                            <label class="labelup">Cheque/Transfer Date</label>
+                                        </span>
+                                        <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrChequeDate" class="clrdivs"></div>
+                                    </div>
 
-                            </div>
+                                </div>
 
                         <!-- Right Column -->
                         <div class="col-12 col-md-6">
@@ -3486,6 +3491,7 @@ ${$("#txtSAdd3").val()}
                         $('#cmbChequeNo').append($('<option/>', {
                             value: items.ID,
                             text: items.Name,
+                            "data-CHID": items.CBID
                         }));
                     });
                 }
@@ -4944,17 +4950,38 @@ ${$("#txtSAdd3").val()}
                         value: 0,
                         text: "-- Select --",
                     }));
+                    arrBankAccountData = [];
                     $.each(data, function (i, items) {
-                        console.log("Adding item:", items);
-                        var optionText = items.AccountNo ? items.AccountNo : items.Name;
+
+                        var BADetails = (items.Name).split('|');
+
                         $('#cmbFromAccount').append($('<option/>', {
                             value: items.ID,
-                            text: optionText
+                            text: BADetails[0] // Clean Account No
                         }));
-                        $('#cmbFromAccount').val(strAssignValue);
+
+                        var BAInfo = {
+                            "ID": items.ID,
+                            "FAID": items.Code,
+                            "AccNo": BADetails[0],
+                            "Bank": BADetails[1] || '',
+                            "Branch": BADetails[2] || '',
+                            "IFSC": BADetails[3] || '',
+                            "MICR": BADetails[4] || '',
+                            "DefYN": BADetails[5] || '0',
+                            "BankID": BADetails[6] || ''
+                        };
+
+                        if (BADetails[5] == "1") {
+                            DefBankAcc = items.ID;
+                        }
+
+                        arrBankAccountData.push(BAInfo);
                     });
+                    $('#cmbFromAccount').val(strAssignValue);
 
                 }
+                
             }
         });
     }
@@ -5581,11 +5608,40 @@ ${$("#txtSAdd3").val()}
 
         window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
     });
+
+
+    $("#opencheque").click(function (e) {
+        var selectedVal = $("#cmbChequeNo").val() != "" ? $("#cmbChequeNo").val() : 0;
+        var selectedCBID = $('#cmbChequeNo option:selected').attr('data-CHID');
+
+        // Extract CBID or fallback to 0
+        var nvhID = (selectedVal != 0 && selectedCBID) ? selectedCBID : 0;
+        returnField = "chequeno";
+
+        console.log("Selected Cheque Dropdown Value:", selectedVal);
+        console.log("Extracted CBID for URL:", nvhID);
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        const hasPermission = nvhID == 0
+            ? checkAddEditPermission("91")
+            : checkAddEditPermission("92");
+        if (hasPermission) {
+            var ProdUrl = Url + "ChequeBook?name=XXr7R%2B1%2BI9Ginoh3nbpaw0NZPKkGwSLyg6GEOZbkSVM%3D&strFormID=rq5q6i50XyKdLeCOronJVw%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3D%3D&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nvhID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (nvhID == 0 ? "Add" : "Edit") + " Salesman Group</code></h4>");
+        }
+    });
+
     document.addEventListener("keydown", function (event) {
         if (event.key === "F8") {
             event.preventDefault();
             var FieldID = event.target.id;
             var FieldName = event.target.name;
+            if (FieldID == "cmbChequeNo") {
+                $("#opencheque").trigger("click");
+            } 
             if (FieldID == "txtSearch") {
                 var nPartyID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
                 vw = window.innerWidth;
@@ -5644,6 +5700,31 @@ ${$("#txtSAdd3").val()}
             setTimeout(() => {
                 SetAutlistforFields();
             }, 1000);
+        }
+        else if (data && data.source === "ChequeBook") {
+            var ChequeBookID = data.chequeid;
+            var ChequeBookName = data.chequename;
+
+            //ReloadF8Autolistdata("chequebook", null, null, ChequeBookID);
+            $("#cmbChequeNo").find("option").remove();
+            $('#cmbChequeNo').append($('<option/>', {
+                value: 0,
+                text: "-- Select --",
+            }));
+            var PMID = $("#cmbPaymode").val();
+            console.log("PMID Data", PMID);
+            var SelID = $("#cmbFromAccount").val() != "" ? $("#cmbFromAccount").val() : 0;
+            console.log("TXT ID Data", SelID);
+
+            if (nDocPrefix == 18) {
+                if (PMID == "2") {
+                    if (SelID > 0) {
+                        var id = $("#txtID").val() != "" ? $("#txtID").val() : "0"
+                        console.log("TXT ID Data", id);
+                        GetData(5, SelID, id);
+                    }
+                }
+            }
         }
     });
     document.getElementById("txtAmount").addEventListener("input", function () {
