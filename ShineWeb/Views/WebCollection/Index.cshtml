@@ -549,7 +549,7 @@
         scrollX: true,
         scrollCollapse: true,
         order: [[1, 'asc']],
-        "columnDefs": [{ "targets": [0,2], "visible": false, searchable: false, ordering: false }, { "targets": [1], "class": "text-center" }]
+        "columnDefs": [{ "targets": [0,1,2], "visible": false, searchable: false, ordering: false }, { "targets": [1], "class": "text-center" }]
     });
     var InvoiceTable = $('#tblInvoiceData').DataTable({
         paging: false,
@@ -807,9 +807,9 @@
                             ordering: false,
                             sorting: false,
                             columns: [
-                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                                { "data": "EncID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                                { "data": "StatusID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "ID", "visible": false, className: "dt-body-left" },
+                                { "data": "EncID",  "visible": false, className: "dt-body-left" },
+                                { "data": "StatusID",  "visible": false, className: "dt-body-left" },
                                 {
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value, meta) {
@@ -878,9 +878,15 @@
                                     className: "dt-body-left",
                                     mRender: function (data, type, value) {
                                         var chqdate = value.Chequedate || '';
-                                        var clschq = parseInt(AllowPCD) < parseInt(value.ChequeAging) ? "stsCancel" : "stsClose";
-                                        var agingfield = value.Paymentmode == "CHEQUE" ? '<br/>Aging : ' + value.ChequeAging : '';
-                                        return '<label class="' + clschq + '">' + chqdate + '</label> ' + agingfield;
+                                        var agings = value.ChequeAging.split('-');
+                                        var Billage = 0, ChqAge = 0;
+                                        if (agings.length > 0) {
+                                            Billage = agings[0];
+                                            ChqAge = agings[1];
+                                        }
+                                        var clschq = parseInt(AllowPCD) < parseInt(Billage) ? "stsCancel" : "stsClose";
+                                        var agingfield = value.Paymentmode == "CHEQUE" ? '<br/><label title="Bill Ageing">BA : </label> ' + (Billage + ', <label title="Collection Ageing">CA : </label> ' + ChqAge) : '';
+                                        return value.Paymentmode == "CHEQUE" ? '<label class="' + clschq + '">' + chqdate + '</label> ' + agingfield : chqdate;
                                     }
                                 },
                                 { "data": "Chequeno", "autoWidth": true, className: "dt-body-left" },

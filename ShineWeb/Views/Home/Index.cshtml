@@ -9,6 +9,7 @@
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 <link href="~/Content/jquery-ui.css" rel="stylesheet" />
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />
 @*<script src="~/Scripts/bootstrap.min.js"></script>*@
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
@@ -18,6 +19,8 @@
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/Scripts/npm_charts.js"></script>
 <script src="~/Scripts/npm_chart_datalabels.js"></script>
+<script src="~/GKBS_GRID_2.0/js/gridui.js"></script>
+<script src="~/Scripts/xlsx.bundle.js"></script>
 <style>
     :root {
         --primary-color: #4a90e2;
@@ -427,6 +430,86 @@
         color:black !important;
     }
 </style>
+<style>
+    /* The Modal (background) */
+    .modalReportColumnSettings {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 3500; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 800px) {
+        .modalReportColumnSettings-content {
+            background-color: #ffffff;
+            margin: 1% auto; /* 15% from the top and centered */
+            padding: 0px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 85%; /* Could be more or less, depending on screen size */
+            max-height: 60% !important;
+            top: 2% !important;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalReportColumnSettings-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 3px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /*
+ .modal-dialog {
+     width: 80%
+ }*/
+    /* The Close Button */
+    .closemodalReportColumnSettings {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closemodalReportColumnSettings:hover,
+        .closemodalReportColumnSettings:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
 <body>
     <div class="toastBox"></div>
 
@@ -491,7 +574,7 @@
 
         <div class="modern-card brand-overlay-table">
             <div class="row">
-                <div class="col-sm-12 col-md-12 col-lg-12">
+                <div class="col-sm-12 col-md-12 col-lg-12" hidden>
                     <table class="table" id="tblBrandSummary" style="width:100%;">
                         <thead>
                             <tr>
@@ -514,7 +597,8 @@
                         </thead>
                         <tbody></tbody>
                     </table>
-                </div>               
+                </div>
+                <div id="brandsummarygrid" style="height:600px;width:100%;"></div>
             </div>
         </div>
     </div>
@@ -527,7 +611,7 @@
     @Html.HiddenFor(model => model.PendingDraft, new { @autocomplete = "off", @class = "form-control", @id = "txtPendingDraftEnable" })
     @Html.HiddenFor(model => model.TransactionSummary, new { @autocomplete = "off", @class = "form-control", @id = "txtTransactionSummaryEnable" })
     @Html.HiddenFor(model => model.BrandSummary, new { @autocomplete = "off", @class = "form-control", @id = "txtBrandSummaryEnable" })
-    
+
 
     <div class="container-fluid" style="padding: 10px;">
         <div class="row">
@@ -866,13 +950,80 @@
             </div>
         </div>
     </div>
+    <div class="modalReportColumnSettings" id="mymodalReportColumnSettings" tabindex="-1">
+        <div @*class="modal-dialog modal-dialog-centered modal-lg"*@>
+            <div class="modalReportColumnSettings-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header p-3" style="background: var(--primary-color); color:white;">
+                    <h5 class="modal-title" id="lblReportPopupheading"><b>Brand Summary Columns</b></h5>
+                    <button type="button"  style="filter: invert(1);" class="btn-close closemodalReportColumnSettings" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <div id="dvAssign" class="w-100 pb-2">
+                        <table class="table table-bordered table-striped align-middle" id="tblReportSettings">
+                            <thead>
+                                <tr class="trclrforcolheader" style="font-size:10px;">
+                                    <th style="width:0%">ReportID</th>
+                                    <th style="width:0%">TableID</th>
+                                    <th style="width:0%">ColumnID</th>
+                                    <th style="width:0%">FormorReport</th>
+                                    <th style="width:25%">Column Name</th>
+                                    <th style="width:25%">Original Name</th>
+                                    <th style="width:30%">Display Name</th>
+                                    <th style="width:9%">Width</th>
+                                    <th style="width:12%">Visible</th>
+                                    <th style="width:12%">Alignment</th>
+                                    <th style="width:12%">Display Index</th>
+                                    <th style="width:12%">Total</th>
+                                    <th style="width:12%">Sum</th>
+                                    <th style="width:12%">Average</th>
+                                    <th style="width:12%">Count</th>
+                                    <th style="width:12%">Unique</th>
+                                    <th style="width:12%">Column Menu</th>
+                                    <th style="width:12%">Show Column Option</th>
+                                    <th style="width:12%">Print</th>
+                                    <th style="width:12%">Print Name</th>
+                                    <th style="width:12%">Print Width</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="19"></th>
+                                    <th class="text-end">Total Print Width :</th>
+                                    <th class="text-end">
+                                        <label id="lblPrintWidth"></label>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <div class="text-end w-100">
+                        <button type="button" class="btn btn-success" id="btnSubmitmodalReportColumnSettings">
+                            <i class="bi bi-save"></i> Accept
+                        </button>
+                        <button type="button" class="btn btn-warning" id="btnClosemodalReportColumnSettings">
+                            <i class="bi bi-x-circle"></i> Close
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </body>
 <script type="text/javascript">
     var RID = '@Session["RoleID"]';
     var Aurl = '@Session["APIurl"]';
     var HomePeriod = '@Session["HomePeriod"]';
     var AutoRefresh = parseInt('@Session["AutoRefresh"]') * 60;
-
+    var CompanyName = '@Session["CompanyName"]';
     var TblDraftCount = $('#tblDraftCount').DataTable({
         "bFilter": false,
         "bSearchable": false,
@@ -946,8 +1097,24 @@
         scrollX: true,
         scrollCollapse: true,
         "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
-    });    
-    
+    });
+    var tblReportSettings = $('#tblReportSettings').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "250px",
+        "columnDefs": [{ "targets": [0, 1, 2, 3], "visible": false, searchable: false }],
+    });
+    var modalReportColumnsetting = document.getElementById("mymodalReportColumnSettings");
+    var spanRepCSClode = document.getElementsByClassName("closemodalReportColumnSettings")[0];
+    spanRepCSClode.onclick = function () {
+        modalReportColumnsetting.style.display = "none";
+    }
+    $('#btnClosemodalReportColumnSettings').click(function (e) {
+        modalReportColumnsetting.style.display = "none";
+    });
     var collectionChart = null;
     //$('#cmbTransactionTimeFilter,#cmbTimeFilter').val(HomePeriod);
     function updateCollectionChart(data) {
@@ -1085,7 +1252,29 @@
             plugins: [ChartDataLabels]
         });
     }
-
+    var brandsummarygrid;
+    var bransummarycolumnsettings = [];
+    GetColumnSettingsData(2, 1005, 1);
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        columnsettings = [];
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    bransummarycolumnsettings = (data);
+                } else {
+                    showErrorSnackbar("No column found for Brand Summary");
+                }
+            }
+        });
+    }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
     }
@@ -1857,7 +2046,7 @@
             $overlay.addClass('active');
             $btn.addClass('overlay-open');
             $icon.html(ICON_CLOSE);
-            $btn.attr('title', 'Close Brand Summary');            
+            $btn.attr('title', 'Close Brand Summary');
         }
     });
 
@@ -1894,7 +2083,7 @@
     $('#chkOverlayInclusive').click(function (e) {
 
         var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
-        if (Inclusive == 1) {            
+        if (Inclusive == 1) {
             $(".inclField").show();
             $(".exclField").hide();
         }
@@ -1913,7 +2102,8 @@
             data: {
                 BranchID: nBranchID,
                 FromDate: FromDate,
-                ToDate: ToDate
+                ToDate: ToDate,
+                WithTax: Inclusive
             },
             xhrFields: { withCredentials: true },
             success: function (data) {
@@ -1921,7 +2111,7 @@
                 if (Summaryresult && Summaryresult.length > 0) {
                     console.log(" Summaryresult ", Summaryresult);
                     $('#tblBrandSummary').DataTable({
-                        scrollY: "425px",
+                        scrollY: "125px",
                         scrollX: true,
                         scrollCollapse: true,
                         paging: false,
@@ -1934,7 +2124,7 @@
                         sorting: false,
                         columns: [
                             { "data": "ManufID", "autoWidth": true, visible: false, className: "dt-body-left" },
-                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },                           
+                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },
                             {
                                 className: "dt-body-right", ordering: false, sorting: false,
                                 "mRender": function (data, type, value, meta) {
@@ -1946,7 +2136,7 @@
                             //purchae
                             {
                                 className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
-                                "mRender": function (data, type, value, meta) {                                    
+                                "mRender": function (data, type, value, meta) {
                                     var cellfield = '<label name="ExclGrossBillValue" id="exclGrossBillValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossBillValue) + '</label>';
                                     cellfield += '<label name="InclGrossBillValue" id="inclGrossBillValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetBillValue) + '</label>';
                                     return cellfield;
@@ -2033,10 +2223,67 @@
                     else {
                         $(".inclField").hide();
                         $(".exclField").show();
-                    }                                                     
+                    }
+                    var branddata = data.Table1;
+                    var currentSearchValue = '';
+                    if (brandsummarygrid) {
+                        currentSearchValue = brandsummarygrid ? brandsummarygrid.state.searchTerm : '';
+                    }
+                    brandsummarygrid = new GKBSDynamicGrid('#brandsummarygrid', bransummarycolumnsettings, branddata, {
+                        enablePagination: true,
+                        pageSize: ItemsperPage,
+                        height: '500px',
+                        enableSearch: true,
+                        stickyToWindow: true,
+                        enableExport: false,
+                        enablePrint: false,
+                        enableColumnsBtn: false,
+                        enableAddRow: false,
+                        enableRemoveRow: false,
+                        enableSorting: true,
+                        CompanyName: CompanyName,
+                        ReportName: "Brand Summary",
+                        fitersdata: [],
+                        searchTerm: currentSearchValue, singleIconAction: [],
+                        rowActionsMenu: [],
+                        customButtons: [
+                            {
+                                icon: '\u2699\uFE0F',
+                                text: '',
+                                title: 'Settings',
+                                visible: true,
+                                onClick: (gridInstance, event) => {
+                                    //modalGenColumnSettings.show();
+                                    //GendralColumnSettings(1, 33, 1, 0);
+                                    modalReportColumnsetting.style.display = "block";
+                                    ColumnSettings(1, 1005, 1);
+                                    //
+                                }
+                            },
+                            {
+                                icon: '\uD83D\uDCE5',
+                                text: 'Export',
+                                title: 'Export to Excel',
+                                onClick: (gridInstance, event) => {
+                                    gridInstance.exportToExcel();
+                                }
+                            },
+                        ],
+                        customCellRenderer: (el, col, rowData) => {
+                        },
+                        onCellClick: (rowdata, fieldName, cellValue, column) => {
+
+                        },
+                        onCellDoubleClick: (rowdata, fieldName, cellValue, column) => {
+
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(1005, 1, 0, colIndex, field, newWidth)
+                        },
+                    });
                 } else {
                     showErrorSnackbar("No Records Found in Brand Summary");
-                }                
+                }
             },
             error: function (data) {
                 if (data.status == "401") {
@@ -2048,4 +2295,349 @@
             }
         });
     }
+    function ColumnSettings(nMode, nReportID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nReportID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                var jsData = JSON.parse(data);
+                $('#tblReportSettings').DataTable({
+                    scrollY: "400px",
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: false,
+                    destroy: true,
+                    data: jsData,
+                    fixedColumns: false,
+                    searching: false,
+                    ordering: false,
+                    sorting: false,
+                    columns: [
+
+                        //ReportID	TableID	ColumnID	ColumnName	DisplayColumnName	Width	Visible	Alignment	DisplayIndex	IsHiddenColumn
+                        { "data": "FormID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                        { "data": "TableID", "autoWidth": true, "visible": false, className: "dt-body-left" },//1
+                        { "data": "ColumnID", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
+                        { "data": "FormorReport", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
+                        { "data": "ColumnName", "autoWidth": true, "visible": false, className: "dt-body-left" },//3
+                        { "data": "OriginalColumnName", "autoWidth": true, "visible": false, width: "10%", className: "dt-body-left" },//3
+                        {
+                            className: "dt-body-left", width: "20%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="text" value="' + value.DisplayColumnName + '" name ="DisplayColumnName" class="form-control" id="txtDisplayColumnName' + rowIndex + '"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "6%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.Width + '" name ="Width" class="form-control" id="txtWidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.Visible == '0' ? 'selected' : '';
+                                var isTrueSelect = value.Visible == '1' ? 'selected' : '';
+
+                                //var field = "<select name='Visible' class='form-control' id='cmbVisible" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                var ischk = value.Visible == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="Visible" ' + ischk + ' id="cmbVisible' + rowIndex + '"/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isLeftSelect = value.Alignment == '1' ? 'selected' : '';
+                                var isRightSelect = value.Alignment == '2' ? 'selected' : '';
+                                var isCenterSelect = value.Alignment == '3' ? 'selected' : '';
+                                var field = "<select name='Alignment' class='form-control' id='cmbAlignment" + rowIndex + "'><option value= '1'" + isLeftSelect + ">Left</option><option value= '3'" + isCenterSelect + ">Center</option><option value= '2'" + isRightSelect + ">Right</option></select>";
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.DisplayIndex + '" name ="DisplayIndex" class="form-control" id="txtDisplayIndex' + rowIndex + '" min="0" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.TotalYN == '0' ? 'selected' : '';
+                                var isTrueSelect = value.TotalYN == '1' ? 'selected' : '';
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var field = "<select " + isDisable + " name='Total' class='form-control' id='cmbTotal" + rowIndex + "'><option value= '0' " + isFalseSelect + ">No</option><option value= '1'" + isTrueSelect + ">Yes</option></select>";
+                                var ischk = value.TotalYN == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="Total" ' + ischk + ' id="cmbTotal' + rowIndex + '" ' + isDisable + '/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableSum == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableSum == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableSum' class='form-control' id='EnableSum" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableSum == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableSum" ' + ischk + ' id="EnableSum' + rowIndex + '" ' + isDisable + '/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableAvg == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableAvg == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableAvg' class='form-control' id='EnableAvg" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableAvg == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableAvg" ' + ischk + ' id="EnableAvg' + rowIndex + '" ' + isDisable + '/>';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = '';// value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableCount == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableCount == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableCount' class='form-control' id='EnableCount" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableCount == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableCount" ' + ischk + ' id="EnableCount' + rowIndex + '" ' + isDisable + '/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = '';// value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableUnique == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableUnique == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableUnique' class='form-control' id='EnableUnique" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableUnique == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableUnique" ' + ischk + ' id="EnableUnique' + rowIndex + '" ' + isDisable + '/>';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.EnableColumnMenu == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableColumnMenu == '1' ? 'selected' : '';
+                                var field = "<select name='EnableColumnMenu' class='form-control' id='EnableColumnMenu" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableColumnMenu == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableColumnMenu" ' + ischk + ' id="EnableColumnMenu' + rowIndex + '" />';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%", "visible": (RID == 1),
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.ShowinColumnOption == '0' ? 'selected' : '';
+                                var isTrueSelect = value.ShowinColumnOption == '1' ? 'selected' : '';
+                                var field = "<select name='ShowinColumnOption' class='form-control' id='ShowinColumnOption" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.ShowinColumnOption == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="ShowinColumnOption" ' + ischk + ' id="ShowinColumnOption' + rowIndex + '" />';
+
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.PrintYN == '0' ? 'selected' : '';
+                                var isTrueSelect = value.PrintYN == '1' ? 'selected' : '';
+                                var field = "<select name='PrintYN' class='form-control' id='cmbPrintYN" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+
+                                var ischk = value.PrintYN == '1' ? 'checked' : '';
+                                field = '<input type="checkbox" class="dgvPrintYN" name ="PrintYN" ' + ischk + ' id="cmbPrintYN' + rowIndex + '" />';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "18%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="text" value="' + value.PrintColumnName + '" name ="PrintColumnName" class="form-control" id="txtPrintColumnName' + rowIndex + '"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.PrintWidth + '" name ="Printwidth" class="form-control dgvPrintWidth" id="txtPrintwidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                    ],
+                });
+                tblReportSettings = $('#tblReportSettings').DataTable();
+            }
+        });
+    }
+    $("#btnSubmitmodalReportColumnSettings").click(function () {
+
+            var ColumnSettingData = [];
+            $("#tblReportSettings tbody tr").each(function () {
+                var allValues = {};
+                rowdata = tblReportSettings.row($(this)).data();
+                //console.log("Row Data : ", rowdata);
+                //Printwidth,PrintColumnName,PrintYN
+                var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
+                    aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
+                    aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
+                    aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg, aEnableCount = rowdata.EnableCount,
+                    aEnableUnique = rowdata.EnableUnique, aShowinColumnOption = rowdata.ShowinColumnOption;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "DisplayColumnName") {
+                        aDisplayName = $(this).val();
+                    }
+                    if (fieldName == "Width") {
+                        aWidth = $(this).val();
+                    }
+                    if (fieldName == "DisplayIndex") {
+                        aDisplayIndex = $(this).val();
+                    }
+                    if (fieldName == "Printwidth") {
+                        aPrintwidth = $(this).val();
+                    }
+                    if (fieldName == "PrintColumnName") {
+                        aPrintColumnName = $(this).val();
+                    }
+
+                    if (fieldName == "Visible") {
+                        aVisible = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "Total") {
+                        aTotal = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableColumnMenu") {
+                        aEnableColumnMenu = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableSum") {
+                        aEnableSum = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableAvg") {
+                        aEnableAvg = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableCount") {
+                        aEnableCount = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableUnique") {
+                        aEnableUnique = this.checked ? "1" : "0";
+                    }
+
+                    if (fieldName == "ShowinColumnOption") {
+                        aShowinColumnOption = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "PrintYN") {
+                        aPrintYN = this.checked;
+                    }
+
+                });
+                $(this).find("select").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "Alignment") {
+                        aAlign = $(this).val();
+                    }
+                });
+
+                var coldata = {
+                    "FormID": rowdata.FormID,
+                    "TableID": rowdata.TableID,
+                    "ColumnID": rowdata.ColumnID,
+                    "FormorReport": 0,
+                    "ColumnName": rowdata.ColumnName,
+                    "DisplayColumnName": aDisplayName,
+                    "Width": aWidth,
+                    "Visible": aVisible,
+                    "Alignment": aAlign,
+                    "TotalYN": aTotal,
+                    "DisplayIndex": aDisplayIndex,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "EnableAvg": aEnableAvg,
+                    "EnableSum": aEnableSum,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "ShowinColumnOption": aShowinColumnOption,
+                    "PrintYN": aPrintYN,
+                    "PrintColumnName": aPrintColumnName,
+                    "Printwidth": 0,
+                    "EnableCount": aEnableCount,
+                    "EnableUnique": aEnableUnique
+                };
+                ColumnSettingData.push(coldata);
+            });
+            //console.log("ColumnSettingData : ", ColumnSettingData);
+            $.ajax({
+                url: Aurl + "columnsettings/Savecolumnsettings",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(ColumnSettingData),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            //ClearForm();
+                            modalReportColumnsetting.style.display = "none";
+                            GetColumnSettingsData(2, 1005, 1);
+                            setTimeout(() => {
+                                brandsummarygrid.columns = bransummarycolumnsettings;
+                                brandsummarygrid.refreshColumns();
+                            }, 500);
+                        }
+                        else {
+                            showErrorSnackbar(items.Message);
+                            //alert(items.Message);
+                        }
+                    });
+                },
+                error: function (data) {
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        ////showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+            ////console.log("Column Setting Data ", ColumnSettingData);
+
+    });
 </script>
