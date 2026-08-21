@@ -1148,7 +1148,7 @@
     $("#txtDocID").prop("disabled", true);
     $("#dvMain").hide();
 
-    $(".FormBtField").prop("disabled", true);    
+    $(".FormBtField").prop("disabled", true);
     var ProductTable = $('#tblProductData').DataTable({
         paging: false,
         searching: false,
@@ -1205,6 +1205,10 @@
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
     @*var DefBranch = '@Session["DefaultBranch"]';*@
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
     var BatchMode = 0;
     var nTransMode = 1, nIsDraft = 0;
@@ -1536,8 +1540,8 @@ function updateInputColumn(inputID, netValue) {
     $('#tblProductData tbody').on('click', '.clsinfoprod', function () {
         rowdata = ProductTable.row($(this).parents('tr')).data();
         var ProdID = rowdata[0];
-        var PName = $(rowdata[6])[0].value;        
-        $("#lblItemName").text(PName); 
+        var PName = $(rowdata[6])[0].value;
+        $("#lblItemName").text(PName);
         //modalPhistory.style.display = "block";
         modalPhistory.show();
         GetProductHistoryData(ProdID)
@@ -2002,6 +2006,8 @@ function updateInputColumn(inputID, netValue) {
                         PaginatedAutocomplete({
                             inputId: "txtHProds",
                             data: TempAL,
+                            startwitfieldname: startwithfield,
+                            enablefilterstartwith: autolistfilterwith,
                             onSelect: function (item) {
                                 $("#txtHProds").val(item.code);
                                 if ($("#cmbBranch").val() > 0) {
@@ -2016,7 +2022,7 @@ function updateInputColumn(inputID, netValue) {
                                 }
                                 return false;
                             }
-                        });                        
+                        });
                     }
                     else {
                     }
@@ -2064,7 +2070,7 @@ function updateInputColumn(inputID, netValue) {
                         var uomname = $('#cmbUOM option:selected').text();
                         $('#txtNBUOMName').val(uomname);
                     }
-                }                
+                }
             }, error: function (data) {
                 if (data.status == "401") {
                     var msg = data.responseJSON.Message;
@@ -2176,8 +2182,8 @@ function updateInputColumn(inputID, netValue) {
             //modalPhistory.style.display = "block";
             modalPhistory.show();
             var PID = $("#txtHProdID").val();
-            var PName = $("#txtHProds").val();            
-            $("#lblItemName").text(PName);            
+            var PName = $("#txtHProds").val();
+            $("#lblItemName").text(PName);
             GetProductHistoryData(PID);
         } else {
             showErrorSnackbar("Select Product");
@@ -2331,7 +2337,7 @@ function updateInputColumn(inputID, netValue) {
                         showErrorSnackbar("No Records Found");
                     }
                         InventoryAdjustment = data;
-                        
+
                         var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, InventoryAdjustment, {
                             enablePagination: true,
                             pageSize: ItemsperPage,
@@ -2348,7 +2354,7 @@ function updateInputColumn(inputID, netValue) {
                             //onCellChange: handleCellUpdate,
                             customCellRenderer: (el, col, rowData) => {
                                 if (col.field === 'DiffValueNet') {
-                                    const val = rowData[col.field];        
+                                    const val = rowData[col.field];
                                     if (val >= 0) {
                                         el.innerHTML = `<div class="dg-status-badge dg-status-active">
     <span class="dg-status-circle"></span> `+ val +`
@@ -2391,10 +2397,10 @@ function updateInputColumn(inputID, netValue) {
                                 },
                             ],
                             onCellClick: (rowData, fieldName, cellValue, column) => {
-                                
+
                             },
                             onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                                
+
                             },
                             onColumnResize: (colIndex, field, header, newWidth) => {
                                 UpdateColumnWidth(22, 1, 0, colIndex, field, newWidth)
@@ -2421,7 +2427,7 @@ function updateInputColumn(inputID, netValue) {
         $("#lblPTQty,#lblPTAmt,#lblPTFreeQty,#lblPTDmgQty").text("0.00");
         $("#lblPTCount").text("0");
         $("#lblName,#lblProdCodeAS").text(""),
-        $("#btnEmail,#btnWhatsapp").hide();        
+        $("#btnEmail,#btnWhatsapp").hide();
         TableBatch.draw().clear(); TableBatch.draw().clear();
         ProductTable.draw().clear();
         ProductTable.draw().clear();
@@ -2659,7 +2665,118 @@ function updateInputColumn(inputID, netValue) {
             const isAddNBVisib = $("#btnAddNB").is(":visible");
             if (isAddNBVisib) {
                 $("#btnAddNB").trigger("click");
-            }            
+            }
+        }
+        else if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtHProds") {
+                showInfoSnackbar(infomessage);
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        if ($("#cmbBranch").val() > 0) {
+                            var qtyonly = $("#chkQtyonly").is(":checked") ? 1 : 0;
+                            GetData(3, item.code, qtyonly);
+                            $("#btnBatch").focus();
+                        }
+                        else {
+                            showErrorSnackbar("Select Branch");
+                            $('#txtHProds').val("");
+                            $("#cmbBranch").focus();
+                        }
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtHProds") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        if ($("#cmbBranch").val() > 0) {
+                            var qtyonly = $("#chkQtyonly").is(":checked") ? 1 : 0;
+                            GetData(3, item.code, qtyonly);
+                            $("#btnBatch").focus();
+                        }
+                        else {
+                            showErrorSnackbar("Select Branch");
+                            $('#txtHProds').val("");
+                            $("#cmbBranch").focus();
+                        }
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">  
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>	
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
         }
     });
 </script>

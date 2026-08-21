@@ -1978,6 +1978,10 @@
     var UID = '@Session["LoginUserID"]';
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
      var ConfigRoundtype = '@Session["RoundoffType"]';
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
@@ -4155,6 +4159,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 PaginatedAutocomplete({
                     inputId: "txtHProds",
                     data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
                     onSelect: function (item) {
                         $("#txtHProds").val(item.code);
                         $("#txtTempABS").val(item.ABS + item.Location);
@@ -5338,6 +5344,197 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 showErrorSnackbar("Select Customer");
             }
         }
+        else if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtHProds") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Product
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        $("#txtTempABS").val(item.ABS + item.Location);
+                        $("#lblABSLoc").html(item.ABS + item.Location);
+                        $("#clrdivs").html("");
+                        var ID = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+                        GetData(4, item.code, ID);
+                        $("#btnBatch").focus();
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtSearch") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Filter Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtReason") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Filter Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtReason",
+                    data: arrReasons,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtReason").val(item.label);
+                        $("#txtReasonID").val(item.id);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtHProds") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                //~AutoList Product
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        $("#txtTempABS").val(item.ABS + item.Location);
+                        $("#lblABSLoc").html(item.ABS + item.Location);
+                        $("#clrdivs").html("");
+                        var ID = $("#txtID").val() == "" ? 0 : $("#txtID").val();
+                        GetData(4, item.code, ID);
+                        $("#btnBatch").focus();
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtSearch") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList Filter Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtReason") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList Filter Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtReason",
+                    data: arrReasons,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtReason").val(item.label);
+                        $("#txtReasonID").val(item.id);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">  
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>	
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
+        }
         //if (event.ctrlKey && (event.key === 'Insert' || event.which === 45)) {
         //    event.preventDefault();
         //    const dvMainisShow = $("#dvMain").is(":visible"); //
@@ -5384,7 +5581,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $('#cmbReturnType').val(strAssignValue);
                         });
 
-                    } 
+                    }
                 }
             });
         }
@@ -5455,6 +5652,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         PaginatedAutocomplete({
             inputId: "txtSearch",
             data: arrVendor,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtSearch").val(item.code);
                 GetData(3, item.code);
@@ -5465,6 +5664,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         PaginatedAutocomplete({
             inputId: "txtFilterParty",
             data: arrVendor,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtFilterParty").val(item.name);
                 return false;
@@ -5474,6 +5675,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         PaginatedAutocomplete({
             inputId: "txtReason",
             data: arrReasons,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtReason").val(item.label);
                 $("#txtReasonID").val(item.id);

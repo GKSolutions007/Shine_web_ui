@@ -1006,7 +1006,7 @@
         ordering: true,
         scrollY: "250px",
         scrollX: true,
-        scrollCollapse: true,       
+        scrollCollapse: true,
         "columnDefs": [{ "targets": [0, 1], "visible": false, searchable: false, filter: false, ordering: false },
             { "targets": [5], "class": "text-right" }, { "targets": [3], width: "40%" }, { "targets": [10], width: "6%" }],
     });
@@ -1017,16 +1017,20 @@
     var PrintTransID = 7, PrintConfigID = 0;
     var allowprint = '@Session["AllowPrint"]';
     var grid, AutomaticIndent;
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     GetColumnSettingsData(2, 23, 1, true);
            var enableBranch = '@(Model.EnableBranch ?? "0")';
     if ($("#txtEnableBranch").val() == 1) {
         $("#cmbBranch,#cmbFilterBranch").prop("disabled", true);
     }
-    
+
     if ($("#txtEnableBranch").val() == 1) {
         $("#cmbBranch").prop("disabled", true);
     }
-    
+
     $('#tblProductDataAI tbody').on('click','input', function () {
         $(this).select();
     });
@@ -1035,7 +1039,7 @@
     });
 setTimeout(function () { GetFilterData(); }, 800);
     GetData(1, 2);
-    GetPrintProfile(PrintTransID);    
+    GetPrintProfile(PrintTransID);
     var TempProd = [];
     var prodids = 0;
     var tpn = "";
@@ -1136,7 +1140,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                             $("#txtPincode").val(items.Pincode);
                         $("#lblOpenPOCount").text(items.POopen), $("#lblOpenAICount").text(items.AIopen);
                         if (items.lstProduct.length > 0)
-                        {                            
+                        {
                             $('#tblProductDataAI').DataTable({
                                 scrollY: "450px",
                                 scrollX: true,
@@ -1232,7 +1236,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                         }
                     });
                     calculateProdGrid();
-                }                
+                }
                 else if (nMode == 10) {
                     GetFilterData();
                 }
@@ -1249,6 +1253,8 @@ setTimeout(function () { GetFilterData(); }, 800);
         PaginatedAutocomplete({
             inputId: "txtSearch",
             data: arrVendor,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtSearch").val(item.name);
                 GetData(2, item.code);
@@ -1259,11 +1265,13 @@ setTimeout(function () { GetFilterData(); }, 800);
         PaginatedAutocomplete({
             inputId: "txtFilterParty",
             data: arrVendor,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtFilterParty").val(item.name);
                 return false;
             }
-        });       
+        });
     }
     $('#btnFilter').click(function (e) {
         GetFilterData(1);
@@ -1335,7 +1343,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 text: '',
                                 title: 'Settings',
                                 visible: true,
-                                onClick: (gridInstance, event) => {                                    
+                                onClick: (gridInstance, event) => {
                                     modalGenColumnSettings.show();
                                     GendralColumnSettings(1, 23, 1, 0);
                                 }
@@ -1345,7 +1353,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 text: 'New',
                                 title: 'New Automatic Indent',
                                 visible: $("#txtAddID").val() == 1 && rdo1 == 1,
-                                onClick: (gridInstance, event) => {                                    
+                                onClick: (gridInstance, event) => {
                                     nTransMode = 1;
                                     $("#dvMain").show();
                                     $("#dvDocuments").hide();
@@ -1385,7 +1393,7 @@ setTimeout(function () { GetFilterData(); }, 800);
             $dropdown.removeClass('dropup-menu');
         }
     });
-   
+
     function isNumberKey(evt) {
         var charCode = (evt.which) ? evt.which : evt.keyCode
         if (charCode > 31 && (charCode < 48 || charCode > 57))
@@ -1439,7 +1447,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                         $("#lblOpenPOCount").text(itemsParty.POopen), $("#lblOpenAICount").text(itemsParty.AIopen);
 
                     });
-                    var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";                    
+                    var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                     $('#tblProductDataAI').DataTable({
                         scrollY: "450px",
                         scrollX: true,
@@ -1572,7 +1580,7 @@ setTimeout(function () { GetFilterData(); }, 800);
         nTransMode = 2;
         var rdo1 = $("#rdoMainTableData").is(":checked");
         var rdo2 = $("#rdoDraftTableData").is(":checked");
-        var stsID = rowData.CurrentStatus;        
+        var stsID = rowData.CurrentStatus;
         if (rdo2 && !ValidateCancelDraftData(1, 2, rowData.ID, stsID)) {
             return;
         }
@@ -1649,7 +1657,7 @@ setTimeout(function () { GetFilterData(); }, 800);
             CurrentStatus: $("#txtStatus").val()
         }
         VariantActionTrigger(rowinfo);
-    });    
+    });
     function VariantActionTrigger(rowData) {
         nTransMode = 3;
         GetData(1, 1);
@@ -1781,7 +1789,7 @@ setTimeout(function () { GetFilterData(); }, 800);
         }
     }
     //~Clear
-    $("#btnClear").click(function () {       
+    $("#btnClear").click(function () {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
     function ClearForm() {
@@ -2029,4 +2037,129 @@ setTimeout(function () { GetFilterData(); }, 800);
         $("#dvDocuments").hide();
         $("#MainHeading").text("View Automatic Indent");
     }
+
+    document.addEventListener("keydown", function (event) {
+        if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtSearch") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Search
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.name);
+                        GetData(2, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar(infomessage);
+                //~AutoList FilterParty
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtSearch") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                //~AutoList Search
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.name);
+                        GetData(2, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList FilterParty
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">  
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>	
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
+        }
+    });
+
 </script>
