@@ -510,6 +510,105 @@
         -moz-appearance: textfield;
     }
 </style>
+<style>
+    .brand-os-summary {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 18px;
+    padding: 8px 14px;
+    margin-left: auto;
+    width: fit-content;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    transition: all 0.25s ease;
+}
+
+.brand-os-summary:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+}
+
+.brand-os-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 150px;
+}
+
+.brand-os-icon {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #eef5ff;
+    color: #2563eb;
+    font-size: 17px;
+    transition: all 0.3s ease;
+}
+
+.brand-os-item:hover .brand-os-icon {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+.brand-os-content {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.brand-os-title {
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.brand-os-content strong {
+    margin-top: 3px;
+    font-size: 16px;
+    color: #111827;
+    font-weight: 700;
+}
+
+.brand-os-divider {
+    width: 1px;
+    height: 35px;
+    background: #e5e7eb;
+}
+
+/* > 30 Days */
+.brand-os-item.danger .brand-os-icon {
+    background: #fff1f2;
+    color: #dc2626;
+}
+
+.brand-os-item.danger .brand-os-content strong {
+    color: #dc2626;
+}
+
+/* Number animation */
+@@keyframes valuePulse {
+    0% {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.brand-os-content strong {
+    animation: valuePulse 0.5s ease-out;
+}
+</style>
 <body>
     <div class="toastBox"></div>
 
@@ -597,6 +696,29 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+                </div>
+                <div class="brand-os-summary">
+                    <div class="brand-os-item">
+                        <div class="brand-os-icon">
+                            <i class="fa fa-wallet"></i>
+                        </div>
+                        <div class="brand-os-content">
+                            <span class="brand-os-title">Outstanding</span>
+                            <strong id="lblBrandTotalOS">0.00</strong>
+                        </div>
+                    </div>
+
+                    <div class="brand-os-divider"></div>
+
+                    <div class="brand-os-item danger">
+                        <div class="brand-os-icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="brand-os-content">
+                            <span class="brand-os-title">Over 30 Days</span>
+                            <strong id="lblBrandGreater30DOS">0.00</strong>
+                        </div>
+                    </div>
                 </div>
                 <div id="brandsummarygrid" style="height:600px;width:100%;"></div>
             </div>
@@ -2229,6 +2351,17 @@
                     if (brandsummarygrid) {
                         currentSearchValue = brandsummarygrid ? brandsummarygrid.state.searchTerm : '';
                     }
+                    //lblBrandGreater30DOS,lblBrandTotalOS
+                    var totalOS = branddata.reduce(function (sum, item) {
+                        return sum + parseFloat(item.Outstandings.split('/')[0]) || 0;
+                    }, 0);
+
+                    var greater30DOS = branddata.reduce(function (sum, item) {
+                        return sum + parseFloat(item.Last30DaysOS.split('/')[0]) || 0;
+                    }, 0);
+
+                    $("#lblBrandTotalOS").text(formatIndianCurrency(totalOS.toFixed(2)));
+                    $("#lblBrandGreater30DOS").text(formatIndianCurrency(greater30DOS.toFixed(2)));
                     brandsummarygrid = new GKBSDynamicGrid('#brandsummarygrid', bransummarycolumnsettings, branddata, {
                         enablePagination: true,
                         pageSize: ItemsperPage,

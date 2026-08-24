@@ -559,9 +559,9 @@
         scrollX: true,
         scrollCollapse: true,
         "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false }, { "targets": [9], "class": "text-center" }],
-    });    
+    });
     var today = new Date();
-    today.setHours(0, 0, 0, 0); 
+    today.setHours(0, 0, 0, 0);
     var DocumentData = $('#tblDocumentData').DataTable({
         paging: false,
         searching: false,
@@ -604,7 +604,10 @@
     setDate("dtpFFrom", 0);
     setDate("dtpFTo", 0);
     setDate("dtpAsonDate", 0);
-
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     setTimeout(function () { GetFilterData(); }, 800);
     if ($("#txtID").val() > 0 && $("#txtTransType").val() > 0) {
         $("#txtDraftID").val($("#txtID").val())
@@ -649,7 +652,7 @@
     var PrintTransID = 20, PrintConfigID = 0;
     //setDate();
     GetPrintProfile(PrintTransID);
-    
+
     GetData(1);
 
     var TempProd = [], arrParty = [], arrBankAccountData = [], DefBankAcc = 0;
@@ -680,9 +683,8 @@
                     $.each(data, function (i, items) {
                         if (items.FType == 2) {
                             var ven = {
-                                "label": items.Code + " | " + items.Name,
+                                "label":  items.Name,
                                 "name": items.Name,
-                                "code": items.Code,
                                 "id": items.ID,
                             }
                             arrParty.push(ven);
@@ -712,7 +714,7 @@
                             }
                             arrBankAccountData.push(BAInfo);
 
-                            $('#cmbFilterAccountNo,#cmbDepositAccountNo').append($('<option/>', {
+                            $('#cmbFilterAccountNo,#txtFilterParty,#cmbDepositAccountNo').append($('<option/>', {
                                 value: items.ID,
                                 text: BADetails[0],
                             }));
@@ -850,7 +852,7 @@
         });
         //showSuccessSnackbar("Cheques : " + Checkedrows + " & Values : " + Value);
         $("#lblChqCountValue").text(parseFloat(Value).toFixed(DecVal) + " / " + Checkedrows);
-    }    
+    }
     $('#dtpDate,#cmbBranch').on('focus', function () {
         $(this).data("oldvalue", $(this).val());
     });
@@ -876,6 +878,8 @@
         PaginatedAutocomplete({
             inputId: "txtFilterParty",
             data: arrParty,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtFilterParty").val(item.name);
                 return false;
@@ -885,13 +889,15 @@
         PaginatedAutocomplete({
             inputId: "cmbAccountNo",
             data: arrParty,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#cmbAccountNoID").val(item.id);
                 $("#cmbAccountNo").val(item.name);
                 return false;
             }
         });
-        
+
     }
     $('#cmbAccountNo').change(function (e) {
         $("#cmbAccountNoID").val("");
@@ -952,9 +958,9 @@
                         enableRemoveRow: false,
                         enableSorting: true,
                         searchTerm: currentSearchValue, singleIconAction: singleIconAction,
-                        rowActionsMenu: menuActions, 
+                        rowActionsMenu: menuActions,
                         customCellRenderer: (el, col, rowData) => {
-                            
+
                         },
                         customButtons: [
                             {
@@ -962,7 +968,7 @@
                                 text: '',
                                 title: 'Settings',
                                 visible: true,
-                                onClick: (gridInstance, event) => {                                    
+                                onClick: (gridInstance, event) => {
                                     modalGenColumnSettings.show();
                                     GendralColumnSettings(1, 31, 1, 0);
                                 }
@@ -986,10 +992,10 @@
                             },
                         ],
                         onCellClick: (rowData, fieldName, cellValue, column) => {
-                           
+
                         },
                         onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
-                            
+
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {
                             UpdateColumnWidth(31, 1, 0, colIndex, field, newWidth)
@@ -999,7 +1005,7 @@
                         if (ClickType == 1)
                             showErrorSnackbar("No records found");
                     }
-                    
+
                 }, error: function (data) {
                     if (data.status == "401") {
                         var msg = data.responseJSON.Message;
@@ -1014,7 +1020,7 @@
         if (charCode > 31 && (charCode < 48 || charCode > 57))
             return false;
         return true;
-    }    
+    }
     $('#tblMasterData tbody').on('click', '.clsCancel', function (e) {
         var rdo1 = $("#rdoMainTableData").is(":checked");
         $(".clrdivs").html("");
@@ -1183,7 +1189,7 @@
                 SaveData();
             }
         }
-    });    
+    });
     function BranchInfoDialogMsg(message) {
         var IsAccepted = false;
         $(".ui-dialog-titlebar-close").hide();
@@ -1218,7 +1224,7 @@
     };
 
     $("#aOpenChqHandReport").click(function (e) {
-        e.preventDefault();       
+        e.preventDefault();
         const hasPermission = checkAddEditPermission("453")
         if (hasPermission) {
             window.open(
@@ -1227,6 +1233,131 @@
             );
         } else {
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code>Cheque In Hand</code></h4>");
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar(infomessage);
+                //~AutoList FilterParty
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "cmbAccountNo") {
+                showInfoSnackbar(infomessage);
+                //~AutoList FilterParty
+                PaginatedAutocomplete({
+                    inputId: "cmbAccountNo",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#cmbAccountNoID").val(item.id);
+                        $("#cmbAccountNo").val(item.name);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                //~AutoList FilterParty
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "cmbAccountNo") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList FilterParty
+                PaginatedAutocomplete({
+                    inputId: "cmbAccountNo",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#cmbAccountNoID").val(item.id);
+                        $("#cmbAccountNo").val(item.name);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">  
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>	
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
         }
     });
 </script>

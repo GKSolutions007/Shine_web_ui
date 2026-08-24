@@ -252,7 +252,7 @@
         scrollCollapse: true,
         "columnDefs": [{ "targets": [0,1,2,3], "visible": false, searchable: false }, { "targets": [1], "class": "text-center" },
             { "targets": [3], "class": "text-right" }],
-        "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {            
+        "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
             if (aData[8] == "Opening Balance") {
                 $('td', nRow).css('color', 'Blue');
                 $('td', nRow).css("font-weight", "bold");
@@ -273,6 +273,10 @@
     var Aurl = '@Session["APIurl"]';
     var UID = '@Session["LoginUserID"]';
     var DecVal = '@Session["DecimalValues"]';
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     GetData(1);
     var arrParty = [], arrBankAccountData = [], DefBankAcc = 0;
     function GetData(nMode) {
@@ -325,13 +329,13 @@
                                 text: BADetails[0],
                             }));
                         }
-                    });      
+                    });
                     SetAutlistforFields();
                     $("#cmbBankAccNo").val(DefBankAcc);
                 } else if (nMode == 2) {
                     if (data.length > 0) {
                         var accdata = eval(data);
-                        Table.draw().clear(); Table.draw().clear();     
+                        Table.draw().clear(); Table.draw().clear();
                         var cr = 0, dr = 0;
                         var billjsdata = eval(data);
                         $('#tblMasterData').DataTable({
@@ -380,15 +384,15 @@
                                 { "data": "DocDate", "autoWidth": true, className: "dt-body-left" },//3
                                 { "data": "DocID", "autoWidth": true, className: "dt-body-left" },//4
                                 { "data": "TransName", "autoWidth": true, className: "dt-body-left" },//5
-                                { "data": "AccountName", "autoWidth": true, className: "dt-body-left" },//6                            
+                                { "data": "AccountName", "autoWidth": true, className: "dt-body-left" },//6
                                 { "data": "Debit", "autoWidth": true, className: "dt-body-right" },//9
                                 { "data": "Credit", "autoWidth": true, className: "dt-body-right" },//5
-                                { "data": "ChequeNo", "autoWidth": true, className: "dt-body-left" },//6                                                        
-                                { "data": "ChequeInfo", "autoWidth": true, className: "dt-body-left" },//10                                                           
+                                { "data": "ChequeNo", "autoWidth": true, className: "dt-body-left" },//6
+                                { "data": "ChequeInfo", "autoWidth": true, className: "dt-body-left" },//10
                             ],
 
                         });
-                        Table = $('#tblMasterData').DataTable();                        
+                        Table = $('#tblMasterData').DataTable();
                     }
                     else {
                         showErrorSnackbar("No Records Found");
@@ -413,7 +417,7 @@
         var val = e.target.value;
         if (kyc == "32") {//Space : Assign Transdate
             e.preventDefault();
-            //showErrorSnackbar("Key Down Space Pressed, Value : " + val);            
+            //showErrorSnackbar("Key Down Space Pressed, Value : " + val);
             var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
             var CurrRowDocID = currrowdata.JVID;//[0];
             $("#tblMasterData tbody tr").each(function () {
@@ -436,7 +440,7 @@
                 }
             });
         }
-        if (kyc == "68") {//D : 
+        if (kyc == "68") {//D :
             e.preventDefault();
             var AboveDate = "";
             var currrowdata = Table.row(nGrid1CurrentRowIndex - 1).data();
@@ -480,7 +484,7 @@
         }
         if (kyc == "186") {//";" : Add One Day from Trans Date
             e.preventDefault();
-            //showErrorSnackbar("Key Down Space Pressed, Value : " + val);            
+            //showErrorSnackbar("Key Down Space Pressed, Value : " + val);
             var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
             var CurrRowDocID = currrowdata.JVID;//[0];
             $("#tblMasterData tbody tr").each(function () {
@@ -509,14 +513,16 @@
         PaginatedAutocomplete({
             inputId: "txtFilterParty",
             data: arrParty,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtFilterParty").val(item.name);
                 return false;
             }
-        });        
+        });
     }
     setDate("dtpFFrom", 0);
-    setDate("dtpFTo", 0);    
+    setDate("dtpFTo", 0);
     $('#btnFilter').click(function (e) {
         GetFilterData(1);
     });
@@ -553,14 +559,14 @@
     }
     $('input[type=date]').focusin(function (e) {
         $(this).select();
-    });    
+    });
     $('#btnClear').click(function (e) {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
     function ClearForm() {
         SetFilterDate();
         $(".clrdiv").html("");
-        Table.draw().clear(); Table.draw().clear();     
+        Table.draw().clear(); Table.draw().clear();
         GetData(1);
     }
     var listTrans = [];
@@ -601,7 +607,7 @@
         }
     });
     function SaveData() {
-        $("#btnSave").prop("disabled", true);       
+        $("#btnSave").prop("disabled", true);
         $.ajax({
             url: Aurl + "brsdata/save",
             type: 'POST',
@@ -634,5 +640,101 @@
                 }
             }
         });
-    }    
+    }
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar(infomessage);
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">  
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>	
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
+        }
+    });
+
 </script>
