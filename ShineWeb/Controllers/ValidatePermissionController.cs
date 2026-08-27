@@ -100,12 +100,13 @@ namespace ShineWeb.Controllers
                 Session["DefaultCustID"] = dtAppconfig.Rows[0]["DefaultCustID"].ToString();
                 Session["SelectinvoiceinSR"] = dtAppconfig.Rows[0]["SelectinvoiceinSR"].ToString();
                 Session["InvoiceStockOnlyProduct"] = dtAppconfig.Rows[0]["InvoiceStockOnlyProduct"].ToString();
+                Session["AssignInvBeatSalesmanfrom"] = dtAppconfig.Rows[0]["AssignInvBeatSalesmanfrom"].ToString();
+                
                 Session["FilterDateType"] = dtAppconfig.Rows[0]["FilterDate"].ToString();
                 Session["PurchaseOneView"] = dtAppconfig.Rows[0]["PurchaseOneView"].ToString();
                 Session["SalesOneView"] = dtAppconfig.Rows[0]["SalesOneView"].ToString();
                 Session["AllSalesmanInvoice"] = dtAppconfig.Rows[0]["AllSalesmanInvoice"].ToString();
                 Session["SelectinvoiceinSR"] = dtAppconfig.Rows[0]["SelectinvoiceinSR"].ToString();
-                Session["InvoiceStockOnlyProduct"] = dtAppconfig.Rows[0]["InvoiceStockOnlyProduct"].ToString();
                 Session["FilterDateType"] = dtAppconfig.Rows[0]["FilterDate"].ToString();
                 Session["PurchaseOneView"] = dtAppconfig.Rows[0]["PurchaseOneView"].ToString();
                 Session["SalesOneView"] = dtAppconfig.Rows[0]["SalesOneView"].ToString();
