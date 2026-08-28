@@ -67,9 +67,9 @@
         font-size: 14px;
         font-weight: 600;
         color: var(--primary-color);
-        margin-bottom: 8px;
+        margin-bottom: 3px;
         border-bottom: 1px solid var(--border-color);
-        padding-bottom: 8px;
+        padding-bottom: 5px;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -802,6 +802,22 @@
                         </thead>
                     </table>
                 </div>
+                <!-- Outstandings -->
+                <div class="modern-card" id="dvOutstandings">
+                    <div class="card-title widget-header">
+                        <span class="glyphicon glyphicon-credit-card"></span>
+                        Outstandings
+                    </div>
+                    <table class="table" id="tblOutstandings">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th style="text-align:right;">Value</th>
+                                <th style="text-align:right;">Invoice Count</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
                 <!-- Quick Access -->
                 <div class="sidebar-widget" id="dvQuickAccess">
                     <div class="widget-header">
@@ -825,33 +841,7 @@
                     </div>
                 </div>
 
-                <!-- Transaction Variant -->
-                <div class="sidebar-widget Transvariant-container" id="dvTransVariant">
-                    <div class="widget-header">
-                        <span class="glyphicon glyphicon-list-alt"></span> Transaction Variant
-                    </div>
-                    <div class="widget-body">
-                        <div class="form-group form-label">
-                            <label class="labelup">Transaction</label>
-                            <select class="form-control" id="cmbVariantTransaction">
-                                <option value="0">Select</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-label">
-                            <label class="labelup">Doc ID</label>
-                            <input type="text" class="form-control" id="txtVariantDocID" placeholder="Select Doc ID">
-                        </div>
-                        <div class="form-group form-label">
-                            <label class="labelup">Party Name</label>
-                            <input type="text" class="form-control" id="txtVariantPartyName" placeholder="Select Party">
-                            <input hidden id="txtPartyID" />
-                        </div>
-                        <div style="display: flex; justify-content: center; gap: 8px;">
-                            <button type="button" id="btnVariantClear" class="btn btn-danger"><span class="glyphicon glyphicon-refresh"> Reset</span></button>
-                            <button type="button" id="btnVariantSubmit" class="btn btn-success"><span class="glyphicon glyphicon-saved"> Submit</span></button>
-                        </div>
-                    </div>
-                </div>
+               
             </div>
 
             <!-- Main Dashboard Area -->
@@ -891,7 +881,33 @@
                                 </thead>
                             </table>
                         </div>
-
+                        <!-- Transaction Variant -->
+                        <div class="sidebar-widget Transvariant-container" id="dvTransVariant">
+                            <div class="widget-header">
+                                <span class="glyphicon glyphicon-list-alt"></span> Transaction Variant
+                            </div>
+                            <div class="widget-body">
+                                <div class="form-group form-label">
+                                    <label class="labelup">Transaction</label>
+                                    <select class="form-control" id="cmbVariantTransaction">
+                                        <option value="0">Select</option>
+                                    </select>
+                                </div>
+                                <div class="form-group form-label">
+                                    <label class="labelup">Doc ID</label>
+                                    <input type="text" class="form-control" id="txtVariantDocID" placeholder="Select Doc ID">
+                                </div>
+                                <div class="form-group form-label">
+                                    <label class="labelup">Party Name</label>
+                                    <input type="text" class="form-control" id="txtVariantPartyName" placeholder="Select Party">
+                                    <input hidden id="txtPartyID" />
+                                </div>
+                                <div style="display: flex; justify-content: center; gap: 8px;">
+                                    <button type="button" id="btnVariantClear" class="btn btn-danger"><span class="glyphicon glyphicon-refresh"> Reset</span></button>
+                                    <button type="button" id="btnVariantSubmit" class="btn btn-success"><span class="glyphicon glyphicon-saved"> Submit</span></button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <!-- Details Tables Column -->
                     <div class="col-md-7 col-lg-7">
@@ -1207,8 +1223,18 @@
         scrollY: "400px",
         scrollCollapse: true,
         "columnDefs": [{ "targets": [1,2,3], "class": "dt-body-right" }],
-
     });
+    var tblOutstandings = $('#tblOutstandings').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "250px",
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [1], "class": "dt-body-right" }, { "targets": [2], "class": "dt-body-center" }],
+    });
+    
     var tblBrandSummary = $('#tblBrandSummary').DataTable({
         "bFilter": true,
         "bSearchable": true,
@@ -1443,6 +1469,7 @@
     GetData(9, 0);
     GetData(10, 0);
     GetData(11, 0);
+    GetData(13, 0);
     GetData(6, RID);
     var arrTrans = [], arrStockValues = [], arrPartyOS = [],arrCashBalances = [],arrBankBalances = [];
 
@@ -1646,6 +1673,19 @@
                                 items.ActualQty,
                                 formatIndianCurrency(items.Price),
                                 formatIndianCurrency(items.InclPrice)
+                            ]).draw(false);
+                        });
+
+                    }
+                }
+                if (nMode == 13) {
+                    tblOutstandings.draw().clear(); tblOutstandings.draw().clear();
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {                            
+                            tblOutstandings.row.add([
+                                items.Descriptions != 'Total' ? items.Descriptions : '<label style="font-size:12px;color:red">' + items.Descriptions+"</label>",
+                                items.Descriptions != 'Total' ? formatIndianCurrency(items.Balance) : '<label style="font-size:12px;color:red">' + formatIndianCurrency(items.Balance) + "</label>",
+                                items.Descriptions != 'Total' ? items.InvCount : '<label style="font-size:12px;color:red">' + items.InvCount + "</label>"
                             ]).draw(false);
                         });
 
@@ -2123,6 +2163,7 @@
         GetData(9, 0);
         GetData(10, 0);
         GetData(11, 0);
+        GetData(13, 0);
         getCollectionData(nCollPeriodType);
         getTransactionData(nTranPeriodType);
         getChequeData();

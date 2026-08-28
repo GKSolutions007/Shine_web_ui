@@ -781,7 +781,7 @@
     var Frames = 1;
     var arrReportDeatils = [], IsDynamicReport = 0,nSendFilterstoDetail = 0;
     var arrAllFooterData = [];
-
+    var ActualColumns = [];
     var modalReportColumnsetting = document.getElementById("mymodalReportColumnSettings");
     var spanRepCSClode = document.getElementsByClassName("closemodalReportColumnSettings")[0];
     spanRepCSClode.onclick = function () {
@@ -958,7 +958,7 @@
     //ColumnDetails(2, FID, 1);
     //GetColumnSettingsData(2, FID, 1);
     function GetColumnSettingsData(nMode, nFormID, nTableID) {
-        columnsettings = [];
+        columnsettings = [], ActualColumns = [];
         $.ajax({
             url: Aurl + "columnsettings/getcolumnsettings",
             type: 'get',
@@ -971,9 +971,11 @@
             success: function (data) {
                 if (data.length > 0) {
                     columnsettings = (data);
+                    ActualColumns = (data);
                     //console.log("columns : ", columnsettings);
                     if (nTableID == 1) {
                         columnsettings = (data);
+                        
                         //console.log("Header Columns : ", columnsettings);
                         if (columnsettings.length) {
                             arrParamHiddenColumns = columnsettings.filter(hd => hd.ShowinColumnOption == false);
@@ -1328,6 +1330,7 @@ function setDate(FieldID,Type) {
                 $(this).prop("checked", false);
             }
         });
+        ActualColumns = [];
     });
     function LoadDataforAL() {
         $('#tblFilterData tr td input[type=text],select').each(function (i, items) {
@@ -1815,10 +1818,20 @@ function setDate(FieldID,Type) {
         
         if(FID == 14){
             columnsettings = [];
+            //columns = allcolumns.filter(
+            //    item => obj1Fields.includes(item)
+            //);
+            columns = allcolumns
+        }
+        else if (FID == 96) {
+
+            columnsettings =[... ActualColumns];
+            const obj2Fields = columnsettings.map(item => item.field);
             columns = allcolumns.filter(
-                item => obj1Fields.includes(item)
+                item => !obj2Fields.includes(item)
             );
-        }else {
+        }
+        else {
             columns = allcolumns.filter(
                 item => !obj1Fields.includes(item)
             );
@@ -2190,8 +2203,8 @@ function setDate(FieldID,Type) {
                                             PrintColumnName: columns[i],
                                             PrintYN: true,
                                             Printwidth: 20,
-                                            "EnableCount": true,
-                                            "EnableUnique": true
+                                            "EnableCount": false,
+                                            "EnableUnique": false
                                         }
                                         columnsettings.push(coldata)
                                     }
