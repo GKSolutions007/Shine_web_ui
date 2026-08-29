@@ -19,7 +19,7 @@ namespace ShineWeb.Controllers
         clsBusinessLayer objBL = new clsBusinessLayer();
         public IDictionary<string, string> _mappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         
-        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID)
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string TransVariantID = "0", string PartyID = "0")
         {
             if (Session["LoginUserID"] == null)
             {
@@ -60,6 +60,8 @@ namespace ShineWeb.Controllers
                 dam.EnableBranch = EnbBranch;
                 dam.EnableSave = EnabSave;
                 dam.EnablePriceEditInTransaction = editprice;
+                dam.TransVariantID = TransVariantID;
+                dam.PartyID = PartyID;
                 dam.DraftModify = DrftMod;
                 dam.DraftCancel = DrftCan;
                 dam.EnablePaid = EnbPaid;
