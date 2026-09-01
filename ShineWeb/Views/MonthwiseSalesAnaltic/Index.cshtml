@@ -878,6 +878,8 @@
                                     <option value="3">Damage Return</option>
                                     <option value="4">Collection</option>
                                     <option value="5">Outstandings</option>
+                                    <option value="6">Purchase</option>
+                                    <option value="7">Purchase Return</option>
                                 </select>
                             </div>
                         </div>
@@ -939,7 +941,7 @@
                         </div>
                     </div>
                     <!-- Value Type -->
-                    <div class="col-md-2 col-sm-12 dvprodfilterfield">
+                    <div class="col-md-2 col-sm-12 dvvaluetypefilterfield">
                         <div class="form-group-modern">
                             <label>
                                 Value Type
@@ -1067,15 +1069,15 @@ var DefBranch = '@Session["DefaultBranch"]';
             setDate("dtpTo", 0);
             // Custom table renderer is used instead of DataTables
             // var TableMainHeader = ...
-            filterfieldaata(1, 1);
-            filterfieldaata(2, 1);
-            function filterfieldaata(nMode,nFilterID) {
+            filterfieldaata(1, 1, 1);
+            filterfieldaata(2, 1, 1);
+            function filterfieldaata(nMode, nFilterID, nTransID) {
                 $.ajax({
                     url: Aurl + "monthwisesalesanaltic/filterdata",
                     type: 'get',
                     contentType: 'json',
                     data: {
-                        Mode: nMode, FilterID : nFilterID
+                        Mode: nMode, FilterID: nFilterID, TransID: nTransID
                     },
                     xhrFields: {
                         withCredentials: true
@@ -1094,26 +1096,79 @@ var DefBranch = '@Session["DefaultBranch"]';
                     }
                 });
             }            
+            var PartyTypeFilters = [
+                {
+                    "PartyType": "1",
+                    "ID": "1",
+                    "Name": "Beat"
+                },
+                {
+                    "PartyType": "1",
+                    "ID": "2",
+                    "Name": "Salesman"
+                },
+                {
+                    "PartyType": "1",
+                    "ID": "3",
+                    "Name": "Customer"
+                },
+                {
+                    "PartyType": "1",
+                    "ID": "4",
+                    "Name": "Customer Type"
+                },
+                {
+                    "PartyType": "2",
+                    "ID": "1",
+                    "Name": "Vendor"
+                },
+            ];
+            function bindPartyFilterDropdown(nTransID) {
+                $('#cmbPartyFilterType').find("option").remove();
+                $('#cmbPartyFilterType').append($('<option/>', {
+                    value: 0,
+                    text: "-- Select --",
+                }));
+                var IsSaleOrPurchase = nTransID <= 5 ? 1 : 2;
+                var partyfilters = PartyTypeFilters.filter(a => a.PartyType == IsSaleOrPurchase);
+                $.each(partyfilters, function (i, items) {
+                    $('#cmbPartyFilterType').append($('<option/>', {
+                        value: items.ID,
+                        text: items.Name,
+                    }));
+                });
+                $('#cmbPartyFilterType').val(1);
+                $('#cmbPartyFilterType').trigger('change');
+                filterfieldaata(1, 1, nTransID);
+
+            }
             $('#cmbPartyFilterType').change(function (e) {
+                var TranFilter = $('#cmbTransaction').val()
+
                 var selvalue = e.target.value;
                 //dvpartyfilter,dvitemfilter
                 if (selvalue > 0) {
                     $(".dvpartyfilter").show()
-                    filterfieldaata(1, e.target.value);
-                    var partylabels = ["Beat", "Salesman", "Customer", "Customer Type"]
+                    filterfieldaata(1, e.target.value, TranFilter);
+                    var partylabels = ["Beat", "Salesman", "Customer", "Customer Type"];
+                    if (TranFilter > 5) {
+                        partylabels = ["Vendor"];
+                    }
                     var idx = parseInt(e.target.value) - 1;
                     $('#lblPartyFilterName').text(partylabels[idx]);
-                } else {                    
+                } else {
                     $(".dvpartyfilter").hide()
                 }
             });
             $('#cmbProductFilterType').change(function (e) {
+                var TranFilter = $('#cmbTransaction').val()
+
                 var selvalue = e.target.value;
                 if (selvalue > 0) {
                     $(".dvitemfilter").show()
-                filterfieldaata(2, e.target.value);
-                var productlabels = ["Manufacturer", "Brand", "Category", "Product"]
-                var idx = parseInt(e.target.value) - 1;
+                    filterfieldaata(2, e.target.value, TranFilter);
+                    var productlabels = ["Manufacturer", "Brand", "Category", "Product"]
+                    var idx = parseInt(e.target.value) - 1;
                     $('#lblProductFilterName').text(productlabels[idx]);
                 } else {
                     $(".dvitemfilter").hide()
@@ -1122,12 +1177,13 @@ var DefBranch = '@Session["DefaultBranch"]';
             $('#cmbTransaction').change(function (e) {
                 var selval = e.target.value;
                 if (selval == 4 || selval == 5) {
-                    $(".dvprodfilterfield").hide()
+                    $(".dvvaluetypefilterfield").hide()
                 } else {
-                    $(".dvprodfilterfield").show()
+                    $(".dvvaluetypefilterfield").show()
                 }
+
                 $('#lblresulttext').text($('#cmbTransaction option:selected').text() + ' Details - ');
-                
+                bindPartyFilterDropdown(selval);                
             });
 
             // Search button click
@@ -1309,13 +1365,14 @@ var DefBranch = '@Session["DefaultBranch"]';
                 //
                 var nTransactionType = $('#cmbTransaction').val();
                 // Render table
-                if (nTransactionType == 4 || nTransactionType == 5)//Collection
-                {
-                    renderTableforCollection(paginatedData, currentBuckets);
-                } else {
-                    renderTable(paginatedData, currentBuckets);
+                renderTable(paginatedData, currentBuckets);
+                //if (nTransactionType == 4 || nTransactionType == 5)//Collection
+                //{
+                //    renderTableforCollection(paginatedData, currentBuckets);
+                //} else {
+                //    renderTable(paginatedData, currentBuckets);
                     
-                }
+                //}
                 // Update pagination info
                 updatePaginationInfo(currentTableData.length);
             }
@@ -1350,14 +1407,15 @@ var DefBranch = '@Session["DefaultBranch"]';
                 }
 
                 // Filters
+                var nSelTranType = $('#cmbTransaction').val();
                 var nTransactionType = $('#cmbTransaction option:selected').text(),
-                    strPartyFilterTypeID = $('#cmbPartyFilterType option:selected').text(),
+                    strPartyFilterTypeID = $('#cmbPartyFilterType').val() > 0 ? $('#cmbPartyFilterType option:selected').text() : "",
                     strSelectPartyfilterIDs = getMultiSelectValues('txtPartyFilter').map(x => x.label).join(',');
 
-                var strProductFilterTypeID = $('#cmbProductFilterType option:selected').text(),
+                var strProductFilterTypeID = $('#cmbProductFilterType').val() > 0 ? $('#cmbProductFilterType option:selected').text() : "",
                     strSelectProductfilterIDs = getMultiSelectValues('txtProductFilter').map(x => x.label).join(',');
 
-                var strValueTypeID = $('#cmbValueType option:selected').text(),
+                var strValueTypeID = (nSelTranType == 4 || nSelTranType == 5) ? '' : $('#cmbValueType option:selected').text(),
                     strFrom = $('#dtpFrom').val(),
                     strTo = $('#dtpTo').val();
 
@@ -1371,9 +1429,11 @@ var DefBranch = '@Session["DefaultBranch"]';
                 sheetData.push(["MONTHWISE SALES ANALYTICS"]);               
                 sheetData.push(["Transaction", nTransactionType]);
                 sheetData.push(["Party Filter", strPartyFilterTypeID]);
-                sheetData.push([strPartyFilterTypeID, strSelectPartyfilterIDs]);
+                //if (strPartyFilterTypeID != "")
+                    sheetData.push([strPartyFilterTypeID, strSelectPartyfilterIDs]);
                 sheetData.push(["Product Filter", strProductFilterTypeID]);
-                sheetData.push([strProductFilterTypeID, strSelectProductfilterIDs]);
+                //if (strProductFilterTypeID != "")
+                    sheetData.push([strProductFilterTypeID, strSelectProductfilterIDs]);
                 sheetData.push(["Value Type", strValueTypeID]);
                 sheetData.push(["From Date", strFrom]);
                 sheetData.push(["To Date", strTo]);

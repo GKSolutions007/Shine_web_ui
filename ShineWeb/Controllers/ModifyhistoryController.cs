@@ -2,6 +2,7 @@
 using ShineWeb.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -19,6 +20,14 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 220", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "oi33Oyc1x/OHEiUluknD5EQnI/oh2MEtWXXoYdM8cOo=" });
+                }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;

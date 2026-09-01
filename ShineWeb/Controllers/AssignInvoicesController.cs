@@ -30,11 +30,16 @@ namespace ShineWeb.Controllers
                 ViewData["FormID"] = decFormID;
                 int UID = Convert.ToInt32(Session["LoginUserID"]);
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
-                string AddPerm = dtPermission.Select("MenuID = 281", null).Length > 0 ? "1" : "0";
-                string ModPerm = dtPermission.Select("MenuID = 282", null).Length > 0 ? "1" : "0";
-                string ViewPerm = dtPermission.Select("MenuID = 284", null).Length > 0 ? "1" : "0";
-                string CanPerm = dtPermission.Select("MenuID = 283", null).Length > 0 ? "1" : "0";
-                string RtnPerm = dtPermission.Select("MenuID = 285", null).Length > 0 ? "1" : "0";                
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 280 or MenuParentId = 280", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home", new { emanmrofnoissimerpon = "enJRLRQEGFesLWfYCZvwDjYTbV+UADNSWZA4NMsT1dA=" });
+                }
+                string AddPerm = dtPermission.Select("MenuID = 281", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ModPerm = dtPermission.Select("MenuID = 282", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ViewPerm = dtPermission.Select("MenuID = 284", null).Length > 0 || UID == 1 ? "1" : "0";
+                string CanPerm = dtPermission.Select("MenuID = 283", null).Length > 0 || UID == 1 ? "1" : "0";
+                string RtnPerm = dtPermission.Select("MenuID = 285", null).Length > 0 || UID == 1 ? "1" : "0";                
                 string EnbBranch = UID == 1 ? "0" : dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;

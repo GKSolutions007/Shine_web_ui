@@ -11,7 +11,6 @@ namespace ShineWeb.Controllers
 {
     public class UsersController : Controller
     {
-        // GET: SingleMaster
         clsBusinessLayer objBL = new clsBusinessLayer();
         public ActionResult Index(string Name, string strFormID)
         {
@@ -21,11 +20,18 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 124 or MenuParentId = 124", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "DYuHcZhannFSqC9RyuTPLg==" });
+                }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
-                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string AddPerm = dtPermission.Select("MenuName = 'Add " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";

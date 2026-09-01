@@ -21,13 +21,22 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 229", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "4Kl9YhXi9emq/2waIZYqKJcCxg4lxysL5HFYIPpJUSRGb8w5BrcwHtmXkyz4Zc7e" });
+                }
+
+
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
                 ViewData["FormName"] = Name;
                 ViewData["TransType"] = TypeID;
                 int nUID = Convert.ToInt32(Session["LoginUserID"]);
-                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string EnableReturn = dtPermission.Select("MenuName = 'Enable Return Price'", null).Length > 0 ? "1" : "0";
                 string EnbleVLSBatch = dtPermission.Select("MenuID IN (535,536,546,547,539)").Length > 0 || nUID == 1 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();

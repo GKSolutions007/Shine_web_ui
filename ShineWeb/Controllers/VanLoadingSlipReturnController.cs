@@ -20,11 +20,18 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 547", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "PY3KdCdTbyxWJrx+jSGjLKT8MkjyRV6YMh0wrVTI17FAZtbxxHDFV3jyoXP+rY5P" });
+                }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
-                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 return View(dam);

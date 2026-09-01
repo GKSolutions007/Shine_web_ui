@@ -26,7 +26,14 @@ namespace ShineWeb.Controllers
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = strFormID;
                 ViewData["TransType"] = TypeID;
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 86 or MenuParentId = 86", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home", 
+                        new { emanmrofnoissimerpon = "ix78D+hUAlBEpqB2posqhPYbeYM9VPYIQ5lFgLOzPGs=" });
+                }
                 string AddPerm = dtPermission.Select("MenuName = 'Add " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";

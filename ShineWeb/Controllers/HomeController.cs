@@ -12,7 +12,7 @@ using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 namespace ShineWeb.Controllers
 {
     public class HomeController : Controller
-    { 
+    {
         public ActionResult Index(string ID)
         {
             if (Session["LoginUserID"] == null)
@@ -42,7 +42,7 @@ namespace ShineWeb.Controllers
                     dam.QuickAccess = QAEnable;
                     dam.PendingDraft = PendDraftEnable;
                     dam.TransactionSummary = TranSummaryEnable;
-                    dam.BrandSummary= BrandSummaryEnable;
+                    dam.BrandSummary = BrandSummaryEnable;
                     return View(dam);
                 }
                 else
@@ -61,6 +61,14 @@ namespace ShineWeb.Controllers
                 }
             }
         }
+        public ActionResult nopermission(string emanmrofnoissimerpon)
+        {
+            string orgformname = clsEncryptDecrypt.Decrypt(emanmrofnoissimerpon);
+            SingleMasterModel dam = new SingleMasterModel();
+            dam.FormName = orgformname;
+            return View(dam);
+        }
+            
         [HttpGet]
         public JsonResult setdate(int TypeID)
         {

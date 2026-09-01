@@ -20,16 +20,23 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 102 or MenuParentId = 102", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "rr5Wddu2buz5UA+G9dT9Ucj/eOlQpQPpxXStNyfzZdQ=" });
+                }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
                 ViewData["TransType"] = TypeID;
-                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
-                string AddPerm = dtPermission.Select("MenuName = 'Add " + Name + "'", null).Length > 0 ? "1" : "0";
-                string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 ? "1" : "0";
-                string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";
+                string AddPerm = dtPermission.Select("MenuName = 'Add " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 dam.Add = AddPerm;

@@ -21,13 +21,19 @@ namespace ShineWeb.Controllers
             else
             {
                 int nUID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 534 or MenuParentId = 534", null).Length > 0;
+                if (!Formhaveanypermission && nUID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "Q0Cv4BuvYD4zCrDsSye9n/uNOy+kzwrXsr8e/vHCi+sWOHNVNN4O4ndU/TyhewWA" });
+                }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
-                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string AddPerm = dtPermission.Select("MenuID = 535", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuID = 536", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string CancelPerm = dtPermission.Select("MenuID = 546", null).Length > 0 || nUID == 1 ? "1" : "0";

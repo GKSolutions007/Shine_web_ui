@@ -1178,6 +1178,8 @@ class GKBSDynamicGrid {
             optionsBtn.style.background = 'transparent';
             optionsBtn.style.cursor = 'pointer';
             optionsBtn.style.marginLeft = '5px';
+            optionsBtn.style.marginRight = '3px';
+            optionsBtn.style.color = 'white';
             optionsBtn.onclick = (e) => {
                 e.stopPropagation(); // Prevent the sort from triggering
                 this.showOptionsMenu(e.target.parentElement, col);
