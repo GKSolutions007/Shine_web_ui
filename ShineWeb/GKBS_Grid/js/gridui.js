@@ -673,7 +673,7 @@ class GKBSDynamicGrid {
         // Note: The click handler will call the previously defined showColumnSelectionPopup method.
         const columnsBtn = document.createElement('button');
         columnsBtn.className = 'dg-btn dg-columns-btn';
-        columnsBtn.innerText = '⚙️ Columns';
+        columnsBtn.innerText = 'Columns';
 
         columnsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -750,7 +750,7 @@ class GKBSDynamicGrid {
         if (this.options.enableColumnsBtn) {
             const columnsBtn = document.createElement('button');
             columnsBtn.className = 'dg-btn dg-columns-btn';
-            columnsBtn.innerText = '⚙️ Columns';
+            columnsBtn.innerText = 'Columns';
 
             columnsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -998,7 +998,7 @@ class GKBSDynamicGrid {
 
         const columnsBtn = document.createElement('button');
         columnsBtn.className = 'dg-columns-btn';
-        columnsBtn.innerText = '⚙️ Columns'; // Settings icon is standard for configuration
+        columnsBtn.innerText = 'Columns'; // Settings icon is standard for configuration
 
         // Position the button and attach the click handler
         columnsBtn.addEventListener('click', (e) => {
