@@ -1144,6 +1144,7 @@ class GKBSDynamicGrid {
             // Header Content
             const text = document.createElement('span');
             text.innerText = col.header;
+            text.style.paddingTop = '3px';
             // 💡 NEW: Click to Sort Logic
             if (this.options.enableSorting) {
                 cell.style.cursor = 'pointer';
@@ -1751,7 +1752,7 @@ class GKBSDynamicGrid {
     // --- 6. Pagination Footer ---
     // Inside DynamicGrid class, replace the existing renderFooter method:
 
-    renderFooter() {
+    renderFooter_old() {
         if (!this.options.enablePagination) return;
 
         const totalItems = this.state.processedData.length;
@@ -1869,7 +1870,134 @@ class GKBSDynamicGrid {
 
         this.container.appendChild(footer);
     }
+    renderFooter() {
+        if (!this.options.enablePagination) return;
 
+        const totalItems = this.state.processedData.length;
+
+        // Calculate total pages based on current size setting
+        let currentSize = this.options.pageSize;
+        let totalPages = Math.ceil(totalItems / currentSize);
+
+        // Handle the case where the current size is set to 'All'
+        if (currentSize >= totalItems) {
+            currentSize = 'All';
+            totalPages = 1;
+        }
+
+        const footer = document.createElement('div');
+        footer.className = 'dg-footer';
+        footer.style.display = 'flex';
+        footer.style.justifyContent = 'space-between'; // left group vs right group
+        footer.style.alignItems = 'center';
+        footer.style.width = '100%';
+
+        // ============ LEFT GROUP: Page Size + Go To Page ============
+        const leftGroup = document.createElement('div');
+        leftGroup.style.display = 'flex';
+        leftGroup.style.alignItems = 'center';
+        leftGroup.style.gap = '10px';
+
+        // 1. --- Page Size Dropdown Selector ---
+        const pageSizes = [10, 20, 50, 100, 'All'];
+        const pageSizeSelect = document.createElement('select');
+
+        pageSizes.forEach(size => {
+            const option = document.createElement('option');
+            option.value = size;
+            option.innerText = size;
+
+            // Determine the currently selected option
+            const isAllSelected = (size === 'All' && this.options.pageSize >= totalItems);
+            const isSizeSelected = (Number(size) === this.options.pageSize);
+
+            if (isAllSelected || isSizeSelected) {
+                option.selected = true;
+            }
+            pageSizeSelect.appendChild(option);
+        });
+
+        pageSizeSelect.addEventListener('change', (e) => {
+            const newSize = e.target.value;
+
+            if (newSize === 'All') {
+                // Set size to the full length of original data, effectively showing all rows
+                this.options.pageSize = this.originalData.length;
+            } else {
+                this.options.pageSize = Number(newSize);
+            }
+
+            this.state.currentPage = 1; // Always reset to page 1
+            this.processData();
+            this.render(); // Re-render the entire grid
+        });
+
+        const label = document.createElement('span');
+        label.innerText = 'Rows per page: ';
+
+        leftGroup.append(label, pageSizeSelect);
+
+        // 2. --- Go To Page Option ---
+        const goToDiv = document.createElement('div');
+        goToDiv.style.display = 'flex';
+        goToDiv.style.alignItems = 'center';
+        goToDiv.style.marginLeft = '20px';
+        goToDiv.style.gap = '5px';
+
+        const goToInput = document.createElement('input');
+        goToInput.type = 'number';
+        goToInput.min = 1;
+        goToInput.max = totalPages;
+        goToInput.placeholder = 'Page #';
+        goToInput.style.width = '60px';
+        goToInput.style.padding = '4px';
+
+        const goToBtn = document.createElement('button');
+        goToBtn.className = 'dg-btn';
+        goToBtn.innerText = 'Go';
+
+        // Go button click handler
+        goToBtn.onclick = () => {
+            const pageNum = parseInt(goToInput.value);
+            if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
+                alert(`Please enter a valid page number between 1 and ${totalPages}.`);
+                return;
+            }
+            this.state.currentPage = pageNum;
+            this.render();
+        };
+
+        goToDiv.append(document.createTextNode('Go to:'), goToInput, goToBtn);
+        leftGroup.appendChild(goToDiv);
+
+        // ============ RIGHT GROUP: Prev, Next, Page Info ============
+        const rightGroup = document.createElement('div');
+        rightGroup.style.display = 'flex';
+        rightGroup.style.gap = '10px';
+        rightGroup.style.alignItems = 'center';
+
+        const info = document.createElement('span');
+        info.innerText = `Page ${this.state.currentPage} of ${totalPages} (${totalItems} items)`;
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'dg-btn';
+        prevBtn.innerText = 'Prev';
+        prevBtn.disabled = this.state.currentPage === 1;
+        prevBtn.onclick = () => { this.state.currentPage--; this.render(); };
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'dg-btn';
+        nextBtn.innerText = 'Next';
+        nextBtn.disabled = this.state.currentPage >= totalPages || totalPages === 0;
+        nextBtn.onclick = () => { this.state.currentPage++; this.render(); };
+
+        rightGroup.append(prevBtn, nextBtn, info);
+
+        // ============ Assemble Footer ============
+        footer.append(leftGroup, rightGroup);
+
+        this.container.appendChild(footer);
+    }
     // --- Helper: Input Creation ---
     createInput_old(col, rowData) {
         let el;
