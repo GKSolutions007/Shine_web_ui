@@ -1949,9 +1949,10 @@ class GKBSDynamicGrid {
         goToInput.min = 1;
         goToInput.max = totalPages;
         goToInput.placeholder = 'Page #';
-        goToInput.style.width = '60px';
+        goToInput.style.width = '45px';
         goToInput.style.padding = '4px';
-
+        goToInput.style.borderRadius= "15px";
+        goToInput.style.textAlign="center"
         const goToBtn = document.createElement('button');
         goToBtn.className = 'dg-btn';
         goToBtn.innerText = 'Go';
