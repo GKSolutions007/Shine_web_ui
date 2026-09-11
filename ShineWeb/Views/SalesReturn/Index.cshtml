@@ -6680,9 +6680,7 @@ if ($("#txtAddID").val() == 0) {
         $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
         GetVariantData(VarType, ID, PartyID);
         $("#MainHeading").text("Create " + $("#txtFormName").val());
-        setTimeout(() => {
-            CalculateItemDiffPrice();
-        }, 600);
+        
     }
     function GetVariantData(nVariantType, nID, nPartyID) {
         $.ajax({
@@ -6836,29 +6834,31 @@ if ($("#txtAddID").val() == 0) {
                         ]
                     });
                     ProductTable = $('#tblProductData').DataTable();
-                    $("#tblProductData tbody tr").each(function () {
-                        $(this).find("input[name=ProdName]").each(function (index) {
-                            const fieldName = $(this).attr("name");
-                            const fieldID = $(this).attr("id");
-                            //~AutoList
-                            PaginatedAutocomplete({
-                                inputId: fieldID,
-                                data: TempAL,
-                                startwitfieldname: startwithfield,
-                                enablefilterstartwith: autolistfilterwith,
-                                onSelect: function (item) {
-                                    $("#dgvProdName" + ProductRID).val(item.code);
-                                    $("#txtTempABS").val(item.ABS + item.Location);
-                                    modal.show();
-                                    $("#clrdivs").html("");
-                                    var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                                    GetData(4, item.code, CustID);
-                                    $("#btnBatch").focus();
-                                    return false;
-                                }
+                    if (nTransMode != 5 && nTransMode != 4) {
+                        $("#tblProductData tbody tr").each(function () {
+                            $(this).find("input[name=ProdName]").each(function (index) {
+                                const fieldName = $(this).attr("name");
+                                const fieldID = $(this).attr("id");
+                                //~AutoList
+                                PaginatedAutocomplete({
+                                    inputId: fieldID,
+                                    data: TempAL,
+                                    startwitfieldname: startwithfield,
+                                    enablefilterstartwith: autolistfilterwith,
+                                    onSelect: function (item) {
+                                        $("#dgvProdName" + ProductRID).val(item.code);
+                                        $("#txtTempABS").val(item.ABS + item.Location);
+                                        modal.show();
+                                        $("#clrdivs").html("");
+                                        var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                                        GetData(4, item.code, CustID);
+                                        $("#btnBatch").focus();
+                                        return false;
+                                    }
+                                });
                             });
                         });
-                    });
+                    }
                     //end
 
                     ProductRID = ProductTable.rows().count() + 1;
@@ -6866,7 +6866,10 @@ if ($("#txtAddID").val() == 0) {
                     Addprodgridline();
                     setTimeout(() => {
                         setupArrowKeyNavigation1();
-                    }, 200)
+                    }, 200);
+                    setTimeout(() => {
+                        CalculateItemDiffPrice();
+                    }, 1000);
                 });
             }, error: function (data) {
                 if (data.status == "401") {
