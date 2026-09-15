@@ -793,6 +793,142 @@
         padding: 2px 10px !important;
     }
 </style>
+<style>
+    .pi-header {
+        background: linear-gradient(135deg, #0d5c3f 0%, #14804f 100%);
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    .pi-header-icon {
+        width: 38px;
+        height: 38px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .pi-header h4 {
+        font-size: 17px;
+    }
+
+    .pi-close {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        background-color: rgba(255,255,255,0.15) !important;
+        border-radius: 6px;
+        padding: 5px;
+    }
+
+    .pi-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+    }
+
+    .pi-row {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 9px 14px;
+        border-bottom: 1px solid #f0f0f0;
+        min-width: 0;
+    }
+
+        .pi-row.full {
+            grid-column: 1 / -1;
+        }
+
+        .pi-row.highlight {
+            background-color: #eafaf1;
+        }
+
+    .pi-icon-chip {
+        width: 26px;
+        height: 26px;
+        background-color: #eafaf1;
+        color: #14804f;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 11px;
+        margin-top: 1px;
+    }
+
+    .pi-label {
+        width: auto;
+        white-space: nowrap;
+        color: #6b7280;
+        font-size: 12px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .pi-colon {
+        color: #9ca3af;
+        width: 6px;
+        font-size: 12px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .pi-value {
+        font-weight: 600;
+        color: #111827;
+        font-size: 13px;
+        min-width: 0;
+        flex: 1;
+        white-space: normal;
+        overflow: visible;
+        word-break: break-word;
+        line-height: 1.35;
+    }
+
+        .pi-value.muted {
+            color: #9ca3af;
+            font-weight: 400;
+        }
+
+    .pi-badge-good {
+        background-color: #eafaf1;
+        color: #14804f;
+        padding: 2px 10px;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 11px;
+    }
+</style>
+
+<div class="modal fade" id="vendorInfoModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+        <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+            <div class="pi-header">
+                <div class="pi-header-icon"><i class="fas fa-user"></i></div>
+                <div>
+                    <h4 class="mb-0 text-white fw-bold" id="vendTitle">Customer Information</h4>
+                </div>
+                <button type="button" class="btn-close btn-close-white pi-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="vendBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <body>
     @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
     @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
@@ -2473,33 +2609,80 @@ var isEnable = InvoicePriceEdit == 0 ? "disabled" : "";
     });
     var editingRow = null;
     //$("#VendInfo").hide();
+ //   $("#VendInfo").click(function () {
+ //       if ($("#txtCustomerID").val() != "") {
+ //           var vinfo = "<table class='table table-bordered' style='width:100%; font-size:14px;'>";
+ //           vinfo += "<tr><td width='30%'><b>Code</b></td><td>" + $("#lblName").text() + "</td></tr>";
+ //           vinfo += "<tr><td width='30%'><b>Shine Code</b></td><td>" + $("#lblShinecode").text() + "</td></tr>";
+ //           vinfo += "<tr><td><b>Mob No</b></td><td>" + $("#lblMob1").text() + "</td></tr>";
+ //           vinfo += "<tr><td><b>GSTIN</b></td><td>" + $("#lblGSTIN").text() + "</td></tr>";
+
+ //           vinfo += "<tr><td><b>Billing Address</b></td><td>"
+ //               + $("#txtBAdd1").val() + "<br/>"
+ //               + $("#txtBAdd2").val() + "<br/>"
+ //               + $("#txtBAdd3").val() + "</td></tr>";
+
+ //           vinfo += "<tr><td><b>Shipping Address</b></td><td>"
+ //               + $("#txtSAdd1").val() + "<br/>"
+ //               + $("#txtSAdd2").val() + "<br/>"
+ //               + $("#txtSAdd3").val() + "</td></tr>";
+
+ //           vinfo += "<tr><td><b>Pincode</b></td><td>" + $("#txtPincode").val() + "</td></tr>";
+
+ //           vinfo += "</table>";
+ //InfoDialogMsg(vinfo, 'Customer Info');
+
+ //       } else {
+ //           showErrorSnackbar("Select Customer");
+ //       }
+    //   });
+
     $("#VendInfo").click(function () {
         if ($("#txtCustomerID").val() != "") {
-            var vinfo = "<table class='table table-bordered' style='width:100%; font-size:14px;'>";
-            vinfo += "<tr><td width='30%'><b>Code</b></td><td>" + $("#lblName").text() + "</td></tr>";
-            vinfo += "<tr><td width='30%'><b>Shine Code</b></td><td>" + $("#lblShinecode").text() + "</td></tr>";
-            vinfo += "<tr><td><b>Mob No</b></td><td>" + $("#lblMob1").text() + "</td></tr>";
-            vinfo += "<tr><td><b>GSTIN</b></td><td>" + $("#lblGSTIN").text() + "</td></tr>";
+            function piRow(icon, label, value, opts) {
+                opts = opts || {};
+                var displayValue = (value === "" || value === null || value === undefined)
+                    ? '<span class="pi-value muted">—</span>'
+                    : '<span class="pi-value" title="' + value + '">' + value + '</span>';
+                return `<div class="pi-row ${opts.highlight ? 'highlight' : ''} ${opts.full ? 'full' : ''}">
+                <div class="pi-icon-chip"><i class="${icon}"></i></div>
+                <div class="pi-label">${label}</div>
+                <div class="pi-colon">:</div>
+                ${displayValue}
+            </div>`;
+            }
 
-            vinfo += "<tr><td><b>Billing Address</b></td><td>"
-                + $("#txtBAdd1").val() + "<br/>"
-                + $("#txtBAdd2").val() + "<br/>"
-                + $("#txtBAdd3").val() + "</td></tr>";
+            var code = $("#lblName").text();
+            var name = $("#txtSearch").val();
+            var shineCode = $("#lblShinecode").text();
+            var mobile = $("#lblMob1").text();
+            var gstin = $("#lblGSTIN").text();
+            var pincode = $("#txtPincode").val();
 
-            vinfo += "<tr><td><b>Shipping Address</b></td><td>"
-                + $("#txtSAdd1").val() + "<br/>"
-                + $("#txtSAdd2").val() + "<br/>"
-                + $("#txtSAdd3").val() + "</td></tr>";
+            var billingAddress = [$("#txtBAdd1").val(), $("#txtBAdd2").val(), $("#txtBAdd3").val()]
+                .filter(v => v && v.trim() !== "")
+                .join(", ");
+            var shippingAddress = [$("#txtSAdd1").val(), $("#txtSAdd2").val(), $("#txtSAdd3").val()]
+                .filter(v => v && v.trim() !== "")
+                .join(", ");
 
-            vinfo += "<tr><td><b>Pincode</b></td><td>" + $("#txtPincode").val() + "</td></tr>";
+            var html = '<div class="pi-grid">'
+                + piRow('fas fa-home', 'Billing', billingAddress, { full: true })
+                + piRow('fas fa-mobile-alt', 'Mobile', mobile)
+                + piRow('fas fa-tag', 'Shine Code', shineCode)
+                + piRow('fas fa-barcode', 'GSTIN', gstin, { full: true })
+                + piRow('fas fa-map-marker-alt', 'Pincode', pincode)
+                + piRow('fas fa-truck', 'Shipping', shippingAddress, { full: true })
+                + '</div>';
 
-            vinfo += "</table>";
- InfoDialogMsg(vinfo, 'Customer Info');
-
+            $("#vendTitle").text(code + " - " + name);
+            $("#vendBody").html(html);
+            new bootstrap.Modal(document.getElementById('vendorInfoModal')).show();
         } else {
             showErrorSnackbar("Select Customer");
         }
     });
+
     GetData(1, RoleID);
     setDate("dtpDate", 0);
     setTimeout(function () {
@@ -5565,7 +5748,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#cmbRating").text(items.Ratings),
                             $("#lblMob1").text(items.Mob1),
                             $("#txtGSTIN").val(items.GSTIN),
-                            $("#lblGSTIN").val(items.GSTIN),
+                            $("#lblGSTIN").text(items.GSTIN),
                             $("#cmbCreditTerm").val(items.CreditTermID),
                             $("#cmbPaymode").val(items.PaymentModeID);
                         if (items.CloseBal > 0) {
@@ -5595,7 +5778,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#txtBAdd2").val(items.Billadd2),
                             $("#txtBAdd3").val(items.Billadd3),
                             $("#txtSAdd1").val(items.Shipadd1),
-                            $("#txtSAdd2").val(items.shipadd2),
+                            $("#txtSAdd2").val(items.Shipadd2),
                             $("#txtSAdd3").val(items.Shipadd3),
                             $("#txtPincode").val(items.Pincode);
                         $("#txtCustomerScheme").val(items.CustomerScheme);
