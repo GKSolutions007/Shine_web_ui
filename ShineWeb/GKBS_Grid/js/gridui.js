@@ -1130,7 +1130,7 @@ class GKBSDynamicGrid {
                 orderIndicator.innerText = filterOrderNumber;
                 orderIndicator.style.position = 'absolute';
                 orderIndicator.style.top = '0px';
-                orderIndicator.style.right = '0px';
+                orderIndicator.style.right = '15px';
                 orderIndicator.style.backgroundColor = '#1890ff'; // Same as border color
                 orderIndicator.style.color = 'white';
                 orderIndicator.style.borderRadius = '50%';
