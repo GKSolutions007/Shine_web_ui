@@ -1285,8 +1285,8 @@ class GKBSDynamicGrid {
             <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}" hidden>Sort A to Z</div>
             <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}" hidden>Sort Z to A</div>
             <hr class"hrgricline" hidden/>
-            <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}">📏 Auto Fit This Column</div>
-            <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}">📏 Auto Fit All Columns</div>
+            <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}"><i class="bi bi-layout-text-sidebar-reverse"></i> Auto Fit This Column</div>
+            <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}"><i class="bi bi-layout-three-columns"></i> Auto Fit All Columns</div>
         </div>
         <hr class"hrgricline"/>
            <div class="dg-filter-group">
