@@ -362,7 +362,10 @@ class GKBSDynamicGrid {
                 // Handle nulls/undefined to ensure they don't break sorting
                 if (valA === null || valA === undefined) valA = '';
                 if (valB === null || valB === undefined) valB = '';
-
+                if (this.isNumber(valA) && this.isNumber(valB)) {
+                    valA = parseFloat(valA);
+                    valB = parseFloat(valB);
+                }
                 // Check if both are strings for case-insensitive sort
                 if (typeof valA === 'string' && typeof valB === 'string') {
                     // Use localeCompare for robust string comparison (handles accents, case, etc.)
@@ -384,6 +387,7 @@ class GKBSDynamicGrid {
         const maxPage = Math.ceil(this.state.processedData.length / this.options.pageSize) || 1;
         if (this.state.currentPage > maxPage) this.state.currentPage = 1;
     }
+
     getPaginatedData() {
         if (!this.options.enablePagination) return this.state.processedData;
 
@@ -392,7 +396,9 @@ class GKBSDynamicGrid {
         return this.state.processedData.slice(start, end);
     }
     // Inside DynamicGrid class, add this new method:
-
+    isNumber(value) {
+    return value !== "" && !isNaN(value);
+}
     setOption(key, value) {
         if (this.options.hasOwnProperty(key)) {
             this.options[key] = value;
@@ -2127,10 +2133,11 @@ class GKBSDynamicGrid {
             el.style.padding = '8px 2px';
             el.style.boxSizing = 'border-box';
             el.style.textAlign = col.align || 'left';
-            const rawValue = rowData[col.field];
+            const rawValue = parseFloat(rowData[col.field]);
             el.title = rawValue;
             var roundvalue = formatToDecimals(rawValue, col.precision !== undefined ? col.precision : 2);
-            el.innerHTML = roundvalue.toString();
+            console.log("roundvalue", parseFloat(roundvalue));
+            el.innerHTML = roundvalue;
         }
         else if (col.type === 'labelnumber') {
             el = document.createElement('div');
