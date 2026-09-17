@@ -1287,6 +1287,7 @@ class GKBSDynamicGrid {
             <hr class"hrgricline" hidden/>
             <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}"><i class="bi bi-layout-text-sidebar-reverse"></i> Auto Fit This Column</div>
             <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}"><i class="bi bi-layout-three-columns"></i> Auto Fit All Columns</div>
+            <div class="dg-filter-option dg-filter-clear" data-action="clear-filter" data-field="${col.field}"><i class="bi bi-arrow-clockwise"></i> Clear Filter</div>
         </div>
         <hr class"hrgricline"/>
            <div class="dg-filter-group">
@@ -1310,7 +1311,8 @@ class GKBSDynamicGrid {
             </div>
         <div class="dg-filter-actions">
             <button class="dg-btn dg-filter-apply">Apply</button>
-            <button class="dg-btn dg-filter-clear" data-field="${col.field}">Clear Filter</button>
+            <button class="dg-btn dg-filter-clear d-none" data-field="${col.field}">Clear Filter</button>
+            <button class="dg-btn dg-filter-cancel">Cancel</button> 
         </div>
     `;
 
@@ -2627,6 +2629,9 @@ class GKBSDynamicGrid {
             });
         });
 
+        popup.querySelector('.dg-filter-cancel').addEventListener('click', () => {
+            this.closeAllPopups();
+        });
         // Listen for Clear Filter
         popup.querySelector('.dg-filter-clear').addEventListener('click', () => {
             delete this.state.colFilters[field];

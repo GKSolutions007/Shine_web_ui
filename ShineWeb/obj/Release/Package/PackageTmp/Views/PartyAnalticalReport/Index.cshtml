@@ -1,7 +1,6 @@
 ﻿@model ShineWeb.Models.SingleMasterModel
 @{
-    ViewBag.Title = "Party Analytics Report";
-
+    ViewBag.Title = "Party Analytics Report";    
 }
 <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
@@ -19,6 +18,10 @@
 @*<script src="~/Scripts/redirectform.js"></script>*@
 <script src="~/Scripts/xlsx.bundle.js"></script>
 <script src="~/GKBS_GRID_2.0/js/gridui.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
     td {
         font-size: 12px;
@@ -83,23 +86,70 @@
 
     body {
         margin: 0;
-        padding: 20px;
-        font-family: Arial, sans-serif;
-        background-color: #f5f5f5;
+        padding: 6px 2px;
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        background-color: #f2f5f9;
+        color: #1f2d3d;
     }
 
-    .container {
+    /* ============ PAGE HEADER ============ */
+    .app-shell {
+        max-width: 1700px;
+        margin: 0 auto;
+    }
+
+    .page-header {
         display: flex;
-        gap: 20px;
+        align-items: center;
+        gap: 14px;
+        padding: 4px 4px 16px;
+        animation: fadeSlideIn 0.4s ease;
+    }
+
+    .page-header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #1a6fb5 0%, #2596f0 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        box-shadow: 0 4px 10px rgba(26, 111, 181, 0.3);
+        flex-shrink: 0;
+    }
+
+    .page-header h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 800;
+        color: #0f2f4d;
+        letter-spacing: 0.2px;
+    }
+
+    .page-header p {
+        margin: 2px 0 0;
+        font-size: 12.5px;
+        color: #7c8a99;
+    }
+
+    /* ============ LAYOUT ============ */
+    .containerPartyAnalytics {
+        display: flex;
+        gap: 0px;
         flex-wrap: nowrap; /* keep left/right side-by-side; prevents right panel from dropping below on collapse */
-        align-items: flex-start;
+        align-items: stretch;
+        height: calc(100vh - 70px);
+        min-height: 600px;
         transition: gap 0.35s ease;
     }
 
     .left-section {
         flex: 1 1 0;
-        min-width: 200px;
+        min-width: 230px;
         max-width: 100%;
+        height: 100%;
         position: relative;
         overflow: hidden;
         transition: flex-basis 0.35s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.35s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -108,29 +158,33 @@
     .right-section {
         flex: 2 1 0;
         min-width: 0;
+        height: 100%;
         display: flex;
         flex-direction: column;
-        gap: 1px;
+        gap: 2px;
         transition: flex-grow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* Collapsed state: left section shrinks to a slim rail, right section reclaims the space */
-    .container.left-collapsed .left-section {
-        flex: 0 0 52px;
-        min-width: 52px;
-        max-width: 52px;
+    .containerPartyAnalytics.left-collapsed .left-section {
+        flex: 0 0 56px;
+        min-width: 56px;
+        max-width: 56px;
     }
 
-    .container.left-collapsed .right-section {
+    .containerPartyAnalytics.left-collapsed .right-section {
         flex: 1 1 0;
     }
 
     .party-box-content {
         opacity: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
         transition: opacity 0.2s ease 0.1s, visibility 0.2s ease 0.1s;
     }
 
-    .container.left-collapsed .party-box-content {
+    .containerPartyAnalytics.left-collapsed .party-box-content {
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
@@ -139,8 +193,8 @@
 
     .collapse-toggle-btn {
         position: absolute;
-        top: 0px;
-        right: 10px;
+        top: 3px;
+        right: 8px;
         z-index: 20;
         width: 30px;
         height: 30px;
@@ -150,10 +204,9 @@
         padding: 0;
         border: none;
         border-radius: 50%;
-        background-color: transparent;
+        background-color: #eef3f8;
         color: #1a6fb5;
         cursor: pointer;
-        /*box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);*/
         transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     }
 
@@ -172,20 +225,38 @@
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-    .container.left-collapsed .collapse-toggle-btn .toggle-icon {
+    .containerPartyAnalytics.left-collapsed .collapse-toggle-btn .toggle-icon {
         transform: rotate(180deg);
+    }
+
+    /* Rail icon shown only while the left panel is collapsed */
+    .rail-icon {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 18px;
+        color: #1a6fb5;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease 0.15s, visibility 0.2s ease 0.15s;
+    }
+
+    .containerPartyAnalytics.left-collapsed .rail-icon {
+        opacity: 1;
+        visibility: visible;
     }
 
     /* Vertical label shown only while the left panel is collapsed */
     .collapsed-label {
         position: absolute;
-        top: 100px;
+        top: 110px;
         left: 50%;
         transform: translateX(-50%) rotate(90deg);
         transform-origin: center;
         white-space: nowrap;
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 13px;
+        font-weight: 700;
         letter-spacing: 0.5px;
         color: #1a6fb5;
         opacity: 0;
@@ -193,47 +264,57 @@
         transition: opacity 0.2s ease 0.15s, visibility 0.2s ease 0.15s;
     }
 
-    .container.left-collapsed .collapsed-label {
+    .containerPartyAnalytics.left-collapsed .collapsed-label {
         opacity: 1;
         visibility: visible;
     }
 
     .party-box {
-        background-color: #e6f1fb;
-        padding: 2px;
-        min-height: 550px;
-        border: 1px solid #ccc;
-        box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+        background-color: #ffffff;
+        padding: 0;
+        height: 100%;
+        border-radius: 16px;
+        border: 1px solid #e6ebf1;
+        box-shadow: 0 4px 18px rgba(15, 47, 77, 0.07);
         position: relative;
-        transition: background-color 0.3s ease;
+        overflow: hidden;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        animation: fadeSlideIn 0.4s ease;
     }
 
-    .container.left-collapsed .party-box {
-        background-color: #d7e9f8;
+    .containerPartyAnalytics.left-collapsed .party-box {
+        background-color: #f7fbff;
     }
 
     .party-info-box {
-        background-color: #fffde8;
-        padding: 10px;
-        min-height: 100px;
-        border: 1px solid #ccc;
-        box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+        padding: 0;
+        flex: 0 0 auto;
+        border-radius: 16px;
+        border: 1px solid #e6ebf1;
+        box-shadow: 0 4px 18px rgba(15, 47, 77, 0.07);
+        overflow: hidden;
         animation: fadeSlideIn 0.4s ease;
     }
 
     .documents-box {
         background-color: #ffffff;
-        padding: 2px;
-        min-height: 400px;
-        border: 1px solid #ccc;
-        box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
-        animation: fadeSlideIn 0.4s ease;
+        padding: 0;
+        flex: 1 1 auto;
+        min-height: 0;
+        border-radius: 16px;
+        border: 1px solid #e6ebf1;
+        box-shadow: 0 4px 18px rgba(15, 47, 77, 0.07);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: fadeSlideIn 0.4s ease 0.05s both;
     }
 
     @@keyframes fadeSlideIn {
         from {
             opacity: 0;
-            transform: translateY(6px);
+            transform: translateY(8px);
         }
 
         to {
@@ -242,10 +323,24 @@
         }
     }
 
-    @@media (max-width: 768px) {
-        .container {
+    @@keyframes popIn {
+        0% {
+            transform: scale(0.85);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .containerPartyAnalytics {
             flex-direction: column;
             flex-wrap: wrap;
+            height: auto;
+            min-height: 0;
         }
 
         .left-section,
@@ -253,29 +348,96 @@
             flex: 1 0 100% !important;
             max-width: 100% !important;
             min-width: 100% !important;
+            height: auto;
+        }
+        /* On mobile the left panel becomes a full-width accordion; same left-collapsed
+           class/logic as desktop, just re-skinned from a vertical rail to a horizontal bar */
+        .party-box {
+            height: auto;
+            max-height: 640px;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
         }
 
-        .party-box-content,
-        .collapsed-label {
-            display: none !important;
+        .containerPartyAnalytics.left-collapsed .party-box {
+            max-height: 58px;
+        }
+
+        .party-box-content {
+            opacity: 1;
+            visibility: visible;
+            height: auto;
+            pointer-events: auto;
+        }
+
+        .containerPartyAnalytics.left-collapsed .party-box-content {
+            opacity: 0;
+            visibility: hidden;
+            height: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
         }
 
         .collapse-toggle-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+        }
+
+            .collapse-toggle-btn .toggle-icon {
+                transform: rotate(90deg);
+            }
+
+        .containerPartyAnalytics.left-collapsed .collapse-toggle-btn .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .rail-icon,
+        .collapsed-label {
+            position: static;
+            transform: none;
             display: none;
+            align-items: center;
+            font-size: 14px;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .containerPartyAnalytics.left-collapsed .rail-icon {
+            display: inline-flex;
+            padding: 18px 0 18px 18px;
+        }
+
+        .containerPartyAnalytics.left-collapsed .collapsed-label {
+            display: inline-flex;
+            padding: 18px 50px 18px 8px;
+        }
+
+        .profile-stats {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .profile-stats {
+            grid-template-columns: 1fr !important;
+        }
+
+        .profile-card-header {
+            flex-wrap: wrap;
         }
     }
 
     @@media (min-width: 1200px) {
-        .container {
+        .containerPartyAnalytics {
             max-width: 100% !important;
-            gap: 1px !important;
         }
     }
 
     .main {
         padding-left: 0px !important;
-        padding-top: 40px !important;
-        padding-bottom: 30px !important;
+        padding-top: 8px !important;
+        padding-bottom: 12px !important;
         width: 100% !important;
         margin-left: 0px !important;
     }
@@ -310,6 +472,7 @@
                 transform: scale(1.2);
                 animation: bounce 0.5s;
             }
+
     .rating-excellent {
         color: #007BFF;
     }
@@ -448,10 +611,10 @@
         line-height: 1.35;
     }
 
-    .pi-value.muted {
-        color: #9ca3af;
-        font-weight: 400;
-    }
+        .pi-value.muted {
+            color: #9ca3af;
+            font-weight: 400;
+        }
 
     .pi-badge-good {
         background-color: #eafaf1;
@@ -460,6 +623,330 @@
         border-radius: 14px;
         font-weight: 600;
         font-size: 11px;
+    }
+</style>
+<style>
+    /* ============ LEFT PANEL: header + controls ============ */
+    .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 46px 3px 12px;
+        flex-shrink: 0;
+    }
+
+    .panel-header-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #1a6fb5 0%, #2596f0 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+        box-shadow: 0 3px 8px rgba(26, 111, 181, 0.3);
+    }
+
+    .panel-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f2f4d;
+    }
+
+    .panel-controls {
+        padding: 0 16px 2px;
+        flex-shrink: 0;
+    }
+
+    .showall-switch {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 5px;
+        font-size: 13px;
+        color: #37485c;
+        font-weight: 500;
+    }
+
+        .showall-switch .form-check-input {
+            width: 2.3em;
+            height: 1.25em;
+            cursor: pointer;
+            margin-top: 0;
+        }
+
+            .showall-switch .form-check-input:checked {
+                background-color: #1a6fb5;
+                border-color: #1a6fb5;
+            }
+
+        .showall-switch label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+    .type-toggle {
+        display: flex;
+        background: #eef3f8;
+        border-radius: 10px;
+        padding: 4px;
+        gap: 4px;
+    }
+
+        .type-toggle input {
+            display: none;
+        }
+
+    .type-toggle-btn {
+        flex: 1;
+        text-align: center;
+        padding: 6px 5px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #5b6b7d;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin: 0;
+        user-select: none;
+    }
+
+    .type-toggle input:checked + .type-toggle-btn {
+        background: #ffffff;
+        color: #1a6fb5;
+        box-shadow: 0 2px 6px rgba(15, 47, 77, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .type-toggle-btn:hover {
+        color: #1a6fb5;
+    }
+
+    .grid-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 3px 5px 0px;
+        overflow: auto;
+    }
+
+    /* ============ RIGHT TOP PANEL: profile card ============ */
+    .profile-card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 7px 10px 6px;
+        border-bottom: 1px solid #eef2f6;
+    }
+
+    .profile-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1a6fb5 0%, #2596f0 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(26, 111, 181, 0.35);
+        animation: popIn 0.35s ease;
+    }
+
+    .profile-main {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .profile-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 2px 0 6px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f2f4d;
+        flex-wrap: wrap;
+    }
+
+        .profile-name label {
+            margin: 0;
+            cursor: default;
+        }
+
+            .profile-name label:empty:before {
+                content: "Select a party to view details";
+                color: #9aa7b4;
+                font-weight: 400;
+                font-size: 14px;
+            }
+
+    .party-info-icon {
+        cursor: pointer;
+        color: #1a6fb5;
+        font-size: 16px;
+        transition: transform 0.2s ease, color 0.2s ease;
+        display: inline-flex;
+    }
+
+        .party-info-icon:hover {
+            transform: scale(1.2);
+            color: #14804f;
+        }
+
+    .profile-rating {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+        .profile-rating .star-rating {
+            font-size: 1.35rem !important;
+            gap: 1px;
+        }
+
+            .profile-rating .star-rating label {
+                padding: 0 2px;
+            }
+
+    .rating-name-label {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 11px;
+        border-radius: 20px;
+        background: #f3f5f7;
+        margin: 0;
+        letter-spacing: 0.2px;
+    }
+
+    .profile-stats {
+        display: grid;
+        /*grid-template-columns: repeat(4, 1fr);*/
+        grid-template-columns: 1fr 2.3fr 1fr;
+    }
+
+    .stat-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 3px 6px;
+        border-right: 1px solid #eef2f6;
+        border-top: 1px solid #eef2f6;
+        transition: background 0.2s ease;
+        min-width: 0;
+    }
+
+        .stat-chip:hover {
+            background: #f7fbff;
+        }
+
+        .stat-chip:nth-child(4n) {
+            border-right: none;
+        }
+
+    .stat-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        background: #eaf3fb;
+        color: #1a6fb5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .stat-text {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .stat-label {
+        font-size: 9.5px;
+        color: #8996a5;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .stat-value {
+        font-size: 11px;
+        font-weight: 600;
+        color: #1f2d3d;
+        white-space: normal;
+        word-break: break-word;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+        .stat-value:empty:before {
+            content: "--";
+            color: #c3cbd4;
+        }
+
+    .stat-value-big {
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .stat-balance .stat-icon {
+        background: #fdeceb;
+        color: #dc3545;
+    }
+
+    .stat-highlight .stat-icon {
+        background: #eafaf1;
+        color: #14804f;
+    }
+
+    /* ============ RIGHT BOTTOM PANEL: transactions ============ */
+    .doc-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        border-bottom: 1px solid #eef2f6;
+        flex-shrink: 0;
+    }
+
+    .doc-panel-header-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #14804f 0%, #1fae72 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .doc-panel-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f2f4d;
+    }
+
+    .grid-body {
+        flex: 1 1 auto;
+        min-height: 0;
+       /* overflow: auto;*/
+        padding: 5px 8px 12px;
     }
 </style>
 <div class="modal fade" id="partyInfoModal" tabindex="-1" data-bs-backdrop="static">
@@ -481,41 +968,54 @@
 <body>
 
     <div class="toastBox"></div>
-    <div class="container">
-        <div class="left-section">
-            <div class="party-box">
-                <button type="button" id="btnToggleLeft" class="collapse-toggle-btn" title="Collapse Panel">
-                    <i class="bi bi-layout-sidebar-inset" style="font-size:14px"></i>
-                    @*<svg class="toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>*@
-                </button>
-                <span class="collapsed-label">Party List</span>
-                <div class="party-box-content">
-                    <div align="center" style="font-size:13px;padding-bottom:5px">
-                        <input type="radio" name="partytype" id="rdoCustomer" checked /><label for="rdoCustomer">&ensp; Customer</label>
-                        &emsp; <input type="radio" name="partytype" id="rdoVendor" /><label for="rdoVendor">&ensp;Vendor</label>
+    <div class="app-shell">
+
+        <div class="containerPartyAnalytics">
+            <div class="left-section">
+                <div class="party-box">
+
+                    @*<button type="button" id="btnToggleLeft" class="collapse-toggle-btn" title="Collapse Panel">
+                            <i class="bi bi-chevron-left toggle-icon"></i>
+                        </button>*@
+                    <button type="button" id="btnToggleLeft" class="collapse-toggle-btn" title="Collapse Panel">
+                        <i class="bi bi-layout-sidebar-inset" style="font-size:14px"></i>
+                    </button>
+                    @*<span class="rail-icon"><i class="bi bi-people-fill"></i></span>*@
+                    <span class="collapsed-label">Party List</span>
+
+                    <div class="party-box-content">
+                        <div class="panel-header">
+                            <div class="form-check form-switch showall-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="chkShowAll" style="cursor:pointer;">
+                                <label for="chkShowAll"><i class="bi bi-eye"></i> Show All</label>
+                            </div>
+                        </div>
+                        <div class="panel-controls">
+
+                            <div class="type-toggle">
+                                <input type="radio" name="partytype" id="rdoCustomer" checked />
+                                <label for="rdoCustomer" class="type-toggle-btn"><i class="bi bi-person-fill"></i> Customer</label>
+                                <input type="radio" name="partytype" id="rdoVendor" />
+                                <label for="rdoVendor" class="type-toggle-btn"><i class="bi bi-truck"></i> Vendor</label>
+                            </div>
+                        </div>
+                        <div id="MainGrid" class="grid-wrap" style="width: 100%;"></div>
                     </div>
-                    <div id="MainGrid" style="width: 100%;"></div>
-                    @*<div id="Grid"></div>*@
                 </div>
+
             </div>
+            <div class="right-section">
+                <div class="party-info-box">
+                    <input id="txtPartyID" hidden />
 
-        </div>
-        <div class="right-section">
-            <div class="party-info-box">
-                <input id="txtPartyID" hidden />
-                <table width="100%">
-                    <tr>
-                        <td colspan="2" width="100%">
-                            <h5>
-                                <span class="glyphicon glyphicon-info-sign" title="Party Info" id="PartyInfo"></span> &ensp;
-
+                    <div class="profile-card-header">
+                        <div class="profile-avatar"><i class="bi bi-person-fill"></i></div>
+                        <div class="profile-main">
+                            <h5 class="profile-name">
                                 <label id="lblPartyName"></label>
+                                <span class="glyphicon glyphicon-info-sign party-info-icon" title="Party Info" id="PartyInfo"></span>
                             </h5>
-                        </td>
-                        <td align="center">
-                            <div id="dvRatings">
+                            <div id="dvRatings" class="profile-rating">
                                 <div class="star-rating">
                                     <input type="radio" id="star1" name="rating" value="1"><label for="star1">&#9733;</label>
                                     <input type="radio" id="star2" name="rating" value="2"><label for="star2">&#9733;</label>
@@ -523,48 +1023,49 @@
                                     <input type="radio" id="star4" name="rating" value="4"><label for="star4">&#9733;</label>
                                     <input type="radio" id="star5" name="rating" value="5"><label for="star5">&#9733;</label>
                                 </div>
-                                <br />
-                                <label style="font-size:medium" id="lblRatingName"></label>
+                                <label id="lblRatingName" class="rating-name-label"></label>
                             </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="left" width="40%">
-                            <label id="lblMobNo"></label><br />
-                            <label id="lblAddress" style="padding-top:3px"></label>
-                            @*<span class="eye-number-icon">
-                                    <i class="bi bi-eye"></i>
-                                    <span>1</span>
-                                </span>*@
-                        </td>
-                        @*<td align="left" width="40%">
-                                <span style="white-space: nowrap;">
-                                    <span class="glyphicon glyphicon-phone"></span>
-                                    <label id="lblMobNo"></label>
-                                </span>
-                                <br />
+                        </div>
+                        <div class="stat-chip stat-balance">
+                            <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+                            <div class="stat-text">
+                                <span class="stat-label">Balance</span>
+                                <label id="lblClosingBalance" class="stat-value stat-value-big">0.00 Cr</label>
+                            </div>
+                        </div>
+                        <div class="stat-chip stat-highlight">
+                            <div class="stat-icon"><i class="bi bi-speedometer2"></i></div>
+                            <div class="stat-text">
+                                <span class="stat-label">Avg. Collection Days</span>
+                                <label id="lblAccValue" class="stat-value stat-value-big">0</label>
+                            </div>
+                        </div>
+                    </div>
 
-                                <span style="white-space: nowrap;">
-                                    <span class="glyphicon glyphicon-home"></span>
-                                    <label id="lblAddress"></label>
-                                </span>
-                            </td>*@
-                        <td align="center" width="30%">
-                            <b>Average Collection Days : </b><br />
-                            <label style="font-size:28px;font-weight:600;color:darkcyan" id="lblAccValue">0</label>
-                        </td>
-                        <td align="center" width="30%">
-                            <label style="font-size:medium">Balance</label><br />
-                            <label style="font-size:large" id="lblClosingBalance">0.00 Cr</label>
-                        </td>
-                    </tr>
-                </table>
+                    <div class="profile-stats" hidden>
+                        <div class="stat-chip">
+                            <div class="stat-icon"><i class="bi bi-telephone-fill"></i></div>
+                            <div class="stat-text">
+                                <label id="lblMobNo" class="stat-value"></label>
+                            </div>
+                        </div>
+                        <div class="stat-chip">
+                            <div class="stat-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                            <div class="stat-text">
+                                <label id="lblAddress" class="stat-value" style="padding-top:3px"></label>
+                            </div>
+                        </div>
 
-            </div>
-            <div class="documents-box">
-                <strong></strong>
-                <div id="DocumentGrid"></div>
-                <div id="TransactionGrid" style="width: 100%;"></div>
+                        
+                    </div>
+                </div>
+                <div class="documents-box">
+
+                    <div class="grid-body">
+                        <div id="DocumentGrid"></div>
+                        <div id="TransactionGrid" style="width: 100%;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -639,8 +1140,8 @@
     $("#PartyInfo").hide();
     $("#btnToggleLeft").click(function (e) {
         e.stopPropagation();
-        var $container = $(".container");
-        var isCollapsed = $container.toggleClass("left-collapsed").hasClass("left-collapsed");
+        var $containerPartyAnalytics = $(".containerPartyAnalytics");
+        var isCollapsed = $containerPartyAnalytics.toggleClass("left-collapsed").hasClass("left-collapsed");
         $(this).attr("title", isCollapsed ? "Expand Panel" : "Collapse Panel");
         // Give the grid a moment to settle into the newly freed/reclaimed space before resizing it
         setTimeout(function () {
@@ -659,11 +1160,12 @@
     function GetParty(nPartyType) {
         $("#Grid").html("");
         $("#DocumentGrid").html("");
+        var nShowAll = $("#chkShowAll").is(":checked") ? 1 : 0
         $.ajax({
             url: Aurl + "partyanalticalreport/getparty",
             type: 'get',
             contentType: 'json',
-            data: { PartyType: nPartyType },
+            data: { PartyType: nPartyType, ShowAll: nShowAll },
             xhrFields: {
                 withCredentials: true
             },
@@ -672,7 +1174,10 @@
             }
         });
     }
-
+    $("#chkShowAll").click(function (e) {
+        var PartyType = $('#rdoCustomer').is(":checked") ? 1 : 2;
+        GetParty(PartyType);
+    });
     var PartyInfo = [];
     function GetPartyDocuments(nParty, nAccID) {
         $("#lblRatingName,#lblAccValue,#lblMobNo,#lblAddress,#lblClosingBalance").text("");
@@ -703,19 +1208,19 @@
                     $("#lblRatingName").text(PartyInfo[0].RatingName);
 
                     RatingLabel(Rate);
-                    
-                    $("#lblMobNo").text("📱 " + PartyInfo[0].Mob1);
-                    $("#lblAddress").html('<span class="bi-location"></span> ' + PartyInfo[0].BillingAddress);
+
+                    $("#lblMobNo").text(PartyInfo[0].Mob1);
+                    $("#lblAddress").html(PartyInfo[0].BillingAddress);
                     $("#lblClosingBalance").text(PartyInfo[0].Balance);
                     $("#txtPartyID").val(PartyInfo[0].ID);
-                    if (nParty == 2) {//vendor                       
+                    if (nParty == 2) {//vendor
                         if (PartyInfo[0].CrDr == "Cr") {
                             $("#lblClosingBalance").css("color", "green");
-                           
+
                         } else {
                             $("#lblClosingBalance").css("color", "red");
                         }
-                    } else {//customer                       
+                    } else {//customer
                         if (PartyInfo[0].CrDr == "Dr") {
                             $("#lblClosingBalance").css("color", "red");
                         } else {
@@ -731,7 +1236,7 @@
         });
     }
     function RatingLabel(ratingValue) {
-       
+
         var $rating = $("#lblRatingName");
 
         $rating.removeClass("rating-excellent rating-good rating-average rating-poor rating-block");
@@ -764,7 +1269,7 @@
             return; // No data to display
         }
         var Reporthd = "Party Analtical Report";
-        var nHeight = "500px";
+        var nHeight = "550px";
         console.log("bindDataTable columnsettings ", Grid1Columns);
         var currentSearchValue = '';
         //if (grid) {
@@ -821,11 +1326,11 @@
 
             },
             customCellRenderer: (el, col, rowData) => {
-                if (rowData.PartyType == 1) {
-                    el.style.backgroundColor = 'lightcyan';
-                } else{
-                    el.style.backgroundColor = 'lightyellow';
-                }
+                //if (rowData.PartyType == 1) {
+                //    el.style.backgroundColor = 'lightcyan';
+                //} else{
+                //    el.style.backgroundColor = 'lightyellow';
+                //}
                 if (col.field === 'CB') {
                     const value = rowData[col.field];
                     var PartyType = rowData.PartyType;
@@ -864,7 +1369,7 @@
             return; // No data to display
         }
         var Reporthd = "Party Analtical Report";
-        var nHeight = "400px";
+        var nHeight = "413px";
         Grid2 = new GKBSDynamicGrid('#TransactionGrid', Grid2Columns, data, {
             enablePagination: true,
             pageSize: ItemsperPage,
