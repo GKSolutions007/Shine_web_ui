@@ -629,11 +629,11 @@
                                     <th style="width:0%">FormorReport</th>
                                     <th style="width:25%">Column Name</th>
                                     <th style="width:25%">Original Name</th>
-                                    <th style="width:30%">Display Name</th>
+                                    <th style="width:25%">Display Name</th>
                                     <th style="width:9%">Width</th>
                                     <th style="width:12%">Visible</th>
-                                    <th style="width:12%">Alignment</th>
-                                    <th style="width:12%">Display Index</th>
+                                    <th style="width:10%">Alignment</th>
+                                    <th style="width:10%">Display Index</th>
                                     <th style="width:12%">Total</th>
                                     <th style="width:12%">Sum</th>
                                     <th style="width:12%">Average</th>
@@ -644,6 +644,7 @@
                                     <th style="width:12%">Print</th>
                                     <th style="width:12%">Print Name</th>
                                     <th style="width:12%">Print Width</th>
+                                    <th style="width:12%">Column Type</th>
                                 </tr>
                             </thead>
                             <tfoot>
@@ -653,6 +654,7 @@
                                     <th class="text-end">
                                         <label id="lblPrintWidth"></label>
                                     </th>
+                                    <th></th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -1042,17 +1044,18 @@
                     searching: false,
                     ordering: false,
                     sorting: false,
+                    autoWidth: false,
                     columns: [
 
                         //ReportID	TableID	ColumnID	ColumnName	DisplayColumnName	Width	Visible	Alignment	DisplayIndex	IsHiddenColumn
-                        { "data": "FormID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
-                        { "data": "TableID", "autoWidth": true, "visible": false, className: "dt-body-left" },//1
-                        { "data": "ColumnID", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
-                        { "data": "FormorReport", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
-                        { "data": "ColumnName", "autoWidth": true, "visible": false, className: "dt-body-left" },//3
-                        { "data": "OriginalColumnName", "autoWidth": true, width: "10%", className: "dt-body-left" },//3
+                        { "data": "FormID",  "visible": false, className: "dt-body-left" },//0
+                        { "data": "TableID","visible": false, className: "dt-body-left" },//1
+                        { "data": "ColumnID", "visible": false, className: "dt-body-left" },//2
+                        { "data": "FormorReport", "visible": false, className: "dt-body-left" },//2
+                        { "data": "ColumnName",  "visible": false, className: "dt-body-left" },//3
+                        { "data": "OriginalColumnName", width: "10%", className: "dt-body-left" },//3
                         {
-                            className: "dt-body-left", width: "20%",
+                            className: "dt-body-left", width: "15%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 return '<input type="text" value="' + value.DisplayColumnName + '" name ="DisplayColumnName" class="form-control" id="txtDisplayColumnName' + rowIndex + '"/>';
@@ -1079,7 +1082,7 @@
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%",
+                            className: "dt-body-left", width: "6%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 var isLeftSelect = value.Alignment == '1' ? 'selected' : '';
@@ -1090,7 +1093,7 @@
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%",
+                            className: "dt-body-left", width: "6%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 return '<input type="number" value="' + value.DisplayIndex + '" name ="DisplayIndex" class="form-control" id="txtDisplayIndex' + rowIndex + '" min="0" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
@@ -1212,17 +1215,28 @@
                             }
                         },
                         {
-                            className: "dt-body-left", width: "18%",
+                            className: "dt-body-left", width: "10%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 return '<input type="text" value="' + value.PrintColumnName + '" name ="PrintColumnName" class="form-control" id="txtPrintColumnName' + rowIndex + '"/>';
                             }
                         },
                         {
-                            className: "dt-body-left", width: "8%",
+                            className: "dt-body-left", width: "6%",
                             "mRender": function (data, type, value, meta) {
                                 var rowIndex = meta.row;
                                 return '<input type="number" value="' + value.PrintWidth + '" name ="Printwidth" class="form-control dgvPrintWidth" id="txtPrintwidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isStringSelect = value.ColumnType == '1' ? 'selected' : '';
+                                var isNumberSelect = value.ColumnType == '2' ? 'selected' : '';
+                                var isDeciamlSelect = value.ColumnType == '3' ? 'selected' : '';
+                                var field = "<select name='ColumnType' class='form-control' id='cmbColumnType" + rowIndex + "'><option value= '1'" + isStringSelect + ">String</option><option value= '2'" + isNumberSelect + ">Number</option><option value= '3'" + isDeciamlSelect + ">Decimal</option></select>";
+                                return field;
                             }
                         },
                     ],
@@ -2074,7 +2088,7 @@ function setDate(FieldID,Type) {
                     aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
                     aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
                     aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg, aEnableCount = rowdata.EnableCount,
-                    aEnableUnique = rowdata.EnableUnique,aShowinColumnOption = rowdata.ShowinColumnOption;
+                    aEnableUnique = rowdata.EnableUnique, aShowinColumnOption = rowdata.ShowinColumnOption, aColumnType = rowdata.ColumnType;
                 $(this).find("input").each(function (index) {
                     const fieldName = $(this).attr("name");
                     const fieldID = $(this).attr("id");
@@ -2130,6 +2144,9 @@ function setDate(FieldID,Type) {
                     if (fieldName == "Alignment") {
                         aAlign = $(this).val();
                     }
+                    if (fieldName == "ColumnType") {
+                        aColumnType = $(this).val();
+                    }
                 });
 
                 var coldata = {
@@ -2153,7 +2170,8 @@ function setDate(FieldID,Type) {
                     "PrintColumnName": aPrintColumnName,
                     "Printwidth": aPrintwidth,
                     "EnableCount": aEnableCount,
-                    "EnableUnique": aEnableUnique
+                    "EnableUnique": aEnableUnique,
+                    "ColumnType": aColumnType
                 };
                 ColumnSettingData.push(coldata);
             });
