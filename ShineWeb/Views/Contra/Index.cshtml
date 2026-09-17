@@ -207,7 +207,149 @@
         .dropdown-toggle::after {
             display: none;
         }
+
+    .pi-header {
+        background: linear-gradient(135deg, #0d5c3f 0%, #14804f 100%);
+        padding: 8px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    .pi-header-icon {
+        width: 38px;
+        height: 38px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .pi-header h4 {
+        font-size: 17px;
+    }
+
+    .pi-close {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        background-color: rgba(255,255,255,0.15) !important;
+        border-radius: 6px;
+        padding: 5px;
+    }
+
+    .pi-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+    }
+
+    .pi-row {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 9px 14px;
+        border-bottom: 1px solid #f0f0f0;
+        min-width: 0;
+    }
+
+        .pi-row.full {
+            grid-column: 1 / -1;
+        }
+
+        .pi-row.highlight {
+            background-color: #eafaf1;
+        }
+
+    .pi-icon-chip {
+        width: 26px;
+        height: 26px;
+        background-color: #eafaf1;
+        color: #14804f;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 11px;
+        margin-top: 1px;
+    }
+
+    .pi-label {
+        width: auto;
+        white-space: nowrap;
+        color: #6b7280;
+        font-size: 12px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .pi-colon {
+        color: #9ca3af;
+        width: 6px;
+        font-size: 12px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .pi-value {
+        font-weight: 600;
+        color: #111827;
+        font-size: 13px;
+        min-width: 0;
+        flex: 1;
+        white-space: normal;
+        overflow: visible;
+        word-break: break-word;
+        line-height: 1.35;
+    }
+
+        .pi-value.muted {
+            color: #9ca3af;
+            font-weight: 400;
+        }
+
+    .pi-badge-good {
+        background-color: #eafaf1;
+        color: #14804f;
+        padding: 2px 10px;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 11px;
+    }
+
+    /* Elevates the modal container */
+    #bankInfoModal {
+        z-index: 1065 !important;
+    }
+
 </style>
+
+<div class="modal fade" id="bankInfoModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+        <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+            <div class="pi-header">
+                <div class="pi-header-icon"><i class="fas fa-circle-info"></i></div>
+                <div>
+                    <h4 class="mb-0 text-white fw-bold">Bank Info</h4>
+                </div>
+                <button type="button" class="btn-close btn-close-white pi-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="bankInfoBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 <body>
 
     @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
@@ -289,7 +431,7 @@
                     <h5 class="modal-title fw-bold" id="lblPopupheading">
                         Add @ViewData["FormName"]
                     </h5>
-                    <button type="button" class="btn-close" id="modelcloseX"></button>
+                    <button type="button" class="btn-close" style="filter: invert(1);" id="modelcloseX"></button>
                 </div>
                 <!-- Modal body -->
                 <div class="modal-body">
@@ -1352,19 +1494,91 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         if (fromVal > 0) $('#lnkViewFromBank').show(); else $('#lnkViewFromBank').hide();
         if (toVal > 0) $('#lnkViewToBank').show(); else $('#lnkViewToBank').hide();
     });
+
+    function piRow(icon, label, value, opts) {
+        opts = opts || {};
+        var displayValue = (value === "" || value === null || value === undefined)
+            ? '<span class="pi-value muted">—</span>'
+            : '<span class="pi-value" title="' + value + '">' + value + '</span>';
+        return `<div class="pi-row ${opts.full ? 'full' : ''}">
+        <div class="pi-icon-chip"><i class="${icon}"></i></div>
+        <div class="pi-label">${label}</div>
+        <div class="pi-colon">:</div>
+        ${displayValue}
+    </div>`;
+    }
+
+    function ShowBankInfo(account) {
+        var html = '<div class="pi-grid">'
+            + piRow('fas fa-building', 'Bank', account.Bank, { full: true })
+            + piRow('fas fa-code-branch', 'Branch', account.Branch, { full: true })
+            + piRow('fas fa-barcode', 'IFSC', account.IFSC)
+            + piRow('fas fa-hashtag', 'MICR', account.MICR)
+            + '</div>';
+
+        $("#bankInfoBody").html(html);
+        new bootstrap.Modal(document.getElementById('bankInfoModal')).show();
+    }
+
+    $('#bankInfoModal').on('show.bs.modal', function () {
+        setTimeout(function () {
+            $('.modal-backdrop').last().css('z-index', 1060);
+            $('#bankInfoModal').css('z-index', 1065);
+        }, 0);
+    });
+
+    //$('#lnkViewFromBank').click(function (e) {
+    //    if ($('#cmbType').val() != 4) {
+    //        var selectedVal = $('#cmbFromAccount').val();
+    //        if (selectedVal > 0) {
+    //            // FIX: Match against both BaID and ID safely
+    //            var md = arrAccountData.filter(t => String(t.BaID).trim() === String(selectedVal).trim() || String(t.ID).trim() === String(selectedVal).trim());
+
+    //            // FIX: Check if an object was found before trying to read properties
+    //            if (md.length > 0) {
+    //                var account = md[0];
+    //                var cont = '<table class="table table-bordered"><tr><td align="right">Bank :</td><td><label>' + (account.Bank || '') + '</label></td></tr><tr><td align="right">Branch :</td><td><label>' + (account.Branch || '') + '</label></td></tr>';
+    //                cont += '<tr><td align="right">IFSC :</td><td><label>' + (account.IFSC || '') + '</label></td></tr><tr><td align="right">MICR :</td><td><label>' + (account.MICR || '') + '</label></td></tr></table > ';
+    //                BankInfoDialogMsg(cont);
+    //            } else {
+    //                showErrorSnackbar("Bank details not available for selected account");
+    //            }
+    //        } else {
+    //            showErrorSnackbar("Select Bank");
+    //            $('#cmbFromAccount').focus();
+    //        }
+    //    }
+
+    //});
+
+    //$('#lnkViewToBank').click(function (e) {
+    //    var selectedVal = $('#cmbToAccount').val();
+    //    if (selectedVal > 0) {
+    //        // FIX: Match against both BaID and ID safely
+    //        var md = arrAccountData.filter(t => String(t.BaID).trim() === String(selectedVal).trim() || String(t.ID).trim() === String(selectedVal).trim());
+
+    //        // FIX: Check if an object was found before trying to read properties
+    //        if (md.length > 0) {
+    //            var account = md[0];
+    //            var cont = '<table class="table table-bordered"><tr><td align="right">Bank :</td><td><label>' + (account.Bank || '') + '</label></td></tr><tr><td align="right">Branch :</td><td><label>' + (account.Branch || '') + '</label></td></tr>';
+    //            cont += '<tr><td align="right">IFSC :</td><td><label>' + (account.IFSC || '') + '</label></td></tr><tr><td align="right">MICR :</td><td><label>' + (account.MICR || '') + '</label></td></tr></table > ';
+    //            BankInfoDialogMsg(cont);
+    //        } else {
+    //            showErrorSnackbar("Bank details not available for selected account");
+    //        }
+    //    } else {
+    //        showErrorSnackbar("Select Bank");
+    //        $('#cmbToAccount').focus();
+    //    }
+    //});
+
     $('#lnkViewFromBank').click(function (e) {
         if ($('#cmbType').val() != 4) {
             var selectedVal = $('#cmbFromAccount').val();
             if (selectedVal > 0) {
-                // FIX: Match against both BaID and ID safely
                 var md = arrAccountData.filter(t => String(t.BaID).trim() === String(selectedVal).trim() || String(t.ID).trim() === String(selectedVal).trim());
-
-                // FIX: Check if an object was found before trying to read properties
                 if (md.length > 0) {
-                    var account = md[0];
-                    var cont = '<table class="table table-bordered"><tr><td align="right">Bank :</td><td><label>' + (account.Bank || '') + '</label></td></tr><tr><td align="right">Branch :</td><td><label>' + (account.Branch || '') + '</label></td></tr>';
-                    cont += '<tr><td align="right">IFSC :</td><td><label>' + (account.IFSC || '') + '</label></td></tr><tr><td align="right">MICR :</td><td><label>' + (account.MICR || '') + '</label></td></tr></table > ';
-                    BankInfoDialogMsg(cont);
+                    ShowBankInfo(md[0]);
                 } else {
                     showErrorSnackbar("Bank details not available for selected account");
                 }
@@ -1378,15 +1592,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     $('#lnkViewToBank').click(function (e) {
         var selectedVal = $('#cmbToAccount').val();
         if (selectedVal > 0) {
-            // FIX: Match against both BaID and ID safely
             var md = arrAccountData.filter(t => String(t.BaID).trim() === String(selectedVal).trim() || String(t.ID).trim() === String(selectedVal).trim());
-
-            // FIX: Check if an object was found before trying to read properties
             if (md.length > 0) {
-                var account = md[0];
-                var cont = '<table class="table table-bordered"><tr><td align="right">Bank :</td><td><label>' + (account.Bank || '') + '</label></td></tr><tr><td align="right">Branch :</td><td><label>' + (account.Branch || '') + '</label></td></tr>';
-                cont += '<tr><td align="right">IFSC :</td><td><label>' + (account.IFSC || '') + '</label></td></tr><tr><td align="right">MICR :</td><td><label>' + (account.MICR || '') + '</label></td></tr></table > ';
-                BankInfoDialogMsg(cont);
+                ShowBankInfo(md[0]);
             } else {
                 showErrorSnackbar("Bank details not available for selected account");
             }
@@ -1395,6 +1603,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             $('#cmbToAccount').focus();
         }
     });
+
     function LoadDetailsIndropdown(ID) {
        // $('#lnkViewFromBank,#lnkViewToBank').hide();
         var SelID = ID;
