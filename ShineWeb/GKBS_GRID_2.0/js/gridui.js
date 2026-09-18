@@ -414,7 +414,10 @@ class GKBSDynamicGrid {
                 // Handle nulls/undefined to ensure they don't break sorting
                 if (valA === null || valA === undefined) valA = '';
                 if (valB === null || valB === undefined) valB = '';
-
+                if (this.isNumber(valA) && this.isNumber(valB)) {
+                    valA = parseFloat(valA);
+                    valB = parseFloat(valB);
+                }
                 // Check if both are strings for case-insensitive sort
                 if (typeof valA === 'string' && typeof valB === 'string') {
                     // Use localeCompare for robust string comparison (handles accents, case, etc.)
@@ -435,6 +438,9 @@ class GKBSDynamicGrid {
         // Reset page logic
         const maxPage = Math.ceil(this.state.processedData.length / this.options.pageSize) || 1;
         if (this.state.currentPage > maxPage) this.state.currentPage = 1;
+    }
+    isNumber(value) {
+        return value !== "" && !isNaN(value);
     }
     getPaginatedData() {
         if (!this.options.enablePagination) return this.state.processedData;
