@@ -1,0 +1,678 @@
+﻿
+@{
+    ViewBag.Title = "Customer Location Verification";
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link rel="stylesheet" href="~/Content/jquery-ui.css">
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/Validation.js"></script>
+<script src="~/Scripts/datatable.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+
+
+<style>
+    :root {
+        --mda-primary: #4361ee;
+        --mda-primary-dark: #3145c4;
+        --mda-success: #2ec4b6;
+        --mda-warning: #ff9f1c;
+        --mda-danger: #e5383b;
+        --mda-bg: #f4f6fb;
+        --mda-card-radius: 14px;
+    }
+
+    #dvMainTable {
+        animation: mdaFadeIn .45s ease both;
+    }
+
+    @@keyframes mdaFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes mdaPop {
+        0% {
+            transform: scale(.85);
+            opacity: 0;
+        }
+
+        60% {
+            transform: scale(1.05);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @@keyframes mdaPulseIcon {
+        0%, 100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.12);
+        }
+    }
+
+    @@keyframes mdaShake {
+        10%, 90% {
+            transform: translateX(-1px);
+        }
+
+        20%, 80% {
+            transform: translateX(2px);
+        }
+
+        30%, 50%, 70% {
+            transform: translateX(-4px);
+        }
+
+        40%, 60% {
+            transform: translateX(4px);
+        }
+    }
+
+    @@keyframes mdaRowIn {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ---------- Header ---------- */
+    .mda-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-top: 6px;
+    }
+
+        .mda-header .mda-header-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--mda-primary), var(--mda-primary-dark));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(67, 97, 238, .3);
+        }
+
+        .mda-header h4 {
+            font-size: 16px !important;
+            font-weight: 600;
+            margin: 0;
+            color: #2b2d42;
+            letter-spacing: .2px;
+        }
+
+    /* ---------- Stat cards ---------- */
+    .mda-stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+        gap: 14px;
+        margin: 16px 0 20px;
+    }
+
+    @@media (max-width: 900px) {
+        .mda-stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .mda-stats-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .mda-stat-card {
+        position: relative;
+        background: #fff;
+        border-radius: var(--mda-card-radius);
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 2px 10px rgba(20, 25, 60, .06);
+        border: 1px solid #eef0f7;
+        overflow: hidden;
+        animation: mdaPop .4s ease both;
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+        .mda-stat-card:nth-child(1) {
+            animation-delay: .02s;
+        }
+
+        .mda-stat-card:nth-child(2) {
+            animation-delay: .08s;
+        }
+
+        .mda-stat-card:nth-child(3) {
+            animation-delay: .14s;
+        }
+
+        .mda-stat-card:nth-child(4) {
+            animation-delay: .2s;
+        }
+
+        .mda-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 22px rgba(20, 25, 60, .12);
+        }
+
+        .mda-stat-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: .05;
+            background: var(--mda-card-accent, var(--mda-primary));
+        }
+
+    .mda-stat-icon {
+        flex: 0 0 auto;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #fff;
+        background: var(--mda-card-accent, var(--mda-primary));
+        transition: transform .25s ease;
+    }
+
+    .mda-stat-card:hover .mda-stat-icon {
+        animation: mdaPulseIcon .6s ease;
+    }
+
+    .mda-stat-body {
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
+    }
+
+    .mda-stat-label {
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        color: #8a8fa3;
+        font-weight: 600;
+    }
+
+    .mda-stat-value {
+        font-size: 21px;
+        font-weight: 700;
+        color: #23263a;
+        line-height: 1.15;
+    }
+
+    .mda-card-limit {
+        --mda-card-accent: #4361ee;
+    }
+
+    .mda-card-total {
+        --mda-card-accent: #7209b7;
+    }
+
+    .mda-card-active {
+        --mda-card-accent: #2ec4b6;
+    }
+
+    .mda-card-deactive {
+        --mda-card-accent: #e5383b;
+    }
+
+    /* ---------- Table ---------- */
+
+    #tblMobileDevices_wrapper {
+        animation: mdaFadeIn .5s ease .1s both;
+    }
+
+    table.dataTable.table-bordered {
+        border-radius: 10px;
+        overflow: hidden;
+        border-collapse: separate !important;
+        border-spacing: 0;
+    }
+
+    /* Header layout: sticky, bolder, spaced-out caps */
+    .trclrforcolheader th {
+        background: linear-gradient(135deg, var(--mda-primary), var(--mda-primary-dark));
+        color: #fff;
+        border-bottom: none !important;
+        font-size: 12px !important;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        padding: 5px 10px !important;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    /* Table body font size */
+    #tblMobileDevices {
+        font-size: 14px;
+    }
+
+        #tblMobileDevices tbody td {
+            /* padding: 10px 10px !important;*/
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        #tblMobileDevices tbody tr {
+            animation: mdaRowIn .3s ease both;
+            transition: background-color .15s ease;
+        }
+
+            #tblMobileDevices tbody tr:hover {
+                background-color: #dfe4ff;
+            }
+
+    /* ---------- Responsive ---------- */
+    @@media (max-width: 768px) {
+        .mda-header h4 {
+            font-size: 15px !important;
+        }
+
+        #tblMobileDevices, .trclrforcolheader th {
+            font-size: 12.5px !important;
+        }
+
+            #tblMobileDevices tbody td {
+                font-size: 12.5px;
+                padding: 8px 6px !important;
+            }
+
+        .mda-btn-icon {
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .mda-header h4 {
+            font-size: 14px !important;
+        }
+
+        .mda-header-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
+        }
+
+        #tblMobileDevices, .trclrforcolheader th {
+            font-size: 11.5px !important;
+        }
+
+            #tblMobileDevices tbody td {
+                font-size: 11.5px;
+                padding: 6px 5px !important;
+            }
+
+        .mda-btn-icon {
+            font-size: 10px;
+            padding: 3px 6px;
+            gap: 3px;
+        }
+    }
+
+    .mda-btn-icon {
+        border: none;
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #fff;
+        transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+
+        .mda-btn-icon:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,.15);
+        }
+
+        .mda-btn-icon:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+    .mda-btn-activate {
+        background: linear-gradient(135deg, #2ec4b6, #21a99d);
+    }
+
+    .mda-btn-deactivate {
+        background: linear-gradient(135deg, #e5383b, #c9262a);
+    }
+
+    /* ---------- Error popup modal ---------- */
+    .mda-error-modal .modal-content {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        animation: mdaShake .45s ease .1s both;
+    }
+
+    .mda-error-modal .modal-body {
+        text-align: center;
+        padding: 32px 26px 26px;
+    }
+
+    .mda-error-icon-wrap {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 16px;
+        border-radius: 50%;
+        background: rgba(229, 56, 59, .12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: mdaPop .4s ease both;
+    }
+
+        .mda-error-icon-wrap i {
+            font-size: 32px;
+            color: var(--mda-danger);
+        }
+
+    .mda-error-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #23263a;
+        margin-bottom: 6px;
+    }
+
+    .mda-error-message {
+        font-size: 13.5px;
+        color: #6c7086;
+        margin-bottom: 0;
+    }
+
+    .mda-error-modal .modal-footer {
+        border-top: none;
+        justify-content: center;
+        padding-bottom: 26px;
+    }
+
+    .mda-error-modal .btn-close-error {
+        background: linear-gradient(135deg, var(--mda-danger), #c9262a);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 26px;
+        font-weight: 600;
+        font-size: 13px;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+        .mda-error-modal .btn-close-error:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(229, 56, 59, .35);
+        }
+</style>
+
+
+<body>
+    <div class="mda-header">
+        <span class="mda-header-icon"><i class="fa fa-map-marker-alt"></i></span>
+        <h4 class="mb-0" id="MainHeading">Customer Location Verification</h4>
+    </div>
+    <hr />
+    <div class="toastBox"></div>
+
+    <div id="dvMainTable">
+
+        <div class="row">
+            <div class="table-responsive">
+                <div class="d-flex align-items-center justify-content-start mb-2">
+                    <div class="form-check form-switch m-0 ps-0 d-flex align-items-center">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" id="chkShowAll" style="cursor: pointer; transform: scale(1.4); margin-top: 0;">
+                        <label class="form-check-label" for="chkShowAll" style="cursor: pointer; font-weight: 600; font-size: 16px;">
+                            Show All
+                        </label>
+                    </div>
+                </div>
+                <table class="table table-bordered" id="tblCustomerLocation" width="100%">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;width:3%;">#</th>
+                            <th style="text-align:center;width:0%;">ID</th>
+                            <th style="text-align:center;width:0%;">StatusCode</th>
+                            <th style="text-align:center;width:0%;">Latitude</th>
+                            <th style="text-align:center;width:0%;">Longtitude</th>
+                            <th style="text-align:left;width:15%;">Customer</th>
+                            <th style="text-align:center;width:12%;">Date Time</th>
+                            <th style="text-align:left;width:10%;">User</th>
+                            <th style="text-align:center;width:8%;">Location</th>
+                            <th style="text-align:center;width:8%;">Images</th>
+                            <th style="text-align:center;width:8%;">Status</th>
+                            <th style="text-align:left;width:12%;">Remarks</th>
+                            <th style="text-align:left;width:12%;">Approve</th>
+                            <th style="text-align:left;width:12%;">Reject</th>
+                            <th style="text-align:left;width:0%;">Approved / Rejected By</th>
+                            <th style="text-align:center;width:0%;">Action Date Time</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    $(document).ready(function () {
+        InitiateData();
+        $('#chkShowAll').on('change', function () {
+            InitiateData();
+        });
+    });
+    $(document).on("click", ".gotolocation", function (e) {
+        e.preventDefault();
+        var location = $(this).attr("data-location");
+
+        if (!location) {
+            if (typeof showErrorSnackbar === "function") {
+                showErrorSnackbar("Location not available.");
+            } else {
+                alert("Location not available.");
+            }
+            return;
+        }
+
+        var url = "https://www.google.com/maps?q=" + encodeURIComponent(location);
+        window.open(url, "_blank");
+    });
+var Table = $('#tblCustomerLocation').DataTable({
+    pageLength: ItemsperPage,
+    lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+    "bFilter": true,
+    "bSearchable": true,
+    "bInfo": true,
+    "bPaginate": false,
+    "ordering": false,
+    scrollY: "400px",
+    scrollX: true,
+    scrollCollapse: true,
+    "columnDefs": [
+        { "targets": [1, 2, 3, 4, 14, 15], "visible": false },
+        { "className": "text-center", "targets": [0, 1, 2, 3, 4, 6, 8, 9, 10, 12, 13, 15] },
+        { "className": "text-left", "targets": [5, 7, 11, 14] }
+    ],
+});
+
+var Aurl = '@Session["APIurl"]';
+var arrData = [];
+var UID = '@Session["LoginUserID"]';
+var RID = '@Session["RoleID"]';
+var nMode = 1;
+var FID = 1;
+
+    function InitiateData() {
+        Table.clear().draw();
+
+        // Get 1 if checked, 0 if unchecked
+        var showAll = $('#chkShowAll').is(':checked') ? 1 : 0;
+
+        $.ajax({
+            url: Aurl + "customermaster/CustomerLocation",
+            type: 'GET',
+            dataType: 'json',
+            data: { ShowAll: showAll },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (data && data.length > 0) {
+                    $.each(data, function (i, items) {
+
+                        var customerlocation = "";
+                        if (items.Latitude && items.Longtitude) {
+                            customerlocation = items.Latitude.toString().trim() + "," + items.Longtitude.toString().trim();
+                        }
+
+                        // 1. Location Icon (Index 8)
+                        var locationIcon = items.Location == 1
+                            ? '<a href="javascript:void(0);" class="gotolocation" data-location="' + customerlocation + '"><i class="fa fa-map-marker-alt text-success" style="font-size:16px;"></i></a>'
+                            : '<i class="fa fa-map-marker-alt text-secondary" style="font-size:16px; cursor:not-allowed;"></i>';
+
+                        var imageIcon = items.Images == 1
+                            ? '<i class="fa fa-image text-primary" style="font-size:16px;"></i>'
+                            : '<i class="fa fa-image text-secondary" style="font-size:16px;"></i>';
+
+                        var statusBadge = items.Status === "Approved"
+                            ? '<span class="badge bg-success" style="font-size: 13px; padding: 6px 10px;">Approved</span>'
+                            : items.Status === "Rejected"
+                                ? '<span class="badge bg-danger" style="font-size: 13px; padding: 6px 10px;">Rejected</span>'
+                                : '<span class="badge bg-warning text-dark" style="font-size: 13px; padding: 6px 10px;">Open</span>';
+
+                        var isApproved = items.Status === "Approved";
+                        var isRejected = items.Status === "Rejected";
+
+                        var approveDisabled = isApproved ? "disabled" : "";
+                        var rejectDisabled = isRejected ? "disabled" : "";
+
+                        var approveIcon = isApproved ? "fa fa-check-circle" : "fa fa-check";
+                        var rejectIcon = isRejected ? "fa fa-times-circle" : "fa fa-ban";
+
+                        var approveBtn = '<button class="mda-btn-icon mda-btn-activate btnApprove" ' + approveDisabled + ' data-id="' + items.ID + '"><i class="' + approveIcon + '"></i> Approve' + (isApproved ? "d" : "") + '</button>';
+                        var rejectBtn = '<button class="mda-btn-icon mda-btn-deactivate btnReject" ' + rejectDisabled + ' data-id="' + items.ID + '"><i class="' + rejectIcon + '"></i> Reject' + (isRejected ? "ed" : "") + '</button>';
+
+                        Table.row.add([
+                            (i + 1),
+                            items.ID,
+                            items.StatusCode,
+                            items.Latitude || '',
+                            items.Longtitude || '',
+                            items.Customer || '',
+                            items.DateTime || '',
+                            items.User || '',
+                            locationIcon,
+                            imageIcon,
+                            statusBadge,
+                            items.Remarks || '',
+                            approveBtn,
+                            rejectBtn,
+                            items.ApprovedOrRejectedBy || '',
+                            items.ActionDateTime || ''
+                        ]).draw(false);
+                    });
+                } else {
+                    if (typeof showErrorSnackbar === "function") {
+                        showErrorSnackbar("No records found");
+                    }
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("Error loading data:", error);
+            }
+        });
+    }
+
+    // Click handler for Approve button
+    $('#tblCustomerLocation tbody').on('click', 'button.btnApprove', function () {
+        var rowdata = Table.row($(this).parents('tr')).data();
+        SaveCustomerLocationAction(2, rowdata[1]);
+    });
+
+    // Click handler for Reject button
+    $('#tblCustomerLocation tbody').on('click', 'button.btnReject', function () {
+        var rowdata = Table.row($(this).parents('tr')).data();
+        // Mode 3 = Reject
+        SaveCustomerLocationAction(3, rowdata[1]);
+    });
+
+    function SaveCustomerLocationAction(Mode, LocationID) {
+        $.ajax({
+            url: Aurl + "customermaster/SaveLocationAction",
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                nMode: Mode,
+                nID: LocationID,
+                nUserID: UID
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $.each(data, function (i, items) {
+                    if (items.MsgID == "0" || items.Status == "Success") {
+
+                        if (Mode == 2) {
+                            showSuccessSnackbar("Approved Successfully.!!!");
+                        } else {
+                            showSuccessSnackbar("Rejected Successfully.!!!");
+                        }
+
+                        // Reload table data dynamically after action
+                        setTimeout(() => {
+                            InitiateData();
+                        }, 300);
+
+                    } else {
+                        showErrorPopup(items.Message || "Operation failed.");
+                    }
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("Error saving status:", error);
+                showErrorSnackbar("An error occurred while saving.");
+            }
+        });
+    }
+
+</script>
