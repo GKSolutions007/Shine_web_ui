@@ -1,3 +1,7 @@
+/*
+    GKBS GRID JS VERSION 2.0
+*/
+
 class GKBSDynamicGrid {
     constructor(selector, columns, data, options = {}) {
         this.container = document.querySelector(selector);
@@ -6,7 +10,7 @@ class GKBSDynamicGrid {
         // 💡 NEW: Instance Management
         // If there's an existing grid instance on this container, destroy it first
         if (this.container._gkbsGrid && typeof this.container._gkbsGrid.destroy === 'function') {
-            console.log("Existing grid detected on container. Cleaning up...");
+            //console.log("Existing grid detected on container. Cleaning up...");
             this.container._gkbsGrid.destroy();
         }
         // Store this instance on the container for future cleanup
@@ -108,7 +112,7 @@ class GKBSDynamicGrid {
      * and clearing references to prevent memory leaks and duplicate events.
      */
     destroy() {
-        console.log("Destroying grid instance...");
+        //console.log("Destroying grid instance...");
 
         // 1. Remove keyboard navigation listener
         if (this._keyNavHandler) {
@@ -138,8 +142,8 @@ class GKBSDynamicGrid {
         // Use this.originalData if you want ALL data, ignoring filters.
         const dataToReturn = this.state.processedData;
 
-        // Optional: Log the data to the console for verification
-        //console.log("Retrieved Data:", dataToReturn); 
+        // Optional: Log the data to the //console for verification
+        ////console.log("Retrieved Data:", dataToReturn); 
 
         return dataToReturn;
     }
@@ -234,8 +238,8 @@ class GKBSDynamicGrid {
     // --- NEW: Row Double Click Handler ---
     handleRowDoubleClick(rowData) {
         // This is the function that runs when a row is double-clicked.
-        console.log("--- Row Double-Clicked ---");
-        console.log(rowData);
+        //console.log("--- Row Double-Clicked ---");
+        //console.log(rowData);
 
         // Example action: Display the record data in a readable format
         const recordDetails = JSON.stringify(rowData, null, 2);
@@ -316,11 +320,11 @@ class GKBSDynamicGrid {
         Object.keys(this.state.textFilters).forEach(field => {
             const filter = this.state.textFilters[field]; // This is the object { operator, value }
             const { operator, value } = filter;
-            console.log("operator", operator, " value ", value);
+            //console.log("operator", operator, " value ", value);
             // if (value) {
             //     result = result.filter(item => {
             //         const itemValue = String(item[field]).toLowerCase().trim();
-            //         console.log("itemValue ",itemValue);
+            //         //console.log("itemValue ",itemValue);
             //         switch (operator) {
             //             case 'equal':
             //                 return itemValue === value;
@@ -346,7 +350,7 @@ class GKBSDynamicGrid {
                     const rawItemValue = item[field];
 
                     // --- NUMBER FILTERING LOGIC ---
-                    if (columnType === 'number') {
+                    if (columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml') {
                         const numValue = parseFloat(rawItemValue);
                         if (isNaN(numValue)) return false;
 
@@ -410,7 +414,10 @@ class GKBSDynamicGrid {
                 // Handle nulls/undefined to ensure they don't break sorting
                 if (valA === null || valA === undefined) valA = '';
                 if (valB === null || valB === undefined) valB = '';
-
+                if (this.isNumber(valA) && this.isNumber(valB)) {
+                    valA = parseFloat(valA);
+                    valB = parseFloat(valB);
+                }
                 // Check if both are strings for case-insensitive sort
                 if (typeof valA === 'string' && typeof valB === 'string') {
                     // Use localeCompare for robust string comparison (handles accents, case, etc.)
@@ -431,6 +438,9 @@ class GKBSDynamicGrid {
         // Reset page logic
         const maxPage = Math.ceil(this.state.processedData.length / this.options.pageSize) || 1;
         if (this.state.currentPage > maxPage) this.state.currentPage = 1;
+    }
+    isNumber(value) {
+        return value !== "" && !isNaN(value);
     }
     getPaginatedData() {
         if (!this.options.enablePagination) return this.state.processedData;
@@ -453,7 +463,7 @@ class GKBSDynamicGrid {
             // Re-render the grid to update the UI (Toolbar, Footer, Body)
             this.render();
         } else {
-            console.warn(`Option "${key}" is not a recognized configuration property.`);
+            //console.warn(`Option "${key}" is not a recognized configuration property.`);
         }
     }
     // --- 2. Render Orchestrator ---
@@ -540,7 +550,7 @@ class GKBSDynamicGrid {
             }
 
             // Only calculate for 'number' types
-            if (col.type === 'number' || col.Total === true || col.EnableCount || col.EnableUnique) {
+            if (col.type === 'number' || col.type === 'labelnumber' || col.type === 'labeldeciaml' || col.Total === true || col.EnableCount || col.EnableUnique) {
                 const values = dataToCalculate
                     .map(row => parseFloat(row[col.field]))
                     .filter(val => !isNaN(val)); // Filter out bad data
@@ -554,7 +564,7 @@ class GKBSDynamicGrid {
                     var UniqueCounts = 0;
                     if (col.EnableUnique) {
                         UniqueCounts = new Set(dataToCalculate.map(item => item[col.field])).size;
-                        console.log("have no : " + col.field, Object.values(values));
+                        //console.log("have no : " + col.field, Object.values(values));
                     }
                     // Format numbers (e.g., 12,300.50)
                     const fmt = (n) => n.toLocaleString('en-IN',  { minimumFractionDigits: 2, maximumFractionDigits: 2, currency: 'INR' });
@@ -569,7 +579,7 @@ class GKBSDynamicGrid {
                 else {
                     // 
                     const uniqueCount = new Set(dataToCalculate.map(item => item[col.field])).size;
-                    console.log(col.field, dataToCalculate.map(item => item[col.field]));
+                    //console.log(col.field, dataToCalculate.map(item => item[col.field]));
                     cell.innerHTML = `                    
                     `+ (col.EnableCount ? ` <div><span class="dg-stat-label">Count:</span>${dataToCalculate.length}</div> ` : ``) + ` 
                     `+ (col.EnableUnique ? ` <div><span class="dg-stat-label">Unique:</span>${uniqueCount}</div> ` : ``) + ``;
@@ -603,7 +613,7 @@ class GKBSDynamicGrid {
         const scrollWrapper = this.container.querySelector('.dg-scroll-wrapper');
 
         if (!scrollWrapper) {
-            console.error("Cannot find the scroll wrapper (.dg-scroll-wrapper). Status bar update failed.");
+            //console.error("Cannot find the scroll wrapper (.dg-scroll-wrapper). Status bar update failed.");
             return; // Exit if the structure isn't ready
         }
 
@@ -844,7 +854,7 @@ class GKBSDynamicGrid {
     }
     exportToExcel() {
         if (typeof XLSX === 'undefined') {
-            console.error('SheetJS (xlsx.js) library is not loaded. Falling back to CSV.');
+            //console.error('SheetJS (xlsx.js) library is not loaded. Falling back to CSV.');
             this.exportToCSV();
             return;
         }
@@ -855,7 +865,7 @@ class GKBSDynamicGrid {
         const createStyledCell = (val, bgColor = "FFFFFF", fgColor = "000000", isBold = false) => {
             return {
                 v: val,
-                t: (typeof val === 'number') ? 'n' : 's',
+                t: (typeof val === 'number' || typeof val === 'labelnumber' || typeof val === 'labeldeciaml') ? 'n' : 's',
                 s: {
                     fill: { fgColor: { rgb: bgColor } },
                     font: { color: { rgb: fgColor }, bold: isBold },
@@ -949,7 +959,7 @@ class GKBSDynamicGrid {
         // 6. Write and download
         XLSX.writeFile(wb, filename);
 
-        console.log(`Successfully exported ${dataToExport.length} rows to ${filename} with styled custom header and filters.`);
+        //console.log(`Successfully exported ${dataToExport.length} rows to ${filename} with styled custom header and filters.`);
     }
 
     exportToCSV() {
@@ -1004,7 +1014,7 @@ class GKBSDynamicGrid {
             alert("Download failed. Please check browser support.");
         }
 
-        console.log(`Successfully exported ${dataToExport.length} rows to ${filename}.`);
+        //console.log(`Successfully exported ${dataToExport.length} rows to ${filename}.`);
     }
     // Inside DynamicGrid class, update the function that builds body rows:
 
@@ -1287,7 +1297,7 @@ class GKBSDynamicGrid {
         // Determine the operator set based on column type (default to text if type is missing)
         const columnType = col.type && col.type.toLowerCase();
         let operators = TEXT_OPERATORS;
-        if (columnType === 'number') {
+        if (columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml') {
             operators = NUMBER_OPERATORS;
         } else if (columnType === 'label') {
             operators = TEXT_OPERATORS; // Use text operators for labels
@@ -1335,7 +1345,7 @@ class GKBSDynamicGrid {
                 <select class="dg-text-filter-operator">
                     ${operatorOptionsHtml}
                 </select>
-                <input type="text" placeholder="${columnType === 'number' ? 'Value or Range (e.g., 10-20)' : 'Value...'}" 
+                <input type="text" placeholder="${columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml' ? 'Value or Range (e.g., 10-20)' : 'Value...'}" 
                        class="dg-text-filter-input" style="flex-grow: 1;" value="${savedValue}">
             </div>
         </div>
@@ -1343,14 +1353,14 @@ class GKBSDynamicGrid {
         
         <div class="dg-filter-group">
             <div class="dg-filter-text-input">
-                <input type="text" placeholder="Search..." class="dg-text-filter-input">
+                <input type="text" placeholder="Search..." class="dg-text-search-input">
             </div>
         </div>
         <hr/>
         <div class="dg-filter-checkbox-list">
             </div>
         <div class="dg-filter-actions">
-            <button class="dg-btn dg-filter-apply">Apply</button>
+            <button class="dg-btn dg-filter-apply" data-field="${col.field}">Apply</button>
             <button class="dg-btn dg-filter-clear d-none" data-field="${col.field}">Clear Filter</button>
             <button class="dg-btn dg-filter-cancel">Cancel</button>            
         </div>
@@ -1670,7 +1680,7 @@ class GKBSDynamicGrid {
     selectAllRows() {
         // Add every processed row's _gridId to the selected set
         //
-        //console.log(`[GKBSGrid] processedData: ${this.state.processedData.size} row(s) selected.`);
+        ////console.log(`[GKBSGrid] processedData: ${this.state.processedData.size} row(s) selected.`);
 
         this.state.processedData.forEach(row => {
             this.state.selectedRows.add(row._gridId);
@@ -1688,7 +1698,7 @@ class GKBSDynamicGrid {
             });
         }
 
-        console.log(`[GKBSGrid] selectAllRows: ${this.state.selectedRows.size} row(s) selected.`);
+        //console.log(`[GKBSGrid] selectAllRows: ${this.state.selectedRows.size} row(s) selected.`);
     }
 
     // --- Deselect All Rows ---
@@ -1715,7 +1725,7 @@ class GKBSDynamicGrid {
             });
         }
 
-        console.log('[GKBSGrid] deselectAllRows: All selections cleared.');
+        //console.log('[GKBSGrid] deselectAllRows: All selections cleared.');
     }
 
     // --- Get Selected Rows ---
@@ -1729,7 +1739,7 @@ class GKBSDynamicGrid {
      *
      * @example
      * const rows = grid.getSelectedRows();
-     * console.log(rows); // [{ id: 1, name: 'Alice', Select: true, ... }, ...]
+     * //console.log(rows); // [{ id: 1, name: 'Alice', Select: true, ... }, ...]
      */
     getSelectedRows() {
         // Filter originalData by membership in the selectedRows Set.
@@ -1740,7 +1750,7 @@ class GKBSDynamicGrid {
         } else {
             selected = this.originalData.filter(row => row.Select == true);
         }
-        console.log(`[GKBSGrid] getSelectedRows: ${selected.length} row(s) selected.`);
+        //console.log(`[GKBSGrid] getSelectedRows: ${selected.length} row(s) selected.`);
         return selected;
     }
 
@@ -2098,7 +2108,7 @@ class GKBSDynamicGrid {
 
         // Helper function for formatting numbers to a specific decimal place
         const formatToDecimals = (value, decimals) => {
-            if (typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')) {
+            if (typeof value === 'number' || typeof value === 'labeldeciaml' || (typeof value === 'string' && value.trim() !== '')) {
                 const num = parseFloat(value);
                 return isNaN(num) ? '' : num.toFixed(decimals);
             }
@@ -2122,6 +2132,33 @@ class GKBSDynamicGrid {
             el.style.padding = '8px 2px';
             el.style.boxSizing = 'border-box';
             el.style.textAlign = col.align || 'left';
+        }
+        else if (col.type === 'labeldecimal') {
+            el = document.createElement('div');
+            el.className = 'dg-label';
+            // Display label fields as HTML
+            //el.innerHTML = rowData[col.field] || '';
+            el.style.width = '100%';
+            el.style.padding = '8px 2px';
+            el.style.boxSizing = 'border-box';
+            el.style.textAlign = col.align || 'left';
+            const rawValue = rowData[col.field];
+            el.title = rawValue;
+            var roundvalue = formatToDecimals(rawValue, col.precision !== undefined ? col.precision : 2);
+            el.innerHTML = roundvalue.toString();
+        }
+        else if (col.type === 'labelnumber') {
+            el = document.createElement('div');
+            el.className = 'dg-label';
+            // Display label fields as HTML
+            //el.innerHTML = rowData[col.field] || '';
+            el.style.width = '100%';
+            el.style.padding = '8px 2px';
+            el.style.boxSizing = 'border-box';
+            el.style.textAlign = col.align || 'left';
+            const rawValue = rowData[col.field];
+            el.title = rawValue;
+            el.innerHTML = rawValue != "" ? parseInt(rawValue) : rawValue;
         }
         // --- Handle 'dropdown' Type ---
         else if (col.type === 'dropdown') {
@@ -2578,7 +2615,8 @@ class GKBSDynamicGrid {
         // Listen for Sort Clicks
         popup.querySelector('.dg-filter-apply').addEventListener('click', () => {
             const uniqueValuesCount = this.getUniqueValues(field).length;
-
+            const isSelectallcheck = $(".dg-select-all-checkbox").is(":checked");
+            
             // Get all checked values (excluding the "Select All" checkbox)
             const selectedValues = Array.from(checkboxList.querySelectorAll('input[type="checkbox"]:not(.dg-select-all-checkbox):checked'))
                 .map(input => String(input.value)); // Ensure values are strings
@@ -2595,8 +2633,9 @@ class GKBSDynamicGrid {
             }
             // --- 2. Handle Text Filters (NEW) ---
             const textInput = popup.querySelector('.dg-text-filter-input').value.trim();
+            const textsearchInput = popup.querySelector('.dg-text-search-input').value.trim();
             const operator = popup.querySelector('.dg-text-filter-operator').value;
-
+            
             if (textInput) {
                 // Save the complex text filter state
                 this.state.textFilters[field] = {
@@ -2607,6 +2646,12 @@ class GKBSDynamicGrid {
                 // If text input is empty, remove the text filter for this column
                 delete this.state.textFilters[field];
             }
+            //console.log("dg-filter-apply trigger 1 - 1");
+            if (isSelectallcheck && textInput == "" && textsearchInput == "") {
+                $(".dg-filter-clear").trigger("click");
+                return;
+            }
+            //console.log("dg-filter-apply trigger 1 - 2");
             // 3. Update Filter Order
             const isTextFilterActive = !!textInput;
             // The filter is active if EITHER the checkbox filter is active OR the text filter is active
@@ -2638,6 +2683,15 @@ class GKBSDynamicGrid {
         });
         // Listen for Checkbox List Changes (Apply Filter Logic)
         popup.querySelector('.dg-filter-apply').addEventListener('click', () => {
+            //console.log("dg-filter-apply trigger 2 - 1");
+            const isSelectallcheck = $(".dg-select-all-checkbox").is(":checked");
+            const textInput = popup.querySelector('.dg-text-filter-input').value.trim();
+            const textsearchInput = popup.querySelector('.dg-text-search-input').value.trim();
+            if (textInput == "" && textsearchInput == "") {
+                $(".dg-filter-clear").trigger("click");
+                return;
+            }
+            //console.log("dg-filter-apply trigger 2 - 2");
             const selectedValues = Array.from(popup.querySelectorAll('.dg-filter-checkbox-list input:checked'))
                 .map(input => input.value);
 
@@ -2654,6 +2708,7 @@ class GKBSDynamicGrid {
         
         // Listen for Clear Filter
         popup.querySelector('.dg-filter-clear').addEventListener('click', () => {
+            //console.log("clear triggered");
             delete this.state.colFilters[field];
             // 💡 Update Filter Order
             this.updateFilterOrder(field, false); // false = filter is now inactive
@@ -2661,7 +2716,15 @@ class GKBSDynamicGrid {
             this.render();
             this.closeAllPopups();
         });
-
+        // Listen for Text Filter Input (Optional: Live filtering the checkboxes)
+        popup.querySelector('.dg-text-search-input').addEventListener('input', (e) => {
+            // This input is usually used to live filter the list of checkboxes shown below it.
+            const filterText = e.target.value.toLowerCase();
+            popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
+                const value = label.querySelector('input').value.toLowerCase();
+                label.style.display = value.includes(filterText) ? 'block' : 'none';
+            });
+        });
         // Listen for Text Filter Input (Optional: Live filtering the checkboxes)
         popup.querySelector('.dg-text-filter-input').addEventListener('input', (e) => {
             // This input is usually used to live filter the list of checkboxes shown below it.
@@ -3006,8 +3069,8 @@ class GKBSDynamicGrid {
                     // 1. Get the final value and label from the clicked item
                     const selectedValue = item.dataset.value;
                     const selectedLabel = item.dataset.label;
-                    console.log("Selected Value:", selectedValue);
-                    console.log("Selected Label:", selectedLabel);
+                    //console.log("Selected Value:", selectedValue);
+                    //console.log("Selected Label:", selectedLabel);
                     // 2. Update the UI input field with the LABEL (what the user sees)
                     inputEl.value = selectedLabel;
 
@@ -3080,7 +3143,7 @@ class GKBSDynamicGrid {
         // 1. Isolate the grid container (dg-scroll-wrapper)
         const scrollWrapper = this.container.querySelector('.dg-scroll-wrapper');
         if (!scrollWrapper) {
-            console.error("Print failed: Could not find the grid scrolling wrapper.");
+            //console.error("Print failed: Could not find the grid scrolling wrapper.");
             return;
         }
 

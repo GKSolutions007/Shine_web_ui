@@ -796,7 +796,7 @@
 <style>
     .pi-header {
         background: linear-gradient(135deg, #0d5c3f 0%, #14804f 100%);
-        padding: 14px 20px;
+        padding: 8px 20px;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -910,6 +910,23 @@
         font-size: 11px;
     }
 </style>
+
+<div class="modal fade" id="infoMsgModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 650px;">
+        <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+            <div class="pi-header">
+                <div class="pi-header-icon"><i class="fas fa-circle-info"></i></div>
+                <div>
+                    <h4 class="mb-0 text-white fw-bold">Info Message</h4>
+                </div>
+                <button type="button" class="btn-close btn-close-white pi-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="infoMsgBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="vendorInfoModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
@@ -1835,7 +1852,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" style="color:black;" id="lblPopupheading"><b>Product Info</b></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" style="filter: invert(1);" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="dvAssign" style="width:100%;padding-bottom:7px;">
@@ -2675,7 +2692,10 @@ var isEnable = InvoicePriceEdit == 0 ? "disabled" : "";
                 + piRow('fas fa-truck', 'Shipping', shippingAddress, { full: true })
                 + '</div>';
 
-            $("#vendTitle").text(code + " - " + name);
+            $("#vendTitle").html(
+                '<div style="font-size:16px; font-weight:700;">' + name + '</div>' +
+                '<div style="font-size:11px; font-weight:400; opacity:0.85; margin-top:2px;">' + code + '</div>'
+            );
             $("#vendBody").html(html);
             new bootstrap.Modal(document.getElementById('vendorInfoModal')).show();
         } else {
@@ -7646,43 +7666,31 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         },
                         onCellDoubleClick: (rowdata, fieldName, cellValue, column) => {
                             if (rowdata) {
-                                var Message = rowdata.InfoMessage;
-                                Message = `
-<table class="table table-bordered" style="table-layout: fixed; width: 100%;">
-    <tr>
-        <td style="width:30%" align="right">Party Name :</td>
-        <td style="width:70%; word-wrap: break-word; white-space: normal;">
-            <b>${rowdata.VendorID || ''}</b>
-        </td>
-    </tr>
-    <tr>
-        <td style="width:30%" align="right">Salesman :</td>
-        <td style="width:70%; word-wrap: break-word; white-space: normal;">
-            <b>${rowdata.Salesman || ''}</b>
-        </td>
-    </tr>
-    <tr>
-        <td style="width:30%" align="right">Beat Name :</td>
-        <td style="width:70%; word-wrap: break-word; white-space: normal;">
-            <b>${rowdata.BeatName || ''}</b>
-        </td>
-    </tr>
-    <tr>
-        <td style="width:30%" align="right">Remarks :</td>
-        <td style="width:70%; word-wrap: break-word; white-space: normal;">
-            <b>${rowdata.Remarks || ''}</b>
-        </td>
-    </tr>
-    <tr>
-        <td align="right">Narration :</td>
-        <td style="word-wrap: break-word; white-space: normal;">
-            <b>${rowdata.narration || ''}</b>
-        </td>
-    </tr>
-</table>`;
-                                InfoDialogMsg(Message, "Info Message");
+                                function piRow(icon, label, value, opts) {
+                                    opts = opts || {};
+                                    var displayValue = (value === "" || value === null || value === undefined)
+                                        ? '<span class="pi-value muted">—</span>'
+                                        : '<span class="pi-value">' + value + '</span>';
+                                    return `<div class="pi-row ${opts.full ? 'full' : ''}">
+                <div class="pi-icon-chip"><i class="${icon}"></i></div>
+                <div class="pi-label">${label}</div>
+                <div class="pi-colon">:</div>
+                ${displayValue}
+            </div>`;
+                                }
+
+                                var html = '<div class="pi-grid">'
+                                    + piRow('fas fa-building', 'Party Name', rowdata.VendorID, { full: true })
+                                    + piRow('fas fa-user', 'Salesman', rowdata.Salesman)
+                                    + piRow('fas fa-route', 'Beat Name', rowdata.BeatName)
+                                    + piRow('fas fa-comment', 'Remarks', rowdata.Remarks, { full: true })
+                                    + piRow('fas fa-file-lines', 'Narration', rowdata.narration, { full: true })
+                                    + '</div>';
+
+                                $("#infoMsgBody").html(html);
+                                new bootstrap.Modal(document.getElementById('infoMsgModal')).show();
                             } else {
-                                showErrorSnackbar("No info found")
+                                showErrorSnackbar("No info found");
                             }
                         },
                         onColumnResize: (colIndex, field, header, newWidth) => {

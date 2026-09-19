@@ -376,7 +376,7 @@
 
     .pi-header {
         background: linear-gradient(135deg, #0d5c3f 0%, #14804f 100%);
-        padding: 14px 20px;
+        padding: 8px 20px;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -488,6 +488,30 @@
         border-radius: 14px;
         font-weight: 600;
         font-size: 11px;
+    }
+
+    /* Load button loading state */
+    #btnFilter.is-loading {
+        pointer-events: none;
+        opacity: 0.85;
+    }
+
+    .btn-spinner {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(255,255,255,0.55);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: btnSpin 0.7s linear infinite;
+        margin-right: 6px;
+        vertical-align: -1px;
+    }
+
+    @@keyframes btnSpin {
+        to {
+            transform: rotate(360deg);
+        }
     }
 </style>
 
@@ -612,7 +636,9 @@
 
                                     <td class="ps-2 p-0" width="7%">
                                         <button id="btnFilter" class="btn btn-primary">
-                                            Filter
+                                            <span id="btnLoadSpinner" class="btn-spinner" style="display:none;"></span>
+                                            <i class="bi bi-funnel" id="btnLoadIcon"></i>
+                                            <span id="btnLoadText">Filter</span>
                                         </button>
                                     </td>
 
@@ -2107,7 +2133,8 @@
                         var CancelYN = $("#txtCancelID").val() == 0 || rdo1 == "3" ? false : true;
                         var ViewYN = $("#txtViewID").val() == 0 || rdo1 == "3" || rdo1 == "2" ? false : true;
                         var VarianYN = $("#txtVariantID").val() == 0 || rdo1 != "1" ? false : true;
-                        var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; } grid = new GKBSDynamicGrid('#my-grid', columns, PurchaseOrder, {
+                    var currentSearchValue = ''; if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
+                    grid = new GKBSDynamicGrid('#my-grid', columns, PurchaseOrder, {
                             enablePagination: true,
                             pageSize: ItemsperPage,
                             enableSearch: true,
@@ -2906,7 +2933,10 @@
                 + piRow('fas fa-truck', 'Shipping', shippingAddress, { full: true })
                 + '</div>';
 
-            $("#vendTitle").text(code + " - " + name);
+            $("#vendTitle").html(
+                '<div style="font-size:16px; font-weight:700;">' + name + '</div>' +
+                '<div style="font-size:11px; font-weight:400; opacity:0.85; margin-top:2px;">' + code + '</div>'
+            );
             $("#vendBody").html(html);
             new bootstrap.Modal(document.getElementById('vendorInfoModal')).show();
         } else {
@@ -3441,4 +3471,22 @@ $("#openproduct").click(function (e) {
             InfoDialogMsg(alinfo, "Autolist property");
         }
     });
+    //setLoadButtonLoading(true);
+    function setLoadButtonLoading(isLoading) {
+        var $btn = $('#btnFilter');
+        if (isLoading) {
+            $btn.prop('disabled', true).addClass('is-loading');
+            $('#btnLoadSpinner').show();
+            $('#btnLoadIcon').hide();
+            $('#btnLoadText').text('Loading...');
+        } else {
+            $btn.prop('disabled', false).removeClass('is-loading');
+            $('#btnLoadSpinner').hide();
+            $('#btnLoadIcon').show();
+            $('#btnLoadText').text('Filter');
+        }
+    }
+    setTimeout(() => {
+        //setLoadButtonLoading(false);
+    }, 3000);
 </script>

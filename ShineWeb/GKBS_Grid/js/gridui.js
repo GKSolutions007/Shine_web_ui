@@ -7,7 +7,7 @@ class GKBSDynamicGrid {
         this.columns = columns; // Stores config including current width
         this.originalData = data;
         var ItemsperPage = 10;
-        var gridheight = options.height || this.container.style.height || '400px';
+        var gridheight = options.height || '100vh';
         // --- 1. Options with Defaults ---
         this.options = Object.assign({
             enablePagination: false,

@@ -1,3 +1,6 @@
+/*
+    GKBS GRID JS VERSION 1.0
+*/
 class GKBSDynamicGrid {
     constructor(selector, columns, data, options = {}) {
         this.container = document.querySelector(selector);
@@ -295,7 +298,7 @@ class GKBSDynamicGrid {
                     const rawItemValue = item[field];
 
                     // --- NUMBER FILTERING LOGIC ---
-                    if (columnType === 'number') {
+                    if (columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml') {
                         const numValue = parseFloat(rawItemValue);
                         if (isNaN(numValue)) return false;
 
@@ -359,7 +362,10 @@ class GKBSDynamicGrid {
                 // Handle nulls/undefined to ensure they don't break sorting
                 if (valA === null || valA === undefined) valA = '';
                 if (valB === null || valB === undefined) valB = '';
-
+                if (this.isNumber(valA) && this.isNumber(valB)) {
+                    valA = parseFloat(valA);
+                    valB = parseFloat(valB);
+                }
                 // Check if both are strings for case-insensitive sort
                 if (typeof valA === 'string' && typeof valB === 'string') {
                     // Use localeCompare for robust string comparison (handles accents, case, etc.)
@@ -381,6 +387,7 @@ class GKBSDynamicGrid {
         const maxPage = Math.ceil(this.state.processedData.length / this.options.pageSize) || 1;
         if (this.state.currentPage > maxPage) this.state.currentPage = 1;
     }
+
     getPaginatedData() {
         if (!this.options.enablePagination) return this.state.processedData;
 
@@ -389,7 +396,9 @@ class GKBSDynamicGrid {
         return this.state.processedData.slice(start, end);
     }
     // Inside DynamicGrid class, add this new method:
-
+    isNumber(value) {
+    return value !== "" && !isNaN(value);
+}
     setOption(key, value) {
         if (this.options.hasOwnProperty(key)) {
             this.options[key] = value;
@@ -492,7 +501,7 @@ class GKBSDynamicGrid {
             }
 
             // Only calculate for 'number' types
-            if (col.type === 'number' || col.total === true) {
+            if (col.type === 'number' || col.type === 'labelnumber' || col.type === 'labeldeciaml' || col.total === true) {
                 const values = dataToCalculate
                     .map(row => parseFloat(row[col.field]))
                     .filter(val => !isNaN(val)); // Filter out bad data
@@ -1247,7 +1256,7 @@ class GKBSDynamicGrid {
         // Determine the operator set based on column type (default to text if type is missing)
         const columnType = col.type && col.type.toLowerCase();
         let operators = TEXT_OPERATORS;
-        if (columnType === 'number') {
+        if (columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml') {
             operators = NUMBER_OPERATORS;
         } else if (columnType === 'label') {
             operators = TEXT_OPERATORS; // Use text operators for labels
@@ -1303,7 +1312,7 @@ class GKBSDynamicGrid {
         
         <div class="dg-filter-group">
             <div class="dg-filter-text-input">
-                <input type="text" placeholder="Search..." class="dg-text-filter-input">
+                <input type="text" placeholder="Search..." class="dg-text-search-input">
             </div>
         </div>
         <hr class"hrgricline"/>
@@ -2115,6 +2124,34 @@ class GKBSDynamicGrid {
             el.style.boxSizing = 'border-box';
             el.style.textAlign = col.align || 'left';
         }
+        else if (col.type === 'labeldecimal') {
+            el = document.createElement('div');
+            el.className = 'dg-label';
+            // Display label fields as HTML
+            //el.innerHTML = rowData[col.field] || '';
+            el.style.width = '100%';
+            el.style.padding = '8px 2px';
+            el.style.boxSizing = 'border-box';
+            el.style.textAlign = col.align || 'left';
+            const rawValue = parseFloat(rowData[col.field]);
+            el.title = rawValue;
+            var roundvalue = formatToDecimals(rawValue, col.precision !== undefined ? col.precision : 2);
+            console.log("roundvalue", parseFloat(roundvalue));
+            el.innerHTML = roundvalue;
+        }
+        else if (col.type === 'labelnumber') {
+            el = document.createElement('div');
+            el.className = 'dg-label';
+            // Display label fields as HTML
+            //el.innerHTML = rowData[col.field] || '';
+            el.style.width = '100%';
+            el.style.padding = '8px 2px';
+            el.style.boxSizing = 'border-box';
+            el.style.textAlign = col.align || 'left';
+            const rawValue = rowData[col.field];
+            el.title = rawValue;
+            el.innerHTML = rawValue != "" ? parseInt(rawValue) : rawValue;
+        }
         // --- Handle 'dropdown' Type ---
         else if (col.type === 'dropdown') {
             el = document.createElement('select');
@@ -2564,6 +2601,7 @@ class GKBSDynamicGrid {
         // Listen for Sort Clicks
         popup.querySelector('.dg-filter-apply').addEventListener('click', () => {
             const uniqueValuesCount = this.getUniqueValues(field).length;
+            const isSelectallcheck = $(".dg-select-all-checkbox").is(":checked");
 
             // Get all checked values (excluding the "Select All" checkbox)
             // Only include checkboxes that are currently visible (not hidden by search)
@@ -2587,6 +2625,7 @@ class GKBSDynamicGrid {
             }
             // --- 2. Handle Text Filters (NEW) ---
             const textInput = popup.querySelector('.dg-text-filter-input').value.trim();
+            const textsearchInput = popup.querySelector('.dg-text-search-input').value.trim();
             const operator = popup.querySelector('.dg-text-filter-operator').value;
 
             if (textInput) {
@@ -2598,6 +2637,10 @@ class GKBSDynamicGrid {
             } else {
                 // If text input is empty, remove the text filter for this column
                 delete this.state.textFilters[field];
+            }
+            if (isSelectallcheck && textInput == "" && textsearchInput == "") {
+                $(".dg-filter-clear").trigger("click");
+                return;
             }
             // 3. Update Filter Order
             const isTextFilterActive = !!textInput;
@@ -2642,25 +2685,44 @@ class GKBSDynamicGrid {
             this.closeAllPopups();
         });
 
-        // Listen for Text Filter Input (Optional: Live filtering the checkboxes)
-        // Get all inputs with class 'dg-text-filter-input' (there are two)
-        const textFilterInputs = popup.querySelectorAll('.dg-text-filter-input');
+        //// Listen for Text Filter Input (Optional: Live filtering the checkboxes)
+        //// Get all inputs with class 'dg-text-filter-input' (there are two)
+        //const textFilterInputs = popup.querySelectorAll('.dg-text-filter-input');
 
-        // The second input is for searching/filtering the checkbox list
-        if (textFilterInputs.length > 1) {
-            textFilterInputs[1].addEventListener('input', (e) => {
-                // This input is used to live filter the list of checkboxes shown below it.
-                const filterText = e.target.value.toLowerCase();
-                popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
-                    // Always keep the "Select All" checkbox visible
-                    if (label.classList.contains('dg-select-all-label')) {
-                        return; // Skip filtering the Select All checkbox
-                    }
-                    const value = label.querySelector('input').value.toLowerCase();
-                    label.style.display = value.includes(filterText) ? 'block' : 'none';
-                });
+        //// The second input is for searching/filtering the checkbox list
+        //if (textFilterInputs.length > 1) {
+        //    textFilterInputs[1].addEventListener('input', (e) => {
+        //        // This input is used to live filter the list of checkboxes shown below it.
+        //        const filterText = e.target.value.toLowerCase();
+        //        popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
+        //            // Always keep the "Select All" checkbox visible
+        //            if (label.classList.contains('dg-select-all-label')) {
+        //                return; // Skip filtering the Select All checkbox
+        //            }
+        //            const value = label.querySelector('input').value.toLowerCase();
+        //            label.style.display = value.includes(filterText) ? 'block' : 'none';
+        //        });
+        //    });
+        //}
+        //dg-text-search-input
+        // Listen for Text Filter Input (Optional: Live filtering the checkboxes)
+        popup.querySelector('.dg-text-search-input').addEventListener('input', (e) => {
+            // This input is usually used to live filter the list of checkboxes shown below it.
+            const filterText = e.target.value.toLowerCase();
+            popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
+                const value = label.querySelector('input').value.toLowerCase();
+                label.style.display = value.includes(filterText) ? 'block' : 'none';
             });
-        }
+        });
+        // Listen for Text Filter Input (Optional: Live filtering the checkboxes)
+        popup.querySelector('.dg-text-filter-input').addEventListener('input', (e) => {
+            // This input is usually used to live filter the list of checkboxes shown below it.
+            const filterText = e.target.value.toLowerCase();
+            popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
+                const value = label.querySelector('input').value.toLowerCase();
+                label.style.display = value.includes(filterText) ? 'block' : 'none';
+            });
+        });
     }
 
     // Update handl23eSort to accept an explicit direction
