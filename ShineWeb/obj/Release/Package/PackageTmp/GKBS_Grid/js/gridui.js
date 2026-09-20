@@ -185,54 +185,6 @@ class GKBSDynamicGrid {
     }
 
     // --- 1. The Data Pipeline ---
-    processData_old() {
-        let result = [...this.originalData];
-        // 2. 💡 APPLY COLUMN FILTERS
-        Object.keys(this.state.colFilters).forEach(field => {
-            const filters = this.state.colFilters[field];
-            const { operator, value } = filters;
-            // Only apply filter if the array is defined and NOT empty
-            if (filters && filters.length > 0) {
-                result = result.filter(item => {
-                    // Ensure the item's value is converted to a string for strict comparison
-                    const itemValue = String(item[field]);
-
-                    // Return TRUE if the item's value is IN the list of selected filters
-                    return filters.includes(itemValue);
-                });
-            }
-            // If filters is an empty array (meaning the user deselected everything), 
-            // the filter should result in an empty dataset.
-            else if (filters && filters.length === 0) {
-                result = [];
-            }
-        });
-        // A. Global Search
-        if (this.state.searchTerm) {
-            const term = this.state.searchTerm.toLowerCase();
-            result = result.filter(row => {
-                return Object.values(row).some(val =>
-                    String(val).toLowerCase().includes(term)
-                );
-            });
-        }
-
-        // B. Column Sorting
-        if (this.state.currentSort) {
-            const { field, direction } = this.state.currentSort;
-            result.sort((a, b) => {
-                if (a[field] < b[field]) return direction === 'asc' ? -1 : 1;
-                if (a[field] > b[field]) return direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
-
-        this.state.processedData = result;
-
-        // Reset page if data changes significantly reduces count
-        const maxPage = Math.ceil(this.state.processedData.length / this.options.pageSize) || 1;
-        if (this.state.currentPage > maxPage) this.state.currentPage = 1;
-    }
     processData() {
         let result = [...this.originalData]; // Start with the original data
 
@@ -269,60 +221,98 @@ class GKBSDynamicGrid {
             const filter = this.state.textFilters[field]; // This is the object { operator, value }
             const { operator, value } = filter;
             console.log("operator", operator, " value ", value);
-            // if (value) {
-            //     result = result.filter(item => {
-            //         const itemValue = String(item[field]).toLowerCase().trim();
-            //         console.log("itemValue ",itemValue);
-            //         switch (operator) {
-            //             case 'equal':
-            //                 return itemValue === value;
-            //             case 'not_equal':
-            //                 return itemValue !== value;
-            //             case 'starts_with':
-            //                 return itemValue.startsWith(value);
-            //             case 'ends_with':
-            //                 return itemValue.endsWith(value);
-            //             case 'not_contains':
-            //                 return !itemValue.includes(value);
-            //             case 'contains':
-            //             default:
-            //                 return itemValue.includes(value);
-            //         }
-            //     });
-            // }
-            if (value) {
+
+            if (value !== undefined && value !== null && String(value).trim() !== '') {
                 const col = this.columns.find(c => c.field === field);
                 const columnType = col?.type?.toLowerCase();
+                const isDateCol = columnType === 'labeldate';
+                const isNumberCol = columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldecimal' || columnType === 'labeldeciaml' || columnType === 'decimal';
 
                 result = result.filter(item => {
                     const rawItemValue = item[field];
 
-                    // --- NUMBER FILTERING LOGIC ---
-                    if (columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml') {
-                        const numValue = parseFloat(rawItemValue);
-                        if (isNaN(numValue)) return false;
+                    // --- DATE FILTERING LOGIC ---
+                    if (isDateCol) {
+                        if (!rawItemValue) return false;
+                        const formatted = this.formatDate(rawItemValue);
+                        let itemDate = new Date(formatted);
+                        if (isNaN(itemDate.getTime())) {
+                            const formatted = this.formatDate(rawItemValue);
+                            if (formatted) {
+                                itemDate = new Date(formatted);
+                                //console.log("formatted date ", itemDate);
+                            }
+                        }
+                        if (isNaN(itemDate.getTime())) return false;
 
-                        // Handle Number Operators
+                        const now = new Date();
+                        const itemYear = itemDate.getFullYear();
+                        const itemMonth = itemDate.getMonth();
+                        const itemDay = itemDate.getDate();
+
+                        const nowYear = now.getFullYear();
+                        const nowMonth = now.getMonth();
+                        const nowDay = now.getDate();
+
+                        switch (operator) {
+                            case 'today':
+                                return itemYear === nowYear && itemMonth === nowMonth && itemDay === nowDay;
+                            case 'this_month':
+                                return itemYear === nowYear && itemMonth === nowMonth;
+                            case 'last_month': {
+                                let lastMonthYear = nowYear;
+                                let lastMonth = nowMonth - 1;
+                                if (lastMonth < 0) {
+                                    lastMonth = 11;
+                                    lastMonthYear -= 1;
+                                }
+                                return itemYear === lastMonthYear && itemMonth === lastMonth;
+                            }
+                            case 'this_quarter':
+                            case 'this_quater': {
+                                const currentQuarter = Math.floor(nowMonth / 3);
+                                const itemQuarter = Math.floor(itemMonth / 3);
+                                return itemYear === nowYear && itemQuarter === currentQuarter;
+                            }
+                            case 'last_quarter':
+                            case 'last_quater': {
+                                const currentQuarter = Math.floor(nowMonth / 3);
+                                let lastQuarterYear = nowYear;
+                                let lastQuarter = currentQuarter - 1;
+                                if (lastQuarter < 0) {
+                                    lastQuarter = 3;
+                                    lastQuarterYear -= 1;
+                                }
+                                const itemQuarter = Math.floor(itemMonth / 3);
+                                return itemYear === lastQuarterYear && itemQuarter === lastQuarter;
+                            }
+                            case 'this_year':
+                                return itemYear === nowYear;
+                            default:
+                                return true;
+                        }
+                    }
+
+                    // --- NUMBER FILTERING LOGIC ---
+                    else if (isNumberCol) {
+                        const numValue = parseFloat(rawItemValue);
+                        const targetNum = parseFloat(value);
+                        if (isNaN(numValue) || isNaN(targetNum)) return false;
+
+                        // Handle Number Operators: greater_than, less_than, greater_than_or_equal, less_than_or_equal, equal, not_equal
                         switch (operator) {
                             case 'greater_than':
-                                return numValue > parseFloat(value);
+                                return numValue > targetNum;
                             case 'less_than':
-                                return numValue < parseFloat(value);
+                                return numValue < targetNum;
                             case 'greater_than_or_equal':
-                                return numValue >= parseFloat(value);
+                                return numValue >= targetNum;
                             case 'less_than_or_equal':
-                                return numValue <= parseFloat(value);
+                                return numValue <= targetNum;
                             case 'equal':
-                                return numValue === parseFloat(value);
+                                return numValue === targetNum;
                             case 'not_equal':
-                                return numValue !== parseFloat(value);
-                            case 'between':
-                                const parts = value.split('-').map(s => parseFloat(s.trim()));
-                                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-                                    const [min, max] = parts.sort((a, b) => a - b);
-                                    return numValue >= min && numValue <= max;
-                                }
-                                return false; // Invalid range format
+                                return numValue !== targetNum;
                             default:
                                 return true;
                         }
@@ -330,22 +320,23 @@ class GKBSDynamicGrid {
 
                     // --- TEXT FILTERING LOGIC ---
                     else {
-                        const itemValue = String(rawItemValue).toLowerCase().trim();
+                        const itemValue = (rawItemValue !== null && rawItemValue !== undefined) ? String(rawItemValue).toLowerCase().trim() : '';
+                        const targetValue = String(value).toLowerCase().trim();
 
                         switch (operator) {
                             case 'equal':
-                                return itemValue === value;
+                                return itemValue === targetValue;
                             case 'not_equal':
-                                return itemValue !== value;
+                                return itemValue !== targetValue;
                             case 'starts_with':
-                                return itemValue.startsWith(value);
+                                return itemValue.startsWith(targetValue);
                             case 'ends_with':
-                                return itemValue.endsWith(value);
+                                return itemValue.endsWith(targetValue);
                             case 'not_contains':
-                                return !itemValue.includes(value);
+                                return !itemValue.includes(targetValue);
                             case 'contains':
                             default:
-                                return itemValue.includes(value);
+                                return itemValue.includes(targetValue);
                         }
                     }
                 });
@@ -397,8 +388,8 @@ class GKBSDynamicGrid {
     }
     // Inside DynamicGrid class, add this new method:
     isNumber(value) {
-    return value !== "" && !isNaN(value);
-}
+        return value !== "" && !isNaN(value);
+    }
     setOption(key, value) {
         if (this.options.hasOwnProperty(key)) {
             this.options[key] = value;
@@ -415,14 +406,7 @@ class GKBSDynamicGrid {
         }
     }
     // --- 2. Render Orchestrator ---
-    render_old() {
-        this.container.innerHTML = '';
-        this.renderToolbar();
-        this.renderHeader();
-        this.renderBody();
-        this.renderStatusBar(); // <--- NEW: Add this call
-        this.renderFooter();
-    }
+
     render() {
         // 1. Clear the container
         // 0. 💡 FIX: Save current scroll position before clearing
@@ -501,7 +485,7 @@ class GKBSDynamicGrid {
             }
 
             // Only calculate for 'number' types
-            if (col.type === 'number' || col.type === 'labelnumber' || col.type === 'labeldeciaml' || col.total === true) {
+            if (col.type === 'number' || col.type === 'labelnumber' || col.type === 'labeldecimal' || col.type === 'labeldeciaml' || col.total === true) {
                 const values = dataToCalculate
                     .map(row => parseFloat(row[col.field]))
                     .filter(val => !isNaN(val)); // Filter out bad data
@@ -542,16 +526,7 @@ class GKBSDynamicGrid {
     }
     // Inside DynamicGrid class:
 
-    updateStatusAndFooter_old() {
-        const existingStatus = this.container.querySelector('.dg-status-bar');
-        if (existingStatus) existingStatus.remove();
 
-        const footer = this.container.querySelector('.dg-footer');
-        if (footer) footer.remove();
-
-        this.renderStatusBar();
-        if (this.options.enablePagination) this.renderFooter();
-    }
     updateStatusAndFooter() {
         // 1. Locate the scroll wrapper to ensure the status bar is appended correctly.
         const scrollWrapper = this.container.querySelector('.dg-scroll-wrapper');
@@ -580,141 +555,6 @@ class GKBSDynamicGrid {
         }
     }
     // --- 3. Global Search Toolbar ---
-    renderToolbar_old() {
-        if (!this.options.enableSearch && !this.options.enableExport && !this.options.enableEditing) return;
-
-        const toolbar = document.createElement('div');
-        toolbar.className = 'dg-toolbar';
-
-        const input = document.createElement('input');
-        input.className = 'dg-search-input';
-        input.placeholder = 'Search grid...';
-        input.value = this.state.searchTerm;
-
-        input.addEventListener('input', (e) => {
-            this.state.searchTerm = e.target.value;
-            this.state.currentPage = 1; // Reset to page 1 on search
-            this.processData();
-            this.render(); // Re-render everything
-        });
-        toolbar.appendChild(input);
-
-        // NEW: Export Button
-        if (this.options.enableExport !== false) {
-            const exportBtn = document.createElement('button');
-            exportBtn.className = 'dg-btn';
-            exportBtn.innerText = 'Export';
-            exportBtn.style.marginLeft = '10px';
-            exportBtn.onclick = () => this.exportToCSV();
-            toolbar.appendChild(exportBtn);
-        }
-
-        // --- Add/Remove Buttons (NEW) ---
-        const addRowBtn = document.createElement('button');
-        addRowBtn.className = 'dg-action-btn';
-        addRowBtn.innerText = '➕ Add Row';
-        addRowBtn.onclick = () => this.addRow();
-
-        const removeRowBtn = document.createElement('button');
-        removeRowBtn.className = 'dg-action-btn';
-        removeRowBtn.innerText = '➖ Remove Selected';
-        removeRowBtn.onclick = () => this.removeSelectedRows();
-
-        // Create a container for the edit actions
-        const actionGroup = document.createElement('div');
-        actionGroup.style.display = 'inline-block';
-        actionGroup.style.marginLeft = '20px';
-        actionGroup.append(addRowBtn, removeRowBtn);
-        toolbar.appendChild(actionGroup);
-
-        this.container.appendChild(toolbar);
-    }
-    renderToolbar_old() {
-        // Return if no features are enabled
-        if (!this.options.enableSearch && !this.options.enableExport && !this.options.enableEditing && !this.options.enableColumnVisibility) return;
-
-        const toolbar = document.createElement('div');
-        toolbar.className = 'dg-toolbar';
-        // Use Flexbox to separate left-aligned search/input from right-aligned buttons
-        toolbar.style.display = 'flex';
-        toolbar.style.justifyContent = 'space-between';
-        toolbar.style.alignItems = 'center';
-        toolbar.style.padding = '2px 0'; // Add some vertical padding
-
-        // --- 1. Left Section: Global Search Input ---
-        const leftSection = document.createElement('div');
-        leftSection.className = 'dg-toolbar-left';
-
-        const input = document.createElement('input');
-        input.className = 'dg-search-input';
-        input.placeholder = 'Search grid...';
-        input.value = this.state.searchTerm;
-
-        input.addEventListener('input', (e) => {
-            this.state.searchTerm = e.target.value;
-            this.state.currentPage = 1; // Reset to page 1 on search
-            this.processData();
-            this.render(); // Re-render everything
-        });
-        leftSection.appendChild(input);
-        toolbar.appendChild(leftSection);
-
-
-        // --- 2. Right Section: Action Buttons (Export, Add/Remove, Columns) ---
-        const rightSection = document.createElement('div');
-        rightSection.className = 'dg-toolbar-right';
-        rightSection.style.display = 'flex';
-        rightSection.style.alignItems = 'center';
-        rightSection.style.gap = '10px'; // Space between groups of buttons
-
-
-        // A. Export Button (Existing Logic)
-        if (this.options.enableExport !== false) {
-            const exportBtn = document.createElement('button');
-            exportBtn.className = 'dg-btn';
-            exportBtn.innerText = 'Export';
-            exportBtn.onclick = () => this.exportToCSV();
-            rightSection.appendChild(exportBtn);
-        }
-
-        // B. Columns Visibility Button (NEW LOGIC) 
-        // Assuming you have this.options.enableColumnVisibility set to true
-        // Note: The click handler will call the previously defined showColumnSelectionPopup method.
-        const columnsBtn = document.createElement('button');
-        columnsBtn.className = 'dg-btn dg-columns-btn';
-        columnsBtn.innerText = 'Columns';
-
-        columnsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.showColumnSelectionPopup(e.target);
-        });
-        rightSection.appendChild(columnsBtn);
-
-
-        // C. Add/Remove Buttons (Existing Logic)
-        if (this.options.enableEditing !== false) {
-            const actionGroup = document.createElement('div');
-            actionGroup.className = 'dg-action-group';
-            actionGroup.style.display = 'flex';
-            actionGroup.style.gap = '5px'; // Space between Add/Remove buttons
-
-            const addRowBtn = document.createElement('button');
-            addRowBtn.className = 'dg-action-btn';
-            addRowBtn.innerText = '➕ Add Row';
-            addRowBtn.onclick = () => this.addRow();
-
-            const removeRowBtn = document.createElement('button');
-            removeRowBtn.className = 'dg-action-btn';
-            removeRowBtn.innerText = '➖ Remove Selected';
-            removeRowBtn.onclick = () => this.removeSelectedRows();
-
-            actionGroup.append(addRowBtn, removeRowBtn);
-            rightSection.appendChild(actionGroup);
-        }
-
-        toolbar.appendChild(rightSection);
-        this.container.appendChild(toolbar);
-    }
     renderToolbar() {
         // Check if any feature that requires the toolbar is enabled.
         if (!this.options.enableSearch && !this.options.enableExport &&
@@ -800,9 +640,9 @@ class GKBSDynamicGrid {
         if (this.options.customButtons && this.options.customButtons.length > 0) {
             this.options.customButtons.forEach(btnConfig => {
                 const customBtn = document.createElement('button');
-                customBtn.className = btnConfig.className || 'dg-btn';     
+                customBtn.className = btnConfig.className || 'dg-btn';
                 customBtn.id = btnConfig.id || (btnConfig.text == "New" ? "btnGKBSGNew" : btnConfig.title == "Settings" ? "btnGKBSGSetting"
-                :'btndefid');     
+                    : 'btndefid');
                 // Set button text with optional icon
                 if (btnConfig.icon && btnConfig.text) {
                     customBtn.innerText = `${btnConfig.icon} ${btnConfig.text}`;
@@ -1122,7 +962,7 @@ class GKBSDynamicGrid {
             cell.style.textAlign = col.align || 'right';
             cell.draggable = true; // Enable Column Reorder
             // 💡 NEW LOGIC: Check if the current column field is in the active filters state
-            const isFiltered = this.state.colFilters.hasOwnProperty(col.field);
+            const isFiltered = this.state.colFilters.hasOwnProperty(col.field) || this.state.textFilters.hasOwnProperty(col.field);
             // Find the index in the filter order
             const filterIndex = this.state.filterOrder.indexOf(col.field); // -1 if not found
             const filterOrderNumber = filterIndex + 1; // 1-based order number
@@ -1229,38 +1069,48 @@ class GKBSDynamicGrid {
     // Inside DynamicGrid class
     showOptionsMenu(headerCell, col) {
         this.closeAllPopups(); // Ensure nothing else is open
-        // 💡 NEW: Retrieve the saved text filter state
-        const savedTextFilter = this.state.textFilters[col.field] || {};
-        const savedOperator = savedTextFilter.operator || 'contains'; // Default to 'contains'
-        const savedValue = savedTextFilter.value || '';
-
         // --- Define Option Sets ---
+        const DATE_OPERATORS = [
+            { value: '', label: 'Select Date Filter' },
+            { value: 'today', label: 'Today' },
+            { value: 'this_month', label: 'This Month' },
+            { value: 'last_month', label: 'Last Month' },
+            { value: 'this_quarter', label: 'This Quater' },
+            { value: 'last_quarter', label: 'Last Quater' },
+            { value: 'this_year', label: 'This Year' }
+        ];
+
         const TEXT_OPERATORS = [
-            { value: 'contains', label: 'Contains' },
-            { value: 'not_contains', label: 'Not Contains' },
-            { value: 'equal', label: 'Equals' },
-            { value: 'not_equal', label: 'Not Equals' },
+            { value: 'equal', label: 'Equal' },
+            { value: 'not_equal', label: 'Not Equal' },
             { value: 'starts_with', label: 'Starts With' },
-            { value: 'ends_with', label: 'Ends With' }
+            { value: 'ends_with', label: 'Ends With' },
+            { value: 'not_contains', label: 'Not Contains' },
+            { value: 'contains', label: 'Contains' }
         ];
 
         const NUMBER_OPERATORS = [
-            { value: 'equal', label: 'Equals' },
-            { value: 'not_equal', label: 'Not Equals' },
             { value: 'greater_than', label: 'Greater Than' },
-            { value: 'greater_than_or_equal', label: 'Greater Than or Equal' },
             { value: 'less_than', label: 'Less Than' },
+            { value: 'greater_than_or_equal', label: 'Greater Than or Equal' },
             { value: 'less_than_or_equal', label: 'Less Than or Equal' },
-            { value: 'between', label: 'Between' }
+            { value: 'equal', label: 'Equal' },
+            { value: 'not_equal', label: 'Not Equal' }
         ];
-        // Determine the operator set based on column type (default to text if type is missing)
+
+        // Determine the operator set based on column type
         const columnType = col.type && col.type.toLowerCase();
-        let operators = TEXT_OPERATORS;
-        if (columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml') {
-            operators = NUMBER_OPERATORS;
-        } else if (columnType === 'label') {
-            operators = TEXT_OPERATORS; // Use text operators for labels
-        }
+        const isDateCol = columnType === 'labeldate';
+        const isNumberCol = columnType === 'labelnumber' || columnType === 'labeldecimal' || columnType === 'number' || columnType === 'decimal' || columnType === 'labeldeciaml';
+        const operators = isDateCol ? DATE_OPERATORS : (isNumberCol ? NUMBER_OPERATORS : TEXT_OPERATORS);
+
+        // 💡 Retrieve the saved text filter state
+        const savedTextFilter = this.state.textFilters[col.field] || {};
+        const defaultOperator = isDateCol ? '' : operators[0].value;
+        const savedOperator = operators.some(op => op.value === savedTextFilter.operator)
+            ? savedTextFilter.operator
+            : defaultOperator;
+        const savedValue = savedTextFilter.value !== undefined ? savedTextFilter.value : '';
 
         // Helper to generate <option> HTML
         const operatorOptionsHtml = operators.map(op => `
@@ -1301,11 +1151,11 @@ class GKBSDynamicGrid {
         <hr class"hrgricline"/>
            <div class="dg-filter-group">
             <div class="dg-filter-text-input" style="display: flex; gap: 5px;">
-                <select class="dg-text-filter-operator">
+                <select class="dg-text-filter-operator form-select" style="${isDateCol ? 'width: 100%;' : ''}">
                     ${operatorOptionsHtml}
                 </select>
-                <input type="text" placeholder="${columnType === 'number' ? 'Value or Range (e.g., 10-20)' : 'Value...'}" 
-                       class="dg-text-filter-input" style="flex-grow: 1;" value="${savedValue}">
+                <input type="text" placeholder="${isNumberCol ? 'Value...' : 'Value...'}" 
+                       class="dg-text-filter-input" style="${isDateCol ? 'display: none;' : 'flex-grow: 1;'}" value="${savedValue}">
             </div>
         </div>
         <hr class"hrgricline"/>
@@ -1344,19 +1194,24 @@ class GKBSDynamicGrid {
         </label>
         <hr class"hrgricline"/>
     `;
-        uniqueValues.forEach(rawValue => {
-            const value = String(rawValue);
+        // 💡 LABELDATE: Render Excel-style hierarchical date tree; other column types use flat checkbox list
+        if (columnType === 'labeldate') {
+            this.buildDateTreeCheckboxList(checkboxList, uniqueValues, currentFilters);
+        } else {
+            uniqueValues.forEach(rawValue => {
+                const value = String(rawValue);
 
-            // 💡 DEFAULT CHECKED LOGIC: If currentFilters is empty (initial state) OR if the value is explicitly in the filters, check it.
-            const isChecked = currentFilters.length === 0 || currentFilters.includes(value);
-            const checkedAttr = isChecked ? 'checked' : '';
+                // 💡 DEFAULT CHECKED LOGIC: If currentFilters is empty (initial state) OR if the value is explicitly in the filters, check it.
+                const isChecked = currentFilters.length === 0 || currentFilters.includes(value);
+                const checkedAttr = isChecked ? 'checked' : '';
 
-            checkboxList.innerHTML += `
-            <label>
-                <input type="checkbox" value="${value}" ${checkedAttr}> ${value}
-            </label>
-        `;
-        });
+                checkboxList.innerHTML += `
+                <label>
+                    <input type="checkbox" value="${value}" ${checkedAttr}> ${value}
+                </label>
+            `;
+            });
+        }
 
         // 5. Attach Global Event Listener to popup
         this.attachPopupListeners(popup, col);
@@ -1588,83 +1443,6 @@ class GKBSDynamicGrid {
     }
     // Inside DynamicGrid class:
 
-    showRowActionsMenu_old(buttonElement, rowData) {
-        // 1. Close any currently open filter/action popups
-        this.closeAllPopups();
-
-        // 2. Create the popup container
-        const popup = document.createElement('div');
-        popup.className = 'dg-action-menu-popup dg-filter-popup';
-        popup.style.minWidth = '120px';
-        popup.style.padding = '5px 0';
-        // Temporarily set position to fixed/absolute for sizing calculation
-        popup.style.position = 'absolute';
-        popup.style.visibility = 'hidden';
-
-        // 3. Populate the menu items
-        const ul = document.createElement('ul');
-        ul.style.listStyle = 'none';
-        ul.style.padding = '0';
-        ul.style.margin = '0';
-
-        this.options.rowActions.forEach(action => {
-            const li = document.createElement('li');
-            li.className = 'dg-action-menu-item';
-            // 💡 NEW: Inline styles for padding and hover effect
-            li.style.padding = '5px 15px 5px 10px';
-            li.style.cursor = 'pointer';
-            li.style.whiteSpace = 'nowrap';
-            li.style.transition = 'background-color 0.1s';
-            li.innerHTML = `${action.icon} ${action.title}`;
-
-            // 💡 NEW: Hover effect (using mouseenter/mouseleave)
-            li.onmouseenter = () => {
-                li.style.backgroundColor = '#f0f0f0'; // Light grey hover background
-            };
-            li.onmouseleave = () => {
-                li.style.backgroundColor = 'transparent';
-            };
-
-            li.onclick = (e) => {
-                e.stopPropagation();
-                action.handler(rowData, this);
-                this.closeAllPopups();
-            };
-
-            ul.appendChild(li);
-        });
-
-        popup.appendChild(ul);
-
-        // 4. Position the popup near the button (FIXED LOGIC)
-
-        // A. Temporarily append to DOM to calculate its width
-        document.body.appendChild(popup);
-
-        const rect = buttonElement.getBoundingClientRect();
-
-        // B. Calculate the correct position: Aligns the left edge of the popup with the left edge of the button
-        let leftPosition = rect.left + window.scrollX;
-
-        // C. Boundary Check (Optional but recommended): If the popup would go off the right edge of the screen,
-        // align its right edge with the button's right edge instead.
-        const viewportWidth = window.innerWidth;
-        const popupWidth = popup.offsetWidth;
-        const buttonRight = rect.right + window.scrollX;
-
-        if (leftPosition + popupWidth > viewportWidth) {
-            // If it overflows the right edge, align it to the right of the button
-            leftPosition = (buttonRight - popupWidth) - 20;
-        }
-
-        // D. Apply the calculated position and make it visible
-        popup.style.top = `${rect.bottom + window.scrollY + -12}px`;
-        popup.style.left = `${leftPosition}px`;
-        popup.style.visibility = 'visible';
-
-        // 5. Store reference for closing
-        this.state.activeRowActionPopup = popup;
-    }
     showRowActionsMenu(buttonElement, rowData) {
         // 1. Close any currently open filter/action popups
         this.closeAllPopups();
@@ -1763,124 +1541,6 @@ class GKBSDynamicGrid {
     // --- 6. Pagination Footer ---
     // Inside DynamicGrid class, replace the existing renderFooter method:
 
-    renderFooter_old() {
-        if (!this.options.enablePagination) return;
-
-        const totalItems = this.state.processedData.length;
-
-        // Calculate total pages based on current size setting
-        let currentSize = this.options.pageSize;
-        let totalPages = Math.ceil(totalItems / currentSize);
-
-        // Handle the case where the current size is set to 'All' 
-        if (currentSize >= totalItems) {
-            currentSize = 'All';
-            totalPages = 1;
-        }
-
-        const footer = document.createElement('div');
-        footer.className = 'dg-footer';
-
-        // 1. --- NEW: Page Size Dropdown Selector ---
-        const pageSizes = [10, 20, 50, 100, 'All'];
-        const pageSizeSelect = document.createElement('select');
-
-        pageSizes.forEach(size => {
-            const option = document.createElement('option');
-            option.value = size;
-            option.innerText = size;
-
-            // Determine the currently selected option
-            const isAllSelected = (size === 'All' && this.options.pageSize >= totalItems);
-            const isSizeSelected = (Number(size) === this.options.pageSize);
-
-            if (isAllSelected || isSizeSelected) {
-                option.selected = true;
-            }
-            pageSizeSelect.appendChild(option);
-        });
-
-        pageSizeSelect.addEventListener('change', (e) => {
-            const newSize = e.target.value;
-
-            if (newSize === 'All') {
-                // Set size to the full length of original data, effectively showing all rows
-                this.options.pageSize = this.originalData.length;
-            } else {
-                this.options.pageSize = Number(newSize);
-            }
-
-            this.state.currentPage = 1; // Always reset to page 1
-            this.processData();
-            this.render(); // Re-render the entire grid
-        });
-
-        const label = document.createElement('span');
-        label.innerText = 'Rows per page: ';
-
-        // Add selector and label to the left of the footer
-        footer.append(label, pageSizeSelect);
-
-        // 2. --- Existing Pagination Controls ---
-
-        const controls = document.createElement('div');
-        controls.style.display = 'flex';
-        controls.style.gap = '10px';
-        controls.style.alignItems = 'center';
-
-        const info = document.createElement('span');
-        info.innerText = `Page ${this.state.currentPage} of ${totalPages} (${totalItems} items)`;
-        info.style.marginLeft = '20px'; // Add some separation
-
-        const prevBtn = document.createElement('button');
-        prevBtn.className = 'dg-btn';
-        prevBtn.innerText = 'Prev';
-        prevBtn.disabled = this.state.currentPage === 1;
-        prevBtn.onclick = () => { this.state.currentPage--; this.render(); };
-
-        const nextBtn = document.createElement('button');
-        nextBtn.className = 'dg-btn';
-        nextBtn.innerText = 'Next';
-        nextBtn.disabled = this.state.currentPage >= totalPages || totalPages === 0;
-        nextBtn.onclick = () => { this.state.currentPage++; this.render(); };
-
-        controls.append(info, prevBtn, nextBtn);
-        // 3. --- NEW: Go To Page Option ---
-        const goToDiv = document.createElement('div');
-        goToDiv.style.display = 'flex';
-        goToDiv.style.alignItems = 'center';
-        goToDiv.style.marginLeft = '20px';
-        goToDiv.style.gap = '5px';
-
-        const goToInput = document.createElement('input');
-        goToInput.type = 'number';
-        goToInput.min = 1;
-        goToInput.max = totalPages;
-        goToInput.placeholder = 'Page #';
-        goToInput.style.width = '60px';
-        goToInput.style.padding = '4px';
-
-        const goToBtn = document.createElement('button');
-        goToBtn.className = 'dg-btn';
-        goToBtn.innerText = 'Go';
-
-        // Go button click handler
-        goToBtn.onclick = () => {
-            const pageNum = parseInt(goToInput.value);
-            if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
-                alert(`Please enter a valid page number between 1 and ${totalPages}.`);
-                return;
-            }
-            this.state.currentPage = pageNum;
-            this.render();
-        };
-
-        goToDiv.append(document.createTextNode('Go to:'), goToInput, goToBtn);
-        controls.appendChild(goToDiv); // Add the new controls alongside Prev/Next
-        footer.appendChild(controls);
-
-        this.container.appendChild(footer);
-    }
     renderFooter() {
         if (!this.options.enablePagination) return;
 
@@ -1962,8 +1622,8 @@ class GKBSDynamicGrid {
         goToInput.placeholder = 'Page #';
         goToInput.style.width = '45px';
         goToInput.style.padding = '4px';
-        goToInput.style.borderRadius= "15px";
-        goToInput.style.textAlign="center"
+        goToInput.style.borderRadius = "15px";
+        goToInput.style.textAlign = "center"
         const goToBtn = document.createElement('button');
         goToBtn.className = 'dg-btn';
         goToBtn.innerText = 'Go';
@@ -2011,89 +1671,6 @@ class GKBSDynamicGrid {
         this.container.appendChild(footer);
     }
     // --- Helper: Input Creation ---
-    createInput_old(col, rowData) {
-        let el;
-        // --- NEW: Handle 'label' Type for Non-Editable Display ---
-        if (col.type === 'label') {
-            el = document.createElement('div');
-            el.className = 'dg-label'; // Custom class for styling non-editable cells
-            el.innerText = rowData[col.field];//.toLocaleString(undefined, { maximumFractionDigits: 2 });
-            el.style.width = '100%';
-            el.style.padding = '8px';
-            el.style.boxSizing = 'border-box';
-            el.style.textAlign = col.align || 'left';
-            // Note: No change listener is attached for 'label' type.
-
-            return el; // Return the non-editable element immediately
-        }
-        else if (col.type === 'dropdown') {
-            el = document.createElement('select');
-            el.className = 'dg-select';
-            el.style.textAlign = col.align || 'left';
-            col.options.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt;
-                option.innerText = opt;
-                option.selected = rowData[col.field] === opt;
-                el.appendChild(option);
-            });
-        } else {
-            el = document.createElement('input');
-            el.className = 'dg-input';
-            el.type = col.type === 'number' ? 'number' : 'text';
-            el.style.textAlign = col.align || 'left';
-            el.value = rowData[col.field];
-            // --- NEW: Custom Autocomplete Trigger ---
-            if (col.autocomplete) {
-                // Prevent the input from receiving focus right away if clicked, 
-                // and trigger the custom list instead.
-                el.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Stop event from propagating up to the document click handler
-                    this.showAutocompleteList(el, col);
-                });
-                // 2. Live Filtering when typing
-                el.addEventListener('input', (e) => {
-                    // Keep the list visible and filter its contents based on current input value
-                    this.updateAutocompleteList(el, col, e.target.value);
-                });
-                // Optional: If you want to force selection only and prevent typing, uncomment the line below:
-                // el.setAttribute('readonly', 'true'); 
-            }
-        }
-
-        // Event Listener
-        el.addEventListener('change', (e) => {
-            let val = e.target.value;
-            // Convert to number if column type is number
-            if (col.type === 'number') val = parseFloat(val);
-
-            // Update Data Source
-            rowData[col.field] = val;
-            // 2. 💡 NEW: Execute Custom Cell Change Callback 
-            if (this.options.onCellChange && typeof this.options.onCellChange === 'function') {
-                // Pass the field, the new value, and the entire row object for context
-                this.options.onCellChange(col.field, val, rowData);
-            }
-            // Trigger Recalculation of Status Bar
-            // We don't need to re-render the whole body (expensive), 
-            // just the status bar.
-            const existingStatus = this.container.querySelector('.dg-status-bar');
-            if (existingStatus) existingStatus.remove();
-
-            // We must re-insert status bar before the footer
-            const footer = this.container.querySelector('.dg-footer');
-            if (footer) footer.remove(); // Remove footer momentarily
-
-            this.renderStatusBar();
-            if (this.options.enablePagination) this.renderFooter(); // Add footer back
-        });
-        // --- NEW HOOK ---
-        if (this.options.customCellRenderer) {
-            // Execute the custom function, allowing it to modify the element or attach listeners
-            this.options.customCellRenderer(el, col, rowData);
-        }
-        return el;
-    }
     createInput(col, rowData) {
         let el;
 
@@ -2136,7 +1713,7 @@ class GKBSDynamicGrid {
             const rawValue = parseFloat(rowData[col.field]);
             el.title = rawValue;
             var roundvalue = formatToDecimals(rawValue, col.precision !== undefined ? col.precision : 2);
-            console.log("roundvalue", parseFloat(roundvalue));
+            //console.log("roundvalue", parseFloat(roundvalue));
             el.innerHTML = roundvalue;
         }
         else if (col.type === 'labelnumber') {
@@ -2151,6 +1728,17 @@ class GKBSDynamicGrid {
             const rawValue = rowData[col.field];
             el.title = rawValue;
             el.innerHTML = rawValue != "" ? parseInt(rawValue) : rawValue;
+        }
+        else if (col.type === 'labeldate') {
+            el = document.createElement('div');
+            el.className = 'dg-label';
+            // Display label fields formatted to 2 decimals
+            el.innerText = rowData[col.field];// formatToDecimals(rowData[col.field], 2);
+            el.title = rowData[col.field];
+            el.style.width = '100%';
+            el.style.padding = '8px 2px';
+            el.style.boxSizing = 'border-box';
+            el.style.textAlign = col.align || 'left';
         }
         // --- Handle 'dropdown' Type ---
         else if (col.type === 'dropdown') {
@@ -2501,7 +2089,7 @@ class GKBSDynamicGrid {
     // Inside DynamicGrid class:
     updateCalculatedFields(updatedRow) {
         this.renderStatusBarAfterChange();
-        }
+    }
     updateCalculatedFields_try(updatedRow) {
         // 1. Recalculate netsalary based on the updated numerical fields
         const salary = updatedRow.salary || 0;
@@ -2557,11 +2145,259 @@ class GKBSDynamicGrid {
         if (this.options.enablePagination) this.renderFooter();
     }
     // Inside DynamicGrid class
+    // 💡 NEW: Build Excel-style hierarchical date tree checkboxes for labeldate columns
+    buildDateTreeCheckboxList(container, uniqueValues, currentFilters) {
+        const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+
+        // --- 1. Parse date strings into Year → Month → Day → [times] tree ---
+        const dateTree = {};
+        uniqueValues.forEach(rawVal => {
+            let year, monthName, day, timeStr = null;
+            const convertdateObj = this.formatDate(rawVal);
+            const dateObj = new Date(convertdateObj);
+
+            if (!isNaN(dateObj.getTime())) {
+                year = String(dateObj.getFullYear());
+                monthName = MONTH_NAMES[dateObj.getMonth()];
+                day = String(dateObj.getDate());
+                // Detect time component via regex (hh:mm in the raw string)
+                const hasTime = /\d{1,2}:\d{2}/.test(rawVal);
+                if (hasTime) {
+                    timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+            } else {
+                // Fallback for non-parseable strings
+                year = 'Unknown';
+                monthName = 'Unknown';
+                day = rawVal;
+            }
+
+            if (!dateTree[year]) dateTree[year] = {};
+            if (!dateTree[year][monthName]) dateTree[year][monthName] = {};
+            if (!dateTree[year][monthName][day]) dateTree[year][monthName][day] = [];
+            dateTree[year][monthName][day].push({ rawVal, timeStr });
+        });
+
+        const isLeafChecked = (rawVal) => currentFilters.length === 0 || currentFilters.includes(rawVal);
+
+        // --- 2. Helper: recalculate all branch checkbox states from leaf states ---
+        const updateParentCheckboxes = (root) => {
+            // Process deepest nodes first (reverse so children update before parents)
+            const branchHeaders = Array.from(
+                root.querySelectorAll('.dg-date-tree-node > .dg-date-tree-header')
+            ).reverse();
+            branchHeaders.forEach(header => {
+                const branchCb = header.querySelector('input[type="checkbox"]');
+                if (!branchCb) return;
+                const nodeDiv = header.parentElement;
+                const leaves = nodeDiv.querySelectorAll('input[data-date-leaf="true"]');
+                if (leaves.length === 0) return;
+                const checkedCount = Array.from(leaves).filter(l => l.checked).length;
+                if (checkedCount === 0) {
+                    branchCb.checked = false;
+                    branchCb.indeterminate = false;
+                } else if (checkedCount === leaves.length) {
+                    branchCb.checked = true;
+                    branchCb.indeterminate = false;
+                } else {
+                    branchCb.checked = false;
+                    branchCb.indeterminate = true;
+                }
+            });
+        };
+        // Store reference on the container so attachPopupListeners can call it from the Select All handler
+        container._updateParentCheckboxes = updateParentCheckboxes;
+
+        // --- 3. Helper: create a branch node (Year, Month, or Day with time children) ---
+        const createBranchNode = (label, indentPx, parentContainer) => {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = 'dg-date-tree-node';
+
+            const header = document.createElement('div');
+            header.className = 'dg-date-tree-header';
+            header.style.paddingLeft = indentPx + 'px';
+
+            const toggle = document.createElement('span');
+            toggle.className = 'dg-date-tree-toggle expanded';
+            toggle.textContent = '\u25B6'; // ▶
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = true; // Will be recalculated after all leaves are inserted
+
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = label;
+
+            header.appendChild(toggle);
+            header.appendChild(cb);
+            header.appendChild(labelSpan);
+            nodeDiv.appendChild(header);
+
+            const childrenDiv = document.createElement('div');
+            childrenDiv.className = 'dg-date-tree-children';
+            nodeDiv.appendChild(childrenDiv);
+
+            // Expand / Collapse on toggle arrow click
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                childrenDiv.classList.toggle('collapsed');
+                toggle.classList.toggle('expanded', !childrenDiv.classList.contains('collapsed'));
+            });
+
+            // Parent checkbox cascades checked state to all descendant leaves
+            cb.addEventListener('change', (e) => {
+                e.stopPropagation();
+                nodeDiv.querySelectorAll('input[data-date-leaf="true"]').forEach(leaf => {
+                    leaf.checked = cb.checked;
+                });
+                cb.indeterminate = false;
+                updateParentCheckboxes(container);
+            });
+
+            parentContainer.appendChild(nodeDiv);
+            return childrenDiv;
+        };
+
+        // --- 4. Helper: create a leaf node (Day when no time, or Time) ---
+        const createLeafNode = (label, rawVal, isChecked, parentContainer, indentPx) => {
+            const leafDiv = document.createElement('div');
+            leafDiv.className = 'dg-date-tree-leaf';
+            leafDiv.style.paddingLeft = (indentPx + 20) + 'px';
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = isChecked;
+            cb.value = rawVal;                         // Raw date string — used for filtering
+            cb.setAttribute('data-date-leaf', 'true'); // Identifies this as a leaf for Apply collection
+
+            cb.addEventListener('change', () => {
+                updateParentCheckboxes(container);
+            });
+
+            const labelSpan = document.createElement('span');
+            labelSpan.textContent = label;
+
+            leafDiv.appendChild(cb);
+            leafDiv.appendChild(labelSpan);
+            parentContainer.appendChild(leafDiv);
+        };
+
+        // --- 5. Render the tree: Year → Month → Day (→ Time if present) ---
+        const MONTH_ORDER = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+        const sortedYears = Object.keys(dateTree).sort();
+
+        sortedYears.forEach(year => {
+            const yearChildren = createBranchNode(year, 0, container);
+
+            const sortedMonths = Object.keys(dateTree[year])
+                .sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b));
+
+            sortedMonths.forEach(monthName => {
+                const monthChildren = createBranchNode(monthName, 14, yearChildren);
+
+                const sortedDays = Object.keys(dateTree[year][monthName])
+                    .sort((a, b) => parseInt(a) - parseInt(b));
+
+                sortedDays.forEach(day => {
+                    const entries = dateTree[year][monthName][day];
+
+                    if (entries.length === 1 && entries[0].timeStr === null) {
+                        // No time component — day IS the leaf node
+                        createLeafNode(day, entries[0].rawVal, isLeafChecked(entries[0].rawVal), monthChildren, 28);
+                    } else {
+                        // Time component present — day is a branch, times are leaves
+                        const dayChildren = createBranchNode(day, 28, monthChildren);
+                        entries.forEach(entry => {
+                            const timeLabel = entry.timeStr || entry.rawVal;
+                            createLeafNode(timeLabel, entry.rawVal, isLeafChecked(entry.rawVal), dayChildren, 42);
+                        });
+                    }
+                });
+            });
+        });
+
+        // --- 6. Set initial branch checkbox states from leaf states ---
+        updateParentCheckboxes(container);
+    }
+    formatDate(rawVal) {
+        if (!rawVal) return '';
+
+        rawVal = rawVal.trim();
+
+        // Separate date and time
+        var parts = rawVal.split(/\s+/);
+        var datePart = parts[0];
+        var timePart = parts.length > 1 ? parts.slice(1).join(' ') : '';
+
+        // Convert date part to yyyy-MM-dd
+        var formattedDate = '';
+
+        // yyyy-MM-dd
+        if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+            formattedDate = datePart;
+        }
+
+        // dd/MM/yyyy
+        else if (/^\d{2}\/\d{2}\/\d{4}$/.test(datePart)) {
+            var p = datePart.split('/');
+            formattedDate = `${p[2]}-${p[1]}-${p[0]}`;
+        }
+
+        // dd-MMM-yyyy or dd/MMM/yyyy
+        else if (/^\d{2}[-\/][A-Za-z]{3}[-\/]\d{4}$/.test(datePart)) {
+            var separator = datePart.includes('-') ? '-' : '/';
+            var p = datePart.split(separator);
+
+            var months = {
+                Jan: '01', Feb: '02', Mar: '03', Apr: '04',
+                May: '05', Jun: '06', Jul: '07', Aug: '08',
+                Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+            };
+
+            formattedDate = `${p[2]}-${months[p[1]]}-${p[0]}`;
+        }
+
+        if (!formattedDate)
+            return '';
+
+        // No time
+        if (!timePart)
+            return formattedDate;
+
+        // Convert time to HH:mm:ss tt
+        var timeMatch = timePart.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+
+        if (!timeMatch)
+            return formattedDate;
+
+        var hour = parseInt(timeMatch[1], 10);
+        var minute = timeMatch[2];
+        var second = timeMatch[3] || '00';
+        var ampm = timeMatch[4];
+
+        if (ampm) {
+            ampm = ampm.toUpperCase();
+            hour = hour.toString().padStart(2, '0');
+        } else {
+            // Convert 24-hour time to 12-hour time
+            ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12 || 12;
+            hour = hour.toString().padStart(2, '0');
+        }
+
+        return `${formattedDate} ${hour}:${minute}:${second} ${ampm}`;
+    }
+    // Inside DynamicGrid class
     attachPopupListeners(popup, col) {
         const field = col.field;
+        const colType = col.type && col.type.toLowerCase();
+        const isDateCol = colType === 'labeldate'; // 💡 Detect labeldate for date-tree and date presets
+        const isNumberCol = colType === 'labelnumber' || colType === 'labeldecimal' || colType === 'number' || colType === 'decimal' || colType === 'labeldeciaml';
         const checkboxList = popup.querySelector('.dg-filter-checkbox-list');
         const selectAllCheckbox = popup.querySelector('.dg-select-all-checkbox');
-        // Find all individual checkboxes
+        // Find all individual checkboxes (branch + leaf for date columns, flat labels for others)
         const individualCheckboxes = checkboxList.querySelectorAll('input[type="checkbox"]:not(.dg-select-all-checkbox)');
 
 
@@ -2569,10 +2405,19 @@ class GKBSDynamicGrid {
         if (selectAllCheckbox) {
             selectAllCheckbox.addEventListener('change', () => {
                 const isChecked = selectAllCheckbox.checked;
-
-                individualCheckboxes.forEach(cb => {
-                    cb.checked = isChecked;
-                });
+                if (isDateCol) {
+                    // For date tree: toggle only leaf checkboxes, then cascade branch states
+                    checkboxList.querySelectorAll('input[data-date-leaf="true"]').forEach(cb => {
+                        cb.checked = isChecked;
+                    });
+                    if (checkboxList._updateParentCheckboxes) {
+                        checkboxList._updateParentCheckboxes(checkboxList);
+                    }
+                } else {
+                    individualCheckboxes.forEach(cb => {
+                        cb.checked = isChecked;
+                    });
+                }
                 // Note: Filter is applied only on 'Apply' click.
             });
         }
@@ -2581,18 +2426,33 @@ class GKBSDynamicGrid {
         individualCheckboxes.forEach(cb => {
             cb.addEventListener('change', () => {
                 if (selectAllCheckbox) {
-
-                    // 1. Check if the changed item was unchecked
-                    if (!cb.checked) {
-                        // If even one item is unchecked, force Select All to be unchecked
-                        selectAllCheckbox.checked = false;
-                    } else {
-                        // 2. If the changed item was checked, check if all others are now checked
-                        const allChecked = Array.from(individualCheckboxes).every(item => item.checked);
-
-                        if (allChecked) {
-                            // If every single individual item is checked, then check Select All
+                    if (isDateCol) {
+                        // For date tree: evaluate only leaf checkboxes for the Select All state
+                        // (branch states are managed internally by buildDateTreeCheckboxList)
+                        const allLeaves = Array.from(checkboxList.querySelectorAll('input[data-date-leaf="true"]'));
+                        const checkedCount = allLeaves.filter(l => l.checked).length;
+                        if (checkedCount === 0) {
+                            selectAllCheckbox.checked = false;
+                            selectAllCheckbox.indeterminate = false;
+                        } else if (checkedCount === allLeaves.length) {
                             selectAllCheckbox.checked = true;
+                            selectAllCheckbox.indeterminate = false;
+                        } else {
+                            selectAllCheckbox.checked = false;
+                            selectAllCheckbox.indeterminate = true;
+                        }
+                    } else {
+                        // 1. Check if the changed item was unchecked
+                        if (!cb.checked) {
+                            // If even one item is unchecked, force Select All to be unchecked
+                            selectAllCheckbox.checked = false;
+                        } else {
+                            // 2. If the changed item was checked, check if all others are now checked
+                            const allChecked = Array.from(individualCheckboxes).every(item => item.checked);
+                            if (allChecked) {
+                                // If every single individual item is checked, then check Select All
+                                selectAllCheckbox.checked = true;
+                            }
                         }
                     }
                 }
@@ -2603,15 +2463,27 @@ class GKBSDynamicGrid {
             const uniqueValuesCount = this.getUniqueValues(field).length;
             const isSelectallcheck = $(".dg-select-all-checkbox").is(":checked");
 
-            // Get all checked values (excluding the "Select All" checkbox)
-            // Only include checkboxes that are currently visible (not hidden by search)
-            const selectedValues = Array.from(checkboxList.querySelectorAll('input[type="checkbox"]:not(.dg-select-all-checkbox):checked'))
-                .filter(input => {
-                    // Check if the parent label is visible (not hidden by search)
-                    const parentLabel = input.closest('label');
-                    return parentLabel && parentLabel.style.display !== 'none';
-                })
-                .map(input => String(input.value)); // Ensure values are strings
+            // 💡 LABELDATE: Collect only date leaf checkbox values; other columns use flat checkbox list
+            let selectedValues;
+            if (isDateCol) {
+                // Only visible leaf nodes are collected (respects search filtering)
+                selectedValues = Array.from(checkboxList.querySelectorAll('input[data-date-leaf="true"]:checked'))
+                    .filter(input => {
+                        const leafDiv = input.closest('.dg-date-tree-leaf');
+                        return leafDiv && leafDiv.style.display !== 'none';
+                    })
+                    .map(input => String(input.value));
+            } else {
+                // Get all checked values (excluding the "Select All" checkbox)
+                // Only include checkboxes that are currently visible (not hidden by search)
+                selectedValues = Array.from(checkboxList.querySelectorAll('input[type="checkbox"]:not(.dg-select-all-checkbox):checked'))
+                    .filter(input => {
+                        // Check if the parent label is visible (not hidden by search)
+                        const parentLabel = input.closest('label');
+                        return parentLabel && parentLabel.style.display !== 'none';
+                    })
+                    .map(input => String(input.value)); // Ensure values are strings
+            }
             const isFilterActive = selectedValues.length > 0 && selectedValues.length !== uniqueValuesCount;
             // If all items are selected, delete the filter to avoid unnecessary filtering
             if (selectedValues.length === uniqueValuesCount) {
@@ -2623,31 +2495,57 @@ class GKBSDynamicGrid {
                 // If nothing is checked, set an empty array to filter everything out
                 this.state.colFilters[field] = [];
             }
-            // --- 2. Handle Text Filters (NEW) ---
+
+            // --- 2. Handle Text / Date Filters ---
             const textInput = popup.querySelector('.dg-text-filter-input').value.trim();
             const textsearchInput = popup.querySelector('.dg-text-search-input').value.trim();
             const operator = popup.querySelector('.dg-text-filter-operator').value;
 
-            if (textInput) {
-                // Save the complex text filter state
-                this.state.textFilters[field] = {
-                    operator: operator,
-                    value: textInput.toLowerCase() // Always filter using lowercase
-                };
+            if (isDateCol) {
+                if (operator) {
+                    this.state.textFilters[field] = {
+                        operator: operator,
+                        value: operator
+                    };
+                } else {
+                    delete this.state.textFilters[field];
+                }
             } else {
-                // If text input is empty, remove the text filter for this column
-                delete this.state.textFilters[field];
+                if (textInput !== '') {
+                    // Save the complex text/number filter state
+                    this.state.textFilters[field] = {
+                        operator: operator,
+                        value: isNumberCol ? textInput : textInput.toLowerCase()
+                    };
+                } else {
+                    // If text input is empty, remove the text filter for this column
+                    delete this.state.textFilters[field];
+                }
             }
-            if (isSelectallcheck && textInput == "" && textsearchInput == "") {
-                $(".dg-filter-clear").trigger("click");
+
+            const isFilterInputEmpty = isDateCol ? !operator : (textInput === "");
+            if (isSelectallcheck && isFilterInputEmpty && textsearchInput === "") {
+                delete this.state.colFilters[field];
+                delete this.state.textFilters[field];
+                this.updateFilterOrder(field, false);
+                this.processData();
+                this.render();
+                this.closeAllPopups();
                 return;
             }
+
+            // If user applied a condition text/number/date filter and didn't uncheck items,
+            // ensure colFilters doesn't redundantly restrict data
+            const hasConditionFilter = isDateCol ? !!operator : (textInput !== '');
+            if (hasConditionFilter && selectedValues.length === uniqueValuesCount) {
+                delete this.state.colFilters[field];
+            }
+
             // 3. Update Filter Order
-            const isTextFilterActive = !!textInput;
-            // The filter is active if EITHER the checkbox filter is active OR the text filter is active
-            this.updateFilterOrder(field, isFilterActive || isTextFilterActive);
-            // 💡 Update Filter Order
-            //this.updateFilterOrder(field, isFilterActive);
+            const isCheckboxFilterActive = this.state.colFilters.hasOwnProperty(field);
+            const isTextFilterActive = this.state.textFilters.hasOwnProperty(field);
+            this.updateFilterOrder(field, isCheckboxFilterActive || isTextFilterActive);
+
             this.processData();
             this.render();
             this.closeAllPopups();
@@ -2675,54 +2573,57 @@ class GKBSDynamicGrid {
         popup.querySelector('.dg-filter-cancel').addEventListener('click', () => {
             this.closeAllPopups();
         });
-        // Listen for Clear Filter
-        popup.querySelector('.dg-filter-clear').addEventListener('click', () => {
-            delete this.state.colFilters[field];
-            // 💡 Update Filter Order
-            this.updateFilterOrder(field, false); // false = filter is now inactive
-            this.processData();
-            this.render();
-            this.closeAllPopups();
+        // Listen for Clear Filter (both menu option and button)
+        popup.querySelectorAll('.dg-filter-clear').forEach(clearBtn => {
+            clearBtn.addEventListener('click', () => {
+                delete this.state.colFilters[field];
+                delete this.state.textFilters[field];
+                this.updateFilterOrder(field, false); // false = filter is now inactive
+                this.processData();
+                this.render();
+                this.closeAllPopups();
+            });
         });
 
-        //// Listen for Text Filter Input (Optional: Live filtering the checkboxes)
-        //// Get all inputs with class 'dg-text-filter-input' (there are two)
-        //const textFilterInputs = popup.querySelectorAll('.dg-text-filter-input');
-
-        //// The second input is for searching/filtering the checkbox list
-        //if (textFilterInputs.length > 1) {
-        //    textFilterInputs[1].addEventListener('input', (e) => {
-        //        // This input is used to live filter the list of checkboxes shown below it.
-        //        const filterText = e.target.value.toLowerCase();
-        //        popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
-        //            // Always keep the "Select All" checkbox visible
-        //            if (label.classList.contains('dg-select-all-label')) {
-        //                return; // Skip filtering the Select All checkbox
-        //            }
-        //            const value = label.querySelector('input').value.toLowerCase();
-        //            label.style.display = value.includes(filterText) ? 'block' : 'none';
-        //        });
-        //    });
-        //}
-        //dg-text-search-input
-        // Listen for Text Filter Input (Optional: Live filtering the checkboxes)
+        // Listen for Search Input (live filtering the checkbox list)
         popup.querySelector('.dg-text-search-input').addEventListener('input', (e) => {
-            // This input is usually used to live filter the list of checkboxes shown below it.
             const filterText = e.target.value.toLowerCase();
-            popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
-                const value = label.querySelector('input').value.toLowerCase();
-                label.style.display = value.includes(filterText) ? 'block' : 'none';
-            });
+            if (isDateCol) {
+                // For date tree: show/hide leaf nodes by their raw value or display label
+                checkboxList.querySelectorAll('.dg-date-tree-leaf').forEach(leafDiv => {
+                    const inputEl = leafDiv.querySelector('input');
+                    const spanEl = leafDiv.querySelector('span');
+                    const val = inputEl ? inputEl.value.toLowerCase() : '';
+                    const lbl = spanEl ? spanEl.textContent.toLowerCase() : '';
+                    leafDiv.style.display = (val.includes(filterText) || lbl.includes(filterText)) ? 'flex' : 'none';
+                });
+            } else {
+                popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
+                    const value = label.querySelector('input').value.toLowerCase();
+                    label.style.display = value.includes(filterText) ? 'block' : 'none';
+                });
+            }
         });
-        // Listen for Text Filter Input (Optional: Live filtering the checkboxes)
-        popup.querySelector('.dg-text-filter-input').addEventListener('input', (e) => {
-            // This input is usually used to live filter the list of checkboxes shown below it.
-            const filterText = e.target.value.toLowerCase();
-            popup.querySelectorAll('.dg-filter-checkbox-list label').forEach(label => {
-                const value = label.querySelector('input').value.toLowerCase();
-                label.style.display = value.includes(filterText) ? 'block' : 'none';
+
+        // Allow pressing Enter in text filter input or search input to apply filter
+        const textFilterInput = popup.querySelector('.dg-text-filter-input');
+        if (textFilterInput) {
+            textFilterInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    popup.querySelector('.dg-filter-apply').click();
+                }
             });
-        });
+        }
+        const textSearchInput = popup.querySelector('.dg-text-search-input');
+        if (textSearchInput) {
+            textSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    popup.querySelector('.dg-filter-apply').click();
+                }
+            });
+        }
     }
 
     // Update handl23eSort to accept an explicit direction
@@ -2902,43 +2803,6 @@ class GKBSDynamicGrid {
     }
     // Inside DynamicGrid class, add this new method:
 
-    updateAutocompleteList_old(inputEl, col, filterText = '') {
-        // If the popup container hasn't been created yet, create it now (edge case)
-        if (!this.activeAutocompletePopup) {
-            this.showAutocompleteList(inputEl, col);
-            return; // The showAutocompleteList call will handle the initial rendering
-        }
-
-        const list = this.activeAutocompletePopup;
-
-        // 1. Determine source options (user-provided or generated)
-        let sourceOptions = col.options || this.getUniqueValues(col.field);
-
-        // 2. Filter the options based on the input text
-        const filteredOptions = sourceOptions.filter(value =>
-            String(value).toLowerCase().includes(filterText.toLowerCase())
-        );
-
-        list.innerHTML = ''; // Clear existing list items
-
-        // 3. Regenerate and append filtered items
-        if (filteredOptions.length > 0) {
-            filteredOptions.forEach(value => {
-                const item = document.createElement('li');
-                item.innerText = value;
-
-                // Re-attach click listener for item selection
-                item.addEventListener('click', () => {
-                    inputEl.value = value;
-                    inputEl.dispatchEvent(new Event('change'));
-                    this.closeAllPopups();
-                });
-                list.appendChild(item);
-            });
-        } else {
-            list.innerHTML = '<li>No matches found</li>';
-        }
-    }
     updateAutocompleteList(inputEl, col, filterText = '') {
         if (!this.activeAutocompletePopup) {
             // Assuming showAutocompleteList calls this function after setting up the popup
