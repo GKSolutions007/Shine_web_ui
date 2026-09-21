@@ -14,7 +14,7 @@ function PaginatedAutocomplete(options) {
 
     var $input = $("#" + inputId);
     $("#" + dropId).remove();
-
+    $input.css("background-color", "var(--dynamic-bg)");
     var $GKBSdropdown = $([
         '<div class="gkbsautocomplete" id="' + dropId + '" style="',
         'display:none;position:fixed;z-index:99999;',   /* ← fixed, not absolute */
@@ -217,22 +217,43 @@ function PaginatedAutocomplete(options) {
                 if (autolistfilterwith) {//StartWith
                     //return (d.label && d.label.toLowerCase().indexOf(q) == 0) ||
                     //    (d.code && d.code.toLowerCase().indexOf(q) == 0);
-                    if (d.name && startwithfieldname == "name")
-                        return (d.name && d.name.toLowerCase().indexOf(q) == 0);
-                    else if (d.code && startwithfieldname == "code")
-                        return (d.code && d.code.toLowerCase().indexOf(q) == 0);
+                    if (d.name && startwithfieldname == "name") {
+                        if (d.name)
+                            return (d.name.toLowerCase().indexOf(q) == 0);//d.name && 
+                        else {
+                            return (d.label.toLowerCase().indexOf(q) == 0);
+                        }
+                    }
+                    else if (startwithfieldname == "code")
+                        if (d.code)
+                            return (d.code.toLowerCase().indexOf(q) == 0);
+                        else {
+                            return (d.label.toLowerCase().indexOf(q) == 0);
+                        }
                     else
                         //return (d.label && d.label.toLowerCase().indexOf(q) == 0);
                         return (d.code && d.code.toLowerCase().indexOf(q) == 0) ||
-                            (d.name && d.name.toLowerCase().indexOf(q) == 0);
+                            (d.name && d.name.toLowerCase().indexOf(q) == 0) ||
+                            (d.label && d.label.toLowerCase().indexOf(q) == 0);
                 } else {//Contains
-                    if (d.name && startwithfieldname == "name")
-                        return (d.name && d.name.toLowerCase().indexOf(q) > -1);
+                    if (startwithfieldname == "name") {
+                        if (d.name) {
+                            return (d.name && d.name.toLowerCase().indexOf(q) > -1);
+                        } else {
+                            return (d.label && d.label.toLowerCase().indexOf(q) > -1);
+                        }
+                    }
                     else if (d.code && startwithfieldname == "code")
-                        return (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                        if (d.code) {
+                            return (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                        }
+                        else {
+                            return (d.label && d.label.toLowerCase().indexOf(q) > -1);
+                        }
                     else
                     return (d.label && d.label.toLowerCase().indexOf(q) > -1) ||
-                        (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                        (d.code && d.code.toLowerCase().indexOf(q) > -1) ||
+                        (d.label && d.label.toLowerCase().indexOf(q) > -1);
                     
                 }
             })

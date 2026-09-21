@@ -21,7 +21,7 @@
     <script src="~/Scripts/Validation.js"></script>
     <script src="~/Autocomplete/GKBSautocomplete.js"></script>
     <script src="~/Unauth/unathjs.js"></script>
-    <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-base/styles/bootstrap5.css" rel="stylesheet">
+    @*<link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-base/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-grids/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-buttons/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-popups/styles/bootstrap5.css" rel="stylesheet">
@@ -34,7 +34,7 @@
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-notifications/styles/bootstrap5.css" rel="stylesheet">
     <link href="https://cdn.syncfusion.com/ej2/31.2.2/ej2-splitbuttons/styles/bootstrap5.css" rel="stylesheet">
     <script src="https://cdn.syncfusion.com/ej2/31.2.2/dist/ej2.min.js" type="text/javascript"></script>
-    <script src="https://cdn.syncfusion.com/ej2/syncfusion-helper.js" type="text/javascript"></script>
+    <script src="https://cdn.syncfusion.com/ej2/syncfusion-helper.js" type="text/javascript"></script>*@
     @*<link href="~/Content/Site.css" rel="stylesheet" />
         <link href="~/Content/navbar.css" rel="stylesheet" />*@
     <style>
@@ -922,6 +922,7 @@
                                         <th style="width:12%">Average</th>
                                         <th style="width:12%">Column Menu</th>
                                         <th style="width:12%">Show Column Option</th>
+                                        <th style="width:12%">Column Type</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -1045,6 +1046,7 @@
         </div>
     </div>
     <script>
+        var Aurl = '@Session["APIurl"]';
         var RID = '@Session["RoleID"]';
         var ItemsperPage =  parseInt('@Session["ItemsperPage"]', 10) < 0 ? 'All' :parseInt('@Session["ItemsperPage"]', 10)  || 10;
         var SendAutoMail = 0;
@@ -1102,6 +1104,72 @@
                 }
             });
         }
+        function ReturnColumnSettingsData(nMode, nFormID, nTableID) {
+            var coldata = [];
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        console.log("Column Settings ", data);
+                        coldata = data;
+                    } else {
+                        showErrorSnackbar("No column data found");
+                        coldata = [];
+                    }
+                }, error: function (data) { coldata = []; }
+            });
+            return coldata;
+        }
+        function CommonDocFilterColumnSettingsData(nMode, nFormID, nTableID, Threedoticon = false) {
+            $.ajax({
+                url: Aurl + "columnsettings/getcolumnsettings",
+                type: 'get',
+                contentType: 'json',
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                xhrFields: {
+                    withCredentials: true
+                },
+                //async: false,
+                success: function (data) {
+                    if (data.length > 0) {
+                        console.log("data ", data);
+                        var selchk = {
+                            "field": "Select",
+                            "header": "Select",
+                            "type": "checkbox",
+                            "checked": true,
+                            "width": 50,
+                            "align": "center",
+                            "visible": true,
+                            "EnableColumnMenu": true,
+                            "ShowinColumnOption": false,
+                            "Total": false,
+                            "TotalYN": "1",
+                            "EnableSum": false,
+                            "EnableAvg": false,
+                            "EnableCount": false,
+                            "EnableUnique": false,
+                            "precision": "2",
+                            "ClickPopup": false,
+                            "Printwidth": 94,
+                            "PrintYN": false,
+                            "PrintColumnName": "Select"
+                        }
+                        //gkbscustomfiltercolumnsettings.push(selchk);
+                        //gkbscustomfiltercolumnsettings = (data);
+                        gkbscustomfiltercolumnsettings = [selchk, ...data];
+                    }
+                }
+            });
+        }
+        LoadBranchByRoles('#cmbCommonDocFilterBranch');
             function LoadBranchByRoles(FieldIDs) {
     var RID = '@Session["RoleID"]';
     $.ajax({
@@ -1128,7 +1196,43 @@
             }
         }
     });
-}
+        }
+        var TransactionPrintProfiles = [];
+        function GetPrintProfile(nTransID) {
+            $.ajax({
+                url: Aurl + "printprofileconfig/getprofile",
+                type: 'get',
+                contentType: 'json',
+                data: { TransID: nTransID },
+                xhrFields: {
+                    withCredentials: true
+                },
+                async: false,
+                success: function (data) {
+                    $('#cmbPrintProfile').find("option").remove();
+                    $('#cmbPrintProfile').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    TransactionPrintProfiles = eval(data)
+                    var getdef = TransactionPrintProfiles.filter(pr => pr.DefaultConfig == 1);
+                    var defid = getdef.length > 0 ? getdef[0].ConfigID : 0;
+                    var copies = getdef.length > 0 ? getdef[0].NoCopies : 1;
+                    $.each(TransactionPrintProfiles, function (i, items) {
+                        $('#cmbPrintProfile').append($('<option/>', {
+                            value: items.ConfigID,
+                            text: items.ConfigName,
+                            'data-automail': items.AutoMail,
+                            'data-nocopies': items.NoCopies,
+                        }));
+                        $('#cmbPrintProfile').val(defid);
+                        $("#txtNoofCopies").val(copies);
+                        PrintConfigID = defid;
+                    });
+                }
+            });
+        }
+        var ApplyCommonEnterEvent = true;
     </script>
     <link href="~/Content/dialogbox/confirmdialog.css" rel="stylesheet" />
     <canvas id="cmCanvas"></canvas>
@@ -2661,102 +2765,190 @@ $("#btnCommonDocumentFilter").click(function () {
         });
     }
 });
-var customfiltercolumnsettings = [];
-var commonfiltergrid;
-ColumnDetails(2, 1003, 1);
+    var customfiltercolumnsettings = [], gkbscustomfiltercolumnsettings = [];
+    var commonfiltergrid, gkbscommonfiltergrid;
+    //ColumnDetails(2, 1003, 1);
 
-ej.grids.Grid.Inject(ej.grids.Page, ej.grids.ExcelExport, ej.grids.Toolbar, ej.grids.Aggregate, ej.grids.Group, ej.grids.Sort, ej.grids.Filter, ej.grids.ColumnMenu, ej.grids.ColumnChooser);
-function CustomFilterbindDataTable(data) {
-    if (data.length === 0) {
-        return; // No data to display
-    }
+    CommonDocFilterColumnSettingsData(2, 38, 1, false);
 
-    commonfiltergrid = new ej.grids.Grid({
-        dataSource: data,
-        allowPaging: false,
-        //pageSettings: { pageSize: 25 },
-        allowSorting: true,
-        allowFiltering: true,
-        allowResizing: true,
-        filterSettings: { type: 'Excel' },
-        toolbar: ['Search'],//, { tooltipText: 'Customize Columns', id: 'CommonFiltercustomizeBtn', prefixIcon: 'e-icons e-settings' }
-        allowExcelExport: true,
-        height: 250,
-        enableColumnVirtualization: true,
-        allowReordering: true,
-        showColumnChooser: true, // ✅ Must be true
-        showColumnMenu: true,
-        rowSelected: onRowSelected,
-        columns: customfiltercolumnsettings,
-        toolbarClick: function (args) {
-            if (args.item.id === 'CommonFiltercustomizeBtn') {
-                SelectTableID = 1;
-                modalReportColumnsetting.style.display = "block";
-                //modalReportColumnsetting.show();
-                ColumnSettings(1, 1003, SelectTableID);
-            }
-        },
-        resizeStop: function (args) {
-            const field = args.column.field;
-            const fieldIndex = args.column.index;
-            const newWidth = args.column.width;
-            //showErrorSnackbar("Column resized: " + field + " → New width: " + newWidth);
-            // You can store or use the new width as needed
-        },
-        columnVisibilityChanged: function (args) {
-            console.log("Column visibility changed:");
-            console.log("Field:", args.column.field);
-            console.log("Now Visible:", args.visible);
-        },
-    });
-
-    commonfiltergrid.appendTo('#DocumetFiltersGrid');
-
-    function onRowSelected(args) {
-        var rowData = args.data;
-        //showErrorSnackbar("Doc ID " + rowData["Doc ID"])//.
-        //console.log("Selected Row Data:", rowData);
-        //$("#DocumentGrid").html("");
-        //$("#ProductInfo").show();
-        //GetProductDocuments(rowData["ID"]);
-        //$("#lblProductName").text(rowData["Name"]);
-    }
-    function getCheckedRows() {
-        // Get grid instance
-        var gridObj = document.getElementById('DocumetFiltersGrid').ej2_instances[0];
-        console.log("gridObj:", gridObj);
-        // Filter rows where checkbox is true
-        var checkedRows = gridObj.getCurrentViewRecords().filter(function (row) {
-            return row.Chk === true;
-        });
-
-        console.log("Checked Rows:", checkedRows);
-        return checkedRows;
-    }
-
-}
-$("#btnAcceptDocFilterModal").click(function () {
-    if (commonfiltergrid) {
-        var selectedRows = commonfiltergrid.getSelectedRecords();
-        if (selectedRows.length > 0) {
-            var commfieldid = $("#txtcommonfilterapplyfieldid").val();
-            //console.log(selectedRows);
-            var selectedDocs = "";
-            for (var i = 0; i < selectedRows.length; i++) {
-                selectedDocs += selectedRows[i].DocValue + (((selectedRows.length - 1) == i) ? "" : ",");
-            }
-            $("#" + commfieldid).val(selectedDocs);
-            //modalFilterModal.style.display = "none";
-            modalFilterModal.hide();
-            $("#txtcommonfilterapplyfieldid,#txtcommonfilterapplytransid").val("");
-        } else {
-            showErrorSnackbar("Select atleast one document");
+    //ej.grids.Grid.Inject(ej.grids.Page, ej.grids.ExcelExport, ej.grids.Toolbar, ej.grids.Aggregate, ej.grids.Group, ej.grids.Sort, ej.grids.Filter, ej.grids.ColumnMenu, ej.grids.ColumnChooser);
+    function CustomFilterbindDataTable(data) {
+        if (data.length === 0) {
+            showErrorSnackbar("No records found");
         }
-    } else {
-        showErrorSnackbar("No Documents Found");
-    }
-});
+        //-----------------//
+        //New common filter//
+        //-----------------//
+        gkbscommonfiltergrid = new GKBSDynamicGrid('#commondocumentfiltergrid', gkbscustomfiltercolumnsettings, data, {
+            enablePagination: true,
+            pageSize: 100,
+            height: "450px",
+            enableSearch: true,
+            stickyToWindow: true,
+            enableExport: false,
+            enablePrint: false,
+            enableColumnsBtn: false,
+            enableAddRow: false,
+            enableRemoveRow: false,
+            enableSorting: true,
+            enableDarkMode: true,
+            searchTerm: "",
+            CompanyName: "",
+            ReportName: "",
+            fitersdata: [],
+            singleIconAction: [],
+            rowActionsMenu: [],
+            customCellRenderer: (el, col, rowData) => {
 
+            },
+            customButtons: [
+                {
+                    icon: '\u{2699}\u{FE0F}',
+                    text: '',
+                    title: 'Settings',
+                    visible: true,
+                    onClick: (gridInstance, event) => {
+                        modalGenColumnSettings.show();
+                        GendralColumnSettings(1, 38, 1, 0);
+                    }
+                },
+                {
+                    icon: '\u{2714}\u{FE0F}',
+                    text: 'Select All',
+                    title: 'Select All',
+                    visible: true,
+                    onClick: (gridInstance, event) => {
+                        console.log("ColData ", gridInstance.originalData);
+                        gridInstance.selectAllRows();
+                    }
+                },
+                {
+                    icon: '\u{274C}',
+                    text: 'Remove All',
+                    title: 'Remove All',
+                    visible: true,
+                    onClick: (gridInstance, event) => {
+                        console.log("ColData ", gridInstance.originalData);
+                        gridInstance.deselectAllRows();
+                    }
+                },
+            ],
+            onCellClick: (rowData, fieldName, cellValue, column) => {
+
+            },
+            onCellDoubleClick: (rowData, fieldName, cellValue, column) => {
+
+            },
+            onColumnResize: (colIndex, field, header, newWidth) => {
+                UpdateColumnWidth(38, 1, 0, colIndex, field, newWidth)
+            },
+        });
+        //-----------------//
+        //Old common filter//
+        //-----------------//
+        //commonfiltergrid = new ej.grids.Grid({
+        //    dataSource: data,
+        //    allowPaging: false,
+        //    //pageSettings: { pageSize: 25 },
+        //    allowSorting: true,
+        //    allowFiltering: true,
+        //    allowResizing: true,
+        //    filterSettings: { type: 'Excel' },
+        //    toolbar: ['Search'],//, { tooltipText: 'Customize Columns', id: 'CommonFiltercustomizeBtn', prefixIcon: 'e-icons e-settings' }
+        //    allowExcelExport: true,
+        //    height: 250,
+        //    enableColumnVirtualization: true,
+        //    allowReordering: true,
+        //    showColumnChooser: true, // ✅ Must be true
+        //    showColumnMenu: true,
+        //    rowSelected: onRowSelected,
+        //    columns: customfiltercolumnsettings,
+        //    toolbarClick: function (args) {
+        //        if (args.item.id === 'CommonFiltercustomizeBtn') {
+        //            SelectTableID = 1;
+        //            //modalReportColumnsetting.style.display = "block";
+        //            modalReportColumnsetting.show();
+        //            ColumnSettings(1, 1003, SelectTableID);
+        //        }
+        //    },
+        //    resizeStop: function (args) {
+        //        const field = args.column.field;
+        //        const fieldIndex = args.column.index;
+        //        const newWidth = args.column.width;
+        //        //showErrorSnackbar("Column resized: " + field + " → New width: " + newWidth);
+        //        // You can store or use the new width as needed
+        //    },
+        //    columnVisibilityChanged: function (args) {
+        //        //console.log("Column visibility changed:");
+        //        //console.log("Field:", args.column.field);
+        //        //console.log("Now Visible:", args.visible);
+        //    },
+        //});
+
+        //commonfiltergrid.appendTo('#DocumetFiltersGrid');
+
+        function onRowSelected(args) {
+            var rowData = args.data;
+        }
+        function getCheckedRows() {
+            // Get grid instance
+            var gridObj = document.getElementById('DocumetFiltersGrid').ej2_instances[0];
+            //console.log("gridObj:", gridObj);
+            // Filter rows where checkbox is true
+            var checkedRows = gridObj.getCurrentViewRecords().filter(function (row) {
+                return row.Chk === true;
+            });
+
+            //console.log("Checked Rows:", checkedRows);
+            return checkedRows;
+        }
+
+    }
+    $("#btnAcceptDocFilterModal").click(function () {
+        //if (commonfiltergrid) {
+        //    var selectedRows = commonfiltergrid.getSelectedRecords();
+        //    if (selectedRows.length > 0) {
+        //        var commfieldid = $("#txtcommonfilterapplyfieldid").val();
+        //        ////console.log(selectedRows);
+        //        var selectedDocs = "";
+        //        for (var i = 0; i < selectedRows.length; i++) {
+        //            selectedDocs += selectedRows[i].DocValue + (((selectedRows.length - 1) == i) ? "" : ",");
+        //        }
+        //        $("#" + commfieldid).val(selectedDocs);
+        //        //modalFilterModal.style.display = "none";
+        //        modalFilterModal.hide();
+        //        $("#txtcommonfilterapplyfieldid,#txtcommonfilterapplytransid").val("");
+        //    } else {
+        //        showErrorSnackbar("Select atleast one document");
+        //    }
+        //} else {
+        //    showErrorSnackbar("No Documents Found");
+        //}
+
+        if (gkbscommonfiltergrid) {
+            var selectedRows = gkbscommonfiltergrid.getSelectedRows();
+            if (selectedRows.length > 0) {
+                var commfieldid = $("#txtcommonfilterapplyfieldid").val();
+                ////console.log(selectedRows);
+                var selectedDocs = "";
+                for (var i = 0; i < selectedRows.length; i++) {
+                    selectedDocs += selectedRows[i].DocValue + (((selectedRows.length - 1) == i) ? "" : ",");
+                }
+                $("#" + commfieldid).val(selectedDocs);
+                //modalFilterModal.style.display = "none";
+                modalFilterModal.hide();
+                $("#txtcommonfilterapplyfieldid,#txtcommonfilterapplytransid").val("");
+                $("#txtcommonfilterapplytransmode").val("");
+                $("#txtcommonfilterapplydocidentid").val("");
+                $("#txtcommonfilterapplytransname").val("");
+            } else {
+                showErrorSnackbar("Select atleast one document");
+            }
+        }
+        else {
+            showErrorSnackbar("No Documents Found");
+        }
+    });
 function ColumnDetails(nMode, nReportID, nTableID) {
     customfiltercolumnsettings = [];
     $.ajax({
@@ -3055,6 +3247,18 @@ function addModuleIcons() {
                                 return field;
                             }
                         },
+                        {
+                            className: "dt-body-left", width: "10%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isStringSelect = value.ColumnType == '1' ? 'selected' : '';
+                                var isNumberSelect = value.ColumnType == '2' ? 'selected' : '';
+                                var isDeciamlSelect = value.ColumnType == '3' ? 'selected' : '';
+                                var isDateSelect = value.ColumnType == '4' ? 'selected' : '';
+                                var field = "<select name='ColumnType' class='form-control' id='cmbColumnType" + rowIndex + "'><option value= '1'" + isStringSelect + ">String</option><option value= '2'" + isNumberSelect + ">Number</option><option value= '3'" + isDeciamlSelect + ">Decimal</option><option value= '4'" + isDateSelect + ">Date</option></select>";
+                                return field;
+                            }
+                        },
                     ],
                 });
                 //tblGenColumnSettings,TableGenColumnSettings
@@ -3073,7 +3277,7 @@ function addModuleIcons() {
             var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
                 aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
                 aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg,
-                aShowinColumnOption = rowdata.ShowinColumnOption;
+                aShowinColumnOption = rowdata.ShowinColumnOption, aColumnType = rowdata.ColumnType;
             $(this).find("input").each(function (index) {
                 const fieldName = $(this).attr("name");
                 const fieldID = $(this).attr("id");
@@ -3111,6 +3315,9 @@ function addModuleIcons() {
                 if (fieldName == "ShowinColumnOption") {
                     aShowinColumnOption = $(this).val();
                 }
+                if (fieldName == "ColumnType") {
+                    aColumnType = $(this).val();
+                }
             });
 
             var coldata = {
@@ -3129,7 +3336,8 @@ function addModuleIcons() {
                 "EnableAvg": aEnableAvg,
                 "EnableSum": aEnableSum,
                 "EnableColumnMenu": aEnableColumnMenu,
-                "ShowinColumnOption": aShowinColumnOption
+                "ShowinColumnOption": aShowinColumnOption,
+                "ColumnType": aColumnType
             };
             ColumnSettingData.push(coldata);
         });
