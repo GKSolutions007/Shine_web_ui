@@ -217,14 +217,20 @@ function PaginatedAutocomplete(options) {
                 if (autolistfilterwith) {//StartWith
                     //return (d.label && d.label.toLowerCase().indexOf(q) == 0) ||
                     //    (d.code && d.code.toLowerCase().indexOf(q) == 0);
-                    console.log("startwithfieldname ", startwithfieldname);
                     if (d.name && startwithfieldname == "name")
                         return (d.name && d.name.toLowerCase().indexOf(q) == 0);
                     else if (d.code && startwithfieldname == "code")
                         return (d.code && d.code.toLowerCase().indexOf(q) == 0);
                     else
-                        return (d.label && d.label.toLowerCase().indexOf(q) == 0);
+                        //return (d.label && d.label.toLowerCase().indexOf(q) == 0);
+                        return (d.code && d.code.toLowerCase().indexOf(q) == 0) ||
+                            (d.name && d.name.toLowerCase().indexOf(q) == 0);
                 } else {//Contains
+                    if (d.name && startwithfieldname == "name")
+                        return (d.name && d.name.toLowerCase().indexOf(q) > -1);
+                    else if (d.code && startwithfieldname == "code")
+                        return (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                    else
                     return (d.label && d.label.toLowerCase().indexOf(q) > -1) ||
                         (d.code && d.code.toLowerCase().indexOf(q) > -1);
                     

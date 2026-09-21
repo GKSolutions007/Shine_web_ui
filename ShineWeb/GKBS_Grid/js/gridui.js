@@ -1710,7 +1710,7 @@ class GKBSDynamicGrid {
             el.style.padding = '8px 2px';
             el.style.boxSizing = 'border-box';
             el.style.textAlign = col.align || 'left';
-            const rawValue = parseFloat(rowData[col.field]);
+            const rawValue = parseFloat(rowData[col.field]) || 0;
             el.title = rawValue;
             var roundvalue = formatToDecimals(rawValue, col.precision !== undefined ? col.precision : 2);
             //console.log("roundvalue", parseFloat(roundvalue));
@@ -1725,7 +1725,7 @@ class GKBSDynamicGrid {
             el.style.padding = '8px 2px';
             el.style.boxSizing = 'border-box';
             el.style.textAlign = col.align || 'left';
-            const rawValue = rowData[col.field];
+            const rawValue = rowData[col.field] || 0;
             el.title = rawValue;
             el.innerHTML = rawValue != "" ? parseInt(rawValue) : rawValue;
         }

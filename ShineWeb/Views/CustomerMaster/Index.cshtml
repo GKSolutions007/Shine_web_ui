@@ -314,8 +314,8 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 8px 16px;
-        background: #0d6efd;
+        padding: 8px 15px;
+        
         color: #fff;
         border: none;
         border-radius: 25px;
@@ -663,9 +663,12 @@
                                                     </div>
                                                 </td>
                                                 <td style="border:none;padding-left:2px;padding-right:2px">
-                                                    <div>
-                                                        <button type="button" id="gotolocation" class="navigate-btn">
+                                                    <div class="d-flex">
+                                                        <button type="button" id="gotolocation" title="Goto location" class="navigate-btn"style="background: #0d6efd;">
                                                             <i class="fa-solid fa-location-dot"></i>
+                                                        </button>
+                                                        <button type="button" id="removelocation" title="Remove Pin Location" class="navigate-btn"style="background: RED;">
+                                                            <i class="fa-solid fa-remove"></i>
                                                         </button>
                                                     </div>
                                                 </td>
@@ -1520,7 +1523,8 @@
     var itemorderby = '@Session["ItemOrderby"]';
 var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
 var autolistfilterwith = EnableALStartWith;
-var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
+    var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
+    var removepinlocation = 0;
     var grid, Customer;
     GetColumnSettingsData(2, 14, 1);
     var Table = $('#tblMasterData').DataTable();
@@ -1710,6 +1714,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                 else if (nMode == 5) {
                     //~Assign Data
                     RemovedImages = "";
+                    $("#gotolocation").show();
+                    $("#removelocation").hide();
+                    
+                    removepinlocation = 0;
                     TableBS.draw().clear(); TableRemarks.draw().clear();
                     $.each(data, function (i, items) {
                         $("#txtID").val(items.ID),
@@ -1784,9 +1792,12 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                         var customerlocation = "";
                         if (items.Latitude != "") {
                             customerlocation = items.Latitude.trim() + "," + items.Longtitude.trim();
-                            $("#gotolocation").show();
+                            $("#gotolocation,#removelocation").show();
                         } else {
                             $("#gotolocation").hide();
+                        }
+                        if (nTransMode == 3) {
+                            $("#removelocation").hide();
                         }
                         $("#gotolocation").attr("data-location", customerlocation);
                         $.each(items.BSM, function (j, bsmitems) {
@@ -1895,6 +1906,12 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         var url = "https://www.google.com/maps?q=" + encodeURIComponent(location);
         window.open(url, "_blank");
     });
+    $(document).on("click", "#removelocation", function () {
+        $("#gotolocation").hide();
+        $("#txtMobilePinAddress").val("");
+        removepinlocation = 1;
+    });
+    
     var gridbeatid, gridsmid;
     function LoadDependData(DependModeID,AssignValue) {
         $.ajax({
@@ -2195,7 +2212,7 @@ function updateInputColumn(inputID, netValue) {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
     function ClearForm() {
-        ids = 0, Salesmanids = 0;
+        ids = 0, Salesmanids = 0,removepinlocation = 0;;
         RemovedImages = "";
         $(".FormclrField").val("");
         $(".FormclrcmbField").val(0);
@@ -2205,6 +2222,7 @@ function updateInputColumn(inputID, netValue) {
         $("#lblShowTrackPointData").text("0.00 / ₹ 0.00");
         $(".clrdivs").html("");
         $("#dvErrorDetail").hide();
+        $("#removelocation").hide();
         $("#lblSaveError").html("");
         TableBS.draw().clear();
         TableRemarks.draw().clear();
@@ -2506,6 +2524,7 @@ function updateInputColumn(inputID, netValue) {
             "Remark": $("#txtRemarks").val(),
             "Active": $("#chkActive").is(":checked") ? 1 : 0,
             "RemoveImages": RemovedImages,
+            "Removelocation": removepinlocation,
             "lstCustRemark": objcustRem,
             "UserID": UID,
             "BSM": objItemDetails

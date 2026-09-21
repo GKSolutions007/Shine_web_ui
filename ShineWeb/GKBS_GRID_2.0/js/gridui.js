@@ -1865,7 +1865,7 @@ class GKBSDynamicGrid {
         const pageData = this.getPaginatedData();
 
         if (pageData.length === 0) {
-            body.innerHTML = '<div style="padding:30px; text-align:center; color:#999"> <i class="fas fa-folder-open" style="font-size:15px;padding:5px"></i>No records found</div>';
+            body.innerHTML = '<div style="padding:10px; text-align:center; color:#999"> <i class="fas fa-folder-open" style="font-size:15px;padding:5px"></i>No records found</div>';
             this.container.appendChild(body);
             return;
         }
@@ -2461,7 +2461,7 @@ class GKBSDynamicGrid {
             el.style.padding = '8px 2px';
             el.style.boxSizing = 'border-box';
             el.style.textAlign = col.align || 'left';
-            const rawValue = rowData[col.field];
+            const rawValue = rowData[col.field] || 0;
             el.title = rawValue;
             var roundvalue = formatToDecimals(rawValue, col.precision !== undefined ? col.precision : 2);
             el.innerHTML = roundvalue.toString();
@@ -2475,7 +2475,7 @@ class GKBSDynamicGrid {
             el.style.padding = '8px 2px';
             el.style.boxSizing = 'border-box';
             el.style.textAlign = col.align || 'left';
-            const rawValue = rowData[col.field];
+            const rawValue = rowData[col.field] || 0;
             el.title = rawValue;
             el.innerHTML = rawValue != "" ? parseInt(rawValue) : rawValue;
         }
