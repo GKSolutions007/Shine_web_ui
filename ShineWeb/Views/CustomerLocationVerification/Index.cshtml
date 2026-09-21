@@ -794,7 +794,10 @@
         .mda-image-modal .modal-header .btn-close {
             filter: invert(1);
         }
-
+    .mda-image-modal .modal-header {
+        position: relative;
+        z-index: 1056;
+    }
     .mda-image-modal .modal-body {
         text-align: center;
         padding: 22px;
@@ -829,6 +832,108 @@
             .mda-image-status i.fa-exclamation-triangle {
                 color: var(--mda-warning);
             }
+    .toastBox {
+        pointer-events: none;
+    }
+</style>
+<style>
+    /* ---------- Amazon-style hover zoom ---------- */
+    .mda-zoom-container {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        min-height: 480px;
+    }
+
+    .mda-zoom-thumb-wrap {
+        position: relative;
+        width: 420px;
+        height: 480px;
+        border: 1px solid #eef0f7;
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: crosshair;
+        flex: 0 0 auto;
+        background: #f4f6fb;
+    }
+
+        .mda-zoom-thumb-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+    .mda-zoom-lens {
+        position: absolute;
+        border: 2px solid var(--mda-primary);
+        background: rgba(67, 97, 238, 0.15);
+        width: 150px;
+        height: 150px;
+        pointer-events: none;
+        display: none;
+    }
+
+    .mda-zoom-result {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 480px;
+        border: 1px solid #eef0f7;
+        border-radius: 12px;
+        background-repeat: no-repeat;
+        background-color: #f4f6fb;
+        display: none;
+        box-shadow: 0 6px 20px rgba(20, 25, 60, .12);
+    }
+
+    .mda-zoom-thumbs-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+    }
+
+    .mda-zoom-thumb-small {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid transparent;
+        cursor: pointer;
+        flex: 0 0 auto;
+        transition: border-color .15s ease;
+    }
+
+        .mda-zoom-thumb-small img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .mda-zoom-thumb-small.active {
+            border-color: var(--mda-primary);
+        }
+
+    .mda-zoom-meta {
+        margin-top: 10px;
+        font-size: 13px;
+        color: #6c7086;
+    }
+
+    .mda-image-modal .modal-dialog {
+        max-width: 95vw;
+    }
+
+    @@media (max-width: 768px) {
+        .mda-zoom-container {
+            flex-direction: column;
+        }
+
+        .mda-zoom-result {
+            display: none !important; /* zoom panel doesn't make sense on touch/mobile */
+        }
+    }
 </style>
 
 
@@ -1050,7 +1155,7 @@ var FID = 1;
                             "mRender": function (data, type, value, meta) {
                                 var hasImage = parseInt(value.Images, 10) === 1;
                                 if (hasImage) {
-                                    return '<button type="button" class="mda-link-btn mda-link-image btnViewImage" data-id="' + value.ID + '">'
+                                    return '<button type="button" class="mda-link-btn mda-link-image btnViewImage" data-id="' + value.CustomerID + '">'
                                         + '<i class="fa fa-image"></i> View</button>';
                                 }
                                 return '<span class="mda-empty-cell"><i class="fa fa-ban"></i> No Image</span>';
@@ -1152,14 +1257,15 @@ var FID = 1;
     // Click handler for Approve button
     $('#tblCustomerLocation tbody').on('click', 'button.btnApprove:not(:disabled)', function () {
         var locationId = $(this).data('id');
-        SaveCustomerLocationAction(2, locationId);
+        var remarks = $(this).closest('tr').find('.remarkInput').val();
+        SaveCustomerLocationAction(2, locationId, remarks);
     });
 
     // Click handler for Reject button
     $('#tblCustomerLocation tbody').on('click', 'button.btnReject:not(:disabled)', function () {
         var locationId = $(this).data('id');
-        // Mode 3 = Reject
-        SaveCustomerLocationAction(3, locationId);
+        var remarks = $(this).closest('tr').find('.remarkInput').val();
+        SaveCustomerLocationAction(3, locationId, remarks);
     });
 
     // ---------- Stat cards ----------
@@ -1191,14 +1297,8 @@ var FID = 1;
         var mdaImageModal = bootstrap.Modal.getOrCreateInstance(mdaImageModalEl);
         mdaImageModal.show();
 
-        var cached = customerimage.find(function (img) { return img.CustomerID == customerId; });
-        if (cached) {
-            RenderCustomerImage(cached.ImgData);
-            return;
-        }
-
         $.ajax({
-            url: Aurl + "customermaster/GetCustomerLocationImage",
+            url: Aurl + "customermaster/CustomerLocationImage",
             type: 'GET',
             dataType: 'json',
             data: { CustomerID: customerId },
@@ -1206,18 +1306,11 @@ var FID = 1;
                 withCredentials: true
             },
             success: function (data) {
-                // Expecting the API to return an array of image objects, same shape as
-                // the CommonImagedata sample array (FileName, FileSize, CompressImageData).
-                // Fall back to CommonImagedata if the API hasn't been wired up yet.
-                var imgArray = (data && data.length) ? data : CommonImagedata;
-
-                customerimage.push({ CustomerID: customerId, ImgData: imgArray });
-                RenderCustomerImage(imgArray);
+                RenderCustomerImage(data);
             },
             error: function (xhr, status, error) {
                 console.error("Error loading customer image:", error);
-                // Fall back to the CommonImagedata sample array so the gallery popup can still be shown.
-                RenderCustomerImage(CommonImagedata);
+                $('#mdaImageModalBody').html('<div class="mda-image-status"><i class="fa fa-exclamation-triangle"></i>Failed to load image.</div>');
             }
         });
     });
@@ -1230,54 +1323,167 @@ var FID = 1;
             return;
         }
 
-        var html = '<div class="mda-image-gallery">';
-        $.each(images, function (i, img) {
-            var raw = img.CompressImageData || img.ImgData || '';
-            var src = (raw.indexOf('data:image') === 0) ? raw : ('data:image/jpeg;base64,' + raw);
-            var fileName = img.FileName || ('Image ' + (i + 1));
-            var fileSize = img.FileSize || '';
+        var html = '<div class="mda-zoom-container">'
+            + '<div class="mda-zoom-thumb-wrap" id="mdaZoomThumbWrap">'
+            + '<img id="mdaZoomImg" src="" alt="" />'
+            + '<div class="mda-zoom-lens" id="mdaZoomLens"></div>'
+            + '</div>'
+            + '<div class="mda-zoom-result" id="mdaZoomResult"></div>'
+            + '</div>'
+            + '<div class="mda-zoom-meta" id="mdaZoomMeta"></div>';
 
-            html += '<div class="mda-image-card">'
-                + '<div class="mda-image-zoom-wrap"><img src="' + src + '" alt="' + fileName + '" /></div>'
-                + '<div class="mda-image-meta">'
-                + '<div class="mda-image-name" title="' + fileName + '">' + fileName + '</div>'
-                + (fileSize ? '<div class="mda-image-size">' + fileSize + '</div>' : '')
-                + '</div>'
-                + '</div>';
-        });
-        html += '</div>';
+        if (images.length > 1) {
+            html += '<div class="mda-zoom-thumbs-row" id="mdaZoomThumbsRow"></div>';
+        }
 
         $('#mdaImageModalBody').html(html);
+
+        // Normalize each image's src/fileName/fileSize once
+        var normalized = $.map(images, function (img, i) {
+            var raw = img.CompressImageData || img.ImgData || '';
+            var src = (raw.indexOf('data:image') === 0) ? raw : ('data:image/jpeg;base64,' + raw);
+            return {
+                src: src,
+                fileName: img.FileName || ('Image ' + (i + 1)),
+                fileSize: img.FileSize || ''
+            };
+        });
+
+        SetActiveZoomImage(normalized[0]);
+        InitZoom();
+
+        if (normalized.length > 1) {
+            var rowHtml = '';
+            $.each(normalized, function (i, item) {
+                rowHtml += '<div class="mda-zoom-thumb-small' + (i === 0 ? ' active' : '') + '" data-index="' + i + '">'
+                    + '<img src="' + item.src + '" alt="' + item.fileName + '" />'
+                    + '</div>';
+            });
+            $('#mdaZoomThumbsRow').html(rowHtml);
+
+            $('#mdaZoomThumbsRow').on('click', '.mda-zoom-thumb-small', function () {
+                var idx = $(this).data('index');
+                $('#mdaZoomThumbsRow .mda-zoom-thumb-small').removeClass('active');
+                $(this).addClass('active');
+                SetActiveZoomImage(normalized[idx]);
+            });
+        }
     }
 
-    function SaveCustomerLocationAction(Mode, LocationID) {
+    function SetActiveZoomImage(item) {
+        $('#mdaZoomImg').attr('src', item.src).attr('alt', item.fileName);
+        $('#mdaZoomResult').css('background-image', 'url(' + item.src + ')');
+        $('#mdaZoomMeta').html('<strong>' + item.fileName + '</strong>' + (item.fileSize ? ' &middot; ' + item.fileSize : ''));
+    }
+
+    // Sets up the lens-follow-cursor zoom interaction. Bound once per modal open
+    // since the elements are freshly injected each time.
+    function InitZoom() {
+        var $wrap = $('#mdaZoomThumbWrap');
+        var $img = $('#mdaZoomImg');
+        var $lens = $('#mdaZoomLens');
+        var $result = $('#mdaZoomResult');
+
+        $wrap.off('mouseenter mousemove mouseleave');
+
+        $wrap.on('mouseenter', function () {
+            if (window.innerWidth <= 768) return; // skip on small screens
+            $lens.show();
+            $result.show();
+        });
+
+        $wrap.on('mouseleave', function () {
+            $lens.hide();
+            $result.hide();
+        });
+
+        $wrap.on('mousemove', function (e) {
+            if (window.innerWidth <= 768) return;
+
+            var wrapOffset = $wrap.offset();
+            var wrapW = $wrap.width();
+            var wrapH = $wrap.height();
+            var lensW = $lens.width();
+            var lensH = $lens.height();
+
+            var x = e.pageX - wrapOffset.left - lensW / 2;
+            var y = e.pageY - wrapOffset.top - lensH / 2;
+
+            // Clamp lens inside the thumbnail bounds
+            x = Math.max(0, Math.min(x, wrapW - lensW));
+            y = Math.max(0, Math.min(y, wrapH - lensH));
+
+            $lens.css({ left: x + 'px', top: y + 'px' });
+
+            // Map lens position to the zoomed background position
+            var resultW = $result.width();
+            var resultH = $result.height();
+            var ratioX = resultW / lensW;
+            var ratioY = resultH / lensH;
+
+            $result.css({
+                backgroundSize: (wrapW * ratioX) + 'px ' + (wrapH * ratioY) + 'px',
+                backgroundPosition: '-' + (x * ratioX) + 'px -' + (y * ratioY) + 'px'
+            });
+        });
+    }
+
+    //function SaveCustomerLocationAction(Mode, LocationID, Remarks) {
+    //    $.ajax({
+    //        url: Aurl + "customermaster/CustomerLocationVerificationSave",
+    //        type: 'POST',
+    //        dataType: 'json',
+    //        data: {
+    //            mode: Mode,
+    //            id: LocationID,
+    //            userId: UID,
+    //            remarks: Remarks || ''
+    //        },
+    //        xhrFields: {
+    //            withCredentials: true
+    //        },
+    //        success: function (data) {
+    //            $.each(data, function (i, items) {
+    //                if (items.MsgID == "0" || items.Status == "Success") {
+    //                    if (Mode == 2) {
+    //                        showSuccessSnackbar("Approved Successfully.!!!");
+    //                    } else {
+    //                        showSuccessSnackbar("Rejected Successfully.!!!");
+    //                    }
+    //                    setTimeout(() => {
+    //                        InitiateData();
+    //                    }, 300);
+    //                } else {
+    //                    showErrorPopup(items.Message || "Operation failed.");
+    //                }
+    //            });
+    //        },
+    //        error: function (xhr, status, error) {
+    //            console.error("Error saving status:", error);
+    //            showErrorSnackbar("An error occurred while saving.");
+    //        }
+    //    });
+    //}
+
+    function SaveCustomerLocationAction(Mode, LocationID, Remarks) {
         $.ajax({
-            url: Aurl + "customermaster/SaveLocationAction",
-            type: 'GET',
+            url: Aurl + "customermaster/CustomerLocationVerificationSave?mode=" + Mode + "&id=" + LocationID + "&userId=" + UID + "&remarks=" + encodeURIComponent(Remarks || ''),
+            type: 'POST',
             dataType: 'json',
-            data: {
-                nMode: Mode,
-                nID: LocationID,
-                nUserID: UID
-            },
             xhrFields: {
                 withCredentials: true
             },
             success: function (data) {
                 $.each(data, function (i, items) {
                     if (items.MsgID == "0" || items.Status == "Success") {
-
                         if (Mode == 2) {
                             showSuccessSnackbar("Approved Successfully.!!!");
                         } else {
                             showSuccessSnackbar("Rejected Successfully.!!!");
                         }
-
-                        // Reload table data dynamically after action
                         setTimeout(() => {
                             InitiateData();
                         }, 300);
-
                     } else {
                         showErrorPopup(items.Message || "Operation failed.");
                     }
@@ -1289,5 +1495,4 @@ var FID = 1;
             }
         });
     }
-
 </script>
