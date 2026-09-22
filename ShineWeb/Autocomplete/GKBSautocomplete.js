@@ -14,7 +14,7 @@ function PaginatedAutocomplete(options) {
 
     var $input = $("#" + inputId);
     $("#" + dropId).remove();
-    $input.css("background-color", "var(--dynamic-bg)");
+    $input.css("background-color", "var(--AutocompleteFieldBG)");
     var $GKBSdropdown = $([
         '<div class="gkbsautocomplete" id="' + dropId + '" style="',
         'display:none;position:fixed;z-index:99999;',   /* ← fixed, not absolute */
