@@ -233,7 +233,7 @@
     }
 
     .preview-header {
-        height: 60px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -243,6 +243,7 @@
 
     .preview-body {
         padding: 20px;
+        border-left: 180px solid white;
     }
 
     .preview-grid-header {
@@ -265,11 +266,25 @@
         color: white;
         transition: opacity 0.2s;
     }
+        .preview-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,.12);
+        }
+    .newtheme-btn {
+        border: 2px solid lightgray;
+        background: none;
+        padding: 0px 5px;
+        border-radius: 5px;        
+    }
 
+        .newtheme-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,.12);
+        }
     .preview-autocomplete {
         width: 250px;
-        border-radius: 8px;
-        padding: 10px;
+        border-radius: 1px;
+        padding: 1px 5px;
         margin-top: 1px;
     }
 
@@ -296,6 +311,35 @@
         background-color: var(--header-bg) !important;
         color: var(--header-color) !important;
     }
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -45%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 0.9em;
+        font-weight: 600;
+        letter-spacing: 1px;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
 </style>
 
 <body>
@@ -320,10 +364,15 @@
                     <p class="subtitle">Customize your workspace colors and theme settings.</p>
                 </div>
                 <div class="card theme-card p-3">
-                    <div class="section-title fw-bolder"><i class="fas fa-palette"></i> Theme Selection</div>
-                    <div class="d-flex align-items-end gap-2">
-                        <div class="flex-grow-1 fw-bold">
+                    <div class="section-title fw-bolder">
+                        <i class="fas fa-palette"></i> Theme Selection
+                        <button id="btnNewTheme" class="newtheme-btn" title="New Theme">
+                            ➕
+                        </button>
+                    </div>
 
+                    <div class="d-flex align-items-end gap-2">
+                        <div class="flex-grow-1 fw-bold" id="dvExistsTheme">
                             <div class="input-group">
                                 <span class="flex-grow-1">
                                     <select id="cmbThemes" class="form-select" style="width:100%;font-size:12px">
@@ -332,12 +381,23 @@
                                     </select>
                                 </span>
                                 <span id="btnLoad" class="input-group-text" style="font-size: 12px; cursor: pointer "><span class="fa fa-download" style="background-color:white"></span>&ensp; Load</span>
-                            </div>                            
+                            </div>
                         </div>
-                        @*<button class="btn btn-primary load" id="btnLoad">
-                            <i class="fas fa-sync"></i> Load
-                        </button>*@
+
+                        <div class="flex-grow-1 fw-bold mt-2" id="dvNewTheme">
+                            <div class="input-group">
+                                <span class="form-label flex-fill">
+                                    <input class="form-control FormclrField"
+                                           type="text"
+                                           id="txtNewThemeName"
+                                           placeholder="Theme Name">
+                                    <label class="labelup">Theme Name *</label>
+                                </span>
+                            </div>
+                            <div class="text-danger pt-1 ps-1 clrdivs" id="divErrNewTheme"></div>
+                        </div>
                     </div>
+                    
                     <button type="button" class="btn btn-success mt-2" id="btnSave">
                         <i class="glyphicon glyphicon-saved"></i> Save Changes
                     </button>
@@ -431,14 +491,20 @@
                         </div>
                         <div class="col-6">
                             <div class="color-picker-wrapper fw-bold">
+                                <input type="color" id="txtAutoCompleteSelectBG" class="form-control form-control-color" />
+                                <small>Autocomplete Select BG</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="color-picker-wrapper fw-bold">
                                 <input type="color" id="txtAutoCompleteLine1" class="form-control form-control-color" />
-                                <small>Autocomplete Line 1</small>
+                                <small>Autocomplete Text 1</small>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="color-picker-wrapper fw-bold">
                                 <input type="color" id="txtAutoCompleteLine2" class="form-control form-control-color" />
-                                <small>Autocomplete Line 2</small>
+                                <small>Autocomplete Text 2</small>
                             </div>
                         </div>
                     </div>
@@ -558,72 +624,159 @@
                         <!-- Simulated Navigation Header -->
                         <div id="dvHeaderMenu" class="preview-header">
                             <div>
-                                <span id="pCompName" style="font-weight: 800; font-size: 1.2rem;">Shine Web</span>
-                                <span class="ms-3 fw-500" style="opacity: 0.9;">Main Menu</span>
+                                <img src="~/Images/G_large_Transparent.png" style="height:25px;width:25px;"/>
+                                <span id="pCompName" style="font-weight: 800; font-size: 1.6rem;">Shine Web</span>
+                                <span hidden class="ms-3 fw-500" style="opacity: 0.9;">Main Menu</span>
                             </div>
-                            <div id="dvHeaderSubMenu" style="font-size: 0.85rem; border:groove; padding:3px;">
+                            <div hidden id="dvHeaderSubMenu" style="font-size: 0.85rem; border:groove; padding:3px;">
                                 <i class="fas fa-chevron-right me-1" style="font-size: 0.7rem;"></i> Sub Menu Item
                             </div>
                         </div>
 
                         <div class="preview-body">
-                            <div class="row">                                
+
+                            <span class="fw-500 spHeaderMenuText" style="opacity: 0.9;margin-left:-180px;font-size:15px">Main Menu 1</span>
+                            <br /><br />
+                            <span class="fw-500 spHeaderSubMenuText spHeaderSubMenuTextHVR" style="opacity: 0.9; font-size: 13px; margin-left: -160px;">&bull; SubMenu Menu 1</span>
+                            <br />
+                            <span class="fw-500 spHeaderSubMenuText" style="opacity: 0.9; font-size: 13px; margin-left: -160px;">&bull; SubMenu Menu 2</span>
+                            <br />
+                            <span class="fw-500 spHeaderSubMenuText" style="opacity: 0.9; font-size: 13px; margin-left: -160px;">&bull; SubMenu Menu 3</span>
+                            <br />
+                            <span class="fw-500 spHeaderMenuText" style="opacity: 0.9;margin-left:-180px;font-size:15px">Main Menu 2</span>
+                            <br />
+                            <span class="fw-500 spHeaderMenuText" style="opacity: 0.9;margin-left:-180px;font-size:15px">Main Menu 3</span>
+                            <div class="row" style="margin-top: -150px">
                                 <div class="d-flex justify-content-between mb-2">
                                     <button class="preview-btn clrforadd fortextcolor">Add Items</button>
                                     <button class="preview-btn clrforbatch fortextcolor">Batch</button>
-                                    
+
                                     <button class="preview-btn clrforfilter fortextcolor">Filter</button>
                                 </div>
                             </div>
                             <!-- Simulated Grid -->
-                            <table class="table table-bordered mb-4" style="border-radius: 8px; overflow: hidden;">
+                            <table class="table table-bordered mb-4" style="border-radius: 8px; overflow: hidden">
                                 <thead class="preview-grid-header">
-                                   
-                                    <tr id="trGridHeader">
-                                        <th class="text-center p-3">Category</th>
-                                        <th class="text-center p-3">Description</th>
-                                        <th class="text-center p-3">Amount</th>
-                                        <th class="text-center p-3">Status</th>
+
+                                    <tr class="trGridHeader">
+                                        <th class="text-center p-2">Doc ID</th>
+                                        <th class="text-center p-2">Doc Date</th>
+                                        <th class="text-center p-2">Party</th>
+                                        <th class="text-center p-2">Net Amount</th>
+                                        <th class="text-center p-2">Balance</th>
+                                        <th class="text-center p-2">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr style="background: #fff;">
-                                        <td class="p-3">Sample Item</td>
-                                        <td class="p-3">Modern UI Preview</td>
-                                        <td class="p-3">1200.00</td>
-                                        <td class="p-3">
-                                            <span class="badge bg-success">Active</span>
+                                        <td class="p-2">INV/2627/8323</td>
+                                        <td class="p-2">@DateTime.Now.ToShortDateString()</td>
+                                        <td class="p-2">NILA SUPER MARKET</td>
+                                        <td class="p-2" align="right">51200.00</td>
+                                        <td class="p-2" align="right">51200.00</td>
+                                        <td class="p-2">
+                                            Open
                                         </td>
                                     </tr>
-                                </tbody>
-                            </table>
+                                    <tr style="background: #fff;">
+                                        <td class="p-2">INV/2627/8322</td>
+                                        <td class="p-2">@DateTime.Now.ToShortDateString()</td>
+                                        <td class="p-2">AVENUE SUPERMARTS LTD</td>
+                                        <td class="p-2" align="right">26500.00</td>
+                                        <td class="p-2" align="right">0.00</td>
+                                        <td class="p-2">
+                                            Close
+                                        </td>
+                                    </tr>
+</table>
+                            <div class="row">
+                                <div class="d-flex align-content-start">
+                                    <div>
+                                        <!-- Simulated Autocomplete -->
+                                        <input placeholder="Autocomplete field" readonly style="width:250px" class="form-control" id="txtAutcompletefield" />
+                                        <div class="preview-autocomplete dvAutoComplete">
+                                            <div class="fw-bold lblAutoCompleteLine1" style="font-size: 1rem;">Search Result (Text 1)</div>
+                                            <div class="lblAutoCompleteLine2" style="font-size: 0.85rem; opacity: 0.8;">Detailed description... (Text 2)</div>
+                                        </div>
+                                        <div id="dvAutoCompleteSelectBG" class="preview-autocomplete dvAutoComplete">
+                                            <div class="fw-bold lblAutoCompleteLine1" style="font-size: 1rem;">Search Result (Text 1)</div>
+                                            <div class="lblAutoCompleteLine2" style="font-size: 0.85rem; opacity: 0.8;">Detailed description... (Text 2)</div>
+                                        </div>
+                                        <div class="preview-autocomplete dvAutoComplete">
+                                            <div class="fw-bold lblAutoCompleteLine1" style="font-size: 1rem;">Search Result (Text 1)</div>
+                                            <div class="lblAutoCompleteLine2" style="font-size: 0.85rem; opacity: 0.8;">Detailed description... (Text 2)</div>
+                                        </div>
+                                        <div class="preview-autocomplete dvAutoComplete">
+                                            <div class="fw-bold lblAutoCompleteLine1" style="font-size: 1rem;">Search Result (Text 1)</div>
+                                            <div class="lblAutoCompleteLine2" style="font-size: 0.85rem; opacity: 0.8;">Detailed description... (Text 2)</div>
+                                        </div>
+                                        <div class="preview-autocomplete dvAutoComplete">
+                                            <div class="fw-bold lblAutoCompleteLine1" style="font-size: 1rem;">Search Result (Text 1)</div>
+                                            <div class="lblAutoCompleteLine2" style="font-size: 0.85rem; opacity: 0.8;">Detailed description... (Text 2)</div>
+                                        </div>
+                                    </div>
+                                    <div class="ms-4 vw-100">
+                                        <!-- Simulated Popup -->
+                                        <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                                            <div id="dvPopHeader" class="px-3 py-2 fw-bold">Popup Header</div>
+                                            <div class="p-3" style="background: #fbfbfb; font-size: 0.85rem; color: #718096;">
+                                                @*This is how your application popups and footer buttons will look.*@
+                                                <!-- Simulated Grid -->
+                                                <table class="table table-bordered mb-4" style="border-radius: 8px; overflow: hidden">
+                                                    <thead class="preview-grid-header">
+                                                        <tr class="trGridHeader">
+                                                            <th class="text-center p-1">Item Name</th>
+                                                            <th class="text-center p-1">Sales Price</th>
+                                                            <th class="text-center p-1">MRP</th>
+                                                            <th class="text-center p-1">ABS Qty</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr style="background: #fff;">
+                                                            <td class="p-2">Aachi Chilli Masala 100G</td>
+                                                            <td class="p-2" align="right">45.00</td>
+                                                            <td class="p-2" align="right">50.00</td>
+                                                            <td class="p-2" align="right">254.00</td>
+                                                        </tr>
+                                                        <tr style="background: #fff;">
+                                                            <td class="p-2">AACHI CORIANDER POWDER 200GM</td>
+                                                            <td class="p-2" align="right">35.00</td>
+                                                            <td class="p-2" align="right">39.00</td>
+                                                            <td class="p-2" align="right">122.00</td>
+                                                        </tr>
+                                                        <tr style="background: #fff;">
+                                                            <td class="p-2">AACHI GHEE JAR- 100ML</td>
+                                                            <td class="p-2" align="right">98.00</td>
+                                                            <td class="p-2" align="right">120.00</td>
+                                                            <td class="p-2" align="right">65.00</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
 
-                            <!-- Simulated Autocomplete -->
-                            <input placeholder="Autocomplete field" readonly style="width:250px" class="form-control" id="txtAutcompletefield"/>
-                            <div id="dvAutoComplete" class="preview-autocomplete">
-                                <div id="lblAutoCompleteLine1" class="fw-bold" style="font-size: 0.9rem;">Search Result Title</div>
-                                <div id="lblAutoCompleteLine2" style="font-size: 0.75rem; opacity: 0.8;">Detailed description goes here...</div>
-                            </div>
-
-                            <!-- Simulated Popup -->
-                            <div class="mt-4" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-                                <div id="dvPopHeader" class="px-3 py-2 fw-bold">Popup Header</div>
-                                <div class="p-3" style="background: #fbfbfb; font-size: 0.85rem; color: #718096;">
-                                    This is how your application popups and footer buttons will look.
-                                </div>
-                                <div id="dvPopFooter" class="px-3 py-2 d-flex justify-content-end gap-2">
-                                    Popup Footer
-                                    <button class="preview-btn clrforclear fortextcolor">Cancel</button>
-                                    <button class="preview-btn clrforsave fortextcolor">Action</button>
-                                    <button class="preview-btn clrforclose fortextcolor">Close</button>
+                                            <div id="dvPopFooter" class="px-3 py-2 d-flex justify-content-between gap-2">
+                                                <div>
+                                                    Popup Footer
+                                                </div>
+                                                <div>
+                                                    
+                                                    <button class="preview-btn clrforclear fortextcolor">Cancel</button>
+                                                    <button class="preview-btn clrforsave fortextcolor">Action</button>
+                                                    <button class="preview-btn clrforclose fortextcolor">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                           
+                            
 
                             <!-- All Buttons Row -->
                             <div class="section-title mt-4" style="font-size: 0.9rem;">
                                 <i class="fas fa-keyboard"></i> Button Variants
                             </div>
-                            <div class="preview-btn-group d-flex flex-wrap gap-2 mt-2 fw-bold">
+                            <div class="preview-btn-group d-flex flex-wrap gap-2 mt-2 fw-bold justify-content-end">
                                 @*<button class="preview-btn clrforadd fortextcolor" hidden>Add New</button>*@
                                 <button class="preview-btn clrformail fortextcolor">Mail</button>
                                 <button class="preview-btn clrforpdf fortextcolor">PDF</button>
@@ -667,27 +820,47 @@
             toast.text(msg).css("background", type === "success" ? "#2ecc71" : "#e74c3c").fadeIn();
             setTimeout(() => toast.fadeOut(), 3000);
         }
-
         $(".trClrEnableChange").hide();
+        $("#dvNewTheme").hide();
+        $("#dvExistsTheme").show();
+        var SaveType = 1;
+        //dvExistsTheme,
+        $("#btnNewTheme").click(function () {
+            $("#dvNewTheme").show();
+            $("#dvExistsTheme").hide();
+            SaveType = 2;
+        });
+        
 
         // Event Bindings for live preview updates (maintaining original IDs)
         $("#txtCompanyName").on('input', function(e) { $("#pCompName").css("color", e.target.value); });
-        $("#txtMenuHeader").on('input', function(e) { $("#dvHeaderMenu").css("background-color", e.target.value); });
+        $("#txtMenuHeader").on('input', function (e) {
+            $("#dvHeaderMenu").css("background-color", e.target.value);
+            $(".preview-body").css("border-left", "180px solid " + e.target.value);
+        });
         $("#txtGridHeaderText").on('input', function (e) {
             //$("#trGridHeader").find('tr').find('th').css("color", e.target.value);
+            //document
+            //    .getElementsByClassName("trGridHeader")
+            //    .style.setProperty("--header-color", this.value);
             document
-                .getElementById("trGridHeader")
-                .style.setProperty("--header-color", this.value);
+                .querySelectorAll(".trGridHeader")
+                .forEach(el => {
+                    el.style.setProperty("--header-color", this.value);
+                });
         });
         $("#txtGridHeaderBG").on('input', function (e) {
-            //$("#trGridHeader thead").find('tr').find('th').css("background-color", e.target.value);
+            //document.getElementsByClassName("trGridHeader").style.setProperty("--header-bg", this.value);
+            //$(".trGridHeader").css("--header-bg", this.value);
             document
-                .getElementById("trGridHeader")
-                .style.setProperty("--header-bg", this.value);
+                .querySelectorAll(".trGridHeader")
+                .forEach(el => {
+                    el.style.setProperty("--header-bg", this.value);
+                });
         });
-        $("#txtMenuText").on('input', function(e) { $("#dvHeaderMenu").css("color", e.target.value); });
-        $("#txtSubMenuText").on('input', function (e) { $("#dvHeaderSubMenu").css("color", e.target.value); });
-        $("#txtSubMenuHover").on('input', function (e) { $("#dvHeaderSubMenu").css("background-color", e.target.value); });
+        $("#txtMenuText").on('input', function (e) { $("#dvHeaderMenu,.spHeaderMenuText").css("color", e.target.value);});
+        $("#txtSubMenuText").on('input', function (e) { $("#dvHeaderSubMenu,.spHeaderSubMenuText").css("color", e.target.value); });
+        $("#txtSubMenuHover").on('input', function (e) { $("#dvHeaderSubMenu,.spHeaderSubMenuTextHVR").css("background-color", e.target.value); });
         $("#txtPopupfooter").on('input', function(e) { $("#dvPopFooter").css("background-color", e.target.value); });
         $("#txtPopupheader").on('input', function(e) { $("#dvPopHeader").css("background-color", e.target.value); });
         $("#txtPopupheadertext").on('input', function(e) { $("#dvPopHeader").css("color", e.target.value); });
@@ -711,9 +884,11 @@
         $("#txtPrintBtn").on('input', function (e) { $(".clrforprint").css("background-color", e.target.value); });
 
         $("#txtAutoCompleteFieldBG").on('input', function (e) { $("#txtAutcompletefield").css("background-color", e.target.value); });
-        $("#txtAutoCompleteBG").on('input', function(e) { $("#dvAutoComplete").css("background-color", e.target.value); });
-        $("#txtAutoCompleteLine1").on('input', function(e) { $("#lblAutoCompleteLine1").css("color", e.target.value); });
-        $("#txtAutoCompleteLine2").on('input', function(e) { $("#lblAutoCompleteLine2").css("color", e.target.value); });
+        
+        $("#txtAutoCompleteSelectBG").on('input', function (e) { $("#dvAutoCompleteSelectBG").css("background-color", e.target.value); });
+        $("#txtAutoCompleteBG").on('input', function(e) { $(".dvAutoComplete").css("background-color", e.target.value); });
+        $("#txtAutoCompleteLine1").on('input', function (e) { $(".lblAutoCompleteLine1").css("color", e.target.value); });
+        $("#txtAutoCompleteLine2").on('input', function(e) { $(".lblAutoCompleteLine2").css("color", e.target.value); });
 
         // Logic for enabling/disabling controls based on user/theme (Preserved)
         function updateControlVisibility() {
@@ -733,9 +908,8 @@
             GetData(1, $("#cmbThemes").val());
             showNotification("Theme preferences reloaded", "success");
         });
-
         // Initial update
-        $("#cmbThemes").val(TID);
+        GetData(0, TID);       
         GetData(1, TID);
         updateControlVisibility();
 
@@ -746,7 +920,18 @@
                 contentType: 'json',
                 data: { Mode: nMode, Name: strName },
                 xhrFields: { withCredentials: true },
+                async: false,
                 success: function (data) {
+                    if (nMode == 0) {
+                        $('#cmbThemes').find("option").remove();
+                        $.each(data, function (i, items) {
+                            $('#cmbThemes').append($('<option/>', {
+                                value: items.ID,
+                                text: items.Name,
+                            }));
+                            $("#cmbThemes").val(strName);
+                        });
+                    }
                     if (nMode == 1) {
                         $.each(data, function (i, items) {
                             // Update input values and trigger live preview
@@ -780,9 +965,12 @@
                             $("#txtGridHeaderText").val(items.GridHeaderTextColor).trigger('input');
                             $("#txtPopupheadertext").val(items.PopupHeaderText).trigger('input');
                             $("#txtAutoCompleteFieldBG").val(items.AutocompleteFieldBG).trigger('input');
+                            
                             $("#txtAutoCompleteBG").val(items.AutocompleteBG).trigger('input');
                             $("#txtAutoCompleteLine1").val(items.AutocompleteLine1).trigger('input');
                             $("#txtAutoCompleteLine2").val(items.AutocompleteLine2).trigger('input');
+                            $("#txtAutoCompleteSelectBG").val(items.AutoCompleteSelectBG).trigger('input');
+    
                         });
                     }
                 },
@@ -793,10 +981,21 @@
                 }
             });
         }
-
+        //txtNewThemeName,divErrNewTheme
         function SaveData() {
+            $("#divErrNewTheme").html("");
+            if (SaveType == 2)//New Theme
+            {
+                if ($("#txtNewThemeName").val() == "") {
+                    $("#divErrNewTheme").html("Theme Name should not be empty");
+                    showErrorSnackbar("Theme Name should not be empty");
+                    return;
+                }
+            }
             $("#btnSave").prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
             var lstMaster = {
+                "TransMode": SaveType,
+                "NewThemeName": $("#txtNewThemeName").val(),
                 "ThemeID": $("#cmbThemes").val(),
                 "UID": nUID,
                 "MenuHeader": $("#txtMenuHeader").val(),
@@ -829,6 +1028,7 @@
                 "DraftButton": $("#txtDraftBtn").val(),
 
                 "AutocompleteFieldBG": $("#txtAutoCompleteFieldBG").val(),
+                "AutoCompleteSelectBG": $("#txtAutoCompleteSelectBG").val(),
                 "FilterButton": $("#txtFilterBtn").val(),
                 "MailButton": $("#txtMailBtn").val(),
                 "PrintButton": $("#txtPrintBtn").val(),
@@ -847,7 +1047,8 @@
                     $.each(data, function (i, items) {
                         if (items.MsgID == 0) {
                             //showNotification(items.Message, "success");
-                            showSuccessSnackbar(items.Message);
+                            showSuccessSnackbar(items.Message);                
+                            ResetTheme(items.ID);
                         } else {
                             //showNotification(items.Message, "error");
                             showErrorSnackbar(items.Message);
@@ -860,7 +1061,12 @@
                 }
             });
         }
-
+        function ResetTheme(Theme) {
+            SaveType = 1;
+            $("#dvNewTheme").hide();
+            $("#dvExistsTheme").show();
+            GetData(0, Theme);
+        }
         // Action Handlers
         function ClearForm() {
             GetData(1, $("#cmbThemes").val());

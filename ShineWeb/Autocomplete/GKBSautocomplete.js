@@ -136,7 +136,7 @@ function PaginatedAutocomplete(options) {
         if (!$els.length) return;
         idx = Math.max(-1, Math.min(idx, $els.length - 1));
         $els.each(function (i) {
-            $(this).css("background", i === idx ? "#E6F1FB" : "");
+            $(this).css("background", i === idx ? "var(--AutoCompleteSelectBG)" : "");
         });
         state.activeIdx = idx;
         if (idx >= 0) {
@@ -181,7 +181,7 @@ function PaginatedAutocomplete(options) {
                     if (state.mouseBlock) return;
                     var pos = $items().index(this);
                     $items().css("background", "");
-                    $(this).css("background", "#E6F1FB");
+                    $(this).css("background", "var(--AutoCompleteSelectBG)");
                     state.activeIdx = pos;
                 });
 
