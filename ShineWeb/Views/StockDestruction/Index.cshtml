@@ -305,7 +305,7 @@
                                     <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
                                 </td>
                                 <td width="5%">
-                                    <button id="btnFilter" class="btn btn-primary"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
+                                    <button id="btnFilter" class="btn btn-filter-style"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
                                 </td>
                             </tr>
                         </table>
@@ -962,6 +962,7 @@ if ($("#txtAddID").val() == 0) {
 function updateInputColumn(inputID, netValue) {
     //const label = document.getElementById(`dgvProdGross${rowId}`);
     const input = document.getElementById(inputID);
+    console.log("id passed in:", JSON.stringify(inputID));
     var value = netValue != "" ? netValue : 0;
     input.setAttribute('txttag', parseFloat(value).toFixed(4));
     input.value = parseFloat(value).toFixed(DecVal);
@@ -1011,7 +1012,7 @@ function updateInputColumn(inputID, netValue) {
     });
     var BatchRID = 0, ProductRID = 0;
     $("#btnBatch").click(function () {
-        $("#txtBatchQtyTotal").val(0); $("#txtBatchDmgQtyTotal").val(0); $("#txtBatchQty").val(0); $("#txtBatchFreeQty").val(0); $("#txtBatchDmgQty").val(0);
+         $("#txtBatchDmgQtyTotal").val(0); $("#txtBatchDmgQty").val(0);
         TableBatch.clear().draw(); TableBatch.clear().draw();
         BatchRID = 0;
         if ($('#txtHProdID').val() != "") {
@@ -1167,13 +1168,16 @@ function updateInputColumn(inputID, netValue) {
                 result.push(allValues);
             }
         });
-        updateInputColumn("txtBatchQtyTotal", dQtyTotValue);
-        updateInputColumn("txtBatchQty", dTotQty);
+        updateInputColumn("txtBatchDmgQty", dTotQty);
+        updateInputColumn("txtBatchDmgQtyTotal", dQtyTotValue);
+        //updateInputColumn("txtBatchQtyTotal", dQtyTotValue);
+        //updateInputColumn("txtBatchQty", dTotQty);
 
     }
     let BatchAcceptArray = [];
     $('#btnBatchAccept').click(function (e) {
-        var TotQty = $("#txtBatchQty").val(), TotFreeQty = 0, TotDmgQty = 0;
+        var TotDmgQty = parseFloat($("#txtBatchDmgQty").attr("txttag")) || 0;
+            TotFreeQty = 0;
         var actqty = 0, actfree = 0, actdmg = 0, batchno = "", pkd = "", exp = "", CheckAnyBatch = false;
         $("#tblBatch tbody tr").each(function () {
             $(this).find("input[type=checkbox]").each(function (index) {
@@ -1183,7 +1187,7 @@ function updateInputColumn(inputID, netValue) {
                 }
             });
         });
-        if (CheckAnyBatch && TotQty > 0)//TotQty > 0 || TotFreeQty > 0 || TotDmgQty > 0
+        if (CheckAnyBatch && TotDmgQty > 0)//TotQty > 0 || TotFreeQty > 0 || TotDmgQty > 0
         {
             let removeprodarr = BatchAcceptArray.filter(a => a.ProdID != $("#txtHProdID").val());
             BatchAcceptArray = removeprodarr;
@@ -1247,9 +1251,9 @@ function updateInputColumn(inputID, netValue) {
             var TPren = 1;// parseFloat($("#txtBatchTaxPern").val());
             var Sno = parseInt(ProductTable.rows().count()) + 1;
             //var Calcgross = parseFloat($("#txtBatchQtyTotal").val()) + parseFloat($("#txtBatchDmgQtyTotal").val());
-            var Calcgross = parseFloat(document.getElementById("txtBatchQtyTotal").getAttribute("txttag"));
+            var Calcgross = parseFloat(document.getElementById("txtBatchDmgQtyTotal").getAttribute("txttag"));
             var gross = Calcgross;
-            var Qty1 = document.getElementById("txtBatchQty").getAttribute("txttag");
+            var Qty1 = document.getElementById("txtBatchDmgQty").getAttribute("txttag");
 
             if (BatchMode == 0 || BatchMode == 1) {
 
@@ -1281,7 +1285,7 @@ function updateInputColumn(inputID, netValue) {
                     '<p style="font-size:14px;">' + Sno + '</p>',
                     '<input disabled name = "ProName" class="gdInput" value="' + PName + '" title="' + PName + '" style="border:none;"/><br/>' + PCode,
                     $('#cmbUOM option:selected').text(),
-                    '<input txttag="' + TotQty + '" title="' + TotQty + '" type="number" step="any" id="dgvProdQty' + ProductRID + '" name ="Qty" class="gdInput txtsettag" value="' + parseFloat(TotQty).toFixed(DecVal) + '" disabled/>',
+                    '<input txttag="' + TotDmgQty + '" title="' + TotDmgQty + '" type="number" step="any" id="dgvProdQty' + ProductRID + '" name ="Qty" class="gdInput txtsettag" value="' + parseFloat(TotDmgQty).toFixed(DecVal) + '" disabled/>',
                     '<label lbltag="' + gross + '" title="' + gross + '" name="Gross" id="dgvProdGross' + ProductRID + '" class="lblsettag">' + parseFloat(gross).toFixed(DecVal) + '</label>',
                     $("#cmbReason").val() > 0 ? $("#cmbReason option:selected").text() : ""
                 ]).draw(false)
@@ -1402,7 +1406,7 @@ function setDate1(FieldID,Type) {
         var Branch = $("#cmbBranch").val();
         var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
         var isedit = nTransMode == 2;
-        GetDocumentID(DocDate, Branch, 22, prefix, isedit, id);
+        GetDocumentID(DocDate, Branch, 26, prefix, isedit, id);
     });
 
     $("#cmbBranch").change(function (e) {
@@ -1412,22 +1416,22 @@ function setDate1(FieldID,Type) {
         var id = e.target.id;
         var prefix = document.getElementById("lblDocID").getAttribute("docprefix");
         var isedit = nTransMode == 2;
-        GetDocumentID(DocDate, Branch, 22, prefix, isedit, id);
+        GetDocumentID(DocDate, Branch, 26, prefix, isedit, id);
     });
     var TempAL = [];
     function GetData(nMode, strName = null, strID = null) {
         $.ajax({
-            url: Aurl + "inventoryconvertion/get",
+            url: Aurl + "stockdestruction/get",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, CodeName: strName, ID: strID, BranchID: $("#cmbBranch").val(), Date: $("#dtpDate").val(), ConvType: $('#cmbConvertionType').val() },
+            data: { Mode: nMode, CodeName: strName, ID: strID, BranchID: $("#cmbBranch").val(), Date: $("#dtpDate").val() },
             xhrFields: {
                 withCredentials: true
             },
             success: function (data) {
                 if (nMode == 1) {
-                    $('#cmbBranch,#cmbFilterBranch,#cmbConvertionType,#cmbReason').find("option").remove();
-                    $('#cmbBranch,#cmbFilterBranch,#cmbConvertionType,#cmbReason').append($('<option/>', {
+                    $('#cmbBranch,#cmbFilterBranch,#cmbReason').find("option").remove();
+                    $('#cmbBranch,#cmbFilterBranch,#cmbReason').append($('<option/>', {
                         value: 0,
                         text: "-- Select --",
                     }));
@@ -1441,12 +1445,12 @@ function setDate1(FieldID,Type) {
                                 text: items.Name,
                             }));
                         }
-                        if (items.FType == 2) {
-                            $('#cmbConvertionType').append($('<option/>', {
-                                value: items.ID,
-                                text: items.Name,
-                            }));
-                        }
+                        //if (items.FType == 2) {
+                        //    $('#cmbConvertionType').append($('<option/>', {
+                        //        value: items.ID,
+                        //        text: items.Name,
+                        //    }));
+                        //}
                         if (items.FType == 3) {
                             $("#lblDocID").text(items.Name);
                         }
@@ -1574,20 +1578,20 @@ function setDate1(FieldID,Type) {
             }
         });
     }
-    $("#cmbConvertionType").change(function (e) {
-        var CONVTYPE = e.target.value;
-        $('#txtHProdCode').val("");
-        $('#lblProdCodeAS').text("");
-        $('#txtHProds').val("");
-        $('#txtHSN').val("");
-        $('#txtHProdID').val("");
-        $('#cmbUOM').val(0);
-        TableBatch.clear().draw(); TableBatch.clear().draw();
-        ProductTable.clear().draw();
-        GetData(2, CONVTYPE);
-    });
+    //$("#cmbConvertionType").change(function (e) {
+    //    var CONVTYPE = e.target.value;
+    //    $('#txtHProdCode').val("");
+    //    $('#lblProdCodeAS').text("");
+    //    $('#txtHProds').val("");
+    //    $('#txtHSN').val("");
+    //    $('#txtHProdID').val("");
+    //    $('#cmbUOM').val(0);
+    //    TableBatch.clear().draw(); TableBatch.clear().draw();
+    //    ProductTable.clear().draw();
+    //    GetData(2, CONVTYPE);
+    //});
     $("#cmbBranch,#dtpDate").change(function (e) {
-        var qtyonly = $("#cmbConvertionType").val();
+        //var qtyonly = $("#cmbConvertionType").val();
         $('#txtHProdCode').val("");
         $('#lblProdCodeAS').text("");
         $('#txtHProds').val("");
@@ -1596,20 +1600,20 @@ function setDate1(FieldID,Type) {
         $('#cmbUOM').val(0);
         TableBatch.clear().draw(); TableBatch.clear().draw();
         ProductTable.clear().draw();
-        GetData(2, qtyonly);
+        GetData(2);
     });
-    $('#txtHProds').keyup(function (e) {
-        if ($("#cmbConvertionType").val() == 0) {
-            $("#cmbConvertionType").focus();
-            $('#txtHProdCode').val("");
-            $('#lblProdCodeAS').text("");
-            $('#txtHProds').val("");
-            $('#txtHSN').val("");
-            $('#txtHProdID').val("");
-            $('#cmbUOM').val(0);
-            showErrorSnackbar("Select convertion type");
-        }
-    });
+    //$('#txtHProds').keyup(function (e) {
+    //    if ($("#cmbConvertionType").val() == 0) {
+    //        $("#cmbConvertionType").focus();
+    //        $('#txtHProdCode').val("");
+    //        $('#lblProdCodeAS').text("");
+    //        $('#txtHProds').val("");
+    //        $('#txtHSN').val("");
+    //        $('#txtHProdID').val("");
+    //        $('#cmbUOM').val(0);
+    //        showErrorSnackbar("Select convertion type");
+    //    }
+    //});
     function GetProductViewData(nMode, strName = null) {
         $.ajax({
             url: Aurl + "inventoryconvertion/get",
@@ -1630,7 +1634,7 @@ function setDate1(FieldID,Type) {
                     $("#txtRemarks").val(items.Remarks),
                     $("#txtNarration").val(items.Narration),
                         $("#txtStatus").val(items.Status);
-                    $('#cmbConvertionType').val(items.ConvertionType);
+                    //$('#cmbConvertionType').val(items.ConvertionType);
                     ProductRID = 0;
                     var dataSetlstBatchInfo = items.lstBatchInfo.map(function (itemsProd, nRowIndex) {
                         return [
@@ -1762,10 +1766,10 @@ function setDate1(FieldID,Type) {
             var strBranch = $("#cmbFilterBranch").val(),  dFrom = $("#dtpFFrom").val(),
                 dTo = $("#dtpFTo").val(), chkshow = $("#chkShowAll").is(":checked") ? "1" : "0";
             $.ajax({
-                url: Aurl + "inventoryconvertion/getfilterdata",
+                url: Aurl + "stockdestruction/getfilterdata",
                 type: 'get',
                 contentType: 'json',
-                data: { Mode: 7, TransID: 22, Branch: strBranch, FromDate: dFrom, ToDate: dTo, Showall: chkshow },
+                data: { Mode: 7, TransID: 26, Branch: strBranch, FromDate: dFrom, ToDate: dTo, Showall: chkshow },
                 xhrFields: {
                     withCredentials: true
                 },
@@ -1817,7 +1821,7 @@ function setDate1(FieldID,Type) {
                                         setTimeout(() => {
                                             var DocDate = $("#dtpDate").val();
                                             var Branch = $("#cmbBranch").val();
-                                            GetDocumentID(DocDate, Branch, 22);
+                                            GetDocumentID(DocDate, Branch, 26);
                                         }, 1000);
                                     }
                                 },
@@ -1862,9 +1866,9 @@ function setDate1(FieldID,Type) {
         GetData(1);
         setDate("dtpDate", 0);
         SetFilterDate();
-        //setTimeout(function () {
-        //    GetData(2, qtyonly);
-        //}, 500);
+        setTimeout(function () {
+            GetData(2);
+        }, 500);
         nIsDraft = 0, ProductRID = 0, BatchRID = 0;
         BatchAcceptArray = [];
         TempProd = [];
@@ -1881,7 +1885,7 @@ function setDate1(FieldID,Type) {
         $("#btnSave,#btnClear,#btnDraft").show();
         $("#MainHeading").text($("#txtFormName").val());
         $('#cmbUOM').prop("disabled", true);
-        $("#cmbConvertionType").focus();
+        //$("#cmbConvertionType").focus();
         $("#dvItemselection").show();
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
@@ -2011,7 +2015,7 @@ function setDate1(FieldID,Type) {
                         $("#txtHProds").val(item.code);
                         if ($("#cmbBranch").val() > 0) {
                             var qtyonly = 0;//
-                            GetData(3, item.code, qtyonly);
+                            GetData(3, item.code);
                             $("#btnBatch").focus();
                         }
                         else {
@@ -2256,11 +2260,11 @@ function setDate1(FieldID,Type) {
                 "ID": $("#txtID").val(),
                 "Date": $("#dtpDate").val(),
                 "TransMode": nTransMode,
-                "TransID": 22,
+                "TransID": 26,
                 "BranchID": $("#cmbBranch").val(),
                 "DocID": $("#lblDocID").val(),
                 "RefNo": $("#txtRefNo").val(),
-                "ConvertionType": $("#cmbConvertionType").val(),
+                //"ConvertionType": $("#cmbConvertionType").val(),
                 "TaxTypeID": 1,
                 "GrossAmt": document.getElementById("lblPTAmt").getAttribute("lbltag"),// $("#lblPTAmt").text(),
                 "Status": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode == 2 ? 3 : $("#txtStatus").val(),
@@ -2272,7 +2276,7 @@ function setDate1(FieldID,Type) {
                 "lstProdInfo": ProductArray
             }
             $.ajax({
-                url: Aurl + "inventoryconvertion/save",
+                url: Aurl + "stockdestruction/save",
                 type: 'POST',
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify(listTrans),
