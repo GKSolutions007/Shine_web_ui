@@ -2167,7 +2167,7 @@
         select: true
     });
     var editingRow = null;
-
+    var currentbatchrow = null;
     var TableProductInfo = $('#tblProductInfo').DataTable({
         "bFilter": false,
         "bSearchable": false,
@@ -4188,6 +4188,7 @@ if ($("#txtAddID").val() == 0) {
         SelRowIndex = $(this).closest('tr').index();
         editingRow = ProductTable.row($(this).closest('tr'));
         rowdata = ProductTable.row($(this).parents('tr')).data();
+        currentbatchrow = ProductTable.row($(this).closest('tr'));
         var ProdID = rowdata[0];
         var Price = rowdata[3];
         var mrp = rowdata[15];
@@ -4352,7 +4353,8 @@ if ($("#txtAddID").val() == 0) {
     function applyBatchdatatoItemrow(rowdata) {
 
         var nPricttype = $("#cmbPriceType").val();
-        var Prodrowdata = ProductTable.row(editingRow).data();
+        //var Prodrowdata = ProductTable.row(editingRow).data();
+        var Prodrowdata = ProductTable.row(currentbatchrow).data(); 
         var nCurRowProdID = parseInt(Prodrowdata[0]);
         var tpern = parseFloat(Prodrowdata[2]);
         var currenthiddenrowid = parseInt(Prodrowdata[30]);
@@ -4401,12 +4403,12 @@ if ($("#txtAddID").val() == 0) {
         updateInputColumn(finclid, InclPrice);
 
         //batch price,mrp,batchno,pkd,expiry update
-        ProductTable.cell(editingRow, 3).data(Price).draw();
+        ProductTable.cell(currentbatchrow, 3).data(Price).draw();//editingRow
         //ProductTable.cell(SelRowIndex, 4).data(MRP).draw();
-        ProductTable.cell(editingRow, 5).data(BatchNo).draw();
-        ProductTable.cell(editingRow, 6).data(PKD).draw();
-        ProductTable.cell(editingRow, 7).data(Expiry).draw();
-        ProductTable.cell(editingRow, 29).data(SelBatchType).draw();
+        ProductTable.cell(currentbatchrow, 5).data(BatchNo).draw();//editingRow
+        ProductTable.cell(currentbatchrow, 6).data(PKD).draw();//editingRow
+        ProductTable.cell(currentbatchrow, 7).data(Expiry).draw();//editingRow//editingRow
+        ProductTable.cell(currentbatchrow, 29).data(SelBatchType).draw();//editingRow
 
         //get qty
         var prqty = Prodrowdata[17];
@@ -4497,7 +4499,7 @@ if ($("#txtAddID").val() == 0) {
             0,0,0,'','','',0,0,0,0,
             '<span style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>',
             '<p style="font-size:14px;">' + (sno+ 1) + '</p>',
-            $('#txtHProdCode').val() + '<br/><input name = "ProdName" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + ProductRID +'" value="" title=""/>',
+            $('#txtHProdCode').val() + '<br/><input name = "ProdName" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + ProductRID +'" value="" title=""  autocomplete="off"/>',
             //PName,
             //'<input min="0" type="number" step="any" class="gdInput" name="HSN" value=""txtsettag/>',
             '<input disabled min="0" type="number" txttag ="0" step="any" id="dgvProdMRP' + ProductRID + '" name ="MRP" class="gdInput txtsettag" value="0"/>',
@@ -5320,7 +5322,8 @@ if ($("#txtAddID").val() == 0) {
                         $('#dgvUOM' + ProductRID).val(TempProd.BaseUomID);
                         //ProductTable.row(SelRowIndex).data(dgvdata).draw();
                         editingRow.data(dgvdata).draw();
-
+                        var tridx = editingRow.data(dgvdata).index();
+                        currentbatchrow = ProductTable.row(tridx);
                         ProductPriceQtyChange(1);
                         //~AutoList
                         PaginatedAutocomplete({
@@ -5444,7 +5447,7 @@ if ($("#txtAddID").val() == 0) {
                     $('#dtpNBExp').prop("min", mind);
                     if (TableBatch.rows().count() > 0) {
                         modal.show();
-                        var Prodrowdata = ProductTable.row(editingRow).data();//SelRowIndex
+                        var Prodrowdata = ProductTable.row(currentbatchrow).data();//editingRow
                         var PID = Prodrowdata[0];
                         var prodnamefield = $(Prodrowdata[14]);
                         var Price = Prodrowdata[3];
