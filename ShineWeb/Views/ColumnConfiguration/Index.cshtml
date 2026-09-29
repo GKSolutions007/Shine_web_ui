@@ -191,7 +191,7 @@
         }
 
     .animate-up {
-        animation: fadeInUp 0.6s ease-out forwards;
+        animation: fadeInUp 0.4s ease-out forwards;
         opacity: 0;
     }
 
@@ -644,7 +644,12 @@
                     //tblGenColumnSettings,TableGenColumnSettings
                     TableGenColumnSettings = $('#ccTable').DataTable();
 
-                    $('#dvColumnTable').show();
+                    var $container = $('#dvColumnTable');
+
+                    $container.hide().removeClass('animate-up');
+                    void $container[0].offsetWidth;
+                    $container.addClass('animate-up').show();
+                    TableGenColumnSettings = $('#ccTable').DataTable();
                     TableGenColumnSettings.columns.adjust();
                 }
             },
@@ -717,6 +722,180 @@
             avgBox.prop("checked", true);
         }
     }
+
+    function ReportColumnValidation() {
+        var isValid = true;
+
+        var totwidth = $("#lblPrintWidth").text();
+        if (totwidth > 210) {
+            isValid = false;
+            showErrorSnackbar('Total Print Width (Print - Yes) cannot exceed 210');
+        }
+        if (isValid) {
+            $("#ccTable tbody tr").each(function () {
+                var rowdata = TableGenColumnSettings.row($(this)).data();
+                var aPrintYN = false;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "PrintYN") {
+                        aPrintYN = this.checked;
+                    }
+                    if (fieldName == "Printwidth" && aPrintYN) {
+                        var PrintWidth = parseInt($(this).val());
+                        if (PrintWidth < 5) {
+                            isValid = false;
+                        }
+                    }
+                });
+            });
+            if (!isValid) {
+                showErrorSnackbar('Set Print Width greater 5');
+            }
+        }
+        return isValid;
+    }
+    var ColumnSettingData = [];
+    $("#ccBtnAccept").click(function () {
+        var totwidth = $("#lblPrintWidth").text();
+        if (ReportColumnValidation()) {
+            ColumnSettingData = [];
+            $("#ccTable tbody tr").each(function () {
+                var allValues = {};
+                var rowdata = TableGenColumnSettings.row($(this)).data();
+                //console.log("Row Data : ", rowdata);
+                //Printwidth,PrintColumnName,PrintYN
+                var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
+                    aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
+                    aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
+                    aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg, aEnableCount = rowdata.EnableCount,
+                    aEnableUnique = rowdata.EnableUnique, aShowinColumnOption = rowdata.ShowinColumnOption, aColumnType = rowdata.ColumnType, aPermission = rowdata.Permission;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "DisplayColumnName") {
+                        aDisplayName = $(this).val();
+                    }
+                    if (fieldName == "Width") {
+                        aWidth = $(this).val();
+                    }
+                    if (fieldName == "DisplayIndex") {
+                        aDisplayIndex = $(this).val();
+                    }
+                    if (fieldName == "Printwidth") {
+                        aPrintwidth = $(this).val();
+                    }
+                    if (fieldName == "PrintColumnName") {
+                        aPrintColumnName = $(this).val();
+                    }
+
+                    if (fieldName == "Visible") {
+                        aVisible = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "Total") {
+                        aTotal = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableColumnMenu") {
+                        aEnableColumnMenu = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableSum") {
+                        aEnableSum = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableAvg") {
+                        aEnableAvg = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableCount") {
+                        aEnableCount = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableUnique") {
+                        aEnableUnique = this.checked ? "1" : "0";
+                    }
+
+                    if (fieldName == "ShowinColumnOption") {
+                        aShowinColumnOption = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "PrintYN") {
+                        aPrintYN = this.checked;
+                    }
+                    if (fieldName == "Permission") {
+                        aPermission = this.checked ? "1" : "0";
+                    }
+
+                });
+                $(this).find("select").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "Alignment") {
+                        aAlign = $(this).val();
+                    }
+                    if (fieldName == "ColumnType") {
+                        aColumnType = $(this).val();
+                    }
+                });
+
+                var coldata = {
+                    "FormID": rowdata.FormID,
+                    "TableID": rowdata.TableID,
+                    "ColumnID": rowdata.ColumnID,
+                    "FormorReport": rowdata.FormorReport,
+                    "ColumnName": rowdata.ColumnName,
+                    "DisplayColumnName": aDisplayName,
+                    "Width": aWidth,
+                    "Visible": aVisible,
+                    "Alignment": aAlign,
+                    "TotalYN": aTotal,
+                    "DisplayIndex": aDisplayIndex,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "EnableAvg": aEnableAvg,
+                    "EnableSum": aEnableSum,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "ShowinColumnOption": aShowinColumnOption,
+                    "PrintYN": aPrintYN,
+                    "PrintColumnName": aPrintColumnName,
+                    "Printwidth": aPrintwidth,
+                    "EnableCount": aEnableCount,
+                    "EnableUnique": aEnableUnique,
+                    "ColumnType": aColumnType,
+                    "Permission": aPermission
+                };
+                ColumnSettingData.push(coldata);
+            });
+            //console.log("ColumnSettingData : ", ColumnSettingData);
+            $.ajax({
+                url: Aurl + "columnconfig/saveColumnConfiguration",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(ColumnSettingData),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    if (!data || !data.length) {
+                        showErrorSnackbar('Save failed');
+                        return;
+                    }
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            OpenColumnSettings();
+                        } else {
+                            showErrorSnackbar(items.Message);
+                        }
+                    });
+                },
+                error: function (data) {
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        ////showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+            ////console.log("Column Setting Data ", ColumnSettingData);
+        }
+    });
+
 
 
     // Attach listeners
