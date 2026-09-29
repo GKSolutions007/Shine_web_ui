@@ -1823,7 +1823,9 @@
                     <thead>
                         <tr>
                             <td colspan="12">
-                                <label style="font-weight:500;" id="lblBatchItemName">Surf-excel matic super 1L</label>
+                                <label hidden id="lblBatchProdID"></label>
+                                <label hidden id="lblBatchRowID"></label>
+                                <label style="font-weight:500;" id="lblBatchItemName">Selected item name</label>
                             </td>
                         </tr>
                         <tr>
@@ -2626,6 +2628,7 @@ var isEnable = InvoicePriceEdit == 0 ? "disabled" : "";
         "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
     });
     var editingRow = null;
+    var currentbatchrow = null;
     //$("#VendInfo").hide();
  //   $("#VendInfo").click(function () {
  //       if ($("#txtCustomerID").val() != "") {
@@ -4736,6 +4739,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         nCurrentRowIndex = $(this).closest('tr').index();
         editingRow = ProductTable.row($(this).closest('tr'));
         rowdata = ProductTable.row($(this).parents('tr')).data();
+        currentbatchrow = ProductTable.row($(this).closest('tr'));
         var TrkInv = rowdata[8];
         var ProdID = rowdata[0];
         var Price = rowdata[3];
@@ -4750,6 +4754,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var uomval = $("#" + seluomid + " option:selected").attr('name');
         var Prodnamefieldid = $(rowdata[14])[0].id;;
         var prodname = document.getElementById(Prodnamefieldid).value;
+        
+        $("#lblBatchProdID").text(ProdID);
+        //$("#lblBatchRowID").text(ProdID);
         $("#lblBatchItemName").text(prodname);
         if (TrkInv == 1) {
             var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
@@ -4778,6 +4785,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var uomval = $("#" + seluomid + " option:selected").attr('name');
         var Prodnamefieldid = $(rowdata[14])[0].id;;
         var prodname = document.getElementById(Prodnamefieldid).value;
+        $("#lblBatchProdID").text(ProdID);
+        //$("#lblBatchRowID").text(ProdID);
         $("#lblBatchItemName").text(prodname);
         if (TrkInv == 1) {
             var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
@@ -4918,7 +4927,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var ShowPrice = rowdata[11];//rowdata[9];
         var ShownQty = rowdata[8];
         //alert("Price : " + Price + " ,  MRP : " + MRP);
-        var Prodrowdata = ProductTable.row(editingRow).data();////ProductTable.row(SelRowIndex).data();
+        //var Prodrowdata = ProductTable.row(editingRow).data();
+        console.log("editingRow", editingRow, "currentbatchrow", currentbatchrow);
+        var Prodrowdata = ProductTable.row(currentbatchrow).data(); 
         var tpern = parseFloat(Prodrowdata[2]);
         var TaxPern = (tpern / 100) + 1;
         var ApponMRPCum = 0; //$(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
@@ -4950,13 +4961,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn(finclid, InclPrice);
 
         //batch price,mrp,batchno,pkd,expiry update
-        ProductTable.cell(editingRow, 3).data(Price).draw();//SelRowIndex
+        ProductTable.cell(currentbatchrow, 3).data(Price).draw();//editingRow
         //ProductTable.cell(SelRowIndex, 4).data(MRP).draw();
-        ProductTable.cell(editingRow, 5).data(BatchNo).draw();
-        ProductTable.cell(editingRow, 6).data(PKD).draw();
-        ProductTable.cell(editingRow, 7).data(Expiry).draw();
-        ProductTable.cell(editingRow, 26).data(ShownQty).draw();
-        ProductTable.cell(editingRow, 30).data(QtyType).draw();
+        ProductTable.cell(currentbatchrow, 5).data(BatchNo).draw();//editingRow
+        ProductTable.cell(currentbatchrow, 6).data(PKD).draw();//editingRow
+        ProductTable.cell(currentbatchrow, 7).data(Expiry).draw();//editingRow
+        ProductTable.cell(currentbatchrow, 26).data(ShownQty).draw();//editingRow
+        ProductTable.cell(currentbatchrow, 30).data(QtyType).draw();//editingRow
         //showErrorSnackbar("Batch Select : " + ShownQty);
         //get qty
         var prqty = Prodrowdata[17];
@@ -5932,7 +5943,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         var MRP = parseFloat(btmrp).toFixed(4);//items.MRP
                         var BatchCount = parseInt(TableBatch.rows().count());
                         var DefQty = BatchCount > 0 ? 1 : trkivYN == 1 ? 0 : 1;
-                        //ProductTable.cell(SelRowIndex, 0).data(items.ProdID); ProductTable.cell(SelRowIndex, 1).data(items.SalesTaxID);
+                        //ProductTable.cell(SelRowIndex, 0).data(items.ProdID); 
+                        ProductTable.cell(SelRowIndex, 1).data(items.SalesTaxID);
+                        $("#lblBatchProdID").text(items.ProdID);
+                        //$("#lblBatchRowID").text(items.ProdID);
                         $("#lblBatchItemName").text(items.Name);
 
                         var dgvdata = [
@@ -5964,6 +5978,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         ];
                         //showSuccessSnackbar("row : " + SelRowIndex);
                         editingRow.data(dgvdata).draw();
+                        var tridx = editingRow.data(dgvdata).index();                        
+                        currentbatchrow = ProductTable.row(tridx);
+                        console.log("tridx", tridx, "currentbatchrow", currentbatchrow);
                         //ProductTable.row(SelRowIndex).data(dgvdata).draw();//(SelRowIndex)
                         var temprid = ProductRID;
                         $('#dgvUOM' + ProductRID).val(TempProd.SalesUomID);//BaseUomID
@@ -6069,7 +6086,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         $(".modalBatch").css("width", "35%");
                     if (TableBatch.rows().count() > 0) {
                         modal.show();
-                        var Prodrowdata = ProductTable.row(editingRow).data();//SelRowIndex
+                        var Prodrowdata = ProductTable.row(currentbatchrow).data();//editingRow
+                        console.log("ProdID : ", strName,"editingRow", ProductTable.row(editingRow).data(), "currentbatchrow", ProductTable.row(currentbatchrow).data())
                         //5,6,7
                         var PID = Prodrowdata[0];
                         var Price = Prodrowdata[3];
@@ -8943,6 +8961,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var uomval = $("#" + seluomid + " option:selected").attr('name');
             var Prodnamefieldid = $(rowdata[14])[0].id;;
             var prodname = document.getElementById(Prodnamefieldid).value;
+            $("#lblBatchProdID").text(ProdID);
+            //$("#lblBatchRowID").text(items.ProdID);
             $("#lblBatchItemName").text(prodname);
             if (TrkInv == 1) {
                 var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
