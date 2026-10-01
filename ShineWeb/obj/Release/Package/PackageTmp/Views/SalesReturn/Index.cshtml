@@ -1596,6 +1596,7 @@
                         <tr>
                             <td colspan="12">
                                 <label style="font-weight:500;" id="lblBatchItemName">Surf-excel matic super 1L</label>
+                                <input hidden id="txtSelectedRowID"/>
                             </td>
                         </tr>
                         <tr>
@@ -4189,6 +4190,7 @@ if ($("#txtAddID").val() == 0) {
         editingRow = ProductTable.row($(this).closest('tr'));
         rowdata = ProductTable.row($(this).parents('tr')).data();
         currentbatchrow = ProductTable.row($(this).closest('tr'));
+        var currowid = rowdata[30];
         var ProdID = rowdata[0];
         var Price = rowdata[3];
         var mrp = rowdata[15];
@@ -4205,6 +4207,7 @@ if ($("#txtAddID").val() == 0) {
         var Prodnamefieldid = $(rowdata[14])[0].id;;
         var prodname = document.getElementById(Prodnamefieldid).value;
         $("#lblBatchItemName").text(prodname);
+        $("#txtSelectedRowID").val(currowid); 
         GetData(20, ProdID, invid,null, uomval);
     });
     //~UOM change
@@ -5183,6 +5186,7 @@ if ($("#txtAddID").val() == 0) {
                     }));
                     var Prodrowdata = ProductTable.row(editingRow).data();
                     var Currenthiddenrowid = Prodrowdata[30];
+                    $("#txtSelectedRowID").val(Currenthiddenrowid); 
                     TableBatch.draw().clear(); TableBatch.draw().clear();
                     $.each(data, function (i, items) {
                         arrSalesTaxDetails = ReturnTaxDetails(items.SalesTaxID, 1);
@@ -5697,6 +5701,7 @@ if ($("#txtAddID").val() == 0) {
             var bPriceType = $("#cmbPriceType").val();
             var ApplyPrice = bPriceType == "1" ? PPrice : bPriceType == "2" ? SalesPrice : bPriceType == "3" ? ECP : bPriceType == "4" ? MRP
                 : bPriceType == "5" ? SPL : RTN;
+            var hdnridx = $("#txtSelectedRowID").val() || 1;
             var nbd = {
                 "BatchType": 1,//New batch
                 "ProdId": PID,
@@ -5712,7 +5717,7 @@ if ($("#txtAddID").val() == 0) {
                 "TaxId": txid,
                 "TaxTypeId": 1,
                 "InclusiveYesNo": 0,
-                "HiddenRowIndex": 1
+                "HiddenRowIndex": hdnridx
             }
             NewTempBatch.push(nbd);
             var doctype = nDocPrefix == 16 ? "SALE" : "DAMAGE";
@@ -5723,7 +5728,7 @@ if ($("#txtAddID").val() == 0) {
                     $("#txtNBBathNo").val(), Pdat, Edat,
                     parseFloat(0).toFixed(DecVal),
                     parseFloat(ApplyPrice).toFixed(DecVal),
-                    parseFloat(MRP).toFixed(DecVal),1
+                    parseFloat(MRP).toFixed(DecVal), hdnridx
                 ]).draw(false);
                 if (nDocPrefix == 16 && !HasFreeBatch) {
                     TableBatch.row.add([
@@ -5732,7 +5737,7 @@ if ($("#txtAddID").val() == 0) {
                         $("#txtNBBathNo").val(), Pdat, Edat,
                         parseFloat(0).toFixed(DecVal),
                         parseFloat(0).toFixed(DecVal),
-                        parseFloat(0).toFixed(DecVal), 1
+                        parseFloat(0).toFixed(DecVal), hdnridx
                     ]).draw(false);
                 }
             } else {
@@ -5742,10 +5747,10 @@ if ($("#txtAddID").val() == 0) {
                     $("#txtNBBathNo").val(), Pdat, Edat,
                     parseFloat(0).toFixed(DecVal),
                     parseFloat(ApplyPrice).toFixed(DecVal),
-                    parseFloat(MRP).toFixed(DecVal), 1
+                    parseFloat(MRP).toFixed(DecVal), hdnridx
                 ]).draw(false);
             }
-            $("#dtpNBExp,#dtpNBPKD,#txtNBBathNo").val("");
+            $("#dtpNBExp,#dtpNBPKD,#txtNBBathNo,#txtSelectedRowID").val("");
             modalNewBatch.hide();
         }
     });

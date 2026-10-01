@@ -14,6 +14,7 @@
 <script src="~/datatable/1.13.6/jquery.dataTables.min.js"></script>
 <script src="~/datatable/1.13.6/dataTables.bootstrap5.min.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>
 
 <style>
     :root {
@@ -29,6 +30,8 @@
         --bp-text: #1e293b;
         --bp-muted: #64748b;
         --bp-radius: 10px;
+        --danger-color: #ff6b6b;
+        --success-color: #1dd1a1;
     }
 
     body {
@@ -524,6 +527,70 @@
             margin: 0 2px;
         }
     }
+
+    /* Custom Checkboxes / Switch */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 19px;
+        margin-bottom: 0;
+        vertical-align: middle;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 15px;
+            width: 15px;
+            left: 4px;
+            bottom: 2px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+    input:checked + .slider {
+        background-color: var(--success-color);
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px var(--success-color);
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
 </style>
 <body>
 
@@ -548,10 +615,11 @@
                     <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;">ID</th>
                     <th class="text-center trclrforcolheader" style="font-size:12px;width:40%;">Profile Name</th>
                     <th class="text-center trclrforcolheader" style="font-size:12px;width:20%;">PRN File</th>
-                    <th class="text-center trclrforcolheader" style="font-size:12px;width:10%;">Height</th>
-                    <th class="text-center trclrforcolheader" style="font-size:12px;width:10%;">Width</th>
-                    <th class="text-center trclrforcolheader" style="font-size:12px;width:10%;">No.of Rows</th>
-                    <th class="text-center trclrforcolheader" style="font-size:12px;width:10%;">Remove</th>
+                    <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Height</th>
+                    <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Width</th>
+                    <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">No.of Rows</th>
+                    <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Print</th>
+                    <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Remove</th>
                 </tr>
             </thead>
 
@@ -633,7 +701,10 @@
         </div>
     </div>
 
-    @*<button  id="btnBarPrint" class="btn btn-info">Print</button>*@
+    <button hidden onclick="barprintEmbedDocumenttest();">Print .OUT File</button>
+
+    <select hidden id="printerSelect"></select>
+    <button hidden onclick="barprintEmbedDocumenttest_1()">Print</button>
 </body>
 <script>
     var Aurl = '@Session["APIurl"]';
@@ -650,8 +721,8 @@
         scrollCollapse: true,
         "autoWidth": false,
         "columnDefs": [{ "targets": [0], "visible": false, searchable: false },
-            { "targets": [1], "width": "40%" }, { "targets": [2], "width": "20%" },{ "targets": [3, 4, 5], "width": "10%" },
-            { "targets": [6], "width": "10%", "className": "text-center", "orderable": false, "searchable": false }],
+            { "targets": [1], "width": "40%" }, { "targets": [2], "width": "20%" }, { "targets": [3, 4, 5, 6], "width": "8%", "className": "text-center" },
+            { "targets": [7], "width": "10%", "className": "text-center", "orderable": false, "searchable": false }],
         "drawCallback": function () {
             // Keeps the cloned scroll-head table's column widths in sync
             // with the scroll-body table after every redraw (row add/remove).
@@ -674,7 +745,8 @@
             '<select name = "FileName" class="gdInput" id="txtFileName' + rowid +'">' + prns +'</select>',
             '<input min="0" type="number" step="any" name ="Width" id="txtWidth' + rowid +'" class="gdInput" value="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)"/><br>' ,
             '<input min="0" type="number" step="any" name ="Height" id="txtHeight' + rowid +'" class="gdInput" value="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)"/>',//
-            '<input min="0" type="number" step="any" name ="NoofRows" id="txtNoofRows' + rowid +'" class="gdInput" value="0"/>',//,
+            '<input min="0" type="number" step="any" name ="NoofRows" id="txtNoofRows' + rowid + '" class="gdInput" value="0"/>',//,
+            '<label class="switch"><input type="checkbox" class="chkPrint" name="Print" id="chkPrint' + rowid + '"/><span class="slider round"></span></label>',
             '<button type="button" class="btn-remove-row" title="Remove"><span class="glyphicon glyphicon-trash"></span></button>',
         ]).draw(false);
         rowid++;
@@ -704,13 +776,15 @@
                     prns += '<option value="' + items.FileName + '">' + items.FileName + '</option>'
                 });
                 $.each(arrProfiles, function (i, items) {
+                    var ischk = items.Active ? "checked" : "";
                     Table.row.add([
                         items.ID,
                         '<input name = "ProfileName" class="gdInput clsProfileName" id="txtProfileName' + rowid + '" value="' + items.ProfileName +'" title="Profile Name"/>',
                         '<select name = "FileName" class="gdInput" id="txtFileName' + rowid + '">' + prns + '</select>',
                         '<input min="0" type="number" step="any" name ="Width" id="txtWidth' + rowid + '" class="gdInput" value="' + items.Width +'" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)"/><br>',
                         '<input min="0" type="number" step="any" name ="Height" id="txtHeight' + rowid + '" class="gdInput" value="' + items.Height +'" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)"oninput="sanitizeNumericOnly(this, null)"/>',
-                        '<input min="0" maxlength="2" type="number" step="any" name ="NoofRows" id="txtNoofRows' + rowid + '" class="gdInput" value="' + items.NoofRows +'"/>',
+                        '<input min="0" maxlength="2" type="number" step="any" name ="NoofRows" id="txtNoofRows' + rowid + '" class="gdInput" value="' + items.NoofRows + '"/>',
+                        '<label class="switch"><input type="checkbox" class="chkPrint" name="Print" id="chkPrint' + rowid + '" ' + ischk + '/><span class="slider round"></span></label>',
                         '<button type="button" class="btn-remove-row" title="Remove"><span class="glyphicon glyphicon-trash"></span></button>',
                     ]).draw(false);
                     $("#txtFileName" + rowid).val(items.FileName);
@@ -720,6 +794,27 @@
             }
         });
     }
+    $('#tblBarcodeProfiles tbody').on('click', '.chkPrint', function (r) {
+        var id = r.target.id;
+        var name = r.target.name;
+        var vals = r.target.value;
+        var ischk = $(this).is(":checked");
+        var currrowdata = Table.row($(this).parents('tr')).data();
+        var TransID = currrowdata[0];
+        var ConfigID = currrowdata[1];
+        //showErrorSnackbar();
+        $("#tblBarcodeProfiles tbody tr").each(function () {
+            rowdata = Table.row($(this)).data();
+            //if (TransID == rowdata[0]) {
+                $(this).find("input").each(function (index) {
+                    if ($(this).attr("name") == "Print") {
+                        $(this).prop("checked", false);
+                    }
+                });
+            //}
+        });
+        $("#" + id).prop("checked", ischk);
+    });
     $('#tblBarcodeProfiles').on('input', 'input[name="NoofRows"]', function () {
         // Remove anything after a decimal
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 2);
@@ -840,6 +935,7 @@
         $('.gdInput').removeClass('input-error');
         $("#btnSave").prop("disabled", true);
         // Loop through each row in the DataTable
+        var PrintChecked = 0;
         $('#tblBarcodeProfiles tbody tr').each(function () {
             rowdata = Table.row($(this)).data();
             const id = rowdata[0];// $(this).find('td:first').text().trim(); // Assuming first column is ID
@@ -848,7 +944,7 @@
             const width = $(this).find('input[name="Width"]').val();
             const height = $(this).find('input[name="Height"]').val();
             const noOfRows = $(this).find('input[name="NoofRows"]').val();
-
+            const nPrint = $(this).find('input[name="Print"]').is(":checked") ? 1 : 0;
             // Profile Name validation
             if (!profileName) {
                 $(this).find('input[name="ProfileName"]').addClass('input-error').attr('title', 'Profile Name cannot be empty');
@@ -891,6 +987,7 @@
                     Width: parseFloat(width),
                     Height: parseFloat(height),
                     NoofRows: parseInt(noOfRows),
+                    Print: nPrint,
                     UID: UID
                 });
             }
@@ -1157,91 +1254,127 @@
     })();
 </script>
 
-<script src="~/Scripts/qz-tray.js"></script>
+@*<script src="~/Scripts/qz-tray.js"></script>*@
+
 <script>
-    async function printOutFile() {
-        try {
-            // connect if not already active
-            if (!qz.websocket.isActive()) {
-                await qz.websocket.connect();
-            }
 
-            // optional: pick specific printer
-            // const printers = await qz.printers.find();
-            // const printerName = printers[0];
-            const printerName = "Citizen CL-E321"; // default printer
 
-            // create print config
-            const config = qz.configs.create(printerName);
+    //var printoutputfile = "https://localhost:44396/barcodefile/TempSpool.out";
 
-            // your .out file URL
-            const fileUrl = "https://www.gksapp.in/gksbak/test/TempSpool.out";
-            const win = window.open(fileUrl, '_blank');
-            win.onload = function () {
-                win.focus();
-                win.print();
-            };
-            // print raw text or file
-            //await qz.print(config, [{ type: 'raw', data: fileUrl }]);
-            const config1 = qz.configs.create(await qz.printers.getDefault());
+    var printoutputfile = "https://localhost:44326/barcodefile/TempSpool.out";
+    printoutputfile = "https://localhost:44396/pdf/TempSpool.out";
+    //GrpPDF_202609301127283886.pdf
+    //printoutputfile = "https://localhost:44396/pdf/GrpPDF_202609301127283886.pdf";
+   //var printoutputfile = "https://localhost:44396/barcodefile/TempSpool.out";
 
-            await qz.print(config1, [{ type: 'raw', data: "^XA^FO50,50^ADN,36,20^FDHello ZPL!^FS^XZ" }]);
+    function barprintEmbedDocumenttest() {
 
-            alert("Print successful!");
-        } catch (err) {
-            console.error(err);
-            alert("Print error: " + err);
-        }
+    var ismoborwin = '@Session["DeviceOS"]';
+        var fileUrl = printoutputfile;// + "?t=" + Date.now(); // avoid cached file
+
+    if (['Windows', 'macOS'].includes(ismoborwin)) {
+        fetch(fileUrl, { method: "GET", cache: "no-store" })
+            .then(response => {
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                return response.arrayBuffer();
+            })
+            .then(buffer => {
+                // Force the correct MIME type
+                const pdfBlob = new Blob([buffer], { type: "application/pdf" });
+                const pdfURL = URL.createObjectURL(pdfBlob);
+
+                // Remove any previous print iframe
+                const old = document.getElementById("printFrame");
+                if (old) old.remove();
+
+                const ifr = document.createElement("iframe");
+                ifr.id = "printFrame";
+                ifr.style.position = "fixed";
+                ifr.style.right = "0";
+                ifr.style.bottom = "0";
+                ifr.style.width = "0";
+                ifr.style.height = "0";
+                ifr.style.border = "none";
+
+                // Attach onload BEFORE setting src
+                ifr.onload = function () {
+                    // Give the PDF viewer time to render
+                    setTimeout(function () {
+                        try {
+                            ifr.contentWindow.focus();
+                            ifr.contentWindow.print();
+                        } catch (e) {
+                            console.error("Print failed, opening in new tab:", e);
+                            window.open(pdfURL, "_blank");
+                        }
+                    }, 500);
+                };
+
+                ifr.src = pdfURL;
+                document.body.appendChild(ifr);
+
+                // Clean up after printing
+                window.addEventListener("focus", function cleanup() {
+                    setTimeout(function () {
+                        URL.revokeObjectURL(pdfURL);
+                        ifr.remove();
+                    }, 1000);
+                    window.removeEventListener("focus", cleanup);
+                });
+            })
+            .catch(err => console.error("Failed to load PDF:", err));
+    } else {
+        window.open(fileUrl, "_blank");
     }
-    async function printOutFile1() {
-        try {
-            if (!qz.websocket.isActive()) await qz.websocket.connect();
+}
 
-            const defaultPrinter = await qz.printers.getDefault();
-            const config = qz.configs.create(defaultPrinter);
-
-            const fileUrl = "https://localhost:44326/PDF/TempSpool.out";
-
-            // Choose correct type manually after checking .out content
-            await qz.print(config, [{ type: 'raw', data: "HELLO TEST PRINT\n" }]);
-
-            alert("Print command sent to " + defaultPrinter);
-        } catch (err) {
-            console.error(err);
-            alert("Print error: " + err);
-        }
+    async function connectQz() {
+        if (!qz.websocket.isActive()) await qz.websocket.connect();
     }
-    function printRemoteFile(url) {
 
-        const printWindow = window.open('', '_blank');
-        fetch(url)
-            .then(response => response.text())
-            .then(text => {
-                printWindow.document.open();
-                printWindow.document.write(`
-        <html>
-          <head>
-            <title>Print File</title>
-            <style>
-              pre {
-                font-family: "Courier New", monospace;
-                font-size: 12px;
-                white-space: pre-wrap;
-                word-wrap: break-word;
-              }
-            </style>
-          </head>
-          <body onload="window.print(); window.close();">
-            <pre>${text.replace(/[&<>]/g, c => ({
-                    '&': '&amp;', '<': '&lt;', '>': '&gt;'
-                }[c]))}</pre>
-          </body>
-        </html>
-      `);
-                printWindow.document.close();
-            });
+    // Fill the dropdown with installed printers (call on page load)
+    async function loadPrinters() {
+        await connectQz();
+        const printers = await qz.printers.find();
+        const sel = document.getElementById("printerSelect");
+        sel.innerHTML = printers.map(p => `<option value="${p}">${p}</option>`).join("");
+
+        const saved = localStorage.getItem("barPrinter");
+        if (saved && printers.includes(saved)) sel.value = saved;
+    }
+
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(r.result.split(",")[1]);
+            r.onerror = reject;
+            r.readAsDataURL(blob);
+        });
+    }
+
+    async function barprintEmbedDocumenttest_1() {
+        try {
+            const printer = document.getElementById("printerSelect").value;
+            if (!printer) { alert("Please select a printer"); return; }
+            localStorage.setItem("barPrinter", printer); // remember the choice
+
+            const res = await fetch(printoutputfile, { cache: "no-store" });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const b64 = await blobToBase64(await res.blob());
+
+            await connectQz();
+            const config = qz.configs.create(printer);
+            await qz.print(config, [{
+                type: "pixel",
+                format: "pdf",
+                flavor: "base64",
+                data: b64
+            }]);
+        } catch (err) {
+            console.error("Print failed:", err);
+            alert("Print failed: " + err.message);
+        }
     }
 
 </script>
 
-<button hidden onclick="printRemoteFile('https://www.gksapp.in/gksbak/test/TempSpool.out');">Print .OUT File</button>
