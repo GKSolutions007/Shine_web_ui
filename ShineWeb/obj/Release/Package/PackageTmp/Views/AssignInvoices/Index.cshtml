@@ -603,6 +603,7 @@
                     <thead>
                         <tr>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:0%;">ID</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px; width:0%;">StatusID</th>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:10%;">
                                 <input type="checkbox" class="form-check-input" id="chkSelectAllInvoice" />
                             </th>
@@ -735,6 +736,7 @@
                             <thead>
                                 <tr>
                                     <th class="text-center trclrforcolheader" style="font-size:12px; width:0%;">ID</th>
+                                    <th class="text-center trclrforcolheader" style="font-size:12px; width:0%;">StatusID</th>
                                     <th class="text-center trclrforcolheader" style="font-size:12px; width:10%;">
                                         <input type="checkbox" class="form-check-input" id="chkSelectAllInvoiceView" />
                                     </th>
@@ -797,6 +799,7 @@
                 handler: (rowdata) => {
                     $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
+                    var Sts = rowdata.Status;//[10];
                     nTransMode = 5;
                     $("#txtID").val(ID);
                     ViewActionButtonPermission();
@@ -810,7 +813,7 @@
                     $("#dvMain").show();
                     $("#dvDocuments").hide();
                     $("#btnEmail,#btnWhatsapp").show();
-                    $("#MainHeading").text("View Assign Invoices");
+                    $("#MainHeading").text("View Assign Invoices_" + Sts);
                 }
             },
             {
@@ -1047,7 +1050,7 @@
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+        "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false, filter: false, ordering: false }],
     });
     var InvoiceDataView = $('#tblInvoiceDataView').DataTable({
         paging: false,
@@ -1057,7 +1060,7 @@
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+        "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false, filter: false, ordering: false }],
     });
 
     var UID = '@Session["LoginUserID"]';
@@ -1310,6 +1313,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                         sorting: true,
                         columns: [
                             { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                            { "data": "Status", "autoWidth": true, "visible": false, className: "dt-body-left" },
                             {
                                 className: "dt-body-center", sorting:false,
                                 "mRender": function (data, type, value, meta) {
@@ -1367,6 +1371,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                         sorting: true,
                         columns: [
                             { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                            { "data": "Status", "autoWidth": true, "visible": false, className: "dt-body-left" },
                             {
                                 className: "dt-body-center", sorting: false,
                                 "mRender": function (data, type, value, meta) {
@@ -1664,6 +1669,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     });
 
     $(document).on("click", "#btnViewInvoices", function () {
+        ViewaddedInvoices();
+    });
+    function ViewaddedInvoices() {
         modal.show();
         var custjsdata = CheckedInvoices;
         $('#tblInvoiceDataView').DataTable({
@@ -1679,6 +1687,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             sorting: true,
             columns: [
                 { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                { "data": "Status", "autoWidth": true, "visible": false, className: "dt-body-left" },
                 {
                     className: "dt-body-center", sorting: false,
                     "mRender": function (data, type, value, meta) {
@@ -1710,7 +1719,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         });
         InvoiceDataView = $('#tblInvoiceDataView').DataTable();
         $('#chkSelectAllInvoiceView').prop("checked", true);
-    });
+    }
     $("#txtScanDocid").on("keydown", function (e) {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -1835,6 +1844,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         //CheckedInvoices = [];
         var IsValid = true;
         $(".clrdivs").html("");
+        $("#tblInvoiceDataView tbody tr").each(function () {
+            $(this).find(" tdp,label,input, select").animate({ color: 'black' }, 100).css("background-color", "").attr("title", "");
+        });
         if ($("#cmbSalesman").val() == 0) {
             IsValid = false;
             $("#divErrSalesman").html("Select Salesman");
@@ -1938,9 +1950,27 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                             ClearForm();
                             GetFilterData();
                         }
+                        else if (items.MsgID == 2) {
+                            showErrorSnackbar(items.Message);
+                            ViewaddedInvoices();
+                            setTimeout(() => {
+                                console.log("Color fill trigger");
+                                var errorinvoices = items.ID.split(',');
+                                $("#tblInvoiceDataView tbody tr").each(function () {
+                                    console.log("Row cell", $(this).find("p,label,input, select"));
+                                    var rowdata = InvoiceDataView.row($(this)).data();
+                                    InvID = rowdata.ID;
+                                    InvSts = rowdata.Status;
+                                    $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 100).css("background-color", "");
+                                    if (errorinvoices.includes(String(InvID))) {
+                                        $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 800).css("background-color", "pink").attr("title", items.Message);
+                                    }
+                                });
+                            }, 1500);
+                        }
                         else {
                             //$("#dvErrorName").html(items.Message);
-                            showErrorSnackbar(items.Message);
+                            showErrorSnackbar(items.Message);                                                       
                         }
                     });
                 }, error: function (data) {

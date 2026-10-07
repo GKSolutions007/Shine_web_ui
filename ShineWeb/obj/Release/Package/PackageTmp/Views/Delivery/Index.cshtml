@@ -468,7 +468,7 @@
         color: white;
     }
     .stsReturn {
-        background-color: lightpink;
+        background-color: #ff042a;
         border-radius: 10px;
         font-weight: 600;
         font-size: 11px;
@@ -764,6 +764,7 @@
                             <thead>
                                 <tr>
                                     <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;">ID</th>
+                                    <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;">StatusID</th>
                                     <th class="text-center trclrforcolheader" style="font-size:12px;width:3%;">
                                         <input id="chkSelectAllInvoice" type="checkbox" />
                                     </th>
@@ -994,7 +995,7 @@
                         if (mapusersRole.canEdit)
                             isVisible = true;
                     }
-                    if (row.dtlClose > 0)
+                    if (row.AssignedInvoice != row.dtlOpen)
                         isVisible = false;
                     return isVisible;
                 },
@@ -1034,8 +1035,10 @@
                     var isVisible = false;
                     var RTNYN = row.Status == 'Amended' || row.Status == 'Cancelled' || row.Status == 'Close' || row.Status == 'Processed' ? false : true;
                     if (mapusersRole.canReturn && RTNYN) {
-                        isVisible = true;
+                        isVisible = true;                       
                     }
+                    if (row.dtlOpen == 0)
+                        isVisible = false;
                     return isVisible;
                 },
                 displayType: 'menu_item',
@@ -1182,7 +1185,7 @@
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+        "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false, filter: false, ordering: false }],
     });
     
     var UID = '@Session["LoginUserID"]';
@@ -1483,6 +1486,7 @@ $("#chkShowAll").prop("checked", Showall == '1');
                         sorting: false,
                         columns: [
                             { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left", width: "0%" },
+                            { "data": "Status", "autoWidth": true, "visible": false, className: "dt-body-left", width: "0%" },
                             {
                                 className: "dt-body-center", width: "2%",
                                 "mRender": function (data, type, value, meta) {
@@ -1666,6 +1670,7 @@ $("#chkShowAll").prop("checked", Showall == '1');
                     sorting: false,
                     columns: [
                         { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left", width: "0%" },
+                        { "data": "Status", "autoWidth": true, "visible": false, className: "dt-body-left", width: "0%" },
                         {
                             className: "dt-body-center", width: "2%",
                             "mRender": function (data, type, value, meta) {
@@ -1813,11 +1818,14 @@ $("#chkShowAll").prop("checked", Showall == '1');
         }, 500);
     }
     //~Validation
-    var CheckedInvoiceIDs = "";
+    var CheckedInvoiceIDs = "",CheckedInvoiceIDStatus = "";
     function SaveValidation() {
         var IsValid = true;
         $(".clrdivs").html("");
-        CheckedInvoiceIDs = "";
+        CheckedInvoiceIDs = "", CheckedInvoiceIDStatus = "";
+        $("#tblInvoices tbody tr").each(function () {
+            $(this).find("td,p,label,input, select").attr("title", "").animate({ color: 'black' }, 100);
+        });
         if ($("#dtpDate").val() == "") {
             IsValid = false;
             $("#divErrDate").html("Date should not be empty");
@@ -1848,9 +1856,11 @@ $("#chkShowAll").prop("checked", Showall == '1');
             $('#tblInvoices tbody tr').each(function () {
                 rowdata = InvoiceTable.row($(this)).data();
                 InvID = rowdata.ID;
+                InvSts = rowdata.Status;
                 var currrowchecked = $(this).find("input[type=checkbox]").is(":checked");
                 if (currrowchecked) {
                     CheckedInvoiceIDs += InvID + ",";
+                    CheckedInvoiceIDStatus += InvSts + ",";
                 }
             });
             if (CheckedInvoiceIDs == "") {
@@ -1884,6 +1894,7 @@ $("#chkShowAll").prop("checked", Showall == '1');
                 "Remarks": $("#txtRemarks").val(),
                 "Narration": $("#txtNarration").val(),
                 "DocumentIDs": CheckedInvoiceIDs,// $("#txtDocIDs").val(),
+                "DocumentIDStatus": CheckedInvoiceIDStatus,
                 "FilterBranch": $("#cmbCommonDocFilterBranch").val(),
                 "UID": UID,
             }
@@ -1904,6 +1915,24 @@ $("#chkShowAll").prop("checked", Showall == '1');
                             showSuccessSnackbar(items.Message);
                             ClearForm();
                             GetFilterData();
+                        }
+                        else if (items.MsgID == 2) {
+                            showErrorSnackbar(items.Message);
+                            var errorinvoices = items.ID.split(',');
+                            $("#tblInvoices tbody tr").each(function () {
+                                var rowdata = InvoiceTable.row($(this)).data();
+                                InvID = rowdata.ID;
+                                InvSts = rowdata.Status;
+                                $(this).css("color", "black");
+                                $(this).find("td,p,label,input, select").animate({ color: 'black' }, 100);
+                                for (var i = 0; i < errorinvoices.length; i++) {
+                                    if (InvID == errorinvoices[i]) {
+                                        $(this).css("color", "red");
+                                        $(this).find("p,label,input, select").attr("title", items.Message).animate({ color: 'red' }, 1000);
+                                    }
+                                }
+                                
+                            });
                         }
                         else {
                             showErrorSnackbar(items.Message);

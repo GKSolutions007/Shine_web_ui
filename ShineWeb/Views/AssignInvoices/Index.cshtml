@@ -389,6 +389,42 @@
         .dropdown-toggle::after {
             display: none;
         }
+
+    .stsOpen {
+        background-color: slateblue;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 11px;
+        padding: 1px 5px;
+        color: white;
+    }
+
+    .stsCancel {
+        background-color: orangered;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 11px;
+        padding: 1px 5px;
+        color: white;
+    }
+
+    .stsReturn {
+        background-color: #ff042a;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 11px;
+        padding: 1px 5px;
+        color: white;
+    }
+
+    .stsClose {
+        background-color: darkgreen;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 11px;
+        padding: 1px 5px;
+        color: white;
+    }
 </style>
 <body>
 
@@ -598,11 +634,12 @@
                     <i class="bi bi-eye"></i> View
                 </button>
             </div>
-            <div class="col-12">
+            <div class="col-12 me-5">
                 <table class="table table-bordered row-border order-column" id="tblInvoiceData" width="100%">
                     <thead>
                         <tr>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:0%;">ID</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px; width:0%;">StatusID</th>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:10%;">
                                 <input type="checkbox" class="form-check-input" id="chkSelectAllInvoice" />
                             </th>
@@ -613,7 +650,7 @@
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:9%;">Beat</th>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:8%;">Salesman</th>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:8%;">Customer</th>
-                            <th class="text-center trclrforcolheader" style="font-size:12px; width:15%;">Net Amount</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px; width:15%;">Net ₹</th>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:10%;">Balance</th>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:10%;">Ageing</th>
                             <th class="text-center trclrforcolheader" style="font-size:12px; width:10%;" title="Assigned Invoice Count">AIC</th>
@@ -735,6 +772,7 @@
                             <thead>
                                 <tr>
                                     <th class="text-center trclrforcolheader" style="font-size:12px; width:0%;">ID</th>
+                                    <th class="text-center trclrforcolheader" style="font-size:12px; width:0%;">StatusID</th>
                                     <th class="text-center trclrforcolheader" style="font-size:12px; width:10%;">
                                         <input type="checkbox" class="form-check-input" id="chkSelectAllInvoiceView" />
                                     </th>
@@ -797,6 +835,7 @@
                 handler: (rowdata) => {
                     $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
+                    var Sts = rowdata.Status;//[10];
                     nTransMode = 5;
                     $("#txtID").val(ID);
                     ViewActionButtonPermission();
@@ -810,7 +849,13 @@
                     $("#dvMain").show();
                     $("#dvDocuments").hide();
                     $("#btnEmail,#btnWhatsapp").show();
-                    $("#MainHeading").text("View Assign Invoices");
+                    $("#MainHeading").text("View Assign Invoices_" + Sts);
+                    if (rowdata.Anyonestatuschanged > 0) {
+                        $("#btnTEdit,#btnTCancel").hide();
+                    }
+                    if (rowdata.OpenCount == 0) {
+                        $("#btnTReturn").hide();
+                    }
                 }
             },
             {
@@ -823,6 +868,9 @@
                         if (mapusersRole.canEdit)
                             isVisible = true;
                     }
+                    console.log("DocID : " + row.DocID, "Anyonestatuschanged : " + row.Anyonestatuschanged);
+                    if (row.Anyonestatuschanged > 0)
+                        isVisible = false;
                     return isVisible;
                 },
                 displayType: 'menu_item',
@@ -877,6 +925,8 @@
                         else
                             isVisible = false;
                     }
+                    if (row.Anyonestatuschanged > 0)
+                        isVisible = false;
                     return isVisible;
                 },
                 displayType: 'menu_item',
@@ -1047,7 +1097,7 @@
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+        "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false, filter: false, ordering: false }],
     });
     var InvoiceDataView = $('#tblInvoiceDataView').DataTable({
         paging: false,
@@ -1057,7 +1107,7 @@
         scrollY: "250px",
         scrollX: true,
         scrollCollapse: true,
-        "columnDefs": [{ "targets": [0], "visible": false, searchable: false, filter: false, ordering: false }],
+        "columnDefs": [{ "targets": [0,1], "visible": false, searchable: false, filter: false, ordering: false }],
     });
 
     var UID = '@Session["LoginUserID"]';
@@ -1280,6 +1330,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                         //if (ClickType == 1)
                             showErrorSnackbar("No records found");
                     }
+                    setGridHeight();
                 }
                 else if (nMode == 3) {
                     //~Assign Data
@@ -1310,12 +1361,18 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                         sorting: true,
                         columns: [
                             { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                            { "data": "Status", "autoWidth": true, "visible": false, className: "dt-body-left" },
                             {
                                 className: "dt-body-center", sorting:false,
                                 "mRender": function (data, type, value, meta) {
                                     var rowIndex = meta.row;
                                     var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID
-                                    var _action = value.Status == "1" ? '<input type="checkbox" checked id="' + checkboxId + '"  name="CustomerCheck" ' + isDisable + ' style="" InvoiceID="' + value.ID + '" />' : '';
+                                    var celldata = 
+                                        value.Status == 4 ? '<label class="stsCancel">Cancel</label>' :
+                                            value.Status == 5 ? '<label class="stsClose">Close</label>' :
+                                                value.Status == 6 ? '<label class="stsReturn">Return</label>' : ''
+
+                                    var _action = value.Status == "1" ? '<input type="checkbox" checked id="' + checkboxId + '"  name="CustomerCheck" ' + isDisable + ' style="" InvoiceID="' + value.ID + '" />' : celldata;
                                     return _action;
                                 },
                             },
@@ -1367,6 +1424,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                         sorting: true,
                         columns: [
                             { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                            { "data": "Status", "autoWidth": true, "visible": false, className: "dt-body-left" },
                             {
                                 className: "dt-body-center", sorting: false,
                                 "mRender": function (data, type, value, meta) {
@@ -1664,6 +1722,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     });
 
     $(document).on("click", "#btnViewInvoices", function () {
+        ViewaddedInvoices();
+    });
+    function ViewaddedInvoices() {
         modal.show();
         var custjsdata = CheckedInvoices;
         $('#tblInvoiceDataView').DataTable({
@@ -1679,6 +1740,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             sorting: true,
             columns: [
                 { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                { "data": "Status", "autoWidth": true, "visible": false, className: "dt-body-left" },
                 {
                     className: "dt-body-center", sorting: false,
                     "mRender": function (data, type, value, meta) {
@@ -1710,7 +1772,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         });
         InvoiceDataView = $('#tblInvoiceDataView').DataTable();
         $('#chkSelectAllInvoiceView').prop("checked", true);
-    });
+    }
     $("#txtScanDocid").on("keydown", function (e) {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -1835,6 +1897,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         //CheckedInvoices = [];
         var IsValid = true;
         $(".clrdivs").html("");
+        $("#tblInvoiceDataView tbody tr").each(function () {
+            $(this).find(" tdp,label,input, select").animate({ color: 'black' }, 100).css("background-color", "").attr("title", "");
+        });
         if ($("#cmbSalesman").val() == 0) {
             IsValid = false;
             $("#divErrSalesman").html("Select Salesman");
@@ -1938,9 +2003,27 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                             ClearForm();
                             GetFilterData();
                         }
+                        else if (items.MsgID == 2) {
+                            showErrorSnackbar(items.Message);
+                            ViewaddedInvoices();
+                            setTimeout(() => {
+                                console.log("Color fill trigger");
+                                var errorinvoices = items.ID.split(',');
+                                $("#tblInvoiceDataView tbody tr").each(function () {
+                                    console.log("Row cell", $(this).find("p,label,input, select"));
+                                    var rowdata = InvoiceDataView.row($(this)).data();
+                                    InvID = rowdata.ID;
+                                    InvSts = rowdata.Status;
+                                    $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 100).css("background-color", "");
+                                    if (errorinvoices.includes(String(InvID))) {
+                                        $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 800).css("background-color", "pink").attr("title", items.Message);
+                                    }
+                                });
+                            }, 1500);
+                        }
                         else {
                             //$("#dvErrorName").html(items.Message);
-                            showErrorSnackbar(items.Message);
+                            showErrorSnackbar(items.Message);                                                       
                         }
                     });
                 }, error: function (data) {

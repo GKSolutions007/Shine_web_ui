@@ -2239,6 +2239,16 @@
                         $("#cmbBranch").prop("disabled", true);
                     }
                     $("#balanceContainer").show();
+                    $("#btnTEdit,#btnTCancel").hide();
+                    const isValidStatus = checkValidStatus(rowdata.Status);
+
+                    setTimeout(() => { 
+                    
+                        if (isValidStatus
+                            && rowdata.DeliveryCount == 0) {
+                            $("#btnTEdit,#btnTCancel").show();
+                        }
+                    }, 1000);                    
                 }
             },
             {
@@ -2247,7 +2257,7 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    const isValidStatus = checkValidStatus(row.Status);
+                    const isValidStatus = checkValidStatus(row.Status, row.PaymentModeID);
                     if (isValidStatus
                         && row.DeliveryCount == 0) {//row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed'
                         if (Permrdo1 == "2") {
@@ -2297,7 +2307,7 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    const isValidStatus = checkValidStatus(row.Status);
+                    const isValidStatus = checkValidStatus(row.Status, row.PaymentModeID);
                     if (isValidStatus && row.DeliveryCount == 0) {//row.Status !== 'Amended' && row.Status !== 'Cancelled' && row.Status !== 'Processed' && row.Status !== 'Processed'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftCancelID").val() != 0)
@@ -7593,14 +7603,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 },
                 success: function (data) {
                     var InvoicejsData = eval(data);
-                    if (rdo1 == "1")
-                    {
-                        var index = columns.findIndex(col => col.field === "GrossAmt");
-                        columns[index].header = "Diff Excl";
-                        index = columns.findIndex(col => col.field === "TaxAmt");
-                        columns[index].header = "Diff Incl";
-                    }
-
+                   
                     var currentSearchValue = '';
                     if (grid) {
                         currentSearchValue = grid ? grid.state.searchTerm : '';
@@ -7655,23 +7658,24 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             },
                         ],
                         customCellRenderer: (el, col, rowData) => {
-                            if (col.field === 'GrossAmt' && rdo1 == "1") {
+                            console.log("col.field ", col.field);
+                            if (col.field === 'DiffExcl') {
                                 const val = rowData[col.field];
                                 if (val >= 0) {
                                     el.innerHTML = `<div class="dg-status-badge dg-status-active"><span class="dg-status-circle"></span> `+ val +`</div>`;
                                 } else {
                                     el.innerHTML = `<div class="dg-status-badge dg-status-inactive"><span class="dg-status-circle"></span> `+ val +`</div>`;
                                 }
-                                col.header = "Diff Excl";
+                                //col.header = "Diff Excl";
                             }
-                            if (col.field === 'TaxAmt' && rdo1 == "1") {
+                            if (col.field === 'DiffIncl') {
                                 const val = rowData[col.field];
                                 if (val >= 0) {
                                     el.innerHTML = `<div class="dg-status-badge dg-status-active"><span class="dg-status-circle"></span> ` + val + `</div>`;
                                 } else {
                                     el.innerHTML = `<div class="dg-status-badge dg-status-inactive"><span class="dg-status-circle"></span> ` + val + `</div>`;
                                 }
-                                col.header = "Diff Incl";
+                                //col.header = "Diff Incl";
                             }
 
 
