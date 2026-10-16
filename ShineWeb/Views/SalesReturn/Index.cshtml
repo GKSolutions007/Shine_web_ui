@@ -4116,7 +4116,8 @@ if ($("#txtAddID").val() == 0) {
         var Net = parseFloat(parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) + WOAmt + TCSAmt + OTCAmt);
         var OCPern = (FC / Net) * 100;
         var SumNet = Net + parseFloat(FC);
-        var RoundNetAmt = Math.floor(SumNet);
+        //var RoundNetAmt = Math.floor(SumNet);
+        var RoundNetAmt = ApplyRoundoff(SumNet);
         var Roundoff = (RoundNetAmt - (Net + FC));
         //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
         updateInputColumn("txtOtherChargAmt", FC);
@@ -5421,7 +5422,7 @@ if ($("#txtAddID").val() == 0) {
                         $.each(currentnewbatch, function (i, itemsNB) {
                             trkbat = itemsNB.Batch != "" ? "True" : "False";
                             trkpkd = itemsNB.PKD != "" ? "True" : "False";
-                            var ApplyPrice = bPriceType == "1" ? itemsNB.PPrice : bPriceType == "2" ? itemsNB.SPrice : bPriceType == "3" ? itemsNB.ECP : bPriceType == "4" ? itemsNB.MRP
+                            var ApplyPrice = bPriceType == "1" ? itemsNB.PPrice : bPriceType == "2" ? itemsNB.SPrice : bPriceType == "3" ? itemsNB.ECP : bPriceType == "4" ? itemsNB.ExclMRP
                                 : bPriceType == "5" ? itemsNB.SPLPrice : itemsNB.Return;
                             TableBatch.row.add([
                                 nDocPrefix == 16 ? 1 : 3,
@@ -5692,14 +5693,16 @@ if ($("#txtAddID").val() == 0) {
             var Prodrowdata = ProductTable.row(editingRow).data();
             var PID = Prodrowdata[0];
             var txid = Prodrowdata[1];
+            var txprn = parseFloat(Prodrowdata[2]);
             var SalesPrice = document.getElementById("txtNBSPrice").getAttribute("txttag");
             var MRP = document.getElementById("txtNBMRP").getAttribute("txttag");
+            var exclMRP = MRP / parseFloat(1 + (txprn / 100));
             var PPrice = document.getElementById("txtNBPPrice").getAttribute("txttag");
             var SPL = document.getElementById("txtNBSPL").getAttribute("txttag");
             var ECP = document.getElementById("txtNBECP").getAttribute("txttag");
             var RTN = document.getElementById("txtNBRtnPrice").getAttribute("txttag");
             var bPriceType = $("#cmbPriceType").val();
-            var ApplyPrice = bPriceType == "1" ? PPrice : bPriceType == "2" ? SalesPrice : bPriceType == "3" ? ECP : bPriceType == "4" ? MRP
+            var ApplyPrice = bPriceType == "1" ? PPrice : bPriceType == "2" ? SalesPrice : bPriceType == "3" ? ECP : bPriceType == "4" ? exclMRP
                 : bPriceType == "5" ? SPL : RTN;
             var hdnridx = $("#txtSelectedRowID").val() || 1;
             var nbd = {
@@ -5712,6 +5715,7 @@ if ($("#txtAddID").val() == 0) {
                 "SPrice": SalesPrice,
                 "ECP": ECP,
                 "MRP": MRP,
+                "ExclMRP": exclMRP,
                 "SPLPrice": SPL,
                 "Return": RTN,
                 "TaxId": txid,
@@ -6459,6 +6463,7 @@ if ($("#txtAddID").val() == 0) {
         return parseFloat($row.find(selector).attr("txttag") || $row.find(selector).attr("lbltag")) || 0;
     }
     //~Validation
+    var InclusiveMRPCheck = false;
     function SaveValidation() {
         var IsValid = true;
         $(".clrdivs").html("");
@@ -6519,10 +6524,14 @@ if ($("#txtAddID").val() == 0) {
         }
         if (IsValid) {
             var errorthrowwed = false;
+            var inclerroritems = 0, inclerroritemnames = '', InclGreaterMRPError =false;
             $("#tblProductData tbody tr").each(function () {
                 const $r = $(this);
                 let Balance = getTagEl($r, "label[name='NetAmt']");
                 let currentNetAmtid = $r.find("label[name='NetAmt']").attr("id");
+                let InclPrice = getTagEl($r, "input[name='Incl']");
+                let MRP = getTagEl($r, "input[name='MRP']");
+                let ProdNames = $r.find("input[name='ProdName']").val();
                 if (Balance < 0) {
                     $(this).find('td').css("background-color", "#FFB6C1");
                     $("#" + currentNetAmtid).css("color", "red");
@@ -6535,7 +6544,26 @@ if ($("#txtAddID").val() == 0) {
                     $(this).find('td').css("background-color", "white");
                     $("#" + currentNetAmtid).css("color", "black");
                 }
+
+                if (InclPrice > MRP) {
+                    inclerroritems++;
+                    inclerroritemnames += ProdNames + "\n";
+                    $(this).find('td').css("background-color", "#fe7d65").attr("title", "Item Inclusive Price(" + InclPrice + ") cannot exceed MRP(" + MRP + ")");
+                    InclGreaterMRPError = true;
+
+                }
             });
+
+            if (InclGreaterMRPError && IsValid && !InclusiveMRPCheck) {
+                var inclmrpProceed = confirm("Price Mismatch : " + inclerroritems + " item(s) have an Inclusive Price exceeding their MRP." + "\nItems : \n" + inclerroritemnames + "\nDo you want to proceed to save?");
+                if (inclmrpProceed) {
+                    IsValid = true;
+                    InclusiveMRPCheck = true;
+                }
+                else {
+                    IsValid = false;
+                }
+            }
         }
         if (IsValid) {
             var chkadj = $("#chkDocAdj").is(":checked");
@@ -6689,6 +6717,7 @@ if ($("#txtAddID").val() == 0) {
     }
     $("#btnSave").click(function () {
         //SaveData()
+        InclusiveMRPCheck = false;
         nIsDraft = 0;
         if (cfFocus != 3) {
             ConfirmDialogMsg("Do you want to save data?");

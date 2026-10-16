@@ -4615,7 +4615,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         else {
 
             var SumNet = Net + parseFloat(FC);
-            var RoundNetAmt = Math.floor(SumNet);
+            //var RoundNetAmt = Math.floor(SumNet);
+            var RoundNetAmt = ApplyRoundoff(SumNet);
             var Roundoff = (RoundNetAmt - (Net + FC));
             //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
 
@@ -5462,6 +5463,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
     }
 
     function CustomerAutolist(listdata) {
+        var cust = $("#txtSearch");
+        console.log(cust);
         arrVendor = [], arrVendorName = [], nIndexarrVendor = 0;
         $.each(listdata, function (i, items) {
             var ven = {
@@ -7661,7 +7664,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             },
                         ],
                         customCellRenderer: (el, col, rowData) => {
-                            console.log("col.field ", col.field);
+                            //console.log("col.field ", col.field);
                             if (col.field === 'DiffExcl') {
                                 const val = rowData[col.field];
                                 if (val >= 0) {
@@ -7955,6 +7958,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn(id, val);
     }
     //~Validation
+    var InclusiveMRPCheck = false;
     function SaveValidation(SaveMode) {
         var IsValid = true;
         $(".clrdivs").html("");
@@ -8023,18 +8027,22 @@ if ($("#txtReurnPricePerm").val() == 0) {
             showErrorSnackbar("Net Amount should be greater than Zero");
         }
         if (IsValid && nTransMode != 4) {
-            var errorthrowwed = false, shinecodeerror = false;
+            var errorthrowwed = false, shinecodeerror = false, InclGreaterMRPError = false;
             //lblShinecode
             var shinecode = $("#lblShinecode").text();
+            var inclerroritems = 0, inclerroritemnames = '';
             $("#tblProductData tbody tr").each(function () {
                 const $r = $(this);
                 let Balance = getTagEl($r, "label[name='NetAmt']");
+                let InclPrice = getTagEl($r, "input[name='Incl']");
+                let MRP = getTagEl($r, "input[name='MRP']");
                 let currentNetAmtid = $r.find("label[name='NetAmt']").attr("id");
                 let ProdFieldID = $r.find("input[name='ProdName']").attr("id");
+                let ProdNames = $r.find("input[name='ProdName']").val();
                 let ItemShinecode = $r.find("input[name='ProdName']").data("shinecode"); //ProdName
                 $("#" + ProdFieldID).css("color", "black");
                 if (Balance < 0) {
-                    $(this).find('td').css("background-color", "#FFB6C1");
+                    $(this).find('td').css("background-color", "#FFB6C1").attr("title", "Some items are have nagative values");
                     $("#" + currentNetAmtid).css("color", "red");
                     IsValid = false;
                     if (!errorthrowwed) {
@@ -8042,7 +8050,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     }
                 }
                 else {
-                    $(this).find('td').css("background-color", "white");
+                    $(this).find('td').css("background-color", "white").attr("title", "");
                     $("#" + currentNetAmtid).css("color", "black");
                 }
 
@@ -8052,9 +8060,27 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     shinecodeerror = true;
                     IsValid = false;
                 }
+                if (InclPrice > MRP) {
+                    $("#" + ProdFieldID).css("color", "red");
+                    inclerroritems++;
+                    inclerroritemnames += ProdNames + "\n";
+                    $(this).find('td').css("background-color", "#fe7d65").attr("title", "Item Inclusive Price(" + InclPrice + ") cannot exceed MRP(" + MRP + ")");
+                    InclGreaterMRPError = true;
+                    
+                }
             });
             if (shinecodeerror) {
                 showErrorSnackbar("Some items are don't have Shinecode");
+            }
+            if (InclGreaterMRPError && IsValid && !InclusiveMRPCheck) {                
+                var inclmrpProceed = confirm("Price Mismatch : " + inclerroritems + " item(s) have an Inclusive Price exceeding their MRP." + "\nItems : \n" + inclerroritemnames +"\nDo you want to proceed to save?");
+                if (inclmrpProceed) {
+                    IsValid = true;
+                    InclusiveMRPCheck = true;
+                }
+                else {
+                    IsValid = false;
+                }
             }
         }
         if (IsValid && nTransMode != 4) {
@@ -8324,6 +8350,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     });
     $("#btnSave").click(function () {
         //SaveData()
+        InclusiveMRPCheck = false;
         nIsDraft = 0;
         if (SaveValidation()) {
             if (cfFocus != 3) {

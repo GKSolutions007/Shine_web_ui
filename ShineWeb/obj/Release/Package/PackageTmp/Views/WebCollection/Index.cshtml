@@ -478,7 +478,7 @@
                 <!-- Modal Header -->
                 <div class="modal-header text-white" style="background-color:#0d6efd;">
 
-                    <h5 class="modal-title fw-bold" id="lblPopupheading">
+                    <h5 class="modal-title fw-bold" id="lblCustomerNamePopupheading">
                         Invoices
                     </h5>
 
@@ -1086,6 +1086,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $(".clrdivs").html("");
         rowdata = CollectionTable.row($(this).parents('tr')).data();
         var ID = rowdata.ID;//[0];
+        $("#lblCustomerNamePopupheading").text(rowdata.CustomerName);
         InvoiceTable.draw().clear();
         InvoiceTable.draw().clear();
         GetData(8, ID);
@@ -1094,13 +1095,62 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     $('#tblCollectionData tbody').on('click', '.clsEdit', function (e) {
         $(".clrdivs").html("");
         rowdata = CollectionTable.row($(this).parents('tr')).data();
-        var ID = rowdata.EncID;//[0];
+        var ID = rowdata.ID;//[0];
+        var encID = rowdata.EncID;//[0];
         var STSID = rowdata.StatusID;
-        window.open(
-            'CollectionPayment?name=V5BIclDO7YSWXMUYe9qSUbB92jlocOM14lUepH77xc4%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + ID + "&WebCollSts=" + STSID,
-            '_blank'
-        );
+        $("#lblCustomerNamePopupheading").text(rowdata.CustomerName);
+        //window.open(
+        //    'CollectionPayment?name=V5BIclDO7YSWXMUYe9qSUbB92jlocOM14lUepH77xc4%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + ID + "&WebCollSts=" + STSID,
+        //    '_blank'
+        //);
+        Validatecollectiondocument(ID, encID, STSID);
     });
+    function Validatecollectiondocument(nID, EncID, STSID) {
+        $.ajax({
+            url: Aurl + "collectionpayment/validatewebcollosdocs",
+            type: 'GET',
+            contentType: 'application/json',
+            data: {
+                ID: nID,
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (data) {
+                    var anyerrors = data.some(d => d.Response == "Error");
+                    if (anyerrors) {
+                        InvoiceTable.draw().clear();
+                        InvoiceTable.draw().clear();
+                        GetData(8, nID);
+                        modal.show();
+                        var errorinvoices = data[0].Documents;
+                        setTimeout(() => {
+                            showErrorSnackbar(data[0].ResponseMessage);
+                            $.each(errorinvoices, function (i, items) {
+                                var errorinv = items.DocID;
+                                $("#tblInvoiceData tbody tr").each(function () {
+                                    var rowdata = InvoiceTable.row($(this)).data();
+                                    InvID = rowdata[1];
+                                    $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 100).css("background-color", "");
+                                    if (errorinv.includes(String(InvID))) {
+                                        $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 800).css("background-color", "pink").attr("title", data[0].ResponseMessage);
+                                    }
+                                });
+                            });
+                           
+                        }, 1500);
+                    }
+                    else {
+                        window.open(
+                            'CollectionPayment?name=V5BIclDO7YSWXMUYe9qSUbB92jlocOM14lUepH77xc4%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + EncID + "&WebCollSts=" + STSID,
+                            '_blank'
+                        );
+                    }
+                }
+            }
+        });
+    }
     window.addEventListener("message", function (event) {
         var data = event.data;
         if (data && data.source === "Collection") {
