@@ -1700,26 +1700,38 @@
                                             {
                                                 if (UIDs == "1")
                                                 {
-                                <li>
-                                    <a href="@Url.Action("Index", "ColumnConfiguration")" class="linkforecolor">Column Configuration</a>
-                                </li>
+                                                    <li>
+                                                        <a href="@Url.Action("Index", "ColumnConfiguration")" class="linkforecolor">Column Configuration</a>
+                                                    </li>
                                                 }
-                                                <li>                                                    
+                                                <li>
                                                     <a href="javascript:void(0)" id="hrefbakup" class="linkforecolor">Backup</a>
                                                 </li>
-                                                }
                                             }
                                         }
+                                    }
                                 </ul>
+
+
                             </div>
+
                         }
                     }
-                    @*<div style="padding-left:15px">
-                            @Html.ActionLink("LogOut - " + User, "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold", @title = User, @id = "algot" })
-
-                        </div>*@
-                    <div class="dvmainmenuheader" id="sidenavfooter" style="bottom: 0; position: fixed; width: 15%;padding:5px;font-size:16px;z-index:10000 ">
+                    <button class="dropdown-btn"><i class="fa fa-table"></i> New Trans Table</button>
+                    <div class="dropdown-container">
+                        <ul class="linkforecolor">
+                            <li>
+                                @Html.ActionLink("New Quotation", "Index", "Quotationnew", new { name = "BTQgLv+ebY48FN9pEezgnyVrVumuVVzPVnoCFOjqIsU=", strFormID = "jJOtHsRVwYECOhoiBc69dA==", TypeID = "jJOtHsRVwYECOhoiBc69dA==", TranID = "jJOtHsRVwYECOhoiBc69dA==" }, new { @class = "dropdown linkforecolor", @style = "font-weight:bold; color: var(--CompanyNameColor)" })                                
+                            </li>
+                            <li>
+                                @Html.ActionLink("New Purchase Order", "Index", "PurchaseOrdernew", new { name = "Vd++rU8QQpt1lN1iIJW1a5vMQ8aDbizObKKScceojgs=", strFormID = "jJOtHsRVwYECOhoiBc69dA==", TypeID = "jJOtHsRVwYECOhoiBc69dA==", TranID = "jJOtHsRVwYECOhoiBc69dA==" }, new { @class = "dropdown linkforecolor", @style = "font-weight:bold; color: var(--CompanyNameColor)" })
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="dvmainmenuheader" id="sidenavfooter" style="bottom: 0; position: fixed; width: 15%;padding:5px;font-size:16px;z-index:10000 ">                        
                         <div class="account-link-container" style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 5px;">
+
+
                             <a href="@Url.Action("Index", "UpdateUser", new { name = "ONuKr1oIASSV+koj5n/Zz0ymu1AOgX8YlbLqAg8l8rQ=", strFormID = "BOII5FUynjpl5RZJJ8nW1g==" })" title="User Profile" class="dropdown linkforecolor" style="display: flex; align-items: center; text-decoration: none; color: var(--main-menutext); font-weight: bold;">
                                 <img src="~/Images/G_100x80.png" id="imgUserProfilePicture" style="border-radius: 50%; height: 30px; width: 30px; margin-right: 10px; border: 2px solid white;" alt="User Profile" />
                                 <span>@User</span>
@@ -2556,29 +2568,62 @@
                 }
             });
         }
-        function ReturnColumnSettingsData(nMode, nFormID, nTableID) {
+        function ReturnColumnSettingsData(nMode, nFormID, nTableID, nFormorReport = 0) {
             var coldata = [];
             $.ajax({
                 url: Aurl + "columnsettings/getcolumnsettings",
                 type: 'get',
                 contentType: 'json',
-                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+                data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: nFormorReport },
                 xhrFields: {
                     withCredentials: true
                 },
                 async: false,
                 success: function (data) {
                     if (data.length > 0) {
-                        console.log("Column Settings ", data);
-                        coldata = data;
+                        console.log("Return Column Settings ", data);
+                        return data;
                     } else {
                         showErrorSnackbar("No column data found");
-                        coldata = [];
+                        return [];
                     }
-                }, error: function (data) { coldata = []; }
+                }, error: function (data) { return []; }
             });
-            return coldata;
+            return [];
         }
+
+        async function TransactionColumnSettingsData(nMode, nFormID, nTableID, nFormorReport = 0) {
+            try {
+                const data = await $.ajax({
+                    url: Aurl + "columnsettings/getcolumnsettings",
+                    type: "GET",
+                    dataType: "json",
+                    data: {
+                        Mode: nMode,
+                        FormID: nFormID,
+                        TableID: nTableID,
+                        FormorReport: nFormorReport
+                    },
+                    xhrFields: {
+                        withCredentials: true
+                    }
+                });
+
+                if (Array.isArray(data) && data.length > 0) {
+                    //console.log("Return Column Settings", data);
+                    return data;
+                }
+
+                showErrorSnackbar("No column data found");
+                return [];
+
+            } catch (error) {
+                console.error("Error fetching column settings:", error);
+                showErrorSnackbar("Failed to retrieve column settings");
+                return [];
+            }
+        }
+
         function CommonDocFilterColumnSettingsData(nMode, nFormID, nTableID, Threedoticon = false) {
             $.ajax({
                 url: Aurl + "columnsettings/getcolumnsettings",
@@ -4268,6 +4313,10 @@ function CloseConfirmDialogMsg_old(message) {
     //}
 
     function GetBranchwiseABSQty(nProdID) {
+        if (nProdID == 0) {
+            showErrorSnackbar("Select valid product");
+            return;
+        }
         $.ajax({
             url: Aurl + "automaticindent/getbranchqty",
             type: 'get',
