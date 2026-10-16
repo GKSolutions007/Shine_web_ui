@@ -9,6 +9,7 @@
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 <link href="~/Content/jquery-ui.css" rel="stylesheet" />
 <link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />
 @*<script src="~/Scripts/bootstrap.min.js"></script>*@
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
@@ -18,6 +19,8 @@
 <script src="~/Scripts/js/refreshtoken.js"></script>
 <script src="~/Scripts/npm_charts.js"></script>
 <script src="~/Scripts/npm_chart_datalabels.js"></script>
+<script src="~/GKBS_GRID_2.0/js/gridui.js"></script>
+<script src="~/Scripts/xlsx.bundle.js"></script>
 <style>
     :root {
         --primary-color: #4a90e2;
@@ -64,9 +67,9 @@
         font-size: 14px;
         font-weight: 600;
         color: var(--primary-color);
-        margin-bottom: 8px;
+        margin-bottom: 3px;
         border-bottom: 1px solid var(--border-color);
-        padding-bottom: 8px;
+        padding-bottom: 5px;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -301,9 +304,443 @@
     div.dt-container div.dt-layout-row {
         margin: 0 !important;
     }
+
+    /* ===== Brand Summary Overlay ===== */
+    /* Adjust --navbar-height to match the real height of the top menu bar
+       rendered by _LayoutBT5, so the overlay never covers the existing menus. */
+    :root {
+        --navbar-height: 15px;
+    }
+
+    .overlay-toggle-btn {
+        position: fixed;
+        top: 50px;
+        right: 0;
+        z-index: 2200;
+        width: 20px;
+        height: 65px;
+        border: none;
+        border-radius: 50% 0 0 50%;
+        background: var(--primary-color);
+        color: #fff;
+        box-shadow: -3px 4px 14px rgba(0,0,0,0.28);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: right 0.45s cubic-bezier(0.4, 0, 0.2, 1), left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.45s ease, transform 0.25s ease, background 0.25s ease;
+    }
+
+        .overlay-toggle-btn:hover {
+            transform: scale(1.08);
+            background: #3a7bc8;
+        }
+
+        .overlay-toggle-btn:active {
+            transform: scale(0.96);
+        }
+
+        .overlay-toggle-btn .toggle-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .overlay-toggle-btn .toggle-icon svg {
+                width: 100%;
+                height: 100%;
+                stroke: #fff;
+                fill: none;
+                stroke-width: 2.4;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+
+        /* Open state: button detaches from the right edge and docks on the left edge */
+        .overlay-toggle-btn.overlay-open {
+            right: auto;
+            left: 0;
+            border-radius: 0 50% 50% 0;
+            box-shadow: 3px 4px 14px rgba(0,0,0,0.28);
+        }
+
+    .brand-overlay {
+        position: fixed;
+        top: var(--navbar-height);
+        right: -100%;
+        width: 100%;
+        height: calc(100% - var(--navbar-height));
+        background: var(--bg-color);
+        z-index: 2050;
+        box-shadow: -8px 0 30px rgba(0,0,0,0.25);
+        transition: right 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        padding: 10px 10px 5px 20px;
+    }
+
+        .brand-overlay.active {
+            right: 0;
+        }
+
+    .brand-overlay-header {
+        margin-bottom: 15px;
+    }
+
+        .brand-overlay-header h4 {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 18px;
+            margin: 0;
+        }
+
+
+        .brand-overlay-filters .form-group {
+            margin-bottom: 0;
+        }
+
+    .brand-overlay-inclusive {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 5px;
+    }
+
+        .brand-overlay-inclusive label {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color:black;
+        }
+
+    #btnOverlayGenerate {
+        margin-top: 8px;
+        white-space: nowrap;
+    }
+
+    
+
+        .brand-overlay-table table.dataTable tbody td:first-child {
+            text-align: left;
+        }
+
+    .dt-input{
+        color:black !important;
+    }
+</style>
+<style>
+    /* The Modal (background) */
+    .modalReportColumnSettings {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 3500; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content/Box */
+    @@media only screen and (min-width: 800px) {
+        .modalReportColumnSettings-content {
+            background-color: #ffffff;
+            margin: 1% auto; /* 15% from the top and centered */
+            padding: 0px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 85%; /* Could be more or less, depending on screen size */
+            max-height: 60% !important;
+            top: 2% !important;
+            overflow: auto;
+        }
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .modalReportColumnSettings-content {
+            background-color: #ffffff;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 3px;
+            border: 1px solid #888;
+            width: 95%; /* Could be more or less, depending on screen size */
+            height: 70%;
+            top: 20%;
+            overflow: auto;
+        }
+    }
+    /*
+ .modal-dialog {
+     width: 80%
+ }*/
+    /* The Close Button */
+    .closemodalReportColumnSettings {
+        color: #aaa;
+        float: right;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+        .closemodalReportColumnSettings:hover,
+        .closemodalReportColumnSettings:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+<style>
+    .brand-os-summary {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 18px;
+    padding: 8px 14px;
+    margin-left: auto;
+    width: fit-content;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    transition: all 0.25s ease;
+}
+
+.brand-os-summary:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+}
+
+.brand-os-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 150px;
+}
+
+.brand-os-icon {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #eef5ff;
+    color: #2563eb;
+    font-size: 17px;
+    transition: all 0.3s ease;
+}
+
+.brand-os-item:hover .brand-os-icon {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+.brand-os-content {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.brand-os-title {
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.brand-os-content strong {
+    margin-top: 3px;
+    font-size: 16px;
+    color: #111827;
+    font-weight: 700;
+}
+
+.brand-os-divider {
+    width: 1px;
+    height: 35px;
+    background: #e5e7eb;
+}
+
+/* > 30 Days */
+.brand-os-item.danger .brand-os-icon {
+    background: #fff1f2;
+    color: #dc2626;
+}
+
+.brand-os-item.danger .brand-os-content strong {
+    color: #dc2626;
+}
+
+/* Number animation */
+@@keyframes valuePulse {
+    0% {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.brand-os-content strong {
+    animation: valuePulse 0.5s ease-out;
+}
+
+    .single-row {
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+        .single-row .form-group.form-label {
+            margin: 0;
+            flex: 1;
+            width: auto;
+        }
+
+        .single-row + div {
+            margin-top: 12px;
+        }
 </style>
 <body>
     <div class="toastBox"></div>
+
+    <!-- Overlay Toggle Button (docks on the right edge when closed, left edge when open) -->
+    <button type="button" id="btnToggleBrandOverlay" class="overlay-toggle-btn" title="Open Brand Summary">
+        <span class="toggle-icon" id="iconToggleOverlay">
+            <!-- Modern open (chevron) icon -->
+            <svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"></polyline></svg>
+        </span>
+    </button>
+
+    <!-- Brand Summary Overlay -->
+    <div class="brand-overlay" id="brandSummaryOverlay">
+
+
+        <div class="modern-card brand-overlay-filters">
+            <div class="row">
+
+                <div class="col-xs-12 col-sm-6 col-md-4 form-group form-label">
+                    <div class="brand-overlay-header">
+                        <h4><span class="glyphicon glyphicon-stats"></span> Brand Summary</h4>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-3 form-group form-label">
+                    <div class="form-group form-label">
+                        <select class="form-control" id="cmbOverlayBranch">
+                            <option value="0">-- All --</option>
+                        </select>
+                        <label class="labelup">Branch</label>
+                    </div>
+
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <select class="form-control gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <div class="form-group form-label">
+                        <input type="date" class="form-control" id="dtpFFrom" autocomplete="off" />
+                        <label class="labelup">From Date</label>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+                    <div class="form-group form-label">
+                        <input type="date" class="form-control" id="dtpFTo" autocomplete="off" />
+                        <label class="labelup">To Date</label>
+                    </div>
+                </div>
+                <div class="col-xs-6 col-sm-3 col-md-1">
+                    <div class="brand-overlay-inclusive">
+                        <input type="checkbox" id="chkOverlayInclusive" />
+                        <label for="chkOverlayInclusive">With Tax</label>
+                    </div>
+                </div>
+                <div class="col-xs-6 col-sm-3 col-md-1">
+                    <button type="button" id="btnOverlayGenerate" class="btn btn-filter-style btn-block">
+                        <span class="glyphicon glyphicon-play"></span> Generate
+                    </button>
+                </div>
+            </div>
+            <div style="color: red; font-size: 11px;" id="divErrOverlayFilter"></div>
+        </div>
+
+        <div class="modern-card brand-overlay-table">
+            <div class="row">
+                <div class="col-sm-12 col-md-12 col-lg-12" hidden>
+                    <table class="table" id="tblBrandSummary" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>ManufID</th>
+                                <th>Brand</th>
+                                <th style="text-align:right;">Opening</th>
+                                <th style="text-align:right;">Purchase</th>
+                                <th style="text-align:right;">PR</th>
+                                <th style="text-align:right;">NET Purchase</th>
+                                <th style="text-align:right;">Sales</th>
+                                <th style="text-align:right;">SR</th>
+                                <th style="text-align:right;">DR</th>
+                                <th style="text-align:right;">NET Sales</th>
+                                <th style="text-align:right;">Closing</th>
+                                <th style="text-align:right;">Dmg Closing</th>
+                                <th style="text-align:center;" title="Outstandings/Invoice Count/Customer Count">OS/INV/CX</th>
+                                <th style="text-align:right;">&gt;30 days</th>
+                                <th style="text-align:right;" title="Total Customer Count">Cx Count</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="brand-os-summary">
+                    <div class="brand-os-item">
+                        <div class="brand-os-icon">
+                            <i class="fa fa-wallet"></i>
+                        </div>
+                        <div class="brand-os-content">
+                            <span class="brand-os-title">Outstanding</span>
+                            <strong id="lblBrandTotalOS">0.00</strong>
+                        </div>
+                    </div>
+
+                    <div class="brand-os-divider"></div>
+
+                    <div class="brand-os-item danger">
+                        <div class="brand-os-icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="brand-os-content">
+                            <span class="brand-os-title">Over 30 Days</span>
+                            <strong id="lblBrandGreater30DOS">0.00</strong>
+                        </div>
+                    </div>
+                </div>
+                <div id="brandsummarygrid" style="height:600px;width:100%;"></div>
+            </div>
+        </div>
+    </div>
     @Html.HiddenFor(model => model.CollectionDetailEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtCollectionDetailEnable" })
     @Html.HiddenFor(model => model.ChequeDetailEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtChequeDetailEnable" })
     @Html.HiddenFor(model => model.TransVariantEnable, new { @autocomplete = "off", @class = "form-control", @id = "txtTransVariantEnable" })
@@ -312,6 +749,7 @@
     @Html.HiddenFor(model => model.QuickAccess, new { @autocomplete = "off", @class = "form-control", @id = "txtQuickAccessEnable" })
     @Html.HiddenFor(model => model.PendingDraft, new { @autocomplete = "off", @class = "form-control", @id = "txtPendingDraftEnable" })
     @Html.HiddenFor(model => model.TransactionSummary, new { @autocomplete = "off", @class = "form-control", @id = "txtTransactionSummaryEnable" })
+    @Html.HiddenFor(model => model.BrandSummary, new { @autocomplete = "off", @class = "form-control", @id = "txtBrandSummaryEnable" })
 
 
     <div class="container-fluid" style="padding: 10px;">
@@ -359,56 +797,47 @@
                         </div>
                     </div>
                 </div>
-                <!-- Quick Access -->
-                <div class="sidebar-widget" id="dvQuickAccess">
-                    <div class="widget-header">
-                        <span class="glyphicon glyphicon-flash"></span> Quick Access
+                <!-- Stock In Hand -->
+                <div class="modern-card dvBalances" id="dvChequeDetail">
+                    <div class="card-title widget-header">
+                        <span class="glyphicon glyphicon-home" title="Stock In Hand"></span>
+                        <select class="form-control" id="cmbBranch" title="Branch">
+                            <option value="0">Select</option>
+                        </select>
+                        <select class="form-control" id="cmbManuf" title="Manufacturers">
+                            <option value="0">Select</option>
+                        </select>
                     </div>
-                    <div class="widget-body">
-                        <div class="form-group form-label">
-                            <select class="form-control" id="cmbQAtransaction"></select>
-                            <label class="labelup">Transaction</label>
-                            <div style="color: red; font-size: 11px;" id="divErrTransName"></div>
-                        </div>
-                        <div class="form-group form-label">
-                            <label class="labelup">Doc ID</label>
-                            <input type="text" class="form-control" id="txtQAdocid" placeholder="Enter Doc ID">
-                            <div style="color: red; font-size: 11px;" id="divErrDocID"></div>
-                        </div>
-                        <div style="display: flex; justify-content: center; gap: 8px;">
-                            <button type="button" id="btnQAClear" class="btn btn-danger"><span class="glyphicon glyphicon-refresh"> Reset</span></button>
-                            <button type="button" id="btnQASubmit" class="btn btn-success"><span class="glyphicon glyphicon-saved"> Submit</span></button>
-                        </div>
+                    <table class="table" id="tblStockInHand">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th style="text-align:right;">Qty</th>
+                                <th style="text-align:right;">Gross</th>
+                                <th style="text-align:right;">Net</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+                <!--Pending Drafts -->
+                <div class="modern-card" id="dvPendingDrafts">
+                    <div class="card-title widget-header">
+                        <span class="glyphicon glyphicon-time"></span> Pending Drafts
                     </div>
+                    <table class="table table-hover" id="tblDraftCount">
+                        <thead>
+                            <tr>
+                                <th style="display:none;">TransID</th>
+                                <th style="display:none;">TransName</th>
+                                <th>Transaction</th>
+                                <th style="text-align:center;">Count</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
 
-                <!-- Transaction Variant -->
-                <div class="sidebar-widget Transvariant-container" id="dvTransVariant">
-                    <div class="widget-header">
-                        <span class="glyphicon glyphicon-list-alt"></span> Transaction Variant
-                    </div>
-                    <div class="widget-body">
-                        <div class="form-group form-label">
-                            <label class="labelup">Transaction</label>
-                            <select class="form-control" id="cmbVariantTransaction">
-                                <option value="0">Select</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-label">
-                            <label class="labelup">Doc ID</label>
-                            <input type="text" class="form-control" id="txtVariantDocID" placeholder="Select Doc ID">
-                        </div>
-                        <div class="form-group form-label">
-                            <label class="labelup">Party Name</label>
-                            <input type="text" class="form-control" id="txtVariantPartyName" placeholder="Select Party">
-                            <input hidden id="txtPartyID" />
-                        </div>
-                        <div style="display: flex; justify-content: center; gap: 8px;">
-                            <button type="button" id="btnVariantClear" class="btn btn-danger"><span class="glyphicon glyphicon-refresh"> Reset</span></button>
-                            <button type="button" id="btnVariantSubmit" class="btn btn-success"><span class="glyphicon glyphicon-saved"> Submit</span></button>
-                        </div>
-                    </div>
-                </div>
+
+
             </div>
 
             <!-- Main Dashboard Area -->
@@ -416,6 +845,34 @@
                 <div class="row">
                     <!-- Pending Drafts Card -->
                     <div class="col-md-5 col-lg-5">
+                        <!-- Quick Access -->
+                        <div class="sidebar-widget" id="dvQuickAccess">
+                            <div class="widget-header">
+                                <span class="glyphicon glyphicon-flash"></span> Quick Access
+                            </div>
+                            <div class="widget-body">
+                                <div class="single-row">
+                                    <div class="form-group form-label">
+                                        <select class="form-control" id="cmbQAtransaction"></select>
+                                        <label class="labelup">Transaction</label>
+                                        <div style="color: red; font-size: 11px;" id="divErrTransName"></div>
+                                    </div>
+                                    <div class="form-group form-label">
+                                        <label class="labelup">Doc ID</label>
+                                        <input type="text" class="form-control" id="txtQAdocid" placeholder="Enter Doc ID">
+                                        <div style="color: red; font-size: 11px;" id="divErrDocID"></div>
+                                    </div>
+                                    <div>
+                                        <button type="button" id="btnQAClear" title="Reset" class="btn btn-danger"><span class="glyphicon glyphicon-refresh"></span></button>
+                                        <button type="button" id="btnQASubmit" title="submit" class="btn btn-success"><span class="glyphicon glyphicon-saved"></span></button>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: end; gap: 8px;" hidden>
+                                    <button type="button" id="btnQAClear1" class="btn btn-danger"><span class="glyphicon glyphicon-refresh"> Reset</span></button>
+                                    <button type="button" id="btnQASubmit1" class="btn btn-success"><span class="glyphicon glyphicon-saved"> Submit</span></button>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Cheque Details -->
                         <div class="modern-card" id="dvChequeDetail">
                             <div class="card-title widget-header">
@@ -432,24 +889,51 @@
                                 </thead>
                             </table>
                         </div>
-                        <!--Pending Drafts -->
-                        <div class="modern-card" id="dvPendingDrafts">
+                        <!-- Outstandings -->
+                        <div class="modern-card dvBalances" id="dvOutstandings">
                             <div class="card-title widget-header">
-                                <span class="glyphicon glyphicon-time"></span> Pending Drafts
+                                <span class="glyphicon glyphicon-credit-card"></span>
+                                Outstandings
                             </div>
-                            <table class="table table-hover" id="tblDraftCount">
+                            <table class="table" id="tblOutstandings">
                                 <thead>
                                     <tr>
-                                        <th style="display:none;">TransID</th>
-                                        <th style="display:none;">TransName</th>
-                                        <th>Transaction</th>
-                                        <th style="text-align:center;">Count</th>
+                                        <th>Description</th>
+                                        <th style="text-align:right;">Value</th>
+                                        <th style="text-align:right;">Invoice Count</th>
                                     </tr>
                                 </thead>
                             </table>
                         </div>
 
-                    </div>                    
+                        <!-- Transaction Variant -->
+                        <div class="sidebar-widget Transvariant-container" id="dvTransVariant" hidden>
+                            <div class="widget-header">
+                                <span class="glyphicon glyphicon-list-alt"></span> Transaction Variant
+                            </div>
+                            <div class="widget-body">
+                                <div class="form-group form-label">
+                                    <label class="labelup">Transaction</label>
+                                    <select class="form-control" id="cmbVariantTransaction">
+                                        <option value="0">Select</option>
+                                    </select>
+                                </div>
+                                <div class="form-group form-label">
+                                    <label class="labelup">Doc ID</label>
+                                    <input type="text" class="form-control" id="txtVariantDocID" placeholder="Select Doc ID">
+                                </div>
+                                <div class="form-group form-label">
+                                    <label class="labelup">Party Name</label>
+                                    <input type="text" class="form-control" id="txtVariantPartyName" placeholder="Select Party">
+                                    <input hidden id="txtPartyID" />
+                                </div>
+                                <div style="display: flex; justify-content: center; gap: 8px;">
+                                    <button type="button" id="btnVariantClear" class="btn btn-danger"><span class="glyphicon glyphicon-refresh"> Reset</span></button>
+                                    <button type="button" id="btnVariantSubmit" class="btn btn-success"><span class="glyphicon glyphicon-saved"> Submit</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Details Tables Column -->
                     <div class="col-md-7 col-lg-7">
                         <div class="col-md-12 dvBalances" style="margin-bottom: 10px;">
@@ -491,7 +975,7 @@
                                     <option value="4">Quarter</option>
                                     <option value="5">All</option>
                                 </select>
-                            </div>                            
+                            </div>
                             <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
                                 <div style="flex: 1; min-width: 250px;">
                                     <table class="table" id="tblCollectionDetail">
@@ -587,7 +1071,7 @@
                 <!-- Header -->
                 <div class="modal-header" style="background: var(--primary-color); color:white;">
                     <h5 class="modal-title fw-bold" id="lblPopupheading">Draft Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" style="filter:invert(1)" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
                 <!-- Body -->
@@ -629,13 +1113,81 @@
             </div>
         </div>
     </div>
+    <div class="modalReportColumnSettings" id="mymodalReportColumnSettings" tabindex="-1">
+        <div @*class="modal-dialog modal-dialog-centered modal-lg"*@>
+            <div class="modalReportColumnSettings-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header p-3" style="background: var(--primary-color); color:white;">
+                    <h5 class="modal-title" id="lblReportPopupheading"><b>Brand Summary Columns</b></h5>
+                    <button type="button"  style="filter: invert(1);" class="btn-close closemodalReportColumnSettings" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <div id="dvAssign" class="w-100 pb-2">
+                        <table class="table table-bordered table-striped align-middle" id="tblReportSettings">
+                            <thead>
+                                <tr class="trclrforcolheader" style="font-size:10px;">
+                                    <th style="width:0%">ReportID</th>
+                                    <th style="width:0%">TableID</th>
+                                    <th style="width:0%">ColumnID</th>
+                                    <th style="width:0%">FormorReport</th>
+                                    <th style="width:25%">Column Name</th>
+                                    <th style="width:25%">Original Name</th>
+                                    <th style="width:30%">Display Name</th>
+                                    <th style="width:9%">Width</th>
+                                    <th style="width:12%">Visible</th>
+                                    <th style="width:12%">Alignment</th>
+                                    <th style="width:12%">Display Index</th>
+                                    <th style="width:12%">Total</th>
+                                    <th style="width:12%">Sum</th>
+                                    <th style="width:12%">Average</th>
+                                    <th style="width:12%">Count</th>
+                                    <th style="width:12%">Unique</th>
+                                    <th style="width:12%">Column Menu</th>
+                                    <th style="width:12%">Show Column Option</th>
+                                    <th style="width:12%">Print</th>
+                                    <th style="width:12%">Print Name</th>
+                                    <th style="width:12%">Print Width</th>
+                                    <th style="width:12%">Column Type</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="19"></th>
+                                    <th class="text-end">Total Print Width :</th>
+                                    <th class="text-end">
+                                        <label id="lblPrintWidth"></label>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <div class="text-end w-100">
+                        <button type="button" class="btn btn-success" id="btnSubmitmodalReportColumnSettings">
+                            <i class="bi bi-save"></i> Accept
+                        </button>
+                        <button type="button" class="btn btn-warning" id="btnClosemodalReportColumnSettings">
+                            <i class="bi bi-x-circle"></i> Close
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </body>
 <script type="text/javascript">
     var RID = '@Session["RoleID"]';
     var Aurl = '@Session["APIurl"]';
     var HomePeriod = '@Session["HomePeriod"]';
     var AutoRefresh = parseInt('@Session["AutoRefresh"]') * 60;
-
+    var CompanyName = '@Session["CompanyName"]';
     var TblDraftCount = $('#tblDraftCount').DataTable({
         "bFilter": false,
         "bSearchable": false,
@@ -687,7 +1239,56 @@
         "ordering": false,
         scrollY: "400px",
         scrollCollapse: true,
-});
+    });
+    var tblStockInHand = $('#tblStockInHand').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "400px",
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [1,2,3], "class": "dt-body-right" }],
+    });
+    var tblOutstandings = $('#tblOutstandings').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "250px",
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [1], "class": "dt-body-right" }, { "targets": [2], "class": "dt-body-center" }],
+    });
+    
+    var tblBrandSummary = $('#tblBrandSummary').DataTable({
+        "bFilter": true,
+        "bSearchable": true,
+        "bInfo": true,
+        "bPaginate": true,
+        "ordering": true,
+        scrollY: "425px",
+        scrollX: true,
+        scrollCollapse: true,
+        "columnDefs": [{ "targets": [0], "visible": false, searchable: false }],
+    });
+    var tblReportSettings = $('#tblReportSettings').DataTable({
+        "bFilter": false,
+        "bSearchable": false,
+        "bInfo": false,
+        "bPaginate": false,
+        "ordering": false,
+        scrollY: "250px",
+        "columnDefs": [{ "targets": [0, 1, 2, 3], "visible": false, searchable: false }],
+    });
+    var modalReportColumnsetting = document.getElementById("mymodalReportColumnSettings");
+    var spanRepCSClode = document.getElementsByClassName("closemodalReportColumnSettings")[0];
+    spanRepCSClode.onclick = function () {
+        modalReportColumnsetting.style.display = "none";
+    }
+    $('#btnClosemodalReportColumnSettings').click(function (e) {
+        modalReportColumnsetting.style.display = "none";
+    });
     var collectionChart = null;
     //$('#cmbTransactionTimeFilter,#cmbTimeFilter').val(HomePeriod);
     function updateCollectionChart(data) {
@@ -825,7 +1426,29 @@
             plugins: [ChartDataLabels]
         });
     }
-
+    var brandsummarygrid;
+    var bransummarycolumnsettings = [];
+    GetColumnSettingsData(2, 1005, 1);
+    function GetColumnSettingsData(nMode, nFormID, nTableID) {
+        columnsettings = [];
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                if (data.length > 0) {
+                    bransummarycolumnsettings = (data);
+                } else {
+                    showErrorSnackbar("No column found for Brand Summary");
+                }
+            }
+        });
+    }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
     }
@@ -861,12 +1484,18 @@
     if ($("#txtTransactionSummaryEnable").val() == 0) {
         $("#dvTransSummaryDetail").hide();
     }
+    if ($("#txtBrandSummaryEnable").val() == 0) {
+        $("#btnToggleBrandOverlay").hide();
+    }
+    var brandsummaryfirstclick = true;
+    LoadBranchByRoles('#cmbBranch,#cmbOverlayBranch');
     GetData(1, 0);
     GetData(5, 0);
     GetData(8, 0);
     GetData(9, 0);
     GetData(10, 0);
     GetData(11, 0);
+    GetData(13, 0);
     GetData(6, RID);
     var arrTrans = [], arrStockValues = [], arrPartyOS = [],arrCashBalances = [],arrBankBalances = [];
 
@@ -931,12 +1560,12 @@
         );
         //","
     });
-    function GetData(nMode, ID) {
+    function GetData(nMode, ID,ManufID = "1") {
         $.ajax({
             url: Aurl + "homescreendraft/get",
             type: 'get',
             contentType: 'json',
-            data: { Mode: nMode, Trans: ID },
+            data: { Mode: nMode, Trans: ID, ID: ManufID },
             xhrFields: {
                 withCredentials: true
             },
@@ -991,12 +1620,16 @@
                 }
                 if (nMode == 6) {
                     arrTrans = [];
-                    $('#cmbQAtransaction').find("option").remove();
+                    $('#cmbQAtransaction,#cmbManuf').find("option").remove();
                     $('#cmbQAtransaction').append($('<option/>', {
                         value: 0,
                         text: "-- Select --",
                     }));
-                    var transdata = eval(data);
+                    $('#cmbManuf').append($('<option/>', {
+                        value: 0,
+                        text: "-- All Manufacturer --",
+                    }));
+                    var transdata = data.Table;
                     if (transdata.length > 0) {
                         $.each(transdata, function (i, items) {
                             $('#cmbQAtransaction').append($('<option/>', {
@@ -1008,6 +1641,18 @@
                         });
                     } else {
                         //showErrorSnackbar("You dont have any Transaction permissions");
+                    }
+                    var Mfrs = data.Table1;
+                    $.each(Mfrs, function (i, items) {
+                        $('#cmbManuf').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                    });
+                    if (Mfrs.length > 0) {
+                        var BranchID = $('#cmbBranch').val();
+                        var firstmfrid = Mfrs[0].ID;
+                        GetData(12, BranchID, 0);
                     }
                 }
                 if (nMode == 8) {
@@ -1025,10 +1670,12 @@
                     $("#dvNetOS").html("₹ 0.00");
                     var pmdata = JSON.parse(data);
                     arrPartyOS = pmdata;
-                    var Receivableos = arrPartyOS[0].OrgOS;
-                    var Payableos = arrPartyOS[1].OrgOS;
-                    var NetOS = Receivableos - Payableos;
-                    $("#dvNetOS").html(formatIndianCurrency(NetOS));
+                    if (arrPartyOS.length > 0) {
+                        var Receivableos = arrPartyOS[0].OrgOS;
+                        var Payableos = arrPartyOS[1].OrgOS;
+                        var NetOS = Receivableos - Payableos;
+                        $("#dvNetOS").html(formatIndianCurrency(NetOS));
+                    }
                     console.log(arrPartyOS);
                 }
                 if (nMode == 10) {
@@ -1040,14 +1687,50 @@
                 if (nMode == 11) {
                     $("#dvMobOT,#dvMobCashColl,#dvMobCheque,#dvMonBankTransfer").html("₹ 0.00 / 0");
                     var webdata = JSON.parse(data);
-                    $("#dvMobOT").html(webdata[0].OTAmount || "&#8377; 0.00 / 0");
-                    $("#dvMobCashColl").html(webdata[0].CashValue || "&#8377; 0.00 / 0");
-                    $("#dvMobCheque").html(webdata[0].CheqValue || "&#8377; 0.00 / 0");
-                    $("#dvMonBankTransfer").html(webdata[0].BTValue || "&#8377; 0.00 / 0");
+                    if (webdata.length > 0) {
+                        $("#dvMobOT").html(webdata[0].OTAmount || "&#8377; 0.00 / 0");
+                        $("#dvMobCashColl").html(webdata[0].CashValue || "&#8377; 0.00 / 0");
+                        $("#dvMobCheque").html(webdata[0].CheqValue || "&#8377; 0.00 / 0");
+                        $("#dvMonBankTransfer").html(webdata[0].BTValue || "&#8377; 0.00 / 0");
+                    }
+                }
+                if (nMode == 12) {
+                    tblStockInHand.draw().clear(); tblStockInHand.draw().clear();
+                    console.log("data", data);
+
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {
+                            tblStockInHand.row.add([
+                                items.Type,
+                                items.ActualQty,
+                                formatIndianCurrency(items.Price),
+                                formatIndianCurrency(items.InclPrice)
+                            ]).draw(false);
+                        });
+
+                    }
+                }
+                if (nMode == 13) {
+                    tblOutstandings.draw().clear(); tblOutstandings.draw().clear();
+                    if (data.length > 0) {
+                        $.each(data, function (i, items) {                            
+                            tblOutstandings.row.add([
+                                items.Descriptions != 'Total' ? items.Descriptions : '<label style="font-size:12px;color:red">' + items.Descriptions+"</label>",
+                                items.Descriptions != 'Total' ? formatIndianCurrency(items.Balance) : '<label style="font-size:12px;color:red">' + formatIndianCurrency(items.Balance) + "</label>",
+                                items.Descriptions != 'Total' ? items.InvCount : '<label style="font-size:12px;color:red">' + items.InvCount + "</label>"
+                            ]).draw(false);
+                        });
+
+                    }
                 }
             }
         });
     }
+    $('#cmbManuf,#cmbBranch').change(function (e) {
+        var MfrID = $("#cmbManuf").val();
+        var BranchID = $("#cmbBranch").val();
+        GetData(12, BranchID, MfrID);
+    });
     $('#cmbQAtransaction').change(function (e) {
         var selval = e.target.value;
         if (selval > 0) {
@@ -1102,7 +1785,7 @@
             OpenTransactionDocument(dTransID, DocID);
         }
     });
-    
+
     getCollectionData(HomePeriod);
     getTransactionData(HomePeriod);
     function getCollectionData(FType) {
@@ -1139,7 +1822,6 @@
                             $(row).addClass('total-row');
                         }
                     }
-
                 });
                 tblCollectionDetail = $('#tblCollectionDetail').DataTable();
                 $("#cmbTimeFilter").val(FType);
@@ -1404,7 +2086,7 @@
                 nVariantTransID = ftrans[0].TransID;
                 $("#txtVariantDocID").val(ftrans[0].DocPrefix);
             }
-            PType = (ID == 1 || ID == 2 || ID == 3) ? 1 : 2;
+            PType = (ID == 1 || ID == 2 || ID == 3 || ID == 4) ? 1 : 2;
             GetVariantData(2, PType);
         } else {
             $("#txtVariantDocID").val("");
@@ -1458,9 +2140,9 @@
                             if (VariantType == 1) {// Inv to Qtn
                                 var formhavepermission = checkFormPermission("Quotation?");
                                 if (formhavepermission)
-                                window.open(
-                                    'Quotation?name=BTQgLv%2BebY48FN9pEezgnyVrVumuVVzPVnoCFOjqIsU%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + items.ID + '&TransVariantID=' + VariantType + '&PartyID=' + $("#txtPartyID").val(),
-                                    '_blank'
+                                    window.open(
+                                        'Quotation?name=BTQgLv%2BebY48FN9pEezgnyVrVumuVVzPVnoCFOjqIsU%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + items.ID + '&TransVariantID=' + VariantType + '&PartyID=' + $("#txtPartyID").val(),
+                                        '_blank'
                                     );
                                 else {
                                     showErrorSnackbar("You don't have pemission for &ensp;<h4><code> Quotation</code></h4>")
@@ -1469,9 +2151,9 @@
                             if (VariantType == 2) {// Inv to Sales Return
                                 var formhavepermission = checkFormPermission("SalesReturn?name=6");
                                 if (formhavepermission)
-                                window.open(
-                                    'SalesReturn?name=6%2B9sxOBkg1PjlBjpubNIcRsbDdS%2F%2BKzbighA08XDWD0%3D&strFormID=EvsdnH%2BUlJpTVhFYh%2Bi13g%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + items.ID + '&TransVariantID=' + VariantType + '&PartyID=' + $("#txtPartyID").val(),
-                                    '_blank'
+                                    window.open(
+                                        'SalesReturn?name=6%2B9sxOBkg1PjlBjpubNIcRsbDdS%2F%2BKzbighA08XDWD0%3D&strFormID=EvsdnH%2BUlJpTVhFYh%2Bi13g%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + items.ID + '&TransVariantID=' + VariantType + '&PartyID=' + $("#txtPartyID").val(),
+                                        '_blank'
                                     );
                                 else {
                                     showErrorSnackbar("You don't have pemission for &ensp;<h4><code> Sales Return</code></h4>")
@@ -1480,14 +2162,41 @@
                             if (VariantType == 3) {// Inv to Damage Return
                                 var formhavepermission = checkFormPermission("SalesReturn?name=c");
                                 if (formhavepermission)
-                                window.open(
-                                    'SalesReturn?name=cPfu941CFnux5sU80vV6w6mcrcNWP7Vs7hhrLOCLYgo%3D&strFormID=WHYf4alVgNJY%2FX917pnZ3w%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + items.ID + '&TransVariantID=' + VariantType + '&PartyID=' + $("#txtPartyID").val(),
-                                    '_blank'
+                                    window.open(
+                                        'SalesReturn?name=cPfu941CFnux5sU80vV6w6mcrcNWP7Vs7hhrLOCLYgo%3D&strFormID=WHYf4alVgNJY%2FX917pnZ3w%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + items.ID + '&TransVariantID=' + VariantType + '&PartyID=' + $("#txtPartyID").val(),
+                                        '_blank'
                                     );
                                 else {
                                     showErrorSnackbar("You don't have pemission for &ensp;<h4><code> Damage Return</code></h4>")
                                 }
                             }
+                            if (VariantType == 4) {// Bill to Invoice
+                                var formhavepermission = checkAddEditPermission("224");
+                                if (formhavepermission) {
+                                    window.open(
+                                        'Invoice?name=KUGYxS%2BKhoQB3%2FYrx1I0cQ%3D%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + items.ID + '&TransVariantID=' + VariantType + '&PartyID=' + $("#txtPartyID").val(),
+                                        '_blank'
+                                    );
+                                }
+                                else {
+                                    showErrorSnackbar("You don't have pemission for &ensp;<h4><code> Invoice</code></h4>")
+                                }
+                            }
+                            if (VariantType == 5) {// SR to PR
+                                var formhavepermission = checkAddEditPermission("215");
+                                if (formhavepermission) {
+                                    window.open(
+                                        'PurchaseReturn?name=Vd%2B%2BrU8QQpt1lN1iIJW1a4zfOkO06OcdMkE6UiXKDWE%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + items.ID + '&TransVariantID=' + VariantType + '&PartyID=' + $("#txtPartyID").val(),
+                                        '_blank'
+                                    );
+                                }
+                                else {
+                                    showErrorSnackbar("You don't have pemission for &ensp;<h4><code> Purchase Return</code></h4>")
+                                }
+                            }
+                        }
+                        else if (items.MsgID == "1") {
+                            showErrorSnackbar(items.Message);
                         }
                     });
                 }
@@ -1513,6 +2222,7 @@
         GetData(9, 0);
         GetData(10, 0);
         GetData(11, 0);
+        GetData(13, 0);
         getCollectionData(nCollPeriodType);
         getTransactionData(nTranPeriodType);
         getChequeData();
@@ -1528,5 +2238,655 @@
         } else {
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code>Cheque In Hand</code></h4>");
         }
+    });
+
+    /* ===================== Brand Summary Overlay ===================== */
+
+    // Toggle overlay open / close with animation, move the button between the
+    // right corner (closed) and left corner (open), and swap to a modern SVG icon.
+    var ICON_OPEN = '<svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"></polyline></svg>';   // chevron-left = click to open
+    var ICON_CLOSE = '<svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>'; // X = click to close
+    setDate("dtpFFrom", 2);
+    setDate("dtpFTo", 0);
+    $('#btnToggleBrandOverlay').click(function (e) {
+        e.preventDefault();
+        var $overlay = $('#brandSummaryOverlay');
+        var $icon = $('#iconToggleOverlay');
+        var $btn = $(this);
+        if (brandsummaryfirstclick) {
+            brandsummaryfirstclick = false;
+            $("#btnOverlayGenerate").trigger('click');
+        }
+        if ($overlay.hasClass('active')) {
+            // Collapse overlay - button returns to the right corner
+            $overlay.removeClass('active');
+            $btn.removeClass('overlay-open');
+            $icon.html(ICON_OPEN);
+            $btn.attr('title', 'Open Brand Summary');
+        } else {
+            // Expand overlay to cover the body - button docks on the left corner
+            $overlay.addClass('active');
+            $btn.addClass('overlay-open');
+            $icon.html(ICON_CLOSE);
+            $btn.attr('title', 'Close Brand Summary');
+        }
+    });
+
+
+    // Generate button - validate filters and load the Brand Summary table
+    $('#btnOverlayGenerate').click(function (e) {
+        e.preventDefault();
+        $('#divErrOverlayFilter').html('');
+
+        var BranchID = $('#cmbOverlayBranch').val();
+        var FromDate = $('#dtpFFrom').val();
+        var ToDate = $('#dtpFTo').val();
+        var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
+
+        var isValid = true;
+        if (!FromDate) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('Select From Date');
+        } else if (!ToDate) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('Select To Date');
+        } else if (new Date(FromDate) > new Date(ToDate)) {
+            isValid = false;
+            $('#divErrOverlayFilter').html('From Date cannot be greater than To Date');
+        }
+
+        if (!isValid) {
+            showErrorSnackbar($('#divErrOverlayFilter').html());
+            return;
+        }
+
+        GetBrandSummaryData(BranchID, FromDate, ToDate, Inclusive);
+    });
+    $('#chkOverlayInclusive').click(function (e) {
+
+        var Inclusive = $('#chkOverlayInclusive').is(':checked') ? 1 : 0;
+        if (Inclusive == 1) {
+            $(".inclField").show();
+            $(".exclField").hide();
+        }
+        else {
+            $(".inclField").hide();
+            $(".exclField").show();
+        }
+    });
+    // Fetch and bind the Brand Summary report table
+    function GetBrandSummaryData(nBranchID, FromDate, ToDate, Inclusive) {
+        tblBrandSummary.clear().draw();
+        $.ajax({
+            url: Aurl + "homescreen/brandsummary",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                BranchID: nBranchID,
+                FromDate: FromDate,
+                ToDate: ToDate,
+                WithTax: Inclusive
+            },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                var Summaryresult = (typeof data === "string") ? JSON.parse(data.Table) : data.Table;
+                if (Summaryresult && Summaryresult.length > 0) {
+                    console.log(" Summaryresult ", Summaryresult);
+                    $('#tblBrandSummary').DataTable({
+                        scrollY: "125px",
+                        scrollX: true,
+                        scrollCollapse: true,
+                        paging: false,
+                        info: false,
+                        destroy: true,
+                        data: Summaryresult,
+                        fixedColumns: false,
+                        searching: true,
+                        ordering: false,
+                        sorting: false,
+                        columns: [
+                            { "data": "ManufID", "autoWidth": true, visible: false, className: "dt-body-left" },
+                            { "data": "Name", "autoWidth": true, className: "dt-body-left" },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclOpening" id="exclOpen' + meta.row + '" class="exclField">' + formatIndianCurrency(value.OpenStockValue) + '</label>';
+                                    cellfield += '<label name="InclOpening" id="inclOpen' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclOpenStockValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            //purchae
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossBillValue" id="exclGrossBillValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossBillValue) + '</label>';
+                                    cellfield += '<label name="InclGrossBillValue" id="inclGrossBillValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetBillValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossPRValue" id="exclGrossPRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossPRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossPRValue" id="inclGrossPRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetPRValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossNetPurchase" id="exclGrossNetPurchase' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetPurchase) + '</label>';
+                                    cellfield += '<label name="InclGrossNetPurchase" id="inclGrossNetPurchase' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetPurchase) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            //sales
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossSalesValue" id="exclGrossSalesValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSalesValue) + '</label>';
+                                    cellfield += '<label name="InclGrossSalesValue" id="inclGrossSalesValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSalesValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossSRValue" id="exclGrossSRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossSRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossSRValue" id="inclGrossSRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetSRValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossDRValue" id="exclGrossDRValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossDRValue) + '</label>';
+                                    cellfield += '<label name="InclGrossDRValue" id="inclGrossDRValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetDRValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclGrossNetSales" id="exclGrossNetSales' + meta.row + '" class="exclField">' + formatIndianCurrency(value.GrossNetSales) + '</label>';
+                                    cellfield += '<label name="InclGrossNetSales" id="inclGrossNetSales' + meta.row + '" class="inclField">' + formatIndianCurrency(value.NetNetSales) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            //closing
+                            //StockValue	InclStockValue
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclStockValue" id="exclStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.StockValue) + '</label>';
+                                    cellfield += '<label name="InclStockValue" id="inclStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclStockValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            //DmgStockValue	InclDmgStockValue
+                            {
+                                className: "dt-body-right", ordering: false, sorting: false, "autoWidth": true,
+                                "mRender": function (data, type, value, meta) {
+                                    var cellfield = '<label name="ExclDmgStockValue" id="exclDmgStockValue' + meta.row + '" class="exclField">' + formatIndianCurrency(value.DmgStockValue) + '</label>';
+                                    cellfield += '<label name="InclDmgStockValue" id="inclDmgStockValue' + meta.row + '" class="inclField">' + formatIndianCurrency(value.InclDmgStockValue) + '</label>';
+                                    return cellfield;
+                                },
+                            },
+                            { "data": "Outstandings", "autoWidth": true, className: "dt-body-right" },
+                            { "data": "Last30DaysOS", "autoWidth": true, className: "dt-body-right" },
+                            { "data": "allsaleCustomers", "autoWidth": true, className: "dt-body-center" },
+                        ]
+                    });
+                    tblBrandSummary = $('#tblBrandSummary').DataTable();
+                    if (Inclusive == 1) {
+                        $(".inclField").show();
+                        $(".exclField").hide();
+                    }
+                    else {
+                        $(".inclField").hide();
+                        $(".exclField").show();
+                    }
+                    var branddata = data.Table1;
+                    var currentSearchValue = '';
+                    if (brandsummarygrid) {
+                        currentSearchValue = brandsummarygrid ? brandsummarygrid.state.searchTerm : '';
+                    }
+                    //lblBrandGreater30DOS,lblBrandTotalOS
+                    var totalOS = branddata.reduce(function (sum, item) {
+                        return sum + parseFloat(item.Outstandings.split('/')[0]) || 0;
+                    }, 0);
+
+                    var greater30DOS = branddata.reduce(function (sum, item) {
+                        return sum + parseFloat(item.Last30DaysOS.split('/')[0]) || 0;
+                    }, 0);
+
+                    $("#lblBrandTotalOS").text(formatIndianCurrency(totalOS.toFixed(2)));
+                    $("#lblBrandGreater30DOS").text(formatIndianCurrency(greater30DOS.toFixed(2)));
+                    brandsummarygrid = new GKBSDynamicGrid('#brandsummarygrid', bransummarycolumnsettings, branddata, {
+                        enablePagination: true,
+                        pageSize: ItemsperPage,
+                        height: '500px',
+                        enableSearch: true,
+                        stickyToWindow: true,
+                        enableExport: false,
+                        enablePrint: false,
+                        enableColumnsBtn: false,
+                        enableAddRow: false,
+                        enableRemoveRow: false,
+                        enableSorting: true,
+                        CompanyName: CompanyName,
+                        ReportName: "Brand Summary",
+                        fitersdata: [],
+                        searchTerm: currentSearchValue, singleIconAction: [],
+                        rowActionsMenu: [],
+                        customButtons: [
+                            {
+                                icon: '\u2699\uFE0F',
+                                text: '',
+                                title: 'Settings',
+                                visible: true,
+                                onClick: (gridInstance, event) => {
+                                    //modalGenColumnSettings.show();
+                                    //GendralColumnSettings(1, 33, 1, 0);
+                                    modalReportColumnsetting.style.display = "block";
+                                    ColumnSettings(1, 1005, 1);
+                                    //
+                                }
+                            },
+                            {
+                                icon: '\uD83D\uDCE5',
+                                text: 'Export',
+                                title: 'Export to Excel',
+                                onClick: (gridInstance, event) => {
+                                    gridInstance.exportToExcel();
+                                }
+                            },
+                        ],
+                        customCellRenderer: (el, col, rowData) => {
+                        },
+                        onCellClick: (rowdata, fieldName, cellValue, column) => {
+
+                        },
+                        onCellDoubleClick: (rowdata, fieldName, cellValue, column) => {
+
+                        },
+                        onColumnResize: (colIndex, field, header, newWidth) => {
+                            UpdateColumnWidth(1005, 1, 0, colIndex, field, newWidth)
+                        },
+                    });
+                } else {
+                    showErrorSnackbar("No Records Found in Brand Summary");
+                }
+            },
+            error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                } else {
+                    showErrorSnackbar("Unable to load Brand Summary data");
+                }
+            }
+        });
+    }
+    function ColumnSettings(nMode, nReportID, nTableID) {
+        $.ajax({
+            url: Aurl + "columnsettings/getcolumnsettings",
+            type: 'get',
+            contentType: 'json',
+            data: { Mode: nMode, FormID: nReportID, TableID: nTableID, FormorReport: 0 },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                var jsData = JSON.parse(data);
+                $('#tblReportSettings').DataTable({
+                    scrollY: "400px",
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: false,
+                    destroy: true,
+                    data: jsData,
+                    fixedColumns: false,
+                    searching: false,
+                    ordering: false,
+                    sorting: false,
+                    columns: [
+
+                        //ReportID	TableID	ColumnID	ColumnName	DisplayColumnName	Width	Visible	Alignment	DisplayIndex	IsHiddenColumn
+                        { "data": "FormID", "autoWidth": true, "visible": false, className: "dt-body-left" },//0
+                        { "data": "TableID", "autoWidth": true, "visible": false, className: "dt-body-left" },//1
+                        { "data": "ColumnID", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
+                        { "data": "FormorReport", "autoWidth": true, "visible": false, className: "dt-body-left" },//2
+                        { "data": "ColumnName", "autoWidth": true, "visible": false, className: "dt-body-left" },//3
+                        { "data": "OriginalColumnName", "autoWidth": true, "visible": false, width: "10%", className: "dt-body-left" },//3
+                        {
+                            className: "dt-body-left", width: "20%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="text" value="' + value.DisplayColumnName + '" name ="DisplayColumnName" class="form-control" id="txtDisplayColumnName' + rowIndex + '"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "6%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.Width + '" name ="Width" class="form-control" id="txtWidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.Visible == '0' ? 'selected' : '';
+                                var isTrueSelect = value.Visible == '1' ? 'selected' : '';
+
+                                //var field = "<select name='Visible' class='form-control' id='cmbVisible" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+                                var ischk = value.Visible == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="Visible" ' + ischk + ' id="cmbVisible' + rowIndex + '"/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isLeftSelect = value.Alignment == '1' ? 'selected' : '';
+                                var isRightSelect = value.Alignment == '2' ? 'selected' : '';
+                                var isCenterSelect = value.Alignment == '3' ? 'selected' : '';
+                                var field = "<select name='Alignment' class='form-control' id='cmbAlignment" + rowIndex + "'><option value= '1'" + isLeftSelect + ">Left</option><option value= '3'" + isCenterSelect + ">Center</option><option value= '2'" + isRightSelect + ">Right</option></select>";
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.DisplayIndex + '" name ="DisplayIndex" class="form-control" id="txtDisplayIndex' + rowIndex + '" min="0" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.TotalYN == '0' ? 'selected' : '';
+                                var isTrueSelect = value.TotalYN == '1' ? 'selected' : '';
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var field = "<select " + isDisable + " name='Total' class='form-control' id='cmbTotal" + rowIndex + "'><option value= '0' " + isFalseSelect + ">No</option><option value= '1'" + isTrueSelect + ">Yes</option></select>";
+                                var ischk = value.TotalYN == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="Total" ' + ischk + ' id="cmbTotal' + rowIndex + '" ' + isDisable + '/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableSum == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableSum == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableSum' class='form-control' id='EnableSum" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableSum == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableSum" ' + ischk + ' id="EnableSum' + rowIndex + '" ' + isDisable + '/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableAvg == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableAvg == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableAvg' class='form-control' id='EnableAvg" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableAvg == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableAvg" ' + ischk + ' id="EnableAvg' + rowIndex + '" ' + isDisable + '/>';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = '';// value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableCount == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableCount == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableCount' class='form-control' id='EnableCount" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableCount == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableCount" ' + ischk + ' id="EnableCount' + rowIndex + '" ' + isDisable + '/>';
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "4%", "visible": true,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isDisable = '';// value.Total == '1' ? 'disabled' : '';
+                                var isFalseSelect = value.EnableUnique == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableUnique == '1' ? 'selected' : '';
+                                var field = "<select " + isDisable + " name='EnableUnique' class='form-control' id='EnableUnique" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableUnique == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableUnique" ' + ischk + ' id="EnableUnique' + rowIndex + '" ' + isDisable + '/>';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.EnableColumnMenu == '0' ? 'selected' : '';
+                                var isTrueSelect = value.EnableColumnMenu == '1' ? 'selected' : '';
+                                var field = "<select name='EnableColumnMenu' class='form-control' id='EnableColumnMenu" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.EnableColumnMenu == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="EnableColumnMenu" ' + ischk + ' id="EnableColumnMenu' + rowIndex + '" />';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%", "visible": (RID == 1),
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.ShowinColumnOption == '0' ? 'selected' : '';
+                                var isTrueSelect = value.ShowinColumnOption == '1' ? 'selected' : '';
+                                var field = "<select name='ShowinColumnOption' class='form-control' id='ShowinColumnOption" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+                                var ischk = value.ShowinColumnOption == '1' ? 'checked' : '';
+                                field = '<input type="checkbox"  name ="ShowinColumnOption" ' + ischk + ' id="ShowinColumnOption' + rowIndex + '" />';
+
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-center", width: "5%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isFalseSelect = value.PrintYN == '0' ? 'selected' : '';
+                                var isTrueSelect = value.PrintYN == '1' ? 'selected' : '';
+                                var field = "<select name='PrintYN' class='form-control' id='cmbPrintYN" + rowIndex + "'><option value= '0' " + isFalseSelect + ">False</option><option value= '1'" + isTrueSelect + ">True</option></select>";
+
+
+                                var ischk = value.PrintYN == '1' ? 'checked' : '';
+                                field = '<input type="checkbox" class="dgvPrintYN" name ="PrintYN" ' + ischk + ' id="cmbPrintYN' + rowIndex + '" />';
+
+                                return field;
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "18%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="text" value="' + value.PrintColumnName + '" name ="PrintColumnName" class="form-control" id="txtPrintColumnName' + rowIndex + '"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%", "visible": false,
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                return '<input type="number" value="' + value.PrintWidth + '" name ="Printwidth" class="form-control dgvPrintWidth" id="txtPrintwidth' + rowIndex + '" min="1" oninput="javascript: if (this.value < this.min) { this.value = 0 }"/>';
+                            }
+                        },
+                        {
+                            className: "dt-body-left", width: "8%",
+                            "mRender": function (data, type, value, meta) {
+                                var rowIndex = meta.row;
+                                var isStringSelect = value.ColumnType == '1' ? 'selected' : '';
+                                var isNumberSelect = value.ColumnType == '2' ? 'selected' : '';
+                                var isDeciamlSelect = value.ColumnType == '3' ? 'selected' : '';
+                                var isDateSelect = value.ColumnType == '4' ? 'selected' : '';
+                                var field = "<select name='ColumnType' class='form-control' id='cmbColumnType" + rowIndex + "'><option value= '1'" + isStringSelect + ">String</option><option value= '2'" + isNumberSelect + ">Number</option><option value= '3'" + isDeciamlSelect + ">Decimal</option><option value= '4'" + isDateSelect + ">Date</option></select>";
+                                return field;
+                            }
+                        },
+                    ],
+                });
+                tblReportSettings = $('#tblReportSettings').DataTable();
+            }
+        });
+    }
+    $("#btnSubmitmodalReportColumnSettings").click(function () {
+
+            var ColumnSettingData = [];
+            $("#tblReportSettings tbody tr").each(function () {
+                var allValues = {};
+                rowdata = tblReportSettings.row($(this)).data();
+                //console.log("Row Data : ", rowdata);
+                //Printwidth,PrintColumnName,PrintYN
+                var aDisplayName = "", aWidth = "", aDisplayIndex = "", aAlign = "", aVisible = "",
+                    aPrintwidth = "0", aPrintColumnName = "", aPrintYN = false,
+                    aEnableColumnMenu = rowdata.EnableColumnMenu, aTotal = rowdata.Total,
+                    aEnableSum = rowdata.EnableSum, aEnableAvg = rowdata.EnableAvg, aEnableCount = rowdata.EnableCount,
+                    aEnableUnique = rowdata.EnableUnique, aShowinColumnOption = rowdata.ShowinColumnOption, aColumnType = rowdata.ColumnType;
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "DisplayColumnName") {
+                        aDisplayName = $(this).val();
+                    }
+                    if (fieldName == "Width") {
+                        aWidth = $(this).val();
+                    }
+                    if (fieldName == "DisplayIndex") {
+                        aDisplayIndex = $(this).val();
+                    }
+                    if (fieldName == "Printwidth") {
+                        aPrintwidth = $(this).val();
+                    }
+                    if (fieldName == "PrintColumnName") {
+                        aPrintColumnName = $(this).val();
+                    }
+
+                    if (fieldName == "Visible") {
+                        aVisible = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "Total") {
+                        aTotal = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableColumnMenu") {
+                        aEnableColumnMenu = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableSum") {
+                        aEnableSum = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableAvg") {
+                        aEnableAvg = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableCount") {
+                        aEnableCount = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "EnableUnique") {
+                        aEnableUnique = this.checked ? "1" : "0";
+                    }
+
+                    if (fieldName == "ShowinColumnOption") {
+                        aShowinColumnOption = this.checked ? "1" : "0";
+                    }
+                    if (fieldName == "PrintYN") {
+                        aPrintYN = this.checked;
+                    }
+
+                });
+                $(this).find("select").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "Alignment") {
+                        aAlign = $(this).val();
+                    }
+                    if (fieldName == "ColumnType") {
+                        aColumnType = $(this).val();
+                    }
+                });
+
+                var coldata = {
+                    "FormID": rowdata.FormID,
+                    "TableID": rowdata.TableID,
+                    "ColumnID": rowdata.ColumnID,
+                    "FormorReport": 0,
+                    "ColumnName": rowdata.ColumnName,
+                    "DisplayColumnName": aDisplayName,
+                    "Width": aWidth,
+                    "Visible": aVisible,
+                    "Alignment": aAlign,
+                    "TotalYN": aTotal,
+                    "DisplayIndex": aDisplayIndex,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "EnableAvg": aEnableAvg,
+                    "EnableSum": aEnableSum,
+                    "EnableColumnMenu": aEnableColumnMenu,
+                    "ShowinColumnOption": aShowinColumnOption,
+                    "PrintYN": aPrintYN,
+                    "PrintColumnName": aPrintColumnName,
+                    "Printwidth": 0,
+                    "EnableCount": aEnableCount,
+                    "EnableUnique": aEnableUnique,
+                    "ColumnType": aColumnType
+                };
+                ColumnSettingData.push(coldata);
+            });
+            //console.log("ColumnSettingData : ", ColumnSettingData);
+            $.ajax({
+                url: Aurl + "columnsettings/Savecolumnsettings",
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(ColumnSettingData),
+                cache: false,
+                processData: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (data) {
+                    $.each(data, function (i, items) {
+                        if (items.MsgID == 0) {
+                            showSuccessSnackbar(items.Message);
+                            //ClearForm();
+                            modalReportColumnsetting.style.display = "none";
+                            GetColumnSettingsData(2, 1005, 1);
+                            setTimeout(() => {
+                                brandsummarygrid.columns = bransummarycolumnsettings;
+                                brandsummarygrid.refreshColumns();
+                            }, 500);
+                        }
+                        else {
+                            showErrorSnackbar(items.Message);
+                            //alert(items.Message);
+                        }
+                    });
+                },
+                error: function (data) {
+                    if (data.status == "401") {
+                        var msg = data.responseJSON.Message;
+                        ////showErrorSnackbar(msg + " Logout and Login again.");
+                    }
+                }
+            });
+            ////console.log("Column Setting Data ", ColumnSettingData);
+
     });
 </script>

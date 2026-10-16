@@ -91,6 +91,8 @@ namespace ShineWeb.Controllers
                 Session["Showallstatus"] = dtAppconfig.Rows[0]["Showallstatus"].ToString();
                 Session["DecimalValues"] = dtAppconfig.Rows[0]["DecimalValues"].ToString();
                 Session["ItemOrderby"] = dtAppconfig.Rows[0]["ItemOrderby"].ToString();
+                Session["ALSearchstartwith"] = dtAppconfig.Rows[0]["ALSearchstartwith"].ToString();
+                
                 Session["RoundoffType"] = dtAppconfig.Rows[0]["Roundoff"].ToString();// 1 - nearest,2-lowest,3-heighest
                 Session["RoundoffValue"] = dtAppconfig.Rows[0]["RoundoffValue"].ToString();
                 Session["EnableReturnPrice"] = dtAppconfig.Rows[0]["EnableReturnPrice"].ToString();
@@ -98,12 +100,13 @@ namespace ShineWeb.Controllers
                 Session["DefaultCustID"] = dtAppconfig.Rows[0]["DefaultCustID"].ToString();
                 Session["SelectinvoiceinSR"] = dtAppconfig.Rows[0]["SelectinvoiceinSR"].ToString();
                 Session["InvoiceStockOnlyProduct"] = dtAppconfig.Rows[0]["InvoiceStockOnlyProduct"].ToString();
+                Session["AssignInvBeatSalesmanfrom"] = dtAppconfig.Rows[0]["AssignInvBeatSalesmanfrom"].ToString();
+                
                 Session["FilterDateType"] = dtAppconfig.Rows[0]["FilterDate"].ToString();
                 Session["PurchaseOneView"] = dtAppconfig.Rows[0]["PurchaseOneView"].ToString();
                 Session["SalesOneView"] = dtAppconfig.Rows[0]["SalesOneView"].ToString();
                 Session["AllSalesmanInvoice"] = dtAppconfig.Rows[0]["AllSalesmanInvoice"].ToString();
                 Session["SelectinvoiceinSR"] = dtAppconfig.Rows[0]["SelectinvoiceinSR"].ToString();
-                Session["InvoiceStockOnlyProduct"] = dtAppconfig.Rows[0]["InvoiceStockOnlyProduct"].ToString();
                 Session["FilterDateType"] = dtAppconfig.Rows[0]["FilterDate"].ToString();
                 Session["PurchaseOneView"] = dtAppconfig.Rows[0]["PurchaseOneView"].ToString();
                 Session["SalesOneView"] = dtAppconfig.Rows[0]["SalesOneView"].ToString();
@@ -116,7 +119,15 @@ namespace ShineWeb.Controllers
                 Session["HomePeriod"] = dtAppconfig.Rows[0]["HomePeriod"].ToString();
                 Session["AutoRefresh"] = dtAppconfig.Rows[0]["AutoRefresh"].ToString();
                 Session["CTPPerPointAmount"] = dtAppconfig.Rows[0]["CTPPerPointAmount"].ToString();
-                Session["UpdateVendorinProduct"] = dtAppconfig.Rows[0]["UpdateVendorinProduct"].ToString();                
+                Session["UpdateVendorinProduct"] = dtAppconfig.Rows[0]["UpdateVendorinProduct"].ToString();
+                Session["SpotSalesPriceMode"] = dtAppconfig.Rows[0]["SpotSalesPriceMode"].ToString();
+                Session["AllowPostChequeDaysColl"] = dtAppconfig.Rows[0]["AllowPostChequeDaysColl"].ToString();
+                
+                Session["PurchaseAddnlDiscbeforeProdDisc"] = dtAppconfig.Rows[0]["PurchaseAddnlDiscbeforeProdDisc"].ToString();
+                Session["PurchaseTradeDiscbeforeProdDisc"] = dtAppconfig.Rows[0]["PurchaseTradeDiscbeforeProdDisc"].ToString();
+                Session["SalesAddnlDiscbeforeProdDisc"] = dtAppconfig.Rows[0]["SalesAddnlDiscbeforeProdDisc"].ToString();
+                Session["SalesTradeDiscbeforeProdDisc"] = dtAppconfig.Rows[0]["SalesTradeDiscbeforeProdDisc"].ToString();
+
                 Session["F_SD"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_SD"].ToString()).ToString("yyyy-MM-dd");//,dtCompReg.Rows[0]["F_SD"].ToString();
                 Session["F_ED"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_ED"].ToString()).ToString("yyyy-MM-dd");//dtCompReg.Rows[0]["F_ED"].ToString();
                 Session["CompanyCode"] = dtCompReg.Rows[0]["CompanyCode"].ToString();

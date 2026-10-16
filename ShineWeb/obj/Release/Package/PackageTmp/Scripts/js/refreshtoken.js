@@ -4,7 +4,7 @@
 var baseURL = document.getElementById("hdnApiurl").value;
 var UIURL = document.getElementById("hdnurl").value;
 // Function to refresh access token globally
-function refreshAccessToken(callback) {
+function refreshAccessToken1(callback) {
     //console.log("Attempting to refresh access token...");
 
     $.ajax({
@@ -31,6 +31,55 @@ function refreshAccessToken(callback) {
             //}, 3200)
         }
     }); 
+}
+//new refresh function
+let isRefreshing = false;
+let refreshQueue = [];
+
+function refreshAccessToken(callback) {
+
+    // Refresh already running
+    if (isRefreshing) {
+        refreshQueue.push(callback);
+        return;
+    }
+
+    isRefreshing = true;
+
+    $.ajax({
+        url: baseURL + "token/refresh",
+        type: "POST",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function () {
+
+            isRefreshing = false;
+
+            // Retry current request
+            if (callback)
+                callback();
+
+            // Retry queued requests
+            while (refreshQueue.length > 0) {
+                let cb = refreshQueue.shift();
+                cb();
+            }
+        },
+        error: function (response) {
+
+            isRefreshing = false;
+            refreshQueue = [];
+
+            console.log(response);
+
+            showUnauthorizedPopup({
+                redirectUrl: UIURL,
+                seconds: 5
+            });
+        }
+    });
 }
 
 // Automatically refresh token before making API calls

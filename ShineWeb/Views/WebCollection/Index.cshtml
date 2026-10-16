@@ -355,7 +355,7 @@
 
                     <!-- Filter Button -->
                     <div class="flex-grow-1 flex-md-grow-0">
-                        <button id="btnFilter" class="btn btn-primary w-100">
+                        <button id="btnFilter" class="btn btn-filter-style w-100">
                             <i class="bi bi-funnel-fill"></i> <span class="textforabv800">Filter</span>
                         </button>
                     </div>
@@ -451,17 +451,17 @@
         <div class="d-flex justify-content-between align-items-center w-100 p-2">
 
             <!-- Left Corner -->
-            <button type="button" class="btn btn-warning" id="btnCancel">
+            <button type="button" class="btn btn-close-style" id="btnCancel">
                 <i class="bi bi-x-circle"></i> Cancel
             </button>
 
             <!-- Right Corner -->
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-danger" id="btnClear">
+                <button type="button" class="btn btn-clear-style" id="btnClear">
                     <span class="glyphicon glyphicon-refresh"> Clear</span>
                 </button>
 
-                <button type="button" class="btn btn-success" id="btnSave">
+                <button type="button" class="btn btn-save-style" id="btnSave">
                     <span class="glyphicon glyphicon-saved"> Save</span>
                 </button>
             </div>
@@ -478,11 +478,11 @@
                 <!-- Modal Header -->
                 <div class="modal-header text-white" style="background-color:#0d6efd;">
 
-                    <h5 class="modal-title fw-bold" id="lblPopupheading">
+                    <h5 class="modal-title fw-bold" id="lblCustomerNamePopupheading">
                         Invoices
                     </h5>
 
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" style="filter: invert(1);" data-bs-dismiss="modal"></button>
 
                 </div>
 
@@ -524,7 +524,7 @@
                 <div class="modal-footer">
 
                     <button type="button"
-                            class="btn btn-warning"
+                            class="btn btn-close-style"
                             id="btnPopupClose"
                             data-bs-dismiss="modal">
                         <i class="bi bi-x-circle"></i> Close
@@ -549,7 +549,7 @@
         scrollX: true,
         scrollCollapse: true,
         order: [[1, 'asc']],
-        "columnDefs": [{ "targets": [0,2], "visible": false, searchable: false, ordering: false }, { "targets": [1], "class": "text-center" }]
+        "columnDefs": [{ "targets": [0,1,2], "visible": false, searchable: false, ordering: false }, { "targets": [1], "class": "text-center" }]
     });
     var InvoiceTable = $('#tblInvoiceData').DataTable({
         paging: false,
@@ -566,12 +566,17 @@
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
     var DefBranch = '@Session["DefaultBranch"]';
+    var AllowPCD = '@Session["AllowPostChequeDaysColl"]';
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     var BatchMode = 0;
     var nTransMode = 1, nIsDraft = 0;
     //GetData(1);
     var RtnDisp = 1;
     var modal = new bootstrap.Modal(document.getElementById('myModalfg'));//document.getElementById("myModalfg");
-    
+
     $('#btnPopupClose').click(function (e) {
         //modal.style.display = "none";
         modal.hide();
@@ -656,12 +661,14 @@
                     PaginatedAutocomplete({
                         inputId: "txtCustomer",
                         data: arrParty,
+                        startwitfieldname: startwithfield,
+                        enablefilterstartwith: autolistfilterwith,
                         onSelect: function (item) {
                             $("#txtCustomer").val(item.name);
                             $("#txtCustomerID").val(item.id);
                             return false;
                         }
-                    });                    
+                    });
                 }
                 else if (nMode == 4) {
                     showSuccessSnackbar("Cancelled successfully");
@@ -694,7 +701,7 @@
                                         else if (isChk) {
                                             //$(this).css('color', 'green').attr("title", "Saved Successfully");
                                             $(this).find("td").css("color", "green").attr("title", "Saved Successfully");
-                                        }                                       
+                                        }
                                     });
                                 }
                                 if (ErrorIDs.length == (i + 1)) {
@@ -738,6 +745,7 @@
     $("#txtCustomer").change(function (e) {
         $("#txtCustomerID").val("");
     });
+
     function GetFilterData(nMode) {//arrVendorName,divErrFTo,divErrFFrom,divErrFParty
         var IsValid = true;
         $(".clrdivs").html("");
@@ -805,14 +813,14 @@
                             ordering: false,
                             sorting: false,
                             columns: [
-                                { "data": "ID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                                { "data": "EncID", "autoWidth": true, "visible": false, className: "dt-body-left" },
-                                { "data": "StatusID", "autoWidth": true, "visible": false, className: "dt-body-left" },
+                                { "data": "ID", "visible": false, className: "dt-body-left" },
+                                { "data": "EncID",  "visible": false, className: "dt-body-left" },
+                                { "data": "StatusID",  "visible": false, className: "dt-body-left" },
                                 {
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value, meta) {
                                         var rowIndex = meta.row;
-                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID                                        
+                                        var checkboxId = 'chkCustomerCheck_' + rowIndex;//value.CustomerID
                                         var _action = value.StatusID == "1" || value.StatusID == "3" ? '<input type="checkbox" id="' + checkboxId + '" data-statusid = "' + value.StatusID + '" data-id="' + value.ID +'"  name="CustomerCheck" style="" />': '';
                                         return _action;
                                     },
@@ -871,7 +879,22 @@
                                         return '<label class="' + stsclass + '">' + value.Status + '</label>';
                                     }
                                 },
-                                { "data": "Chequedate", "autoWidth": true, className: "dt-body-left" },
+                                //{ "data": "Chequedate", "autoWidth": true, className: "dt-body-left" },
+                                {
+                                    className: "dt-body-left",
+                                    mRender: function (data, type, value) {
+                                        var chqdate = value.Chequedate || '';
+                                        var agings = value.ChequeAging.split('-');
+                                        var Billage = 0, ChqAge = 0;
+                                        if (agings.length > 0) {
+                                            Billage = agings[0];
+                                            ChqAge = agings[1];
+                                        }
+                                        var clschq = parseInt(AllowPCD) < parseInt(Billage) ? "stsCancel" : "stsClose";
+                                        var agingfield = value.Paymentmode == "CHEQUE" ? '<br/><label title="Bill Ageing">BA : </label> ' + (Billage + ', <label title="Collection Ageing">CA : </label> ' + ChqAge) : '';
+                                        return value.Paymentmode == "CHEQUE" ? '<label class="' + clschq + '">' + chqdate + '</label> ' + agingfield : chqdate;
+                                    }
+                                },
                                 { "data": "Chequeno", "autoWidth": true, className: "dt-body-left" },
 
                                 {
@@ -940,7 +963,7 @@
     //    var checkinputitems = $('#tblCollectionData tbody input[type=checkbox]');
     //    checkinputitems.each(function (i, items) {
     //        var row = $(this).closest('tr'); // Find the parent row
-    //        var rowData = $('#tblCollectionData').DataTable().row(row).data(); // Get full row data        
+    //        var rowData = $('#tblCollectionData').DataTable().row(row).data(); // Get full row data
     //        if (tempids.filter(t => t.ID == rowData.ID).length > 0) {
     //            console.log("rowData.ID", rowData.ID);
     //            row.addClass("highlight-error-row");
@@ -948,7 +971,7 @@
     //        }
     //    });
     //}, 1000);
-    $("#btnCancel").click(function () {        
+    $("#btnCancel").click(function () {
         var checkeditems = $('#tblCollectionData tbody input[type=checkbox]:checked');
         var validateitems = [];
         if (checkeditems.length > 0) {
@@ -988,7 +1011,7 @@
                                         row.removeClass("highlight-error-row"); row.removeClass("highlight-success-row");
                                         var highlightdata = data.filter(t => t.ID == rowData.ID);
                                         if (highlightdata.length > 0) {
-                                            
+
                                             if (highlightdata[0].Type == "Error")
                                                 row.addClass("highlight-error-row");
                                             else
@@ -1008,7 +1031,7 @@
                         }
                     }
                 });
-                
+
             }
         }
         else {
@@ -1063,6 +1086,7 @@
         $(".clrdivs").html("");
         rowdata = CollectionTable.row($(this).parents('tr')).data();
         var ID = rowdata.ID;//[0];
+        $("#lblCustomerNamePopupheading").text(rowdata.CustomerName);
         InvoiceTable.draw().clear();
         InvoiceTable.draw().clear();
         GetData(8, ID);
@@ -1071,11 +1095,164 @@
     $('#tblCollectionData tbody').on('click', '.clsEdit', function (e) {
         $(".clrdivs").html("");
         rowdata = CollectionTable.row($(this).parents('tr')).data();
-        var ID = rowdata.EncID;//[0];
+        var ID = rowdata.ID;//[0];
+        var encID = rowdata.EncID;//[0];
         var STSID = rowdata.StatusID;
-        window.open(
-            'CollectionPayment?name=V5BIclDO7YSWXMUYe9qSUbB92jlocOM14lUepH77xc4%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + ID + "&WebCollSts=" + STSID,
-            '_blank'
-        );
+        $("#lblCustomerNamePopupheading").text(rowdata.CustomerName);
+        //window.open(
+        //    'CollectionPayment?name=V5BIclDO7YSWXMUYe9qSUbB92jlocOM14lUepH77xc4%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + ID + "&WebCollSts=" + STSID,
+        //    '_blank'
+        //);
+        Validatecollectiondocument(ID, encID, STSID);
+    });
+    function Validatecollectiondocument(nID, EncID, STSID) {
+        $.ajax({
+            url: Aurl + "collectionpayment/validatewebcollosdocs",
+            type: 'GET',
+            contentType: 'application/json',
+            data: {
+                ID: nID,
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                if (data) {
+                    var anyerrors = data.some(d => d.Response == "Error");
+                    if (anyerrors) {
+                        InvoiceTable.draw().clear();
+                        InvoiceTable.draw().clear();
+                        GetData(8, nID);
+                        modal.show();
+                        var errorinvoices = data[0].Documents;
+                        setTimeout(() => {
+                            showErrorSnackbar(data[0].ResponseMessage);
+                            $.each(errorinvoices, function (i, items) {
+                                var errorinv = items.DocID;
+                                $("#tblInvoiceData tbody tr").each(function () {
+                                    var rowdata = InvoiceTable.row($(this)).data();
+                                    InvID = rowdata[1];
+                                    $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 100).css("background-color", "");
+                                    if (errorinv.includes(String(InvID))) {
+                                        $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 800).css("background-color", "pink").attr("title", data[0].ResponseMessage);
+                                    }
+                                });
+                            });
+                           
+                        }, 1500);
+                    }
+                    else {
+                        window.open(
+                            'CollectionPayment?name=V5BIclDO7YSWXMUYe9qSUbB92jlocOM14lUepH77xc4%3D&strFormID=NyU15GCpL%2FZR9n8fK57WAg%3D%3D&TypeID=ydRRTTxkdt6Trx91pX1%2BcA%3D%3D&TranID=' + EncID + "&WebCollSts=" + STSID,
+                            '_blank'
+                        );
+                    }
+                }
+            }
+        });
+    }
+    window.addEventListener("message", function (event) {
+        var data = event.data;
+        if (data && data.source === "Collection") {
+            GetFilterData(2);
+            GetFilterData(3);
+        }
+    });
+    document.addEventListener("keydown", function (event) {
+
+        if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtCustomer") {
+                showInfoSnackbar(infomessage);
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtCustomer",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtCustomer").val(item.name);
+                        $("#txtCustomerID").val(item.id);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtCustomer") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtCustomer",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtCustomer").val(item.name);
+                        $("#txtCustomerID").val(item.id);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">  
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>	
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
+        }
+
     });
 </script>

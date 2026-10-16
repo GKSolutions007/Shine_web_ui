@@ -145,6 +145,8 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.ChildURL1, new { @autocomplete = "off", @class = "form-control", @id = "txtChildRoleURL" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.DependFrom, new { @autocomplete = "off", @class = "form-control", @id = "txtDependFrom" })
 
     <div class="d-flex align-items-center gap-2">
         <!-- Larger heading -->
@@ -153,7 +155,7 @@
     <hr />
     <div class="toastBox"></div>
     <div id="dvMainTable">
-        <div id="my-grid" style="height: 600px; width: 100%;"></div>
+        <div id="my-grid" style="width: 100%;"></div>
     </div>
     <div class="modal fade" id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-sm">
@@ -164,7 +166,7 @@
                     <h5 class="modal-title fw-bold" id="lblPopupheading">
                         <b>Add @ViewData["FormName"]</b>
                     </h5>
-                    <button type="button" class="btn-close" id="modelcloseX"></button>
+                    <button type="button" class="btn-close" style="filter: invert(1);" id="modelcloseX"></button>
                 </div>
 
                 <!-- Modal body -->
@@ -334,15 +336,15 @@
 
                     <div class="text-end w-100">
 
-                        <button tabindex="9" type="button" class="btn btn-danger" id="btnClear">
+                        <button tabindex="9" type="button" class="btn btn-clear-style" id="btnClear">
                             <span class="glyphicon glyphicon-refresh"> Clear</span>
                         </button>
 
-                        <button tabindex="8" type="button" class="btn btn-success" id="btnSave">
+                        <button tabindex="8" type="button" class="btn btn-save-style" id="btnSave">
                             <span class="glyphicon glyphicon-saved"> Save</span>
                         </button>
 
-                        <button tabindex="10" type="button" class="btn btn-warning" id="btnClose">
+                        <button tabindex="10" type="button" class="btn btn-close-style" id="btnClose">
                             <i class="bi bi-x-circle"></i> Close
                         </button>
 
@@ -427,7 +429,10 @@ var FID = $("#txtFormID").val();
 var DecVal = '@Session["DecimalValues"]';
     var Aurl = '@Session["APIurl"]';
    var DefBranch = '@Session["DefaultBranch"]';
-
+   var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     var grid, FinancialAccount;
     GetColumnSettingsData(2, 6, 1);
     var Table = $('#tblMasterData').DataTable();
@@ -547,6 +552,8 @@ var DecVal = '@Session["DecimalValues"]';
                         PaginatedAutocomplete({
                             inputId: "txtAccName",
                             data: arrData,
+                            startwitfieldname: startwithfield,
+                            enablefilterstartwith: autolistfilterwith,
                             onSelect: function (item) {
                                 console.log("Selected item:", item);
                                 $("#txtAccName").val(item.label);
@@ -582,6 +589,8 @@ var DecVal = '@Session["DecimalValues"]';
                         PaginatedAutocomplete({
                             inputId: "txtAccGrp",
                             data: arrAccGrp,
+                            startwitfieldname: startwithfield,
+                            enablefilterstartwith: autolistfilterwith,
                             onSelect: function (item) {
                                 $("#txtAccGrp").val(item.label);
                                 return false;
@@ -718,7 +727,11 @@ var DecVal = '@Session["DecimalValues"]';
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        modal.hide();
+        if ($("#txtTransType").val() == "2") {
+            this.close();
+        } else {
+            modal.hide();
+        }
     }
     //~Clear
     $('#btnClear').click(function (e) {
@@ -752,7 +765,7 @@ var DecVal = '@Session["DecimalValues"]';
             showErrorSnackbar("Account Group should not be empty");
         }
         else {
-            const exists = arrAccGrp.filter(acc => acc.label == $("#txtAccGrp").val().trim());
+            const exists = arrAccGrp.filter(acc => acc.label.trim() == $("#txtAccGrp").val().trim());
             if (exists.length == 0) {
                 IsValid = false;
                 $("#dvErrorAccGrp").html("Account Group select from list");
@@ -779,6 +792,7 @@ var DecVal = '@Session["DecimalValues"]';
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
+        var name = $("#txtAccName").val();
         var lstMaster = {
             "Mode": TransMode,
             "ID": $("#txtID").val(),
@@ -807,10 +821,22 @@ var DecVal = '@Session["DecimalValues"]';
                 $.each(data, function (i, items) {
                     if (items.MsgID == 0) {
                         showSuccessSnackbar(items.Message);
-                        ClearForm();
-                        AllFAData();
-                        GetData(3);
-                        modal.hide();
+                        var depfrom = $("#txtDependFrom").val();
+                        if (window.opener && !window.opener.closed) {
+                            window.opener.postMessage({
+                                source: "FinancialAccount",
+                                financialaccountid: items.ID,   // adjust to your actual field names
+                                financialaccountname: name
+                            }, "*");
+
+                            window.close();
+                        }
+                        else {
+                            ClearForm();
+                            AllFAData();
+                            GetData(3);
+                            modal.hide();
+                        }
                     }
                     else if (items.Message == "OSPending") {
                         //$("#divErrorOnName").html("Outstanding Amount Pending. Cannot Deactivate");
@@ -860,6 +886,31 @@ var DecVal = '@Session["DecimalValues"]';
             showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (nCustomerTypeID == 0 ? "Add" : "Edit") + " Role</code></h4>");
         }
     });*@
+
+    //~Depend Master Load
+    if ($("#txtTransType").val() == "2") {
+        if ($("#txtID").val() > 0) {
+            setTimeout(() => {
+
+                TransMode = 2;
+                $(".clrdiv").html("");
+                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                var ID = $("#txtID").val();
+                GetData(6, ID);
+                $(".FormclrField").prop("disabled", false);
+                $("#chkActive,#btnSave,#cmbFAType").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                $("#btnClear").hide();
+                $("#btnClose,#btnSave").show();
+                modal.show();
+            }, 1000);
+        }
+        else {
+            $(".modal-title#lblPopupheading").text($("#MainHeading").text());
+            modal.hide();
+        }
+    }
+
     var Url = '@Session["url"].ToString()';
     $("#openaccountgroup").click(function (e) {
         var selectedName = $("#txtAccGrp").val().trim();
@@ -890,6 +941,140 @@ var DecVal = '@Session["DecimalValues"]';
             if (FieldID == "txtAccGrp") {
                 $("#openaccountgroup").trigger("click");
             }
+        }
+        else if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtAccName") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Account Name
+                PaginatedAutocomplete({
+                    inputId: "txtAccName",
+                    data: arrData,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        console.log("Selected item:", item);
+                        $("#txtAccName").val(item.label);
+                        $("#hdnAccGrpID").val(item.id);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtAccGrp") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Account Group
+                PaginatedAutocomplete({
+                    inputId: "txtAccGrp",
+                    data: arrAccGrp,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtAccGrp").val(item.label);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtHProds") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",// "txtProdName",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        $("#lblABS").html(item.ABS);
+                        $("#clrdivs").html("");
+                        GetData(4, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtSearch" || fieldid == "txtFilterParty") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    pageSize: 50,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                    }
+                });
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    pageSize: 50,
+                    onSelect: function (item) {
+                        console.log("Auto List ", item);
+                        $("#txtFilterParty").val(item.name);
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">  
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>	
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
         }
     });
     window.addEventListener("message", function (event) {

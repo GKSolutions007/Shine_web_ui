@@ -20,11 +20,18 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 359 or MenuParentId = 359", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "5ofcNBfiEV4dGUJCIUBAs8y7A1tpJC1Ci9W7bduHmpIZjYTW75/YggXBx9iRDx2y" });
+                }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
-                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
                 string AddPerm = dtPermission.Select("MenuId = 360", null).Length > 0 ? "1" : "0";
                 string ModPerm = dtPermission.Select("MenuId = 361", null).Length > 0 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuId = 362", null).Length > 0 ? "1" : "0";

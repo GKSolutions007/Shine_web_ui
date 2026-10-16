@@ -24,8 +24,7 @@ namespace ShineWeb.Controllers
         // GET: Login
         public ActionResult Index(string Msg=null)
         {
-            //272,273,274,275,276
-            //string plain = "Order Taken,No Order,Feedback,Manufacturer Filter,Category Filter,Product Filter";
+            //string plain = "546,547";// "Van Loading Slip,Create Van Loading Slip,View Van Loading Slip";
             //string[] strplain = plain.Split(',');
             //string EncVal = "";
             //for (int i = 0; strplain.Length > i; i++)
@@ -33,6 +32,7 @@ namespace ShineWeb.Controllers
             //    string val = strplain[i].ToString();
             //    EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
             //}
+
 
             string nv = Convert.ToString(Session["NavBarVisible"]);
             string userAgent = Request.UserAgent;
@@ -279,9 +279,10 @@ namespace ShineWeb.Controllers
             _client.BaseAddress = new Uri(APIurl);// APILink from app config
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             var authcookie = HttpContext.Request.Cookies["AuthToken"];
+            var Sessionidcookie = HttpContext.Request.Cookies["ASP.NET_SessionId"];
             if (authcookie != null)
             {
-                HttpResponseMessage result = _client.GetAsync("resetlogin?token=" + authcookie.Value).Result;
+                HttpResponseMessage result = _client.GetAsync("resetlogin?token=" + authcookie.Value + "&sessionid=" + Sessionidcookie.Value).Result;
             }
 
             HttpContext.Response.Cache.SetExpires(DateTime.UtcNow.AddMinutes(-1));

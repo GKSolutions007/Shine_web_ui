@@ -34,6 +34,14 @@ namespace ShineWeb.Controllers
                 int RID = Convert.ToInt32(Session["RoleID"]);
                 //MUModel.UserName = BL.GetFilteredItemsFromDictionary(GetComboBoxData(RID));
                 //string sdfsf = GetTreeData("2", "2");
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 117", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "DE496ZpzUGs9Hh2bCGXZw2e0y0WBlX8zPkg6CrsCc3I=" });
+                }
                 return View(MUModel);
             }
         }

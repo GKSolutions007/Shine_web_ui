@@ -11,7 +11,8 @@
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 <script src="~/Scripts/jquery-1.11.1.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+@*<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>*@
+<script src="~/Scripts/jquery-3.7.1.min.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <!-- Bootstrap 5 -->
 @*<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />*@
@@ -56,6 +57,7 @@
         height: 25px;
         border-width: 1px;
     }
+
     th, td {
         white-space: nowrap;
     }
@@ -542,12 +544,147 @@
     select.form-control {
         padding-right: 20px !important;
     }
+
     @@media (max-width:800px) {
-    .filter-text{
-        display:none;
+        .filter-text {
+            display: none;
+        }
     }
-}    
+
+    .pi-header {
+        background: linear-gradient(135deg, #0d5c3f 0%, #14804f 100%);
+        padding: 8px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    .pi-header-icon {
+        width: 38px;
+        height: 38px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .pi-header h4 {
+        font-size: 17px;
+    }
+
+    .pi-close {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        background-color: rgba(255,255,255,0.15) !important;
+        border-radius: 6px;
+        padding: 5px;
+    }
+
+    .pi-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+    }
+
+    .pi-row {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 9px 14px;
+        border-bottom: 1px solid #f0f0f0;
+        min-width: 0;
+    }
+
+        .pi-row.full {
+            grid-column: 1 / -1;
+        }
+
+        .pi-row.highlight {
+            background-color: #eafaf1;
+        }
+
+    .pi-icon-chip {
+        width: 26px;
+        height: 26px;
+        background-color: #eafaf1;
+        color: #14804f;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 11px;
+        margin-top: 1px;
+    }
+
+    .pi-label {
+        width: auto;
+        white-space: nowrap;
+        color: #6b7280;
+        font-size: 12px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .pi-colon {
+        color: #9ca3af;
+        width: 6px;
+        font-size: 12px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .pi-value {
+        font-weight: 600;
+        color: #111827;
+        font-size: 13px;
+        min-width: 0;
+        flex: 1;
+        white-space: normal;
+        overflow: visible;
+        word-break: break-word;
+        line-height: 1.35;
+    }
+
+        .pi-value.muted {
+            color: #9ca3af;
+            font-weight: 400;
+        }
+
+    .pi-badge-good {
+        background-color: #eafaf1;
+        color: #14804f;
+        padding: 2px 10px;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 11px;
+    }
 </style>
+
+<div class="modal fade" id="vendorInfoModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+        <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+            <div class="pi-header">
+                <div class="pi-header-icon"><i class="fas fa-user"></i></div>
+                <div>
+                    <h4 class="mb-0 text-white fw-bold" id="vendTitle">Vendor Information</h4>
+                </div>
+                <button type="button" class="btn-close btn-close-white pi-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="vendBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <body>
     @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
     @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
@@ -642,7 +779,7 @@
                         </div>
                     </div>
                     <div class="col-12 col-md-1">
-                        <button id="btnFilter" class="btn btn-primary">
+                        <button id="btnFilter" class="btn btn-filter-style">
                             <i class="bi bi-funnel-fill"></i>  <span class="filter-text">Filter</span>
                         </button>
                     </div>
@@ -679,7 +816,7 @@
                 </td>
             </tr>
         </table>
-        <div id="my-grid" style="height: 600px; width: 100%;"></div>
+        <div id="my-grid" style="width: 100%;"></div>
     </div>
 
     <div id="dvMain">
@@ -732,13 +869,18 @@
             </div>
 
             <!-- Credit Term -->
-            <div class="col mb-2" style="min-width: 120px; max-width: 140px;">
-                <span class="form-label">
-                    <select class="form-control FormclrcmbField" id="cmbCreditTerm">
-                        <option value="0">Select Credit Term</option>
-                    </select>
-                    <label class="labelup">Credit Term *</label>
-                </span>
+            <div class="col mb-2" style="min-width: 180px; max-width: 220px;">
+                <div class="input-group">
+                    <span id="opencreditterm" class="input-group-text" title="New Credit Term" style="cursor:pointer;">
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                    </span>
+                    <span class="form-label flex-grow-1">
+                        <select class="form-control FormclrcmbField" id="cmbCreditTerm">
+                            <option value="0">Select Credit Term</option>
+                        </select>
+                        <label class="labelup">Credit Term *</label>
+                    </span>
+                </div>
                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrCreditTerm" class="clrdivs"></div>
             </div>
 
@@ -781,155 +923,155 @@
             </div>
         </div>
 
-        
-            <hr style="width:99%" />
-            <div class="row" id="dvSelectItems">
-                <!-- Hidden inputs (no table needed, just a hidden div) -->
-                <div hidden>
-                    <input id="txtHProdID" class="FormclrField" />
-                    <input id="txtHTrackInventory" />
-                    <input id="txtHTrackBatch" />
-                    <input id="txtHPKD" />
-                    <input id="txtHPPrice" />
-                    <input id="txtHSPrice" />
-                    <input id="txtHECP" />
-                    <input id="txtHSPL" />
-                    <input id="txtHMRP" />
-                    <input id="txtHRTNPrice" />
-                    <input id="txtTransBillPrice" />
-                    <input id="txtTempABS" />
-                    <input id="txtHProdCode" />
-                    <input id="txtMRPonTax" />
+
+        <hr style="width:99%" />
+        <div class="row" id="dvSelectItems">
+            <!-- Hidden inputs (no table needed, just a hidden div) -->
+            <div hidden>
+                <input id="txtHProdID" class="FormclrField" />
+                <input id="txtHTrackInventory" />
+                <input id="txtHTrackBatch" />
+                <input id="txtHPKD" />
+                <input id="txtHPPrice" />
+                <input id="txtHSPrice" />
+                <input id="txtHECP" />
+                <input id="txtHSPL" />
+                <input id="txtHMRP" />
+                <input id="txtHRTNPrice" />
+                <input id="txtTransBillPrice" />
+                <input id="txtTempABS" />
+                <input id="txtHProdCode" />
+                <input id="txtMRPonTax" />
+            </div>
+
+            <!-- Item Details -->
+            <div class="col-12 col-md-4">
+                <div class="input-group">
+                    <span id="openproduct" class="input-group-text" title="Product">
+                        <span class="glyphicon glyphicon-export"></span>
+                    </span>
+                    <span class="form-label flex-grow-1">
+                        <input class="form-control FormclrField" id="txtHProds" autocomplete="off"/>
+                        <label class="labelup">Item Details</label>
+                    </span>
                 </div>
+                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProduct" class="clrdivs"></div>
 
-                <!-- Item Details -->
-                <div class="col-12 col-md-4">
-                    <div class="input-group">
-                        <span id="openproduct" class="input-group-text" title="Product">
-                            <span class="glyphicon glyphicon-export"></span>
-                        </span>
-                        <span class="form-label flex-grow-1">
-                            <input class="form-control FormclrField" id="txtHProds" />
-                            <label class="labelup">Item Details</label>
-                        </span>
-                    </div>
-                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProduct" class="clrdivs"></div>
+                <!-- Product code & branch qty labels (table kept: two side-by-side labels need alignment) -->
+                <table>
+                    <tr>
+                        <td style="border:none;">
+                            <label class="form-label" style="padding-left: 2em" id="lblProdCodeAS"></label>
+                        </td>
+                        <td style="border:none;">
+                            <label class="form-label" style="padding-left: 1.5em" id="lblABSLoc" title="click to see Branch Qty"></label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
 
-                    <!-- Product code & branch qty labels (table kept: two side-by-side labels need alignment) -->
-                    <table>
+            <!-- HSN -->
+            <div class="col-12 col-md-1">
+                <span class="form-label">
+                    <input class="form-control FormclrField" type="number" step="any" id="txtHSN" maxlength="8"
+                           onkeypress="return isNumberKey(event)"
+                           oninput="if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                    <label class="labelup">HSN</label>
+                </span>
+            </div>
+
+            <!-- UOM -->
+            <div class="col-12 col-md-1">
+                <span class="form-label">
+                    <select class="form-control FormclrcmbField" id="cmbUOM">
+                        <option value="0">Select UOM</option>
+                    </select>
+                    <label class="labelup">UOM</label>
+                </span>
+            </div>
+
+            <!-- Location -->
+            <div class="col-12 col-md-1">
+                <span class="form-label">
+                    <select class="form-control FormclrcmbField" id="cmbLocation">
+                        <option value="0">Select Location</option>
+                    </select>
+                    <label class="labelup">Location</label>
+                </span>
+            </div>
+
+
+            <!-- Batch Button -->
+            <div class="col-12 col-md-1 d-flex align-items-center">
+                <div>
+                    <button class="btn btn-batch-style" id="btnBatch">Batch</button>
+                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProductBatch" class="clrdivs"></div>
+                </div>
+            </div>
+
+            <!-- Empty gap -->
+            <div class="col-12 col-md-2"></div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+                <table class="table table-bordered  row-border order-column" id="tblProductData" width="100%">
+                    <thead>
                         <tr>
-                            <td style="border:none;">
-                                <label class="form-label" style="padding-left: 2em" id="lblProdCodeAS"></label>
-                            </td>
-                            <td style="border:none;">
-                                <label class="form-label" style="padding-left: 1.5em" id="lblABSLoc" title="click to see Branch Qty"></label>
-                            </td>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ProdID</th>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ProdCode</th>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">UOMID</th>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TaxPern</th>
+                            <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">Action</th>
+                            <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
+                            <th style="text-align:center;font-size: 12px;width:30%;padding-right:150px;" class="trclrforcolheader">Item Names</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">HSN Code</th>
+                            <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">UOM</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Quantity</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Free Qty</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" title="Damage Qty" class="trclrforcolheader">Dmg Qty</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" title="Product Discount Percentage & Amount" class="trclrforcolheader">Prod %/ ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" title="Trade Discoun Percentaget & Amount" class="trclrforcolheader">Trade %/ ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" title="Additional Discount Percentage & Amount" class="trclrforcolheader">Addnl %/ ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Goods ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Gross ₹</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader" title="Tax Amount & Percentage">Tax ₹ / %</th>
+                            <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Net ₹</th>
+                            <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span></th>
+                            <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TransPrice</th>
+                            <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Location</th>
                         </tr>
-                    </table>
-                </div>
-
-                <!-- HSN -->
-                <div class="col-12 col-md-1">
-                    <span class="form-label">
-                        <input class="form-control FormclrField" type="number" step="any" id="txtHSN" maxlength="8"
-                               onkeypress="return isNumberKey(event)"
-                               oninput="if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
-                        <label class="labelup">HSN</label>
-                    </span>
-                </div>
-
-                <!-- UOM -->
-                <div class="col-12 col-md-1">
-                    <span class="form-label">
-                        <select class="form-control FormclrcmbField" id="cmbUOM">
-                            <option value="0">Select UOM</option>
-                        </select>
-                        <label class="labelup">UOM</label>
-                    </span>
-                </div>
-
-                <!-- Location -->
-                <div class="col-12 col-md-1">
-                    <span class="form-label">
-                        <select class="form-control FormclrcmbField" id="cmbLocation">
-                            <option value="0">Select Location</option>
-                        </select>
-                        <label class="labelup">Location</label>
-                    </span>
-                </div>
-
-
-                <!-- Batch Button -->
-                <div class="col-12 col-md-1 d-flex align-items-center">
-                    <div>
-                        <button class="btn btn-primary" id="btnBatch">Batch</button>
-                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrProductBatch" class="clrdivs"></div>
-                    </div>
-                </div>
-
-                <!-- Empty gap -->
-                <div class="col-12 col-md-2"></div>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <td align="right" colspan="5">
+                                <label> Total :</label>
+                            </td>
+                            <td>
+                                <label id="lblPTCount" class="lblPT">0</label>
+                            </td>
+                            <td></td>  <!-- Item Names -->
+                            <td></td>  <!-- HSN -->
+                            <td></td>  <!-- UOM -->
+                            <td align="right"><label id="lblPTQty" style="text-align:right" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTFreeQty" style="text-align:right" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTDmgQty" style="text-align:right" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTPDiscAmt" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTTDiscAmt" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTADiscAmt" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTGoods" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTGross" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTTax" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td align="right"><label id="lblPTNet" class="lblPT lblsettag" lbltag="0">0.00</label></td>
+                            <td></td>  <!-- Diff -->
+                            <td></td>  <!-- TransPrice (hidden) -->
+                            <td></td>  <!-- Location -->
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
-            <div class="row">
-                <div class="col-sm-12 col-md-12 col-lg-12">
-                    <table class="table table-bordered  row-border order-column" id="tblProductData" width="100%">
-                        <thead>
-                            <tr>
-                                <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ProdID</th>
-                                <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ProdCode</th>
-                                <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">UOMID</th>
-                                <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TaxPern</th>
-                                <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">Action</th>
-                                <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
-                                <th style="text-align:center;font-size: 12px;width:30%;padding-right:150px;" class="trclrforcolheader">Item Names</th>
-                                <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">HSN Code</th>
-                                <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">UOM</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Quantity</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Free Qty</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" title="Damage Qty" class="trclrforcolheader">Dmg Qty</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" title="Product Discount Percentage & Amount" class="trclrforcolheader">Prod %/ ₹</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" title="Trade Discoun Percentaget & Amount" class="trclrforcolheader">Trade %/ ₹</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" title="Additional Discount Percentage & Amount" class="trclrforcolheader">Addnl %/ ₹</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Goods ₹</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Gross ₹</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader" title="Tax Amount & Percentage">Tax ₹ / %</th>
-                                <th style="text-align:center;font-size: 12px;width:8%;" class="trclrforcolheader">Net ₹</th>
-                                <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span></th>
-                                <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">TransPrice</th>
-                                <th style="text-align:center;font-size: 12px; width: 5%; padding-right: 10px;" class="trclrforcolheader">Location</th>
-                            </tr>
-                        </thead>
-                        <tfoot>
-                            <tr>
-                                <td align="right" colspan="5">
-                                    <label> Total :</label>
-                                </td>
-                                <td>
-                                    <label id="lblPTCount" class="lblPT">0</label>
-                                </td>
-                                <td></td>  <!-- Item Names -->
-                                <td></td>  <!-- HSN -->
-                                <td></td>  <!-- UOM -->
-                                <td align="right"><label id="lblPTQty" style="text-align:right" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTFreeQty" style="text-align:right" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTDmgQty" style="text-align:right" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTPDiscAmt" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTTDiscAmt" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTADiscAmt" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTGoods" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTGross" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTTax" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td align="right"><label id="lblPTNet" class="lblPT lblsettag" lbltag="0">0.00</label></td>
-                                <td></td>  <!-- Diff -->
-                                <td></td>  <!-- TransPrice (hidden) -->
-                                <td></td>  <!-- Location -->
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
-            </div>
-       
+            @*<button id="btnProdAdd" class="btn btn-info"><span class="glyphicon glyphicon-plus" style="color: white"></span>&#x2009;Add</button>*@
+        </div>
+
 
         <div class="col-12 mt-4 mb-5">
             <div class="row">
@@ -1207,34 +1349,34 @@
                             <input class="form-check-input" style="font-size:14px;" type="checkbox" id="chkUpdateVendor">
                             <label class="form-check-label" for="chkUpdateVendor" style="font-size:14px;color:black">Update Vendor in Product</label>
                         </div>
-                        <button type="button" title="Whatsapp" class="btn" id="btnWhatsapp" style="background-color:green;color:white">
+                        <button type="button" title="Whatsapp" class="btn btn-whatsapp-style" id="btnWhatsapp">
                             <i class="fa-brands fa-whatsapp" style="color:white"></i>
                         </button>
-                        <button type="button" title="Mail" class="btn clrforpdf" id="btnEmail">
+                        <button type="button" title="Mail" class="btn btn-mail-style" id="btnEmail">
                             <span class="glyphicon glyphicon-envelope"></span>
                         </button>
-                        <button type="button" title="PDF" class="btn clrforpdf" id="btnPDF">
+                        <button type="button" title="PDF" class="btn btn-pdf-style" id="btnPDF">
                             <i class="fa-regular fa-file-pdf" style="color:white"></i>
                         </button>
-                        <button type="button" class="btn clrforpreview" id="btnPreview">
+                        <button type="button" class="btn btn-preview-style" id="btnPreview">
                             <span class="glyphicon glyphicon-print"></span> Preview
                         </button>
-                        <button type="button" class="btn clrforpreview" id="btnPrint">
+                        <button type="button" class="btn btn-print-style" id="btnPrint">
                             <span class="glyphicon glyphicon-print"></span> Print
                         </button>
                         <button type="button" class="btn btn-edit-style" id="btnTEdit"><span class="glyphicon glyphicon-pencil"> Edit</span></button>
                         <button type="button" class="btn btn-cancel-style" id="btnTCancel"><span class="glyphicon glyphicon-remove"> Cancel</span></button>
                         <button type="button" class="btn btn-variant-style" id="btnTVariant"><span class="bi bi-copy"> Variant</span></button>
-                        <button type="button" class="btn btn-danger" id="btnClear">
+                        <button type="button" class="btn btn-clear-style" id="btnClear">
                             <span class="glyphicon glyphicon-refresh"></span> Clear
                         </button>
-                        <button type="button" class="btn btn-primary" id="btnDraft">
+                        <button type="button" class="btn btn-draft-style" id="btnDraft">
                             <span class="glyphicon glyphicon-saved"></span> Draft
                         </button>
-                        <button type="button" class="btn btn-success" id="btnSave">
+                        <button type="button" class="btn btn-save-style" id="btnSave">
                             <span class="glyphicon glyphicon-saved"></span> Save
                         </button>
-                        <button type="button" class="btn btn-warning" id="btnClose">
+                        <button type="button" class="btn btn-close-style" id="btnClose">
                             <i class="bi bi-x-circle"></i> Close
                         </button>
                     </div>
@@ -1253,7 +1395,7 @@
                 <!-- Modal Header -->
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold" id="lblPopupheading">Add Batch Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" style="filter: invert(1);" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <!-- Modal Body -->
@@ -1277,14 +1419,14 @@
 
                             <!-- Edit Product Button -->
                             <div class="col-auto">
-                                <button id="openproduct1" class="btn btn-primary">
+                                <button id="openproduct1" class="btn btn-add-style">
                                     <span class="glyphicon glyphicon-export"></span>&#x2009;Edit Product
                                 </button>
                             </div>
 
                             <!-- Add Button -->
                             <div class="col-auto">
-                                <button id="btnBatchAdd" class="btn btn-info">
+                                <button id="btnBatchAdd" class="btn btn-add-style">
                                     <span class="glyphicon glyphicon-plus"></span>&#x2009;Add
                                 </button>
                             </div>
@@ -1399,13 +1541,13 @@
 
                 <!-- Modal Footer -->
                 <div class="modal-footer" style="background-color:skyblue">
-                    <button tabindex="2" type="button" class="btn btn-danger" id="btnBatchClear">
+                    <button tabindex="2" type="button" class="btn btn-clear-style" id="btnBatchClear">
                         <span class="glyphicon glyphicon-refresh"></span> Clear
                     </button>
-                    <button tabindex="1" type="button" class="btn btn-success" id="btnBatchAccept">
+                    <button tabindex="1" type="button" class="btn btn-save-style" id="btnBatchAccept">
                         <span class="glyphicon glyphicon-saved"></span> Accept
                     </button>
-                    <button tabindex="3" type="button" class="btn btn-warning" data-bs-dismiss="modal" id="btnBatchClose">
+                    <button tabindex="3" type="button" class="btn btn-close-style" data-bs-dismiss="modal" id="btnBatchClose">
                         <i class="bi bi-x-circle"></i> Close
                     </button>
                 </div>
@@ -1422,7 +1564,7 @@
                 <!-- Modal Header -->
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold" style="color:black" id="lblPinfoHeading">Product Info</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" style="filter: invert(1);" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <!-- Modal Body -->
@@ -1456,7 +1598,7 @@
 
                 <!-- Modal Footer -->
                 <div class="modal-footer" style="background-color:skyblue">
-                    <button tabindex="5" type="button" class="btn btn-warning" data-bs-dismiss="modal" id="btnPinfoClose">
+                    <button tabindex="5" type="button" class="btn btn-close-style" data-bs-dismiss="modal" id="btnPinfoClose">
                         <i class="bi bi-x-circle"></i> Close
                     </button>
                 </div>
@@ -1474,7 +1616,7 @@
                 <!-- Modal Header -->
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold" id="lblPaymentHeading">Payment Mode</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" style="filter: invert(1);" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <!-- Modal Body -->
@@ -1537,13 +1679,13 @@
 
                 <!-- Modal Footer -->
                 <div class="modal-footer" style="background-color:skyblue">
-                    <button type="button" class="btn btn-danger" id="btnPaymentClear">
+                    <button type="button" class="btn btn-clear-style" id="btnPaymentClear">
                         <span class="glyphicon glyphicon-refresh"></span> Clear
                     </button>
-                    <button type="button" class="btn btn-success" id="btnPaymentAccept">
+                    <button type="button" class="btn btn-save-style" id="btnPaymentAccept">
                         <span class="glyphicon glyphicon-saved"></span> Accept
                     </button>
-                    <button type="button" class="btn btn-warning" data-bs-dismiss="modal" id="btnPaymentClose">
+                    <button type="button" class="btn btn-close-style" data-bs-dismiss="modal" id="btnPaymentClose">
                         <i class="bi bi-x-circle"></i> Close
                     </button>
                 </div>
@@ -1586,10 +1728,10 @@
 
                 <!-- Modal Footer -->
                 <div class="modal-footer" style="background-color:skyblue">
-                    <button type="button" class="btn btn-success" id="btnReasonAccept">
+                    <button type="button" class="btn btn-save-style" id="btnReasonAccept">
                         <span class="glyphicon glyphicon-saved"></span> Apply&ensp;All
                     </button>
-                    <button type="button" class="btn btn-warning" data-bs-dismiss="modal" id="btnReasonClose">
+                    <button type="button" class="btn btn-close-style" data-bs-dismiss="modal" id="btnReasonClose">
                         <i class="bi bi-x-circle"></i> Close
                     </button>
                 </div>
@@ -1758,7 +1900,7 @@
                                     GetFilterData();
                                 }
                             }
-                            
+
                         }
                         else {
                             var conf = confirm("Do you want to remove draft data?");
@@ -2018,6 +2160,12 @@
     var nRoleID = '@Session["RoleID"]';
     var Aurl = '@Session["APIurl"]';
     var DecVal = '@Session["DecimalValues"]';
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
+    var PurAddnlDiscb4Prod = '@Session["PurchaseAddnlDiscbeforeProdDisc"]' == '1';
+    var PurTrdDiscb4Prod = '@Session["PurchaseTradeDiscbeforeProdDisc"]' == '1';
 
     LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
      var ConfigRoundtype = '@Session["RoundoffType"]';
@@ -2066,48 +2214,95 @@ if ($("#txtReurnPricePerm").val() == 0) {
     }
     GetPrintProfile(2);
 
+//    $("#VendInfo").click(function () {
+//        if ($("#txtVendorID").val() != "") {
+//            var htmlTable = `
+//<table style="width:100%; border-collapse:collapse; font-family:Arial, sans-serif; font-size:14px;">
+//  <tr>
+//    <th style="text-align:left; padding:8px; border:1px solid #ccc; width:30%;">Code</th>
+//    <td style="padding:8px; border:1px solid #ccc;">${$("#lblName").text()}</td>
+//  </tr>
+//  <tr>
+//    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Name</th>
+//    <td style="padding:8px; border:1px solid #ccc;">${$("#txtSearch").val()}</td>
+//  </tr>
+//  <tr>
+//    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Mobile No</th>
+//    <td style="padding:8px; border:1px solid #ccc;">${$("#lblMob1").text()}</td>
+//  </tr>
+//  <tr>
+//    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">GSTIN</th>
+//    <td style="padding:8px; border:1px solid #ccc;">${$("#lblGSTIN").text()}</td>
+//  </tr>
+//  <tr>
+//    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Billing Address</th>
+//    <td style="padding:8px; border:1px solid #ccc;">
+//      ${$("#txtBAdd1").val()}<br/>
+//      ${$("#txtBAdd2").val()}<br/>
+//      ${$("#txtBAdd3").val()}
+//    </td>
+//  </tr>
+//  <tr>
+//    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Shipping Address</th>
+//    <td style="padding:8px; border:1px solid #ccc;">
+//      ${$("#txtSAdd1").val()}<br/>
+//      ${$("#txtSAdd2").val()}<br/>
+//      ${$("#txtSAdd3").val()}
+//    </td>
+//  </tr>
+//  <tr>
+//    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Pincode</th>
+//    <td style="padding:8px; border:1px solid #ccc;">${$("#txtPincode").val()}</td>
+//  </tr>
+//</table>`;
+//            InfoDialogMsg(htmlTable, 'Vendor Info');
+//        } else {
+//            showErrorSnackbar("Select Vendor");
+//        }
+    //    });
+
     $("#VendInfo").click(function () {
         if ($("#txtVendorID").val() != "") {
-            var htmlTable = `
-<table style="width:100%; border-collapse:collapse; font-family:Arial, sans-serif; font-size:14px;">
-  <tr>
-    <th style="text-align:left; padding:8px; border:1px solid #ccc; width:30%;">Code</th>
-    <td style="padding:8px; border:1px solid #ccc;">${$("#lblName").text()}</td>
-  </tr>
-  <tr>
-    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Name</th>
-    <td style="padding:8px; border:1px solid #ccc;">${$("#txtSearch").val()}</td>
-  </tr>
-  <tr>
-    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Mobile No</th>
-    <td style="padding:8px; border:1px solid #ccc;">${$("#lblMob1").text()}</td>
-  </tr>
-  <tr>
-    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">GSTIN</th>
-    <td style="padding:8px; border:1px solid #ccc;">${$("#lblGSTIN").text()}</td>
-  </tr>
-  <tr>
-    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Billing Address</th>
-    <td style="padding:8px; border:1px solid #ccc;">
-      ${$("#txtBAdd1").val()}<br/>
-      ${$("#txtBAdd2").val()}<br/>
-      ${$("#txtBAdd3").val()}
-    </td>
-  </tr>
-  <tr>
-    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Shipping Address</th>
-    <td style="padding:8px; border:1px solid #ccc;">
-      ${$("#txtSAdd1").val()}<br/>
-      ${$("#txtSAdd2").val()}<br/>
-      ${$("#txtSAdd3").val()}
-    </td>
-  </tr>
-  <tr>
-    <th style="text-align:left; padding:8px; background:#f9f9f9; border:1px solid #ccc;">Pincode</th>
-    <td style="padding:8px; border:1px solid #ccc;">${$("#txtPincode").val()}</td>
-  </tr>
-</table>`;
-            InfoDialogMsg(htmlTable, 'Vendor Info');
+            function piRow(icon, label, value, opts) {
+                opts = opts || {};
+                var displayValue = (value === "" || value === null || value === undefined)
+                    ? '<span class="pi-value muted">—</span>'
+                    : '<span class="pi-value" title="' + value + '">' + value + '</span>';
+                return `<div class="pi-row ${opts.highlight ? 'highlight' : ''} ${opts.full ? 'full' : ''}">
+                    <div class="pi-icon-chip"><i class="${icon}"></i></div>
+                    <div class="pi-label">${label}</div>
+                    <div class="pi-colon">:</div>
+                    ${displayValue}
+                </div>`;
+            }
+
+            var code = $("#lblName").text();
+            var name = $("#txtSearch").val();
+            var mobile = $("#lblMob1").text();
+            var gstin = $("#lblGSTIN").text();
+            var pincode = $("#txtPincode").val();
+
+            var billingAddress = [$("#txtBAdd1").val(), $("#txtBAdd2").val(), $("#txtBAdd3").val()]
+                .filter(v => v && v.trim() !== "")
+                .join(", ");
+            var shippingAddress = [$("#txtSAdd1").val(), $("#txtSAdd2").val(), $("#txtSAdd3").val()]
+                .filter(v => v && v.trim() !== "")
+                .join(", ");
+
+            var html = '<div class="pi-grid">'
+                + piRow('fas fa-home', 'Billing', billingAddress, { full: true })
+                + piRow('fas fa-mobile-alt', 'Mobile', mobile)
+                + piRow('fas fa-barcode', 'GSTIN', gstin, { full: true })
+                + piRow('fas fa-map-marker-alt', 'Pincode', pincode)
+                + piRow('fas fa-truck', 'Shipping', shippingAddress, { full: true })
+                + '</div>';
+
+            $("#vendTitle").html(
+                '<div style="font-size:16px; font-weight:700;">' + name + '</div>' +
+                '<div style="font-size:11px; font-weight:400; opacity:0.85; margin-top:2px;">' + code + '</div>'
+            );
+            $("#vendBody").html(html);
+            new bootstrap.Modal(document.getElementById('vendorInfoModal')).show();
         } else {
             showErrorSnackbar("Select Vendor");
         }
@@ -2317,12 +2512,17 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#lblECPon").css("color", ecppern);
         $("#lblSPLon").css("color", splpern);
         if (isChk) {
-            PurchasePrice = (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
-            SalesPrice = (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
-            ECP = (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
-            SPLPrice = (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
+
             MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
-            ReturnPrice = (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
+            dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+            dMRPonTax = getPurchaseMRPontax(MRP);
+
+            PurchasePrice = dApponMRPCum > 0 ? parseFloat(TempProd.PurchasePrice) + dMRPonTax : (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
+            SalesPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SalesPrice) + dMRPonTax : (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
+            ECP = dApponMRPCum > 0 ? parseFloat(TempProd.ECP) + dMRPonTax : (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
+            SPLPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SPLPrice) + dMRPonTax : (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
+            MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
+            ReturnPrice = dApponMRPCum > 0 ? parseFloat(TempProd.ReturnPrice) + dMRPonTax : (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
         } else {
             PurchasePrice = (parseFloat(TempProd.PurchasePrice)) * parseFloat(ConvFact);
             SalesPrice = (parseFloat(TempProd.SalesPrice)) * parseFloat(ConvFact);
@@ -2385,12 +2585,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 if (BatchMode == 0)// New Product
                 {
                     if (isChk) {
-                        PurchasePrice = (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
-                        SalesPrice = (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
-                        ECP = (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
-                        SPLPrice = (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
                         MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
-                        ReturnPrice = (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
+                        dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+                        dMRPonTax = getPurchaseMRPontax(MRP);
+
+                        PurchasePrice = dApponMRPCum > 0 ? parseFloat(TempProd.PurchasePrice) + dMRPonTax : (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
+                        SalesPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SalesPrice) + dMRPonTax : (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
+                        ECP = dApponMRPCum > 0 ? parseFloat(TempProd.ECP) + dMRPonTax : (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
+                        SPLPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SPLPrice) + dMRPonTax : (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
+                        ReturnPrice = dApponMRPCum > 0 ? parseFloat(TempProd.ReturnPrice) + dMRPonTax : (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
                     } else {
                         PurchasePrice = (parseFloat(TempProd.PurchasePrice)) * parseFloat(ConvFact);
                         SalesPrice = (parseFloat(TempProd.SalesPrice)) * parseFloat(ConvFact);
@@ -2442,12 +2645,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             var chk = Filterdata[i].CheckInclusive;
                             $("#chkInclusive").prop("checked", chk == 1 ? true : false);
                             if (chk == 1) {
-                                PurchasePrice = (parseFloat(Filterdata[i].PurchasePrice) * TaxPern);// * parseFloat(ConvFact);
-                                SalesPrice = (parseFloat(Filterdata[i].SalesPrice) * TaxPern);// * parseFloat(ConvFact);
-                                ECP = (parseFloat(Filterdata[i].ECP) * TaxPern);// * parseFloat(ConvFact);
-                                SPLPrice = (parseFloat(Filterdata[i].SPLPrice) * TaxPern);// * parseFloat(ConvFact);
                                 MRP = (parseFloat(Filterdata[i].MRP));// * TaxPern * parseFloat(ConvFact);
-                                ReturnPrice = (parseFloat(Filterdata[i].ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
+                                dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+                                dMRPonTax = getPurchaseMRPontax(MRP);
+
+                                PurchasePrice = dApponMRPCum > 0 ? parseFloat(Filterdata[i].PurchasePrice) + dMRPonTax : (parseFloat(Filterdata[i].PurchasePrice) * TaxPern);// * parseFloat(ConvFact);
+                                SalesPrice = dApponMRPCum > 0 ? parseFloat(Filterdata[i].SalesPrice) + dMRPonTax : (parseFloat(Filterdata[i].SalesPrice) * TaxPern);// * parseFloat(ConvFact);
+                                ECP = dApponMRPCum > 0 ? parseFloat(Filterdata[i].ECP) + dMRPonTax : (parseFloat(Filterdata[i].ECP) * TaxPern);// * parseFloat(ConvFact);
+                                SPLPrice = dApponMRPCum > 0 ? parseFloat(Filterdata[i].SPLPrice) + dMRPonTax : (parseFloat(Filterdata[i].SPLPrice) * TaxPern);// * parseFloat(ConvFact);
+                                MRP = (parseFloat(Filterdata[i].MRP));// * TaxPern * parseFloat(ConvFact);
+                                ReturnPrice = dApponMRPCum > 0 ? parseFloat(Filterdata[i].ReturnPrice) + dMRPonTax : (parseFloat(Filterdata[i].ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
                             } else {
                                 PurchasePrice = (parseFloat(Filterdata[i].PurchasePrice));// * parseFloat(ConvFact);
                                 SalesPrice = (parseFloat(Filterdata[i].SalesPrice));// * parseFloat(ConvFact);
@@ -2500,12 +2707,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var TaxPern = parseFloat((TempProd.GSTPern / 100) + 1);
         var PurchasePrice = 0, SalesPrice = 0, ECP = 0, SPLPrice = 0, MRP = 0, ReturnPrice = 0;
         if (isChk) {
-            PurchasePrice = (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
-            SalesPrice = (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
-            ECP = (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
-            SPLPrice = (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
             MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
-            ReturnPrice = (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
+            dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+            dMRPonTax = getPurchaseMRPontax(MRP);
+
+            PurchasePrice = dApponMRPCum > 0 ? parseFloat(TempProd.PurchasePrice) + dMRPonTax : (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
+            SalesPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SalesPrice) + dMRPonTax : (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
+            ECP = dApponMRPCum > 0 ? parseFloat(TempProd.ECP) + dMRPonTax : (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
+            SPLPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SPLPrice) + dMRPonTax : (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
+            MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
+            ReturnPrice = dApponMRPCum > 0 ? parseFloat(TempProd.ReturnPrice) + dMRPonTax : (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
         } else {
             PurchasePrice = (parseFloat(TempProd.PurchasePrice)) * parseFloat(ConvFact);
             SalesPrice = (parseFloat(TempProd.SalesPrice)) * parseFloat(ConvFact);
@@ -2546,12 +2757,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var isChk = $("#chkInclusive").is(":checked");
         var TaxPern = parseFloat((TempProd.GSTPern / 100) + 1);
         if (isChk) {
-            PurchasePrice = (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
-            SalesPrice = (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
-            ECP = (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
-            SPLPrice = (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
-            MRP = (parseFloat(TempProd.MRP) * TaxPern) * parseFloat(ConvFact);
-            ReturnPrice = (parseFloat(TempProd.ReturnPrice) * TaxPern) * parseFloat(ConvFact);
+            MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
+            dApponMRPCum = arrPurchaseTaxDetails.filter(t => t.AppOn == -1).reduce((sum, tx) => sum + (tx.CumulativeTax || 0), 0);
+            dMRPonTax = getPurchaseMRPontax(MRP);
+
+            PurchasePrice = dApponMRPCum > 0 ? parseFloat(TempProd.PurchasePrice) + dMRPonTax : (parseFloat(TempProd.PurchasePrice) * TaxPern) * parseFloat(ConvFact);
+            SalesPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SalesPrice) + dMRPonTax : (parseFloat(TempProd.SalesPrice) * TaxPern) * parseFloat(ConvFact);
+            ECP = dApponMRPCum > 0 ? parseFloat(TempProd.ECP) + dMRPonTax : (parseFloat(TempProd.ECP) * TaxPern) * parseFloat(ConvFact);
+            SPLPrice = dApponMRPCum > 0 ? parseFloat(TempProd.SPLPrice) + dMRPonTax : (parseFloat(TempProd.SPLPrice) * TaxPern) * parseFloat(ConvFact);
+            MRP = (parseFloat(TempProd.MRP));// * TaxPern * parseFloat(ConvFact);
+            ReturnPrice = dApponMRPCum > 0 ? parseFloat(TempProd.ReturnPrice) + dMRPonTax : (parseFloat(TempProd.ReturnPrice) * TaxPern);// * parseFloat(ConvFact);
         } else {
             PurchasePrice = (parseFloat(TempProd.PurchasePrice)) * parseFloat(ConvFact);
             SalesPrice = (parseFloat(TempProd.SalesPrice)) * parseFloat(ConvFact);
@@ -2989,7 +3204,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         if (isChk) {
                             var price = parseFloat($(this).attr("txttag"));
 
-                            slp = dApponMRPCum > 0 ? price + parseFloat(dMRPonTax) : (price / ((TPren / 100) + 1));
+                            slp = dApponMRPCum > 0 ? price - parseFloat(dMRPonTax) : (price / ((TPren / 100) + 1));
                             allValues[fieldName] = slp;
                         } else {
                             slp = parseFloat($(this).attr("txttag"));
@@ -3035,7 +3250,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var Freeqty = document.getElementById("txtBatchFreeQty").getAttribute('txttag');
             var Dmgqty = document.getElementById("txtBatchDmgQtyTotal").getAttribute('txttag');
             var Calcgross = parseFloat(qty) + parseFloat(Dmgqty);
-            var goods = isChk == "0" ? Calcgross : dApponMRPCum > 0 ? (Calcgross + TotalMRPonTax) : (Calcgross / (1 + (TPren / 100)));
+            var goods = isChk == "0" ? Calcgross : dApponMRPCum > 0 ? (Calcgross - TotalMRPonTax) : (Calcgross / (1 + (TPren / 100)));
             //var PDiscAmt = (PDiscPren * goods) / 100;
             //var gross = goods - PDiscAmt;
             //var TAmt = dApponMRPCum > 0 ? gross + TotalMRPonTax : (gross * TPren) / 100;
@@ -3048,10 +3263,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var TDPern = document.getElementById("txtTradeDiscPern").getAttribute("txttag");
                 var ADPern = document.getElementById("txtAddnlDiscPern").getAttribute("txttag");
 
-                var goods = isChk == "0" ? Calcgross : dApponMRPCum > 0 ? (Calcgross + TotalMRPonTax) : (Calcgross / (1 + (TPren / 100)));
+                var goods = isChk == "0" ? Calcgross : dApponMRPCum > 0 ? (Calcgross - TotalMRPonTax) : (Calcgross / (1 + (TPren / 100)));
                 var PDiscAmt = (PDiscPren * goods) / 100;
-                var TDiscAmt = (TDPern * (goods - PDiscAmt)) / 100;
-                var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
+                var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
+                var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
 
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
                 var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
@@ -3104,12 +3319,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 ProductRID++;
             }
             else if (BatchMode == 1) {
+                //var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
+                //var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
                 var PDPern = parseFloat($("#txtGridProdDisc").val());
                 var PDiscAmt = (PDPern * goods) / 100;
                 var TDPern = parseFloat($("#txtGridTradeDisc").val());
-                var TDiscAmt = (TDPern * (goods - PDiscAmt)) / 100;
+                var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
                 var ADPern = parseFloat($("#txtGridAddnlDisc").val());
-                var ADiscAmt = (ADPern * (goods - PDiscAmt)) / 100;
+                var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
                 var gross = goods - (PDiscAmt + TDiscAmt + ADiscAmt);
                 var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
                 var NAmt = gross + TAmt;
@@ -3392,9 +3609,10 @@ var Url = '@Session["url"].ToString()';
         updateLabelColumn("lblPTGoods", dPTGoods); updateLabelColumn("lblPTGross", dPTGross); updateLabelColumn("lblPTTax", dPTTax); updateLabelColumn("lblPTNet", dPTNet);
         updateLabelColumn("lblTaxAmount", dPTTax);
         updateLabelColumn("lblCGST", (dPTTax / 2)); updateLabelColumn("lblSGST", (dPTTax / 2));
-        var grss = (dPTGoods - TotProdDisc);
-        var TrdPern = parseFloat(grss) > 0 ?parseFloat((TotTradeDisc / grss) * 100) : 0;//.toFixed(DecVal)
-        var AddnlPern = parseFloat(grss) > 0 ? parseFloat((TotAddnlDisc / grss) * 100) : 0;//.toFixed(DecVal)
+        var trdgrss = PurTrdDiscb4Prod ? dPTGoods : (dPTGoods - TotProdDisc);
+        var addnlgrss = PurAddnlDiscb4Prod ? dPTGoods : (dPTGoods - TotProdDisc);
+        var TrdPern = parseFloat(trdgrss) > 0 ? parseFloat((TotTradeDisc / trdgrss) * 100) : 0;//.toFixed(DecVal)
+        var AddnlPern = parseFloat(addnlgrss) > 0 ? parseFloat((TotAddnlDisc / addnlgrss) * 100) : 0;//.toFixed(DecVal)
         updateInputColumn("txtTradeDiscPern", TrdPern); updateInputColumn("txtAddnlDiscPern", AddnlPern);
         // ceil - always Up value, floor - always down value
         var tofrg = parseFloat(document.getElementById("txtFright").getAttribute("txttag"));
@@ -3511,7 +3729,7 @@ var Url = '@Session["url"].ToString()';
                     $(this).prop("disabled", value > 0 ? true : false);
                     //var val = value != "" ? parseFloat(value) : 0;
                     //var val = ReturnTagValue(fieldID, fieldName);
-                    var grsamt = (dPTGoods - Proddiscamt);
+                    var grsamt = PurTrdDiscb4Prod ? dPTGoods : (dPTGoods - Proddiscamt);
                     var damt = parseFloat((value * grsamt) / 100);//.toFixed(DecVal);
                     updateInputColumn(fieldID, damt);
                     //$(this).val(damt);
@@ -3595,7 +3813,7 @@ var Url = '@Session["url"].ToString()';
 
             var goods = parseFloat(document.getElementById("lblPTGoods").getAttribute('lbltag'));
             var pdisc = parseFloat(document.getElementById("lblPTPDiscAmt").getAttribute('lbltag'));
-            dPTGross = goods - pdisc;
+            dPTGross = PurTrdDiscb4Prod ? goods : (goods - pdisc);
             var val = value != "" ? parseFloat(value) : 0;
             var damt = parseFloat((val / dPTGross) * 100);//.toFixed(DecVal)
 
@@ -3865,14 +4083,15 @@ var Url = '@Session["url"].ToString()';
         var ProdDiscAmt = (existGoodsAmt * val) / 100;
         updateInput($r, "input[name='ProdDiscAmt']", ProdDiscAmt);
 
-        var price = (existGoodsAmt - ProdDiscAmt);
-        var trdamt = ((existTradeDiscPern * price) / 100);
+        //var price = (existGoodsAmt - ProdDiscAmt);
+        var trdprice = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var trdamt = ((existTradeDiscPern * trdprice) / 100);
         updateInput($r, "input[name='TradeDiscAmt']", trdamt);
         if (trdamt <= 0) {
             updateInput($r, "input[name='TradeDiscPern']", 0);
         }
-        //
-        var addnlamt = ((existAddnlDiscPern * price) / 100);
+        var addnlprice = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var addnlamt = ((existAddnlDiscPern * addnlprice) / 100);
         updateInput($r, "input[name='AddnlDiscAmt']", addnlamt);
         if (addnlamt <= 0) {
             updateInput($r, "input[name='AddnlDiscPern']", 0);
@@ -3882,7 +4101,7 @@ var Url = '@Session["url"].ToString()';
         updateLbl($r, "label[name='Gross']", dGross);
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -3937,14 +4156,15 @@ var Url = '@Session["url"].ToString()';
         ProdDiscAmt = (existGoodsAmt * ProdDiscPern) / 100;
 
 
-        var price = (existGoodsAmt - ProdDiscAmt);
-        var trdamt = ((existTradeDiscPern * price) / 100);
+        //var price = (existGoodsAmt - ProdDiscAmt);
+        var trdprice = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var trdamt = ((existTradeDiscPern * trdprice) / 100);
         updateInput($r, "input[name='TradeDiscAmt']", trdamt);
         if (trdamt <= 0) {
             updateInput($r, "input[name='TradeDiscPern']", 0);
         }
-        //
-        var addnlamt = ((existAddnlDiscPern * price) / 100);
+        var addnlprice = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - ProdDiscAmt);
+        var addnlamt = ((existAddnlDiscPern * addnlprice) / 100);
         updateInput($r, "input[name='AddnlDiscAmt']", addnlamt);
         if (addnlamt <= 0) {
             updateInput($r, "input[name='AddnlDiscPern']", 0);
@@ -3954,7 +4174,7 @@ var Url = '@Session["url"].ToString()';
         updateLbl($r, "label[name='Gross']", dGross);
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -3999,7 +4219,7 @@ var Url = '@Session["url"].ToString()';
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         if ((parseFloat(val) + existAddnlDiscPern) > 100) {
             updateInputColumn(id, 0);
             val = 0;
@@ -4015,7 +4235,7 @@ var Url = '@Session["url"].ToString()';
 
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4059,7 +4279,7 @@ var Url = '@Session["url"].ToString()';
         let existGoodsAmt = getTagEl($r, "label[name='Goods']");
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurTrdDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         var TradeDiscAmt = 0;
 
         var TradeDiscPern = ((val / price) * 100);
@@ -4080,7 +4300,7 @@ var Url = '@Session["url"].ToString()';
 
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4125,7 +4345,7 @@ var Url = '@Session["url"].ToString()';
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         if ((parseFloat(val) + existTradeDiscPern) > 100) {
             updateInputColumn(id, 0);
             val = 0;
@@ -4141,7 +4361,7 @@ var Url = '@Session["url"].ToString()';
 
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4186,7 +4406,7 @@ var Url = '@Session["url"].ToString()';
         let Qty = getTagEl($r, "input[name='Qty']");
         let DmgQty = getTagEl($r, "input[name='DmgQty']");
 
-        var price = (existGoodsAmt - existProdDiscAmt);
+        var price = PurAddnlDiscb4Prod ? existGoodsAmt : (existGoodsAmt - existProdDiscAmt);
         var AddnlDiscAmt = 0;
 
         var AddnlDiscPern = ((val / price) * 100);
@@ -4206,7 +4426,7 @@ var Url = '@Session["url"].ToString()';
 
         var ApponMRPCum = $r.find("label[name='ApponMRPCum']").attr("lbltag") || 0;
         var TotMRPonTaxAmt = $r.find("label[name='TotalMRPonTax']").attr("lbltag") || 0;
-        var tamt = parseFloat(ApponMRPCum) > 0 ? parseFloat(TotMRPonTaxAmt) : ((taxpern * dGross) / 100);
+        var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt)) : ((taxpern * dGross) / 100);//Qty *
         updateLbl($r, "label[name='TaxAmt']", tamt);
 
         var neta = (parseFloat(dGross) + parseFloat(tamt));
@@ -4333,7 +4553,7 @@ var Url = '@Session["url"].ToString()';
                             if (fieldName == "TradeDiscPern") {
                                 if (CurrentFieldname == "TradeDiscAmt") {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var damt = ((val / (dPTGoods - RowProdDiscAmt)) * 100);
+                                    var damt = PurTrdDiscb4Prod ? ((val / dPTGoods) *100) :  ((val / (dPTGoods - RowProdDiscAmt)) * 100);
                                     //$(this).val(damt);
                                     if (damt <= 100) {
                                         updateInputColumn(fieldID, damt);
@@ -4360,7 +4580,7 @@ var Url = '@Session["url"].ToString()';
                                 }
                                 else {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var damt = ((val * (dPTGoods - RowProdDiscAmt)) / 100);
+                                    var damt = PurTrdDiscb4Prod ? ((val * dPTGoods) / 100) : ((val * (dPTGoods - RowProdDiscAmt)) / 100);
                                     //$(this).val(damt);
                                     //$(this).val(damt);
                                     if (damt <= 100) {
@@ -4376,7 +4596,7 @@ var Url = '@Session["url"].ToString()';
                             if (fieldName == "AddnlDiscPern") {
                                 if (CurrentFieldname == "AddnlDiscAmt") {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var damt = ((val / (dPTGoods - RowProdDiscAmt)) * 100);
+                                    var damt = PurAddnlDiscb4Prod ? ((val / dPTGoods) * 100) : ((val / (dPTGoods - RowProdDiscAmt)) * 100);
                                     //$(this).val(damt);
                                     if (damt <= 100) {
                                         updateInputColumn(fieldID, damt);
@@ -4401,7 +4621,7 @@ var Url = '@Session["url"].ToString()';
                                 }
                                 else {
                                     var val = value != "" ? parseFloat(value) : 0;
-                                    var damt = ((val * (dPTGoods - RowProdDiscAmt)) / 100);//;
+                                    var damt = PurAddnlDiscb4Prod ? ((val * dPTGoods) / 100) : ((val * (dPTGoods - RowProdDiscAmt)) / 100);//;
                                     //$(this).val(damt);
                                     if (damt <= 100) {
                                         updateInputColumn(fieldID, damt);
@@ -4543,7 +4763,7 @@ var Url = '@Session["url"].ToString()';
                 if (fieldName == "AddnlDiscAmt") {
                     $(this).prop("disabled", value > 0 ? true : false);
                     var val = value != "" ? parseFloat(value) : 0;
-                    var grsamt = (dPTGoods - Proddiscamt);
+                    var grsamt = PurAddnlDiscb4Prod ? dPTGoods : (dPTGoods - Proddiscamt);
                     var damt = parseFloat(((val * grsamt) / 100));//.toFixed(DecVal)
                     //$(this).val(damt);
                     updateInputColumn(fieldID, damt);
@@ -4847,6 +5067,8 @@ var Url = '@Session["url"].ToString()';
                 PaginatedAutocomplete({
                     inputId: "txtHProds",
                     data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
                     onSelect: function (item) {
                         $("#txtHProds").val(item.code);
                         $("#txtTempABS").val(item.ABS + item.Location);
@@ -5042,7 +5264,7 @@ var Url = '@Session["url"].ToString()';
                             $("#txtBAdd2").val(items.Billadd2),
                             $("#txtBAdd3").val(items.Billadd3),
                             $("#txtSAdd1").val(items.Shipadd1),
-                            $("#txtSAdd2").val(items.shipadd2),
+                            $("#txtSAdd2").val(items.Shipadd2),
                             $("#txtSAdd3").val(items.Shipadd3),
                             $("#txtPincode").val(items.Pincode);
                         if (items.PaymentModeID != "7") {
@@ -5273,14 +5495,18 @@ var Url = '@Session["url"].ToString()';
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                     var hdnfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
                     var dataSet = items.lstProdGrid.map(function (itemsProd, nRowIndex) {
+                        console.log("itemsProd ", itemsProd);
                         var gross = parseFloat(itemsProd.GrossAmt);
-                        var goods = parseFloat(itemsProd.GoodsAmt);
+                        var goods = parseFloat(itemsProd.GoodsAmt)
+                        //var trdgross = PurTrdDiscb4Prod ? goods : gross;
+                        //var addnlgross = PurTrdDiscb4Prod ? goods : gross;
                         var ProdDiscPern = itemsProd.ProdPern != "" ? parseFloat(itemsProd.ProdPern) : 0;
-                        var ProdDiscAmt = parseFloat((goods * ProdDiscPern) / 100);
+                        var ProdDiscAmt = itemsProd.ProdAmt != "" ? parseFloat(itemsProd.ProdAmt) : 0;
+                        //    parseFloat((goods * ProdDiscPern) / 100);
                         var TradeDiscPern = itemsProd.TradePern != "" ? parseFloat(itemsProd.TradePern) : 0;
-                        var TradeDiscAmt = parseFloat((gross * TradeDiscPern) / 100);
+                        var TradeDiscAmt = itemsProd.TradeAmt != "" ? parseFloat(itemsProd.TradeAmt) : 0;// parseFloat((trdgross * TradeDiscPern) / 100);
                         var AddnlDiscPern = itemsProd.AddnlPern != "" ? parseFloat(itemsProd.AddnlPern) : 0;
-                        var AddnlDiscAmt = parseFloat((gross * AddnlDiscPern) / 100);
+                        var AddnlDiscAmt = itemsProd.AddnlAmt != "" ? parseFloat(itemsProd.AddnlAmt) : 0;//parseFloat((addnlgross * AddnlDiscPern) / 100);
                         var ReasonoptionsHtml = strReasons.replace(
                             new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
                             'value="' + itemsProd.ReasonID + '" selected'
@@ -5498,12 +5724,14 @@ var Url = '@Session["url"].ToString()';
                         var dataSet = items.lstProdGrid.map(function (itemsProd, nRowIndex) {
                             var gross = parseFloat(itemsProd.GrossAmt);
                             var goods = parseFloat(itemsProd.GoodsAmt);
+                            var trdgross = PurTrdDiscb4Prod ? goods : gross;
+                            var addnlgross = PurTrdDiscb4Prod ? goods : gross;
                             var ProdDiscPern = itemsProd.ProdPern != "" ? parseFloat(itemsProd.ProdPern) : 0;
-                            var ProdDiscAmt = parseFloat((goods * ProdDiscPern) / 100);
+                            var ProdDiscAmt = itemsProd.ProdAmt != "" ? parseFloat(itemsProd.ProdAmt) : 0;// parseFloat((goods * ProdDiscPern) / 100);
                             var TradeDiscPern = itemsProd.TradePern != "" ? parseFloat(itemsProd.TradePern) : 0;
-                            var TradeDiscAmt = parseFloat((gross * TradeDiscPern) / 100);
+                            var TradeDiscAmt =itemsProd.TradeAmt != "" ? parseFloat(itemsProd.TradeAmt) : 0;//= parseFloat((trdgross * TradeDiscPern) / 100);
                             var AddnlDiscPern = itemsProd.AddnlPern != "" ? parseFloat(itemsProd.AddnlPern) : 0;
-                            var AddnlDiscAmt = parseFloat((gross * AddnlDiscPern) / 100);
+                            var AddnlDiscAmt = itemsProd.AddnlAmt != "" ? parseFloat(itemsProd.AddnlAmt) : 0;// parseFloat((addnlgross * AddnlDiscPern) / 100);
                             var ReasonoptionsHtml = strReasons.replace(
                                 new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
                                 'value="' + itemsProd.ReasonID + '" selected'
@@ -5686,6 +5914,9 @@ var Url = '@Session["url"].ToString()';
             if ($("#txtEnableBranch").val() == 1) {
                 $("#cmbBranch").prop("disabled", true);
             }
+            if ($("#txtEnableSaveButton").val() == 0) {
+                $("#btnSave").hide();
+            }
             $("#MainHeading").text(rdo1 ? "Modify Purchase Bill" : "Create Purchase Bill");
         }
         $("#txtStatus").val(stsID);
@@ -5740,6 +5971,9 @@ var Url = '@Session["url"].ToString()';
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
+        if ($("#txtEnableSaveButton").val() == 0) {
+            $("#btnSave").hide();
+        }
     }
     $('#btnTVariant').click(function (e) {
         var Did = $("#txtID").val();
@@ -5773,6 +6007,9 @@ var Url = '@Session["url"].ToString()';
             var Branch = $("#cmbBranch").val();
             GetDocumentID(DocDate, Branch, 1);
         }, 1000);
+        if ($("#txtEnableSaveButton").val() == 0) {
+            $("#btnSave").hide();
+        }
     }
     function CalculateDiffPrice() {
         var Q1 = 0, Q2 = 0, Q3 = 0, gross = 0, TAmt = 0, NAmt = 0;
@@ -6088,9 +6325,201 @@ var Url = '@Session["url"].ToString()';
 
             }
         }
-        if (event.altKey && event.key === '1') {
-            var nPartyID = $("#txtVendorID").val() != "" ? $("#txtVendorID").val() : 0;
-            OpenOneView(nPartyID, 2, true);
+        //if (event.altKey && event.key === '1') {
+        //    var nPartyID = $("#txtVendorID").val() != "" ? $("#txtVendorID").val() : 0;
+        //    OpenOneView(nPartyID, 2, true);
+        //}
+        else if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtHProds") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Products
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        $("#txtTempABS").val(item.ABS + item.Location);
+                        $("#lblABSLoc").html(item.ABS + item.Location);
+                        $("#clrdivs").html("");
+                        GetData(4, item.code);
+                        $("#btnBatch").focus();
+                        BatchMode = 0;
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtSearch") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Filter Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtReason") {
+                showInfoSnackbar(infomessage);
+                //~AutoList Reason
+                PaginatedAutocomplete({
+                    inputId: "txtReason",
+                    data: arrReasons,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtReason").val(item.label);
+                        $("#txtReasonID").val(item.id);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtHProds") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                //~AutoList Products
+                PaginatedAutocomplete({
+                    inputId: "txtHProds",
+                    data: TempAL,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtHProds").val(item.code);
+                        $("#txtTempABS").val(item.ABS + item.Location);
+                        $("#lblABSLoc").html(item.ABS + item.Location);
+                        $("#clrdivs").html("");
+                        GetData(4, item.code);
+                        $("#btnBatch").focus();
+                        BatchMode = 0;
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtSearch") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList Filter Vendor
+                //~AutoList Filter Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtReason") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList Reason
+                PaginatedAutocomplete({
+                    inputId: "txtReason",
+                    data: arrReasons,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtReason").val(item.label);
+                        $("#txtReasonID").val(item.id);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
         }
     });
     // Add this once on page load in your invoice JS
@@ -6121,6 +6550,8 @@ var Url = '@Session["url"].ToString()';
         PaginatedAutocomplete({
             inputId: "txtSearch",
             data: arrVendor,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtSearch").val(item.code);
                 GetData(3, item.code);
@@ -6136,6 +6567,8 @@ var Url = '@Session["url"].ToString()';
         PaginatedAutocomplete({
             inputId: "txtFilterParty",
             data: arrVendor,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtFilterParty").val(item.name);
                 return false;
@@ -6145,6 +6578,8 @@ var Url = '@Session["url"].ToString()';
         PaginatedAutocomplete({
             inputId: "txtReason",
             data: arrReasons,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
             onSelect: function (item) {
                 $("#txtReason").val(item.label);
                 $("#txtReasonID").val(item.id);
@@ -6577,6 +7012,165 @@ var Url = '@Session["url"].ToString()';
             nSerial++;
         });
     }
+
+    window.addEventListener("message", function (event) {
+        var data = event.data;
+        console.log("depend data", data);
+        if (data && data.source === "CustomerMaster") {
+            var customerID = data.customerid;
+            var code = data.customercode;
+            var name = data.customername;
+
+            // ✅ Use the returned values — example:
+            GetData(3, code);
+            var BeatID = $("#cmbBeat").val();
+            var SalesmanID = $("#cmbSalesman").val();
+            GetData(33, BeatID, SalesmanID);
+        }
+        else if (data && data.source === "ProductMaster") {
+            var ProductID = data.productid;
+            var code = data.productcode;
+            var name = data.productname;
+
+            GetProductList()
+            setTimeout(() => {
+                ReLoadProductAutolists(name);
+            }, 1000);
+            if (gridprodfieldid) {
+                var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+                GetData(4, code, CustID);
+            }
+        }
+        else if (data && data.source === "Credit Term") {
+            var CreditTermID = data.id;
+            var CreditTermName = data.name;
+
+            console.log("Return Type received:", CreditTermID, CreditTermName);
+
+            ReloadF8Autolistdata("creditterm", null, null, CreditTermID);
+        }
+    });
+
+    $("#opencreditterm").click(function (e) {
+        var nvhID = $("#cmbCreditTerm").val() != "" ? $("#cmbCreditTerm").val() : 0;
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        //var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+        //window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        const hasPermission = nvhID == 0
+            ? checkAddEditPermission("15")
+            : checkAddEditPermission("16");
+        if (hasPermission) {
+            var ProdUrl = Url + "TaxCompGift?name=egOIy11IfurSCf1xP3tHhcsrFfMn%2F3jcr%2BHSpUEIF0Q%3D&strFormID=Tg3R3dzL5d8qh2W0SyphdQ%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nvhID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nvhID == 0 ? "Add" : "Edit") + " Credit Term </code></h4>");
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F8") {
+            event.preventDefault();
+            var FieldID = event.target.id;
+            var FieldName = event.target.name;
+            if (FieldID == "txtSearch") {
+                $("#opencustomer").trigger("click");
+            }
+            if (FieldID == "cmbCreditTerm") {
+                $("#opencreditterm").trigger("click");
+            }
+            if (FieldName == "ProdName") {
+                //console.log("editingRow ", editingRow.data());
+                gridprodfieldid = FieldID;
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                vw = window.innerWidth;
+                vh = window.innerHeight;
+                const hasPermission = prodid == 0
+                    ? checkAddEditPermission("111")
+                    : checkAddEditPermission("112");
+                if (hasPermission) {
+                    var ProdUrl = Url + "ProductMaster?name=dFLU9MS0CpfVS5wW5G17EQ%3D%3D&strFormID=RjZMX%2BX6NiPSRFI2WDoZJA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + prodid;
+                    window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                }
+                else {
+                    showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (prodid == 0 ? "Add" : "Edit") + " Product</code></h4>")
+                }
+            }
+        }
+        if (event.key === "F4") {
+            if ($("#txtCustomerID").val() != "") {
+                modalPinfo.show();
+                var prodid = 0
+                var gridrowdata = editingRow.data();
+                if (gridrowdata) {
+                    prodid = gridrowdata[0] || 0;
+                }
+                if (prodid > 0) {
+                    GetData(14, $("#txtCustomerID").val(), prodid)
+                }
+            }
+            else {
+                showErrorSnackbar("Select Customer");
+            }
+        }
+        //if (event.ctrlKey && (event.key === 'Insert' || event.which === 45)) {
+        //    event.preventDefault();
+        //    const dvMainisShow = $("#dvMain").is(":visible"); //
+        //    const dvMasterModels = $("#myModalfg").is(":visible");
+        //    if (dvMainisShow || dvMasterModels) {
+        //        //open current form in new tab
+        //        window.open(window.location.href, '_blank');
+        //    } else {
+        //        $("#btnGKBSGNew").trigger("click");
+        //    }
+        //}
+
+    });
+
+    function ReloadF8Autolistdata(strForm, strSub, strValue, strAssignValue) {
+        console.log("ReloadF8Autolistdata CALLED");
+        console.log("Parameters:", strForm, strSub, strValue, strAssignValue);
+        $.ajax({
+            url: Aurl + "masterlist",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                FormName: strForm, SubField: strSub, Value: strValue
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                console.log("MASTERLIST RESPONSE:", data);
+                console.log("MASTERLIST RESPONSE JSON:", JSON.stringify(data));
+                if (strForm == "creditterm") {
+                    console.log("strForm matched return type");
+                    $('#cmbCreditTerm').find("option").remove();
+                    $('#cmbCreditTerm').append($('<option/>', {
+                        value: 0,
+                        text: "-- Select --",
+                    }));
+                    $.each(data, function (i, items) {
+                        console.log("Adding item:", items);
+                        $('#cmbCreditTerm').append($('<option/>', {
+                            value: items.ID,
+                            text: items.Name,
+                        }));
+                        $('#cmbCreditTerm').val(strAssignValue);
+                    });
+
+                }
+            }
+        });
+    }
+
+
+
     //~Save
     function SaveData(SaveMode) {
         if (SaveValidation(SaveMode)) {
@@ -6713,10 +7307,10 @@ var Url = '@Session["url"].ToString()';
             var Branch = $("#cmbBranch").val();
             GetDocumentID(DocDate, Branch, 1);
         }, 1000);
-        $("#btnClear").prop("disabled", true);
-        $("#dvMain,#dvUpdateVendor").show();
+        $("#dvMain,#dvUpdateVendor,#dvSelectItems").show();
         $("#dvDocuments").hide();
-        $("#btnSave,#btnClear,#btnDraft").show();
+        $("#balanceContainer").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant,#btnClear").hide();
         $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
         $("#MainHeading").text("Create Purchase Bill");
     }

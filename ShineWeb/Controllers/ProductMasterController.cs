@@ -22,19 +22,26 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 110 or MenuParentId = 110", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "dFLU9MS0CpfVS5wW5G17EQ==" });
+                }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
                 ViewData["TransType"] = TypeID;
-                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
-                string AddPerm = dtPermission.Select("MenuName = 'Add " + Name + "'", null).Length > 0 ? "1" : "0";
-                string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 ? "1" : "0";
-                string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 ? "1" : "0";
-                string VarPerm = dtPermission.Select("MenuName = 'Variant " + Name + "'", null).Length > 0 ? "1" : "0";
-                string EnableReturn = dtPermission.Select("MenuName = 'Enable Return Price'", null).Length > 0 ? "1" : "0";
-                string EnblTPrice = dtPermission.Select("MenuID = 297", null).Length > 0 ? "1" : "0";
+                string AddPerm = dtPermission.Select("MenuName = 'Add " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
+                string VarPerm = dtPermission.Select("MenuName = 'Variant " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
+                string EnableReturn = dtPermission.Select("MenuName = 'Enable Return Price'", null).Length > 0 || UID == 1 ? "1" : "0";
+                string EnblTPrice = dtPermission.Select("MenuID = 297", null).Length > 0 || UID == 1 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
                 dam.Add = AddPerm;

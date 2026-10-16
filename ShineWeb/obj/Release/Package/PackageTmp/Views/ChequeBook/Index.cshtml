@@ -130,6 +130,8 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.ChildURL1, new { @autocomplete = "off", @class = "form-control", @id = "txtChildBankAccURL" })
+    @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
+    @Html.HiddenFor(model => model.DependFrom, new { @autocomplete = "off", @class = "form-control", @id = "txtDependFrom" })
 
     <div class="d-flex align-items-center gap-2">
         <!-- Larger heading -->
@@ -138,7 +140,7 @@
     <hr />
     <div class="toastBox"></div>
     <div id="dvMainTable">
-        <div id="my-grid" style="height: 600px; width: 100%;"></div>
+        <div id="my-grid" style="width: 100%;"></div>
     </div>
 
     <div class="modal fade" id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -150,7 +152,7 @@
                     <h5 class="modal-title fw-bold " id="lblPopupheading">
                         Add @ViewData["FormName"]
                     </h5>
-                    <button type="button" class="btn-close" id="modelcloseX"></button>
+                    <button type="button" class="btn-close" style="filter: invert(1);" id="modelcloseX"></button>
                 </div>
 
                 <!-- Modal body -->
@@ -251,8 +253,8 @@
 
                         </div>
 
-                        </div>
                     </div>
+                </div>
 
                 <!-- Modal footer -->
                 <div class="modal-footer">
@@ -260,15 +262,15 @@
                     <div class="row w-100">
                         <div class="col-12 text-end">
 
-                            <button tabindex="7" type="button" class="btn btn-danger" id="btnClear">
+                            <button tabindex="7" type="button" class="btn btn-clear-style" id="btnClear">
                                 <span class="glyphicon glyphicon-refresh"> Clear</span>
                             </button>
 
-                            <button tabindex="6" type="button" class="btn btn-success" id="btnSave">
+                            <button tabindex="6" type="button" class="btn btn-save-style" id="btnSave">
                                 <span class="glyphicon glyphicon-saved"> Save</span>
                             </button>
 
-                            <button tabindex="8" type="button" class="btn btn-warning" id="btnClose">
+                            <button tabindex="8" type="button" class="btn btn-close-style" id="btnClose">
                                 <i class="bi bi-x-circle"></i> Close
                             </button>
 
@@ -367,7 +369,10 @@
 <script type="text/javascript">
 
     var Aurl = '@Session["APIurl"]';
-
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     var TableChqs = $('#tblChequeleaves').DataTable({
         "bSearchable": true,
         "bInfo": false,
@@ -382,7 +387,7 @@
     $("#myModalfg").on("shown.bs.modal", function () {
         $("#txtRefNo").focus();
     });
-    
+
     var arrData = [];
     var grid, ChequeBook;
     GetColumnSettingsData(2, 7, 1);
@@ -391,7 +396,7 @@
     var FID = $("#txtFormID").val();
     var arrStatus = [];
     setTimeout(() => { GetData(5, ""); }, 1000);
-    
+
     GetData(7, "");
     GetData(8, "");
     //GetData(3);
@@ -438,7 +443,7 @@
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
                             if (col.field === 'Active') {
-                                const val = rowData[col.field];                                
+                                const val = rowData[col.field];
                                 if (val === 'True') {
                                     el.innerHTML = `<div class="dg-status-badge dg-status-active">
                       <span class="dg-status-circle"></span> Active
@@ -491,6 +496,8 @@
                     PaginatedAutocomplete({
                         inputId: "txtRefNo",
                         data: arrData,
+                        startwitfieldname: startwithfield,
+                        enablefilterstartwith: autolistfilterwith,
                         onSelect: function (item) {
                             $("#txtRefNo").val(item.label);
                             return false;
@@ -498,9 +505,9 @@
                     });
                     //$("#txtRefNo").autocomplete({
                     //    minLength: 0,
-                    //    source: arrData,                            
+                    //    source: arrData,
                     //    select: function (event, ui) {
-                    //        $("#txtRefNo").val(ui.item.label);                                
+                    //        $("#txtRefNo").val(ui.item.label);
                     //        return false;
                     //    },
                     //}).autocomplete("instance")._renderItem = function (ul, item) {
@@ -510,7 +517,7 @@
                     //        .appendTo(ul);
                     //};
                 }
-                    //~Cheque Leaf table Data
+                //~Cheque Leaf table Data
                 else if (dMode == 6) {
                     TableChqs.draw().clear();
                     var anyStatus5 = false;
@@ -522,7 +529,7 @@
                         var Selc = '<select ' + enbordisb + ' id=' + items.ChequeNo + ' class="form-control ' + clscmb + '"> ';
                         var arrstslen = items.Status == 5 ? arrStatus.length : (arrStatus.length - 1);
                         for (var j = 0; j < arrstslen; j++) {
-                                Selc += '<option value="' + arrStatus[j].ID + '">' + arrStatus[j].Status + '</option> '
+                            Selc += '<option value="' + arrStatus[j].ID + '">' + arrStatus[j].Status + '</option> '
                         }
                         Selc += ' </select>';
                         TableChqs.row.add([
@@ -560,6 +567,16 @@
                             arrStatus.push(liststs);
                         });
                     }
+                }
+                else if (dMode == 9) {
+                        $.each(data, function (i, items) {
+                                $("#txtID").val(items.ID);
+                                $("#txtRefNo").val(items.Refno);
+                            $("#txtStartingNo").val(items.StartingNo);
+                            $("#txtNoofleaves").val(items.NoofLeaves);
+                            $("#cmbAccNo").val(items.BankAccID);
+                                $("#chkActive").prop("checked", items.Active == "True");
+                        });
                 }
             }, error: function (data) {
                 if (data.status == "401") {
@@ -604,7 +621,11 @@
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        modal.hide();
+        if ($("#txtTransType").val() == "2") {
+            this.close();
+        } else {
+            modal.hide();
+        }
     }
     //~Clear
     $('#btnClear').click(function (e) {
@@ -661,6 +682,7 @@
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
+        var name = $("#txtAccName").val();
         var lstvData = [];
         $('#tblChequeleaves tr td select').each(function (i, items) {
             var singlelist = {
@@ -695,9 +717,21 @@
                 $.each(data, function (i, items) {
                     if (items.MsgID == 0) {
                         showSuccessSnackbar(items.Message);
-                        ClearForm();
-                        GetData(5, "");
-                        modal.hide();
+                        var depfrom = $("#txtDependFrom").val();
+                        if (window.opener && !window.opener.closed) {
+                            window.opener.postMessage({
+                                source: "ChequeBook",
+                                chequeid: items.ID,   // adjust to your actual field names
+                                chequename: name
+                            }, "*");
+
+                            window.close();
+                        }
+                        else {
+                            ClearForm();
+                            GetData(5, "");
+                            modal.hide();
+                        }
                     }
                     else {
                         $("#dvErrorName").html(items.Message);
@@ -733,4 +767,106 @@
             }
         }
     });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtRefNo") {
+                showInfoSnackbar(infomessage);
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtRefNo",
+                    data: arrData,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtRefNo").val(item.label);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">  
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>	
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
+        }
+    });
+
+    //~Depend Master Load
+    if ($("#txtTransType").val() == "2") {
+        if ($("#txtID").val() > 0) {
+            setTimeout(() => {
+                nMode = 2;
+                $(".clrdiv").html("");
+                $(".modal-title#lblPopupheading").text("Edit " + $("#MainHeading").text());
+                var ID = $("#txtID").val();
+                //rowdata = Table.row($(this).parents('tr')).data();
+                GetData(6, ID);
+                setTimeout(() => {
+                    GetData(9, ID);
+                }, 300);
+                //$(".FormclrField").prop("disabled", false);
+                $("#btnClear").hide();
+                $("#btnClose,#btnSave").show();
+                $("#btnSave,#cmbAccNo").prop("disabled", false);
+                $("#btnClear").prop("disabled", true);
+                $("#tblChequeleaves").prop("disabled", false);
+                modal.show();
+            }, 1000);
+        }
+        else {
+            $(".modal-title#lblPopupheading").text($("#MainHeading").text());
+            modal.hide();
+        }
+    }
 </script>

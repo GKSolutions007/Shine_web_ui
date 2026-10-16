@@ -20,18 +20,25 @@ namespace ShineWeb.Controllers
             }
             else
             {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 497 or MenuParentId = 497", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "KjM7nKzBk1nDNaClvrH2XVw+zrBwrG+HLzY8Ah2GcVc=" });
+                }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
-                int UID = Convert.ToInt32(Session["LoginUserID"]);
-                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
-                string AddPerm = dtPermission.Select("MenuID = 498", null).Length > 0 ? "1" : "0";
-                string ModPerm = dtPermission.Select("MenuID = 499", null).Length > 0 ? "1" : "0";
-                string ViewPerm = dtPermission.Select("MenuID = 501", null).Length > 0 ? "1" : "0";
-                string RtnPerm = dtPermission.Select("MenuID = 500", null).Length > 0 ? "1" : "0";
+                
+                string AddPerm = dtPermission.Select("MenuID = 498", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ModPerm = dtPermission.Select("MenuID = 499", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ViewPerm = dtPermission.Select("MenuID = 501", null).Length > 0 || UID == 1 ? "1" : "0";
+                string RtnPerm = dtPermission.Select("MenuID = 500", null).Length > 0 || UID == 1 ? "1" : "0";
                 string EnbBranch = UID == 1 ? "0" : dtPermission.Select("MenuID = 221", null).Length > 0 ? "1" : "0";
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;

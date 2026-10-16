@@ -1,10 +1,12 @@
-﻿function PaginatedAutocomplete(options) {
+﻿//var autolistfilterwith = 0;//0- contains, 1 - startwitn
+function PaginatedAutocomplete(options) {
 
     var inputId = options.inputId;
     var fullData = options.data || [];
     var pageSize = 20;// options.pageSize || 50;
     var onSelect = options.onSelect || function () { };
-
+    var startwithfieldname = options.startwitfieldname || "label";
+    var autolistfilterwith = options.enablefilterstartwith || false
     var dropId = "pac_drop_" + inputId;
     var listId = "pac_list_" + inputId;
     var statId = "pac_stat_" + inputId;
@@ -12,7 +14,7 @@
 
     var $input = $("#" + inputId);
     $("#" + dropId).remove();
-
+    $input.css("background-color", "var(--AutocompleteFieldBG)");
     var $GKBSdropdown = $([
         '<div class="gkbsautocomplete" id="' + dropId + '" style="',
         'display:none;position:fixed;z-index:99999;',   /* ← fixed, not absolute */
@@ -134,7 +136,7 @@
         if (!$els.length) return;
         idx = Math.max(-1, Math.min(idx, $els.length - 1));
         $els.each(function (i) {
-            $(this).css("background", i === idx ? "#E6F1FB" : "");
+            $(this).css("background", i === idx ? "var(--AutoCompleteSelectBG)" : "");
         });
         state.activeIdx = idx;
         if (idx >= 0) {
@@ -179,7 +181,7 @@
                     if (state.mouseBlock) return;
                     var pos = $items().index(this);
                     $items().css("background", "");
-                    $(this).css("background", "#E6F1FB");
+                    $(this).css("background", "var(--AutoCompleteSelectBG)");
                     state.activeIdx = pos;
                 });
 
@@ -212,8 +214,48 @@
         state.filtered = query
             ? fullData.filter(function (d) {
                 var q = query.toLowerCase();
-                return (d.label && d.label.toLowerCase().indexOf(q) > -1) ||
-                    (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                if (autolistfilterwith) {//StartWith
+                    //return (d.label && d.label.toLowerCase().indexOf(q) == 0) ||
+                    //    (d.code && d.code.toLowerCase().indexOf(q) == 0);
+                    if (d.name && startwithfieldname == "name") {
+                        if (d.name)
+                            return (d.name.toLowerCase().indexOf(q) == 0);//d.name && 
+                        else {
+                            return (d.label.toLowerCase().indexOf(q) == 0);
+                        }
+                    }
+                    else if (startwithfieldname == "code")
+                        if (d.code)
+                            return (d.code.toLowerCase().indexOf(q) == 0);
+                        else {
+                            return (d.label.toLowerCase().indexOf(q) == 0);
+                        }
+                    else
+                        //return (d.label && d.label.toLowerCase().indexOf(q) == 0);
+                        return (d.code && d.code.toLowerCase().indexOf(q) == 0) ||
+                            (d.name && d.name.toLowerCase().indexOf(q) == 0) ||
+                            (d.label && d.label.toLowerCase().indexOf(q) == 0);
+                } else {//Contains
+                    if (startwithfieldname == "name") {
+                        if (d.name) {
+                            return (d.name && d.name.toLowerCase().indexOf(q) > -1);
+                        } else {
+                            return (d.label && d.label.toLowerCase().indexOf(q) > -1);
+                        }
+                    }
+                    else if (d.code && startwithfieldname == "code")
+                        if (d.code) {
+                            return (d.code && d.code.toLowerCase().indexOf(q) > -1);
+                        }
+                        else {
+                            return (d.label && d.label.toLowerCase().indexOf(q) > -1);
+                        }
+                    else
+                    return (d.label && d.label.toLowerCase().indexOf(q) > -1) ||
+                        (d.code && d.code.toLowerCase().indexOf(q) > -1) ||
+                        (d.label && d.label.toLowerCase().indexOf(q) > -1);
+                    
+                }
             })
             : fullData.slice();
         state.hasMore = state.filtered.length > 0;
