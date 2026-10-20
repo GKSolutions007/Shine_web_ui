@@ -497,7 +497,7 @@
         <label id="lblCode" hidden></label>
         <label id="lblMob1" hidden></label>
         <label id="lblGSTIN" hidden></label>
-
+        <label id="lblTempABS" hidden></label>
         <div hidden>
             <table class="table table-borderless" width="100%">
                 <tr hidden>
@@ -1778,7 +1778,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 "name": items.Name,
                                 "code": items.Code,
                                 "id": items.ID,
-                                "line2": "Price : " + items.PurchasePrice + " | ABS Qty : " + items.ABSQty
+                                "line2": "Price : " + items.PurchasePrice + " | ABS Qty : " + items.ABSQty,
+                                "absqty": items.ABSQty
                             }
                             TempAL.push(al);
                         });
@@ -2048,7 +2049,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     var PPrice = parseFloat(ApplyPrice * items.SalesCR);
                     var InclPPrice = dApponMRPCum > 0 ? PPrice + dMRPonTax : PPrice * TaxPern;
                     gridrow.patch(rowindex, {
-                        itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0,
+                        itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0, stock: $("#lblTempABS").text() || "0.00",
                         ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, OrgPrice: +baseprice || 0,
                         priceExcl: +PPrice || 0,qty : 1,
                         _uoms: uomforselprod, uomID: +items.SalesUomID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
@@ -2319,11 +2320,12 @@ function GetFilterData(ClickType = 0) {//arrCustomerName,divErrFTo,divErrFFrom,d
                                 ClearForm();
                                 //  ProductRID++;
                                 //Addprodgridline();
-                                G.addRow();
                                 setTimeout(() => {
                                     var DocDate = $("#dtpDate").val();
                                     var Branch = $("#cmbBranch").val();
+                                    GetData(2, Branch, DocDate, null, 2);
                                     GetDocumentID(DocDate, Branch, 14);
+                                    G.addRow();
                                 }, 1000);
                             }
                         },
@@ -2929,12 +2931,16 @@ function CloseForm() {
             }   // live flag when value > max
             else if (s.type === 'label') el.textContent = typeof v === 'number' ? f(v, s.dec ?? 2) : v;
             else if (s.type === 'index') el.textContent = this.rows.indexOf(r) + 1;
-            else if (s.type === 'p') el.textContent = s.text(r);
+            else if (s.type === 'p') {
+                el.textContent = s.text(r);
+                if (s.key == "itemCode")
+                    el.style.color = parseFloat(r.stock) > 0 ? 'green' : 'red';
+            }
             else if (s.type === 'checkbox') el.checked = !!v;
             else if (s.type === 'select') { const rb = this.fillSelect(el, s, r); if (rb || el !== document.activeElement) el.value = v ?? '' }   // options may change per row (item UOM list)
             else if (el !== document.activeElement) el.value = v ?? '';
-            const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
-            el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
+            //const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
+            //el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
         }
         changed(r, key) {
             if (this.cfg.calc) this.cfg.calc(r, key);
@@ -3137,7 +3143,7 @@ function CloseForm() {
                     onSelect: item => {
                         $('#' + id).val(item.name);                                   // show the NAME (library puts the code by default)
                         var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-
+                        $("#lblTempABS").text(item.absqty);
                         loadselectedproductdetail(g, i, item.code, CustID, null, $("#cmbPriceType").val());
                         //g.patch(i, {
                         //    itemName: item.name, code: item.code, productID: +item.id || 0, mrp: +item.MRP || 0,
@@ -3213,7 +3219,7 @@ function CloseForm() {
                             { name: 'del', html: IC.del, cls: 'red', title: 'Remove row', onClick: (r, i) => G.deleteRow(i) }]
                     }]
                 },
-                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'text', key: 'itemName', ac: true }, { type: 'p', text: r => `${r.code}` }] },
+                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'text', key: 'itemName', ac: true }, { type: 'p', key: 'itemCode', sign: true, text: r => `${r.code} | Qty :  ${r.stock}` }] },
                 { id: 'mrp', title: 'MRP', width: 80, controls: [{ type: 'label', key: 'mrp', ro: false }] },
                 { id: 'priceExcl', title: 'Excl / Incl ₹', width: 85, controls: [num('priceExcl'), num('priceIncl')] },
                 { id: 'qty', title: 'Qty', width: 80, total: 'qty', controls: [num('qty')] },
@@ -3699,6 +3705,7 @@ function CloseForm() {
                         G.addRow();
                         G.patch(nRowIndex, {
                             itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0,
+                            stock: parseFloat(itemsProd.AdjQty).toFixed(DecVal),
                             ApponMRPCum: itemsProd.CumMRPonTax, MRPonTaxAmt: itemsProd.MRPonTax, OrgPrice: +itemsProd.UomSalePrice || 0,
                             priceExcl: +itemsProd.UomSalePrice || 0,
                             qty: +itemsProd.UomQty || 0,

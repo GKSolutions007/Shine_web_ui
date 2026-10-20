@@ -43,62 +43,7 @@
     /* Firefox */
     input[type=number] {
         -moz-appearance: textfield;
-    }
-    /* The Modal (background) */
-    .modalBatch {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 10; /* Sit on top */
-        left: 0;
-        top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        /*overflow: auto;*/ /* Enable scroll if needed */
-        background-color: rgb(0,0,0); /* Fallback color */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    }
-
-    /* Modal Content/Box */
-    @@media only screen and (min-width: 600px) {
-        .modalBatch-content {
-            background-color: #ffffff;
-            margin: 3% auto; /* 15% from the top and centered */
-            padding: 10px;
-            border: 1px solid #888;
-            width: 35%; /* Could be more or less, depending on screen size */
-            height: 70%;
-            top: 5%;
-            /* overflow: auto;*/
-        }
-    }
-
-    @@media only screen and (max-width: 600px) {
-        .modalBatch-content {
-            background-color: #ffffff;
-            margin: 10% auto; /* 15% from the top and centered */
-            padding: 25px;
-            border: 1px solid #888;
-            width: 95%; /* Could be more or less, depending on screen size */
-            height: 80%;
-            top: 20%;
-            /*overflow: auto;*/
-        }
-    }
-    /* The Close Button */
-    .closefg {
-        color: #aaa;
-        float: right;
-        font-size: 10px;
-        font-weight: bold;
-    }
-
-        .closefg:hover,
-        .closefg:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
+    }   
     .form-label {
         position: relative;
         display: block;
@@ -125,6 +70,9 @@
         cursor: text;
         pointer-events: none;
         font-family: sans-serif;
+    }
+    #tblBRSData tbody tr:hover {
+        background-color: azure !important;
     }
 </style>
 <body>
@@ -189,7 +137,7 @@
         </div>        
         <div class="row">
             <div class="col-12">
-                <table class="table table-bordered" id="tblMasterData" style="width:100%">
+                <table class="table table-bordered" id="tblBRSData" style="width:100%">
                     <thead>
                         <tr class="trclrforcolheader">
                             <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;">JVID</th>
@@ -241,7 +189,7 @@
 </body>
 <script type="text/javascript" style="color:darkgreen">
 
-    var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+    var Table = $('#tblBRSData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
         "bFilter": true,
         "bSearchable": true,
         "bInfo": false,
@@ -334,16 +282,15 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                     $("#cmbBankAccNo").val(DefBankAcc);
                 } else if (nMode == 2) {
                     if (data.length > 0) {
-                        var accdata = eval(data);
                         Table.draw().clear(); Table.draw().clear();
                         var cr = 0, dr = 0;
-                        var billjsdata = eval(data);
-                        $('#tblMasterData').DataTable({
-                            pageLength: ItemsperPage, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                            scrollY: "450px",
+                        var billjsdata = (data);
+                        $('#tblBRSData').DataTable({
+                            pageLength: -1, lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
+                            scrollY: "375px",
                             scrollX: true,
                             scrollCollapse: true,
-                            paging: true,
+                            paging: false,
                             destroy: true,
                             data: billjsdata,
                             fixedColumns: false,
@@ -373,7 +320,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                                             var constdate = "";
                                             if (brsdate != "" && brsdate != null) {
                                                 var gt = new Date(brsdate);
-                                                var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
+                                                const actmonth = (gt.getMonth() + 1)
+                                                var mon = actmonth ? actmonth : '0' + (actmonth);
                                                 var dat = gt.getDate() >= 10 ? gt.getDate() : '0' + (gt.getDate());
                                                 constdate = gt.getFullYear() + "-" + mon + "-" + dat;
                                             }
@@ -392,7 +340,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                             ],
 
                         });
-                        Table = $('#tblMasterData').DataTable();
+                        Table = $('#tblBRSData').DataTable();
                     }
                     else {
                         showErrorSnackbar("No Records Found");
@@ -408,10 +356,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         });
     }
     var nGrid1CurrentRowIndex = -1;
-    $('#tblMasterData tbody').on('focusin', 'tr', function () {
+    $('#tblBRSData tbody').on('focusin', 'tr', function () {
         nGrid1CurrentRowIndex = Table.row(this).index()
     });
-    $('#tblMasterData tbody').on('keydown', '.dgvBRSDate', function (e) {
+    $('#tblBRSData tbody').on('keydown', '.dgvBRSDate', function (e) {
         var kyc = e.keyCode;
         //showErrorSnackbar("D : " + kyc);
         var val = e.target.value;
@@ -420,21 +368,22 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             //showErrorSnackbar("Key Down Space Pressed, Value : " + val);
             var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
             var CurrRowDocID = currrowdata.JVID;//[0];
-            $("#tblMasterData tbody tr").each(function () {
+            $("#tblBRSData tbody tr").each(function () {
                 var rowData = Table.row($(this)).data();
                 var RowDocID = rowData.JVID;//[0];
-                var TranDate = rowData.Date;//[3];
                 if (CurrRowDocID == RowDocID) {
+                    var TranDate = rowData.Date.length > 10 ? rowData.Date.substring(0, 10) : rowData.Date;//[3];
+
                     $(this).find("input").each(function (index) {
                         const fieldName = $(this).attr("name");
                         const fieldID = $(this).attr("id");
                         if (fieldName == "BRSDate") {
-                            var gt = new Date(TranDate);
-                            var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
-                            var dat = gt.getDate() >= 10 ? gt.getDate() : '0' + (gt.getDate());
-                            const constdate = gt.getFullYear() + "-" + mon + "-" + dat;
+                            //var gt = new Date(TranDate);
+                            //var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
+                            //var dat = gt.getDate() >= 10 ? gt.getDate() : '0' + (gt.getDate());
+                            //const constdate = gt.getFullYear() + "-" + mon + "-" + dat;
                             //showErrorSnackbar(constdate);
-                            $(this).val(constdate);
+                            $(this).val(TranDate);
                         }
                     });
                 }
@@ -445,10 +394,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             var AboveDate = "";
             var currrowdata = Table.row(nGrid1CurrentRowIndex - 1).data();
             var CurrRowDocID = currrowdata.JVID;//[0];
-            $("#tblMasterData tbody tr").each(function () {
+            $("#tblBRSData tbody tr").each(function () {
                 var rowData = Table.row($(this)).data();
                 var RowDocID = rowData.JVID;//[0];
-                var TranDate = rowData.Date;//[3];
                 if (CurrRowDocID == RowDocID) {
                     $(this).find("input").each(function (index) {
                         const fieldName = $(this).attr("name");
@@ -463,10 +411,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                 //showSuccessSnackbar("Above date is : " + AboveDate);
                 var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
                 var CurrRowDocID = currrowdata.JVID;//[0];
-                $("#tblMasterData tbody tr").each(function () {
+                $("#tblBRSData tbody tr").each(function () {
                     var rowData = Table.row($(this)).data();
                     var RowDocID = rowData.JVID;//[0];
-                    var TranDate = rowData.Date;//[3];
+
                     if (CurrRowDocID == RowDocID) {
                         $(this).find("input").each(function (index) {
                             const fieldName = $(this).attr("name");
@@ -487,17 +435,20 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             //showErrorSnackbar("Key Down Space Pressed, Value : " + val);
             var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
             var CurrRowDocID = currrowdata.JVID;//[0];
-            $("#tblMasterData tbody tr").each(function () {
+            $("#tblBRSData tbody tr").each(function () {
                 var rowData = Table.row($(this)).data();
                 var RowDocID = rowData.JVID;//[0];
-                var TranDate = rowData.Date;//[3];
+                
                 if (CurrRowDocID == RowDocID) {
+                    var TranDate = rowData.Date.length > 10 ? rowData.Date.substring(0, 10) : rowData.Date;//[3];
                     $(this).find("input").each(function (index) {
                         const fieldName = $(this).attr("name");
                         const fieldID = $(this).attr("id");
                         if (fieldName == "BRSDate") {
                             var gt = new Date(TranDate);
-                            var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
+                            const actmonth = (gt.getMonth() + 1)
+                            console.log("Month : " + gt.getMonth(),gt);
+                            var mon = actmonth >= 10 ? actmonth : '0' + (actmonth);
                             var dat = gt.getDate() >= 10 ? gt.getDate() + 1 : '0' + (gt.getDate() + 1);
                             const constdate = gt.getFullYear() + "-" + mon + "-" + dat;
                             //showErrorSnackbar(constdate);
@@ -572,7 +523,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     var listTrans = [];
     function addAccountsinArray() {
         listTrans = [];
-        $("#tblMasterData tbody tr").each(function () {
+        $("#tblBRSData tbody tr").each(function () {
             var allValues = {}, nJVID = 0, dtpDocDate = 0, dtpBRSDate = '', nDocID = '';
             rowdata = Table.row($(this)).data();
             nJVID = rowdata.JVID;//[0];
