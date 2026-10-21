@@ -501,7 +501,7 @@
                                         <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
                                     </td>
 
-                                    <td class="p-0" width="15%">
+                                    <td class="p-0" width="12%">
                                         <span class="form-label">
                                             <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom">
                                             <label class="labelup">From</label>
@@ -510,7 +510,7 @@
                                         <div id="divErrFFrom" class="clrdivs text-danger pt-1 ps-1"></div>
                                     </td>
 
-                                    <td class="ps-2 p-0" width="15%">
+                                    <td class="ps-2 p-0" width="12%">
                                         <span class="form-label">
                                             <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo">
                                             <label class="labelup">To</label>
@@ -519,12 +519,12 @@
                                         <div id="divErrFTo" class="clrdivs text-danger pt-1 ps-1"></div>
                                     </td>
 
-                                    <td class="ps-2 p-0" width="7%">
+                                    <td class="ps-2 p-0" width="8%">
                                         <input tabindex="1" class="FormfilterclrField" type="checkbox" id="chkShowAll">
                                         <label for="chkShowAll" class="fs-6">All Status</label>
                                     </td>
 
-                                    <td class="ps-2 p-0" width="7%">
+                                    <td class="ps-2 p-0" width="12%">
                                         <button id="btnFilter" class="btn btn-filter-style">
                                             <span id="btnLoadSpinner" class="btn-spinner" style="display:none;"></span>
                                             <i class="bi bi-funnel" id="btnLoadIcon"></i>
@@ -1620,7 +1620,8 @@
                                 "ABS": "<label style='color:" + clr + "'> " + items.ABSQty + " </label>",
                                 "line2": "₹ : " + items.PurchasePrice + " | Qty : <label style='color:" + clr + "'> " + items.ABSQty + " </label>",
                                 "price": items.PurchasePrice,
-                                "hsn": items.HSNCode
+                                "hsn": items.HSNCode,
+                                "absqty": items.ABSQty
                             }
                             TempAL.push(al);
                         });
@@ -1716,7 +1717,7 @@
             }
         });
     }
-    function loadselectedproductdetail(gridrow, rowindex, strName = null, strID = null) {
+    function loadselectedproductdetail(gridrow, rowindex, strName = null, strID = null,absqty = 0) {
         var UOMType = $("#cmbUOMType").val();
         $.ajax({
             url: Aurl + "purchaseorder/get",
@@ -1753,7 +1754,7 @@
                     var PPrice = UOMType == 1 ? parseFloat(items.PurchasePrice) : (parseFloat(items.PurchasePrice) * parseFloat(items.PurchaseCR))
                     var InclPPrice = dApponMRPCum > 0 ? PPrice + dMRPonTax : PPrice * TaxPern;
                     gridrow.patch(rowindex, {
-                        itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0,
+                        itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0, stock: absqty,
                         ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, qty: 1,
                         priceExcl: +PPrice || 0,
                         _uoms: uomforselprod, uomID: +UOMID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
@@ -1822,6 +1823,12 @@
                 showErrorSnackbar("Select Party Name from list");
             }
         }
+        var nBranchID = $("#cmbBranch").val();
+        if (nBranchID == 0) {
+            IsValid = false;
+            $("#divErrBranch").html("Select Branch");
+            showErrorSnackbar("Select Branch");
+        }
         var Manufmultiselvalues = getMultiSelectValues('txtManufName').map(function (i) {
             return i.value;
         }).join(',');
@@ -1847,14 +1854,17 @@
                 return IsValid;
             }
         }
-
+       
         if (IsValid) {
             var UOMType = $("#cmbUOMType").val();
             $.ajax({
                 url: Aurl + "purchaseorder/manufitems",
                 type: 'get',
                 contentType: 'json',
-                data: { PartyID: $("#txtVendorID").val(), ManufID: Manufmultiselvalues, DaysAvg: $("#txtDays").val(), BaseorPurchase: UOMType },
+                data: {
+                    PartyID: $("#txtVendorID").val(), ManufID: Manufmultiselvalues, DaysAvg: $("#txtDays").val(),
+                    BaseorPurchase: UOMType, BranchID: nBranchID
+                },
                 xhrFields: {
                     withCredentials: true
                 },
@@ -1873,7 +1883,7 @@
                         }];
                         const t = taxById(itemsProd.TaxID) || taxOf(itemsProd.TaxPern);   
                         G.patch(nRowIndex, {
-                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0,
+                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0, stock: parseFloat(itemsProd.ActualQty).toFixed(DecVal),
                             ApponMRPCum: itemsProd.CumMRPonTax, MRPonTaxAmt: itemsProd.MRPonTax, 
                             priceExcl: +itemsProd.ExclPrice || 0,
                             qty: +itemsProd.Qty || 0,
@@ -3047,12 +3057,16 @@ $("#openproduct").click(function (e) {
             }   // live flag when value > max
             else if (s.type === 'label') el.textContent = typeof v === 'number' ? f(v, s.dec ?? 2) : v;
             else if (s.type === 'index') el.textContent = this.rows.indexOf(r) + 1;
-            else if (s.type === 'p') el.textContent = s.text(r);
+            else if (s.type === 'p') {
+                el.textContent = s.text(r);
+                if (s.key == "itemCode")
+                    el.style.color = parseFloat(r.stock) > 0 ? 'green' : 'red';
+            }
             else if (s.type === 'checkbox') el.checked = !!v;
             else if (s.type === 'select') { const rb = this.fillSelect(el, s, r); if (rb || el !== document.activeElement) el.value = v ?? '' }   // options may change per row (item UOM list)
             else if (el !== document.activeElement) el.value = v ?? '';
-            const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
-            el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
+            //const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
+            //el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
         }
         changed(r, key) {
             if (this.cfg.calc) this.cfg.calc(r, key);
@@ -3214,7 +3228,7 @@ $("#openproduct").click(function (e) {
                         $('#' + id).val(item.name);                                   // show the NAME (library puts the code by default)
                         var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
 
-                        loadselectedproductdetail(g, i, item.code);
+                        loadselectedproductdetail(g, i, item.code, null, item.absqty);
                         //g.patch(i, {
                         //    itemName: item.name, code: item.code, productID: +item.id || 0, mrp: +item.MRP || 0,
                         //    TrackInentoryYN: +item.TrackInentoryYN || 0, TrackBatchYN: +item.TrackBatchYN || 0, TrackPKDYN: +item.TrackPKDYN || 0,   // hidden columns
@@ -3289,7 +3303,7 @@ $("#openproduct").click(function (e) {
                             { name: 'del', html: IC.del, cls: 'red', title: 'Remove row', onClick: (r, i) => G.deleteRow(i) }]
                     }]
                 },
-                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'text', key: 'itemName', ac: true }, { type: 'p', text: r => `${r.code}` }] },
+                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'text', key: 'itemName', ac: true }, { type: 'p', key: 'itemCode', text: r => `${r.code} | Qty :  ${r.stock}` }] },
                 { id: 'mrp', title: 'MRP', width: 80, controls: [{ type: 'label', key: 'mrp', ro: false }] },
                 { id: 'priceExcl', title: 'Excl / Incl ₹', width: 85, controls: [num('priceExcl'), num('priceIncl')] },
                 { id: 'qty', title: 'Qty', width: 80, total: 'qty', controls: [num('qty')] },
@@ -3538,7 +3552,7 @@ $("#openproduct").click(function (e) {
                         }];
                         G.addRow();
                         G.patch(nRowIndex, {
-                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0,
+                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0, stock: parseFloat(itemsProd.ABSQty).toFixed(DecVal),
                             ApponMRPCum: itemsProd.MRPonTax, MRPonTaxAmt: itemsProd.MRPonTax,
                             priceExcl: +itemsProd.ExclPrice || 0, priceIncl: +itemsProd.InclPrice || 0,
                             qty: +itemsProd.Qty || 0,

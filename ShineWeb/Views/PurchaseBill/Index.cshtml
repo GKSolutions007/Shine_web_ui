@@ -859,12 +859,21 @@
 
             <!-- Payment Mode -->
             <div class="col mb-2" style="min-width: 120px; max-width: 140px;">
-                <span class="form-label">
+                <div class="input-group">
+                    <span class="form-label flex-grow-1">
+                        <select class="form-control FormclrcmbField" id="cmbPaymode"><option value="0">Select Paymode</option></select>
+                        <label class="labelup">Payment Mode *</label>
+                    </span>
+                    <span id="icViewPmDetails" class="input-group-text" title="Payment Mode Details" style="cursor:pointer;">
+                        <i class="fas fa-info-circle"></i>
+                    </span>
+                </div>
+                @*<span class="form-label">
                     <select class="form-control FormclrcmbField" id="cmbPaymode">
                         <option value="0">Select Paymode</option>
                     </select>
                     <label class="labelup">Payment Mode *</label>
-                </span>
+                </span>*@
                 <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrPaymode" class="clrdivs"></div>
             </div>
 
@@ -1770,6 +1779,7 @@
                 displayType: 'single_icon',
                 visible: ViewPerm,
                 handler: (rowdata) => {
+                    GetData(1);
                     $(".clrdivs").html("");
                     $("#txtHProds,#txtHProdCode,#txtHSN,#txtCode").val("");
                     $("#lblProdCodeAS,#lblABSLoc").text("");
@@ -1786,7 +1796,7 @@
                     $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
                     $("#btnPreview,#btnPDF,#btnPrint").show();
                     $("#btnEmail,#btnWhatsapp,#PaymentInfoPopup").show();
-                    $("#btnSave,#btnClear,#btnDraft").hide();
+                    $("#btnSave,#btnClear,#btnDraft,#btnPaymentClear,#btnPaymentAccept").hide();
                     $("#dvMain").show();
                     $("#dvDocuments,#dvUpdateVendor,#dvSelectItems").hide();
                     $("#balanceContainer").show();
@@ -1802,7 +1812,7 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    const isValidStatus = checkValidStatus(row.Status);
+                    const isValidStatus = checkValidStatus(row.Status, row.PaymentModeID);
                     if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftModifyID").val() != 0)
@@ -1819,6 +1829,7 @@
                 },
                 displayType: 'menu_item',
                 handler: (rowdata, gridInstance) => {
+                    GetData(1);
                     $(".clrdivs").html("");
                     $("#txtHProds,#txtHProdCode,#txtHSN,#txtCode").val("");
                     $("#lblProdCodeAS,#lblABSLoc").text("");
@@ -1857,7 +1868,7 @@
                 className: 'dg-action-edit',
                 visible: (row) => {
                     var isVisible = false;
-                    const isValidStatus = checkValidStatus(row.Status);
+                    const isValidStatus = checkValidStatus(row.Status, row.PaymentModeID);
                     if (isValidStatus) {//row.Status !== 'Amended' && row.Status !== 'Cancelled'
                         if (Permrdo1 == "2") {
                             if ($("#txtDraftCancelID").val() != 0)
@@ -2332,7 +2343,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $('#btnPaymentClose').click(function (e) {
         modalPayment.hide();
     });
-
+    $('#icViewPmDetails').click(function (e) {
+        var pmid = $("#cmbPaymode").val();
+        if (pmid == 8) {
+            modalPayment.show();
+        } else {
+            showErrorSnackbar("Paymentmode details shows only for Multimode");
+        }
+    });
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
@@ -3644,12 +3662,27 @@ var Url = '@Session["url"].ToString()';
             ProductTable.columns.adjust();
         }
     }
+    $("#cmbPaymode").change(function (e) {
+        if ($("#cmbPaymode").val() == 8) {
+            $("#cmbCreditTerm").val(0).prop("disabled", true);
+        } else {
+            $("#cmbCreditTerm").val(0).prop("disabled", false);
+        }
+    });
     function ApplyMultimodeAmount(dNetAmt) {
         updateInputColumn("txtPMPTotal", dNetAmt);
+        updateInputColumn("txtPMPBalance", dNetAmt);
         if ($("#cmbPaymode").val() == 8) {
-            var AdjAmt = parseFloat(document.getElementById("txtPMPRecdAmt").getAttribute("txttag"));
-            var bal = dNetAmt - AdjAmt;
+            //var AdjAmt = parseFloat(document.getElementById("txtPMPRecdAmt").getAttribute("txttag"));
+            var GridAdjAmt = 0;
+            $("#tblPayment tbody tr input[name=PaymentAmount]").each(function () {
+                GridAdjAmt += parseFloat($(this).attr("txttag"));
+            });
+            var bal = dNetAmt - GridAdjAmt;
+            updateInputColumn("txtPMPRecdAmt", GridAdjAmt);
+            updateInputColumn("txtPMPAdjAmt", Math.min(dNetAmt, GridAdjAmt));
             updateInputColumn("txtPMPBalance", bal);
+
         }
     }
 
@@ -3953,11 +3986,12 @@ var Url = '@Session["url"].ToString()';
                         }
                     }
                     else if (fieldName == "dgvPMChqNo") {
+                        var BID = $("#txtID").val() != "" ? $("#txtID").val() : 0;
+
                         if (AdjAmt > 0 && DefBankAcc > 0) {
-                            var BID = $("#txtID").val() != "" ? $("#txtID").val() : 0;
                             GetData(20, SelBankAcc, BID, fieldID);
                         } else {
-                            GetData(20, SelBankAcc, 0, fieldID);
+                            GetData(20, SelBankAcc, BID, fieldID);
                         }
                     }
                     //
@@ -5130,7 +5164,7 @@ var Url = '@Session["url"].ToString()';
         GetDocumentID(DocDate, Branch, 1, prefix, isedit, id);
     });
     var arrPurchaseTaxDetails = [];
-    function GetData(nMode, strName = null, strID = null, dtpDt = null) {
+    function GetData(nMode, strName = null, strID = null, dtpDt = null,drpdwnselid = 0) {
         //~Preload Data
         $.ajax({
             url: Aurl + "purchasebill/get",
@@ -5358,6 +5392,7 @@ var Url = '@Session["url"].ToString()';
                             value: items.ID,
                             text: items.Name,
                         }));
+                        $('#' + dtpDt).val(drpdwnselid);
                     });
                 }
             }, error: function (data) {
@@ -5411,15 +5446,15 @@ var Url = '@Session["url"].ToString()';
             var crterm = '';// arrAllPaymode[i].ID == 4 ? '<select name="dgvPMTransMode" id="dgvPMTransMode' + i + '" class="gdInput"><option value="0">Select Mode</option>' + strTransmode + ' </select>' : '';
             var bankacc = arrAllPaymode[i].ID == 4 ? '<select name="dgvPMAccNo" id="dgvPMAccNo' + i + '" class="gdInputPMAccNo dgvAccNo"><option value="0">Select A/c No</option>' + strBankAcc + ' </select>&ensp;<i class="glyphicon glyphicon-info-sign iconBankInfo" title="Bank Info" name="iBankInfo"></i><br/>' + crterm :
                 arrAllPaymode[i].ID == 2 || arrAllPaymode[i].ID == 5 ? '<select name="dgvPMAccNo" id="dgvPMAccNo' + i + '" class="gdInputPMAccNo dgvAccNo"><option value="0">Select A/c No</option>' + strBankAcc + ' </select>&ensp;<i class="glyphicon glyphicon-info-sign iconBankInfo" title="Bank Info" name="iBankInfo"></i>' :
-                    arrAllPaymode[i].ID == 7 ? '<select name="dgvPMCredit" id="dgvPMCredit' + i + '" class="gdInput"><option value="0">Select Credit Date</option>' + strCreditTerm + ' </select>' : '';
+                    arrAllPaymode[i].ID == 7 ? '<select name="dgvPMCredit" id="dgvPMCredit' + i + '" class="gdInput"><option value="0">--Credit Date--</option>' + strCreditTerm + ' </select>' : '';
             var neft = arrAllPaymode[i].ID == 4 || arrAllPaymode[i].ID == 5 ? '<input type="number" placeholder="Ref No" id="dgvPMNeft' + i + '" name="NEFT" class="gdInput">' :
-                arrAllPaymode[i].ID == 2 ? '<select name="dgvPMChqNo" id="dgvPMChqNo' + i + '" class="gdInput"><option value="0">Select Cheque No</option></select>' : '';
+                arrAllPaymode[i].ID == 2 ? '<select name="dgvPMChqNo" id="dgvPMChqNo' + i + '" class="gdInput"><option value="0">--Cheque No--</option></select>' : '';
             var chqdate = arrAllPaymode[i].ID == 2 ? '<input type="date" id="dgvPMDate' + i + '" name="ChqDate" value="' + $("#dtpDate").val() + '" class="gdInput">' : '';
             TablePaymode.row.add([
                 arrAllPaymode[i].ID,
                 arrAllPaymode[i].Name,
                 '<input min="0" type="number" txttag ="0" step="any" id="dgvPMAmt' + i + '" name ="PaymentAmount" class="gdInput dgvPMPayAmt txtsettag" value="" title="0" onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',//dgvPMVisaPern,dgvPMVisaAmt
-                arrAllPaymode[i].ID == 5 ? '<input min="0" style="width:40px;" type="number" txttag ="' + VisaPern + '" step="any" id="dgvPMVisaPern' + i + '" name ="VisaPern" class="gdInput dgvPMVisaPern txtsettag" value="' + VisaPern + '" title="' + VisaPern + '"/><input style="width:40px;" disabled min="0" type="number" txttag ="0" step="any" id="dgvPMVisaAmt' + i + '" name ="VisaAmt" class="gdInput dgvPMVisaAmt txtsettag" value="" title="0"/>' : '',
+                arrAllPaymode[i].ID == 5 ? '<input min="0" style="width:40px;" type="number" txttag ="' + VisaPern + '" step="any" id="dgvPMVisaPern' + i + '" name ="VisaPern" class="gdInput dgvPMVisaPern txtsettag" value="' + VisaPern + '" title="' + VisaPern + '"/><br/><input style="width:40px;" disabled min="0" type="number" txttag ="0" step="any" id="dgvPMVisaAmt' + i + '" name ="VisaAmt" class="gdInput dgvPMVisaAmt txtsettag" value="" title="0"/>' : '',
                 bankacc,
                 neft,
                 chqdate,
@@ -5441,6 +5476,7 @@ var Url = '@Session["url"].ToString()';
                 ProductTable.draw().clear(); ProductTable.draw().clear();
 
                 $.each(data, function (i, items) {
+                    LoadPaymentModeData();
                     var rdo1 = $("#rdoMainTableData").is(":checked");
                     if (rdo1) {
                         $("#txtID").val(items.ID);
@@ -5466,6 +5502,12 @@ var Url = '@Session["url"].ToString()';
                             $("#dtpDate").val(items.Date);
                         }
                     }
+                    if (items.PaymentModeID == 8) {
+                        $("#cmbCreditTerm").val(0).prop("disabled", true);
+                    } else {
+                        //$("#cmbCreditTerm").prop("disabled", false);
+                    }
+
                     $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);//, $("#txtStatus").val(items.Status)
                     updateInputColumn("txtFright", items.Frieght); updateInputColumn("txtOtherChargPern", items.OtherChargePern); updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
                     updateInputColumn("txtProdDiscPern", items.ProdDiscPern); updateInputColumn("txtTradeDiscPern", items.TradeDiscPern); updateInputColumn("txtAddnlDiscPern", items.AddnlDiscPern);
@@ -5491,6 +5533,11 @@ var Url = '@Session["url"].ToString()';
                             $("#txtSAdd3").val(itemsParty.Shipadd3),
                             $("#txtPincode").val(itemsParty.Pincode);
                     });
+                    if (items.lstPaymodeInfo) {
+                        $.each(items.lstPaymodeInfo, function (i, itemsPaymode) {
+                            ReloadMultimodedata(itemsPaymode)
+                        });
+                    }
                     ProductRID = 0;
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                     var hdnfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
@@ -5620,6 +5667,53 @@ var Url = '@Session["url"].ToString()';
                     var msg = data.responseJSON.Message;
                     //showErrorSnackbar(msg + " Logout and Login again.");
                 }
+            }
+        });
+    }
+    function ReloadMultimodedata(rowdetail) {
+        $("#tblPayment tbody tr").each(function () {
+            var allValues = {};
+            rowdata = TablePaymode.row($(this)).data();
+            PMID = rowdata[0];
+            if (rowdetail.Mode == PMID) {
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "PaymentAmount") {
+                        updateInputColumn(fieldID, rowdetail.RecdAmt)
+                    }
+                    if (fieldName == "IFSC") {
+                        $(this).val(rowdetail.IFSC);
+                    }
+                    if (fieldName == "VisaPern") {
+                        updateInputColumn(fieldID, rowdetail.VisaPern)
+
+                    }
+                    if (fieldName == "VisaAmt") {
+                        updateInputColumn(fieldID, rowdetail.VisaAmt)
+                    }
+                    if (fieldName == "NEFT") {
+                        $(this).val(rowdetail.Neft);
+                    }
+                    if (fieldName == "ChqDate") {
+                        $(this).val(rowdetail.Date);
+                    }
+                });
+                $(this).find("select").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "dgvPMAccNo") {
+                        $(this).val(rowdetail.BankAccId);                     
+                    }
+                    
+                    if (fieldName == "dgvPMChqNo" && PMID == 2) {
+                        var BID = $("#txtID").val() != "" ? $("#txtID").val() : 0;
+                        GetData(20, rowdetail.BankAccId, BID, fieldID, rowdetail.ChequeBookID);    
+                    }
+                    if (fieldName == "dgvPMBank") {
+                        $(this).val(rowdetail.BankID);
+                    }
+                });
             }
         });
     }
@@ -5907,7 +6001,7 @@ var Url = '@Session["url"].ToString()';
             $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
             $("#btnSave,#PaymentInfoPopup,#btnDraft").show();
             $("#btnSave,#btnClose,#btnDraft").prop("disabled", false);
-            $("#dvMain,#dvUpdateVendor,#dvSelectItems").show();
+            $("#dvMain,#dvUpdateVendor,#dvSelectItems,#btnPaymentClear,#btnPaymentAccept").show();
             $("#dvDocuments").hide();
             $("#btnEmail,#btnWhatsapp").hide();
             $("#balanceContainer").show();
@@ -5965,7 +6059,7 @@ var Url = '@Session["url"].ToString()';
         $("#btnSave,#btnClose").prop("disabled", false);
         $("#btnSave,#PaymentInfoPopup").show();
         $("#dvMain").show();
-        $("#dvDocuments,#dvUpdateVendor,#dvSelectItems").hide();
+        $("#dvDocuments,#dvUpdateVendor,#dvSelectItems,#btnPaymentClear,#btnPaymentAccept").hide();
         $("#btnEmail,#btnWhatsapp").hide();
         $("#balanceContainer").show();
         if ($("#txtEnableBranch").val() == 1) {
@@ -5997,7 +6091,7 @@ var Url = '@Session["url"].ToString()';
         $("#btnSave,#btnClear,#btnDraft").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnPrint").hide();
-        $("#btnSave,#btnClear,#btnDraft").show();
+        $("#btnSave,#btnClear,#btnDraft,#btnPaymentClear,#btnPaymentAccept").show();
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
@@ -6121,7 +6215,7 @@ var Url = '@Session["url"].ToString()';
                                 visible: $("#txtAddID").val() == 1 && rdo1 == 1,
                                 onClick: (gridInstance, event) => {
                                     nTransMode = 1;
-                                    $("#dvMain,#dvUpdateVendor,#dvSelectItems").show();
+                                    $("#dvMain,#dvUpdateVendor,#dvSelectItems,#btnPaymentClear,#btnPaymentAccept").show();
                                     $("#dvDocuments").hide();
                                     $("#balanceContainer").hide();
                                     $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
@@ -6325,11 +6419,35 @@ var Url = '@Session["url"].ToString()';
 
             }
         }
+        if (event.code == "Space") {
+            
+            var fid = event.target.id;
+            var fname = event.target.name;
+            var fvalue = event.target.value;
+            if (fname == "PaymentAmount") {
+                var balvalue = parseFloat($("#txtPMPBalance").attr("txttag"));
+                if (balvalue > 0) {
+                    updateInputColumn(fid, (balvalue + parseFloat(fvalue)));
+                    var GridAdjAmt = 0;
+                    var TotAmt = parseFloat(document.getElementById("txtPMPTotal").getAttribute("txttag"));
+                    $("#tblPayment tbody tr input[name=PaymentAmount]").each(function () {
+                        GridAdjAmt += parseFloat($(this).attr("txttag"));
+                    });
+                    GridAdjAmt = GridAdjAmt;
+                    updateInputColumn("txtPMPRecdAmt", GridAdjAmt);
+                    updateInputColumn("txtPMPBalance", 0);
+                    updateInputColumn("txtPMPAdjAmt", GridAdjAmt);  
+                } else {
+                    showErrorSnackbar("Balance amount should be greater than 0");
+                }
+
+            }
+        }
         //if (event.altKey && event.key === '1') {
         //    var nPartyID = $("#txtVendorID").val() != "" ? $("#txtVendorID").val() : 0;
         //    OpenOneView(nPartyID, 2, true);
         //}
-        else if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+        if (event.altKey && (event.key == 's')) {//Switch contains & startwith
             event.preventDefault();
             var fieldid = event.target.id;
             var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
