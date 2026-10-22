@@ -1,0 +1,598 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    .gdInput {
+        width: 100%;
+        height: 25px;
+        border-width: 0 0 0.1px 0;
+        border-color: #e0d6d6;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -56%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    #tblBRSData tbody tr:hover {
+        background-color: azure !important;
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+
+    <div class="d-flex align-items-center gap-2">
+        <!-- Larger heading -->
+        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    </div>
+    <hr />
+    <div class="toastBox"></div>
+    <div id="dvMainTable">
+
+        <div class="row">
+            <table class="w-100">
+                <tr>
+                    <td style="padding-right:5px;" width="20%">
+                        <span class="form-label">
+                            <select class="form-control FormfilterclrField" id="cmbTransaction">
+                                <option value="1">Purchase Bill</option>
+                                <option value="12">Purchase Return</option>
+                            </select>
+                            <label class="labelup" for="cmbTransaction">Transaction Type</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrTransaction" class="clrdivs"></div>
+                    </td>
+                    <td width="5%">
+                        <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
+                    </td>
+                    <td style="padding-right:5px;" width="5%">
+                        <span class="form-label">
+                            <input class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                            <label class="labelup" for="txtCode"> From</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFFrom" class="clrdivs"></div>
+                    </td>
+                    <td style="padding-right:5px;" width="5%">
+
+                        <span class="form-label">
+                            <input class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
+                            <label class="labelup" for="txtCode"> To</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
+                    </td>
+                    <td style="padding-right:5px;" width="15%" title="Show blank only">
+                        <input style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowBlank">
+                        <label for="chkShowBlank" style="font-size:14px;">blank only</label>
+                    </td>
+                    <td width="10%">
+                        <button id="btnFilter" class="btn btn-filter-style"><span class="glyphicon glyphicon-filter" style="color: white"></span>&#x2009;Filter</button>
+                    </td>
+                    <td width="20%">
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-bordered" id="tblBRSData" style="width:100%">
+                    <thead>
+                        <tr class="trclrforcolheader">
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;">TransID</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;">ID</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:2%;">#</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:10%;">Branch Name</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:9%;">Portal Date</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Trans Date</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Doc ID</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:12%;">Ref No</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:15%;">Party Name</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Gross Amount</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Tax Amount</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:20%;">Net Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tfoot>
+                        <tr>
+                            <td colspan="9" class="fw-bolder">
+                                <b class="text-primary">Hint :</b>
+                                <code>'Space'</code> - Assign Doc Date,&ensp;
+                                <code>
+                                    ';'
+                                </code>(semi-colon) - Assign Doc Date + 1,&ensp;
+                                <code>'D'</code> - Assign Above Date
+                            </td>
+
+                            <td colspan="3">
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-clear-style" id="btnClear">
+                                        <span class="glyphicon glyphicon-refresh"> Clear</span>
+                                    </button>
+
+                                    <button type="button" class="btn btn-save-style" id="btnSave">
+                                        <span class="glyphicon glyphicon-saved"> Save</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" style="color:darkgreen">
+
+    var Table = $('#tblBRSData').DataTable({
+        paging: false, info: false, searching: true, ordering: true,
+        scrollY: "400px", scrollX: true, scrollCollapse: true,
+        columns: [
+            { data: "TransID", visible: false },
+            { data: "ID", visible: false },
+            { data: null, className: "dt-body-center", render: function (d, t, r, m) { return m.row + 1; } },
+            { data: "BranchName" },
+            {
+                data: "PortalDate", render: function (d) {
+                    var v = d ? d.substring(0, 10) : "";
+                    return '<input type="date" name="PortalDate" class="gdInput dgvPortalDate" value="' + v + '"/>';
+                }
+            },
+            {
+                data: "TransDate",
+                render: function (d, type) {
+                    if (!d) return "";
+                    var iso = d.substring(0, 10);
+                    if (type !== "display") return iso;
+                    var p = iso.split("-");
+                    return p[2] + "/" + p[1] + "/" + p[0];
+                }
+            },
+            { data: "DocID" },
+            { data: "RefNo" },
+            { data: "PartyName" },
+            { data: "GrossAmount", className: "dt-body-right" },
+            { data: "TaxAmount", className: "dt-body-right" },
+            { data: "NetAmount", className: "dt-body-right" }
+        ]
+    });
+
+    $(document).ready(function () {
+        $("#cmbTransaction").focus();
+    });
+
+    var Aurl = '@Session["APIurl"]';
+    var UID = '@Session["LoginUserID"]';
+    var DecVal = '@Session["DecimalValues"]';
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
+    GetData(1);
+    var arrParty = [], arrBankAccountData = [], DefBankAcc = 0;
+    function GetData() {
+        $.ajax({
+            url: Aurl + "gstreconsiliation/getgstrecon",
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                Transaction: $("#cmbTransaction").val(),
+                FromDate: $("#dtpFFrom").val(),
+                ToDate: $("#dtpFTo").val(),
+                ShowBlankDate: $("#chkShowBlank").is(":checked") ? 1 : 0
+            },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                Table.clear().rows.add(data).draw();
+                if (data.length == 0) showErrorSnackbar("No Records Found");
+            },
+            error: function (data) { }
+        });
+    }
+
+    $('#tblBRSData tbody').on('keydown', '.dgvPortalDate', function (e) {
+        var kyc = e.keyCode;
+        var $tr = $(this).closest('tr');
+        var TranDate = Table.row($tr).data().TransDate.substring(0, 10);
+
+        if (kyc == 32) {//Space : Assign Trans Date
+            e.preventDefault();
+            $(this).val(TranDate);
+        }
+        if (kyc == 68) {//D : Assign Above Date
+            e.preventDefault();
+            var AboveDate = $tr.prev().find(".dgvPortalDate").val();
+            if (AboveDate) { $(this).val(AboveDate); } else { showErrorSnackbar("No date found"); }
+        }
+        if (kyc == 186) {//";" : Trans Date + 1
+            e.preventDefault();
+            var gt = new Date(TranDate);
+            gt.setUTCDate(gt.getUTCDate() + 1);
+            $(this).val(gt.toISOString().substring(0, 10));
+        }
+    });
+
+    //var nGrid1CurrentRowIndex = -1;
+    //$('#tblBRSData tbody').on('focusin', 'tr', function () {
+    //    nGrid1CurrentRowIndex = Table.row(this).index()
+    //});
+    //$('#tblBRSData tbody').on('keydown', '.dgvBRSDate', function (e) {
+    //    var kyc = e.keyCode;
+    //    //showErrorSnackbar("D : " + kyc);
+    //    var val = e.target.value;
+    //    if (kyc == "32") {//Space : Assign Transdate
+    //        e.preventDefault();
+    //        //showErrorSnackbar("Key Down Space Pressed, Value : " + val);
+    //        var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
+    //        var CurrRowDocID = currrowdata.JVID;//[0];
+    //        $("#tblBRSData tbody tr").each(function () {
+    //            var rowData = Table.row($(this)).data();
+    //            var RowDocID = rowData.JVID;//[0];
+    //            if (CurrRowDocID == RowDocID) {
+    //                var TranDate = rowData.Date.length > 10 ? rowData.Date.substring(0, 10) : rowData.Date;//[3];
+
+    //                $(this).find("input").each(function (index) {
+    //                    const fieldName = $(this).attr("name");
+    //                    const fieldID = $(this).attr("id");
+    //                    if (fieldName == "BRSDate") {
+    //                        //var gt = new Date(TranDate);
+    //                        //var mon = gt.getMonth() >= 10 ? gt.getMonth() + 1 : '0' + (gt.getMonth() + 1);
+    //                        //var dat = gt.getDate() >= 10 ? gt.getDate() : '0' + (gt.getDate());
+    //                        //const constdate = gt.getFullYear() + "-" + mon + "-" + dat;
+    //                        //showErrorSnackbar(constdate);
+    //                        $(this).val(TranDate);
+    //                    }
+    //                });
+    //            }
+    //        });
+    //    }
+    //    if (kyc == "68") {//D :
+    //        e.preventDefault();
+    //        var AboveDate = "";
+    //        var currrowdata = Table.row(nGrid1CurrentRowIndex - 1).data();
+    //        var CurrRowDocID = currrowdata.JVID;//[0];
+    //        $("#tblBRSData tbody tr").each(function () {
+    //            var rowData = Table.row($(this)).data();
+    //            var RowDocID = rowData.JVID;//[0];
+    //            if (CurrRowDocID == RowDocID) {
+    //                $(this).find("input").each(function (index) {
+    //                    const fieldName = $(this).attr("name");
+    //                    const fieldID = $(this).attr("id");
+    //                    if (fieldName == "BRSDate") {
+    //                        AboveDate = $(this).val();
+    //                    }
+    //                });
+    //            }
+    //        });
+    //        if (AboveDate != "") {
+    //            //showSuccessSnackbar("Above date is : " + AboveDate);
+    //            var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
+    //            var CurrRowDocID = currrowdata.JVID;//[0];
+    //            $("#tblBRSData tbody tr").each(function () {
+    //                var rowData = Table.row($(this)).data();
+    //                var RowDocID = rowData.JVID;//[0];
+
+    //                if (CurrRowDocID == RowDocID) {
+    //                    $(this).find("input").each(function (index) {
+    //                        const fieldName = $(this).attr("name");
+    //                        const fieldID = $(this).attr("id");
+    //                        if (fieldName == "BRSDate") {
+    //                            $(this).val(AboveDate);
+    //                        }
+    //                    });
+    //                }
+    //            });
+    //        }else {
+    //            showErrorSnackbar("No date found");
+    //        }
+
+    //    }
+    //    if (kyc == "186") {//";" : Add One Day from Trans Date
+    //        e.preventDefault();
+    //        //showErrorSnackbar("Key Down Space Pressed, Value : " + val);
+    //        var currrowdata = Table.row(nGrid1CurrentRowIndex).data();
+    //        var CurrRowDocID = currrowdata.JVID;//[0];
+    //        $("#tblBRSData tbody tr").each(function () {
+    //            var rowData = Table.row($(this)).data();
+    //            var RowDocID = rowData.JVID;//[0];
+
+    //            if (CurrRowDocID == RowDocID) {
+    //                var TranDate = rowData.Date.length > 10 ? rowData.Date.substring(0, 10) : rowData.Date;//[3];
+    //                $(this).find("input").each(function (index) {
+    //                    const fieldName = $(this).attr("name");
+    //                    const fieldID = $(this).attr("id");
+    //                    if (fieldName == "BRSDate") {
+    //                        var gt = new Date(TranDate);
+    //                        const actmonth = (gt.getMonth() + 1)
+    //                        console.log("Month : " + gt.getMonth(),gt);
+    //                        var mon = actmonth >= 10 ? actmonth : '0' + (actmonth);
+    //                        var dat = gt.getDate() >= 10 ? gt.getDate() + 1 : '0' + (gt.getDate() + 1);
+    //                        const constdate = gt.getFullYear() + "-" + mon + "-" + dat;
+    //                        //showErrorSnackbar(constdate);
+    //                        $(this).val(constdate);
+    //                    }
+    //                });
+    //            }
+    //        });
+    //    }
+    //});
+    function SetAutlistforFields(defvalue) {
+        //~AutoList
+        PaginatedAutocomplete({
+            inputId: "txtFilterParty",
+            data: arrParty,
+            startwitfieldname: startwithfield,
+            enablefilterstartwith: autolistfilterwith,
+            onSelect: function (item) {
+                $("#txtFilterParty").val(item.name);
+                return false;
+            }
+        });
+    }
+    setDate("dtpFFrom", 0);
+    setDate("dtpFTo", 0);
+    $('#btnFilter').click(function (e) {
+        GetFilterData(1);
+    });
+    function GetFilterData(ClickType = 0) {
+        var IsValid = true;
+        $(".clrdivs").html("");
+        if ($("#dtpFFrom").val() == "") {
+            IsValid = false;
+            $("#divErrFFrom").html("From date should not be empty");
+        }
+        if ($("#dtpFTo").val() == "") {
+            IsValid = false;
+            $("#divErrFTo").html("To date should not be empty");
+        }
+        if ($("#dtpFFrom").val() > $("#dtpFTo").val()) {
+            IsValid = false;
+            $("#divErrFFrom").html("From date should be lessthan To Date");
+        }
+        if (IsValid) {
+            GetData();
+        }
+    }
+    //$('input[type=date]').focusin(function (e) {
+    //    $(this).select();
+    //});
+    $('#btnClear').click(function (e) {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        SetFilterDate();
+        $(".clrdiv").html("");
+        Table.draw().clear(); Table.draw().clear();
+        GetData(1);
+    }
+    var listTrans = [];
+    function addAccountsinArray() {
+        listTrans = [];
+        $("#tblBRSData tbody tr").each(function () {
+            var rowdata = Table.row($(this)).data();
+            if (!rowdata) return;
+
+            var transID = rowdata.TransID;
+            var portalDate = "";
+            $(this).find("input").each(function () {
+                const fieldName = $(this).attr("name");
+                if (fieldName == "PortalDate") {
+                    portalDate = $(this).val();
+                }
+            });
+            if (portalDate == rowdata.PortalDate) return;
+
+            var item = {
+                "ID": rowdata.ID,
+                "TransID": rowdata.TransID,
+                "PortalDate": portalDate,
+                "TransDate": rowdata.TransDate.substring(0, 10)
+            };
+            listTrans.push(item);
+        });
+    }
+
+    $("#btnSave").click(function () {
+        $(".clrdiv").html("");
+
+        if (Table.rows().count() == 0) {
+            showErrorSnackbar("No Records Found");
+            return;
+        }
+
+        addAccountsinArray();
+        if (listTrans.length == 0) { showErrorSnackbar("No changes to save"); return; }
+        if (cfFocus != 3) {
+            ConfirmDialogMsg("Do you want to save data?");
+        } else {
+            SaveData();
+        }
+    });
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $.ajax({
+            url: Aurl + "gstreconsiliation/savegstrecon",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(listTrans),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        GetData();
+                        showSuccessSnackbar(items.Message);
+                    }
+                    else {
+                        showErrorSnackbar(items.Message);
+                    }
+                });
+            },
+            error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                }
+            }
+        });
+    }
+    document.addEventListener("keydown", function (event) {
+
+        if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            autolistfilterwith = !autolistfilterwith;
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar(infomessage);
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+            if (fieldid == "txtFilterParty") {
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+
+                //~AutoList
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrParty,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
+        }
+    });
+
+</script>
