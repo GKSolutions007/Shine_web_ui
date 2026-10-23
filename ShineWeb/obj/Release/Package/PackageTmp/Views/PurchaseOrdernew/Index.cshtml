@@ -501,7 +501,7 @@
                                         <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
                                     </td>
 
-                                    <td class="p-0" width="15%">
+                                    <td class="p-0" width="12%">
                                         <span class="form-label">
                                             <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom">
                                             <label class="labelup">From</label>
@@ -510,7 +510,7 @@
                                         <div id="divErrFFrom" class="clrdivs text-danger pt-1 ps-1"></div>
                                     </td>
 
-                                    <td class="ps-2 p-0" width="15%">
+                                    <td class="ps-2 p-0" width="12%">
                                         <span class="form-label">
                                             <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo">
                                             <label class="labelup">To</label>
@@ -519,12 +519,12 @@
                                         <div id="divErrFTo" class="clrdivs text-danger pt-1 ps-1"></div>
                                     </td>
 
-                                    <td class="ps-2 p-0" width="7%">
+                                    <td class="ps-2 p-0" width="8%">
                                         <input tabindex="1" class="FormfilterclrField" type="checkbox" id="chkShowAll">
                                         <label for="chkShowAll" class="fs-6">All Status</label>
                                     </td>
 
-                                    <td class="ps-2 p-0" width="7%">
+                                    <td class="ps-2 p-0" width="12%">
                                         <button id="btnFilter" class="btn btn-filter-style">
                                             <span id="btnLoadSpinner" class="btn-spinner" style="display:none;"></span>
                                             <i class="bi bi-funnel" id="btnLoadIcon"></i>
@@ -1620,7 +1620,8 @@
                                 "ABS": "<label style='color:" + clr + "'> " + items.ABSQty + " </label>",
                                 "line2": "₹ : " + items.PurchasePrice + " | Qty : <label style='color:" + clr + "'> " + items.ABSQty + " </label>",
                                 "price": items.PurchasePrice,
-                                "hsn": items.HSNCode
+                                "hsn": items.HSNCode,
+                                "absqty": items.ABSQty
                             }
                             TempAL.push(al);
                         });
@@ -1716,7 +1717,7 @@
             }
         });
     }
-    function loadselectedproductdetail(gridrow, rowindex, strName = null, strID = null) {
+    function loadselectedproductdetail(gridrow, rowindex, strName = null, strID = null,absqty = 0) {
         var UOMType = $("#cmbUOMType").val();
         $.ajax({
             url: Aurl + "purchaseorder/get",
@@ -1753,7 +1754,7 @@
                     var PPrice = UOMType == 1 ? parseFloat(items.PurchasePrice) : (parseFloat(items.PurchasePrice) * parseFloat(items.PurchaseCR))
                     var InclPPrice = dApponMRPCum > 0 ? PPrice + dMRPonTax : PPrice * TaxPern;
                     gridrow.patch(rowindex, {
-                        itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0,
+                        itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0, stock: absqty,
                         ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, qty: 1,
                         priceExcl: +PPrice || 0,
                         _uoms: uomforselprod, uomID: +UOMID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
@@ -1822,6 +1823,12 @@
                 showErrorSnackbar("Select Party Name from list");
             }
         }
+        var nBranchID = $("#cmbBranch").val();
+        if (nBranchID == 0) {
+            IsValid = false;
+            $("#divErrBranch").html("Select Branch");
+            showErrorSnackbar("Select Branch");
+        }
         var Manufmultiselvalues = getMultiSelectValues('txtManufName').map(function (i) {
             return i.value;
         }).join(',');
@@ -1847,14 +1854,17 @@
                 return IsValid;
             }
         }
-
+       
         if (IsValid) {
             var UOMType = $("#cmbUOMType").val();
             $.ajax({
                 url: Aurl + "purchaseorder/manufitems",
                 type: 'get',
                 contentType: 'json',
-                data: { PartyID: $("#txtVendorID").val(), ManufID: Manufmultiselvalues, DaysAvg: $("#txtDays").val(), BaseorPurchase: UOMType },
+                data: {
+                    PartyID: $("#txtVendorID").val(), ManufID: Manufmultiselvalues, DaysAvg: $("#txtDays").val(),
+                    BaseorPurchase: UOMType, BranchID: nBranchID
+                },
                 xhrFields: {
                     withCredentials: true
                 },
@@ -1873,7 +1883,7 @@
                         }];
                         const t = taxById(itemsProd.TaxID) || taxOf(itemsProd.TaxPern);   
                         G.patch(nRowIndex, {
-                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0,
+                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0, stock: parseFloat(itemsProd.ActualQty).toFixed(DecVal),
                             ApponMRPCum: itemsProd.CumMRPonTax, MRPonTaxAmt: itemsProd.MRPonTax, 
                             priceExcl: +itemsProd.ExclPrice || 0,
                             qty: +itemsProd.Qty || 0,
@@ -2034,7 +2044,13 @@
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
-
+    // Number inputs: Up/Down arrow keys and mouse wheel must not change the value
+    document.addEventListener('keydown', function (e) {
+        if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.target && e.target.type === 'number') e.preventDefault();
+    }, true);
+    document.addEventListener('wheel', function (e) {
+        if (e.target && e.target.type === 'number' && document.activeElement === e.target) e.preventDefault();
+    }, { passive: false, capture: true });
     
     function Scrolltoid(id) {
         //window.scrollTo(id[0].offsetLeft, id[0].offsetTop);
@@ -2537,7 +2553,15 @@
         if (items.length == 0) {
             IsValid = false;
             $("#divErrProduct").html("Add atleat one product in Grid");
-            showErrorSnackbar("Add atleat one product in Grid");
+            showErrorSnackbar("Add atleast one product in Grid");
+        }
+        else {
+            var sumqty = griditems.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number(a.qty || 0), 0);
+            if (sumqty == 0) {
+                IsValid = false;
+                $("#divErrProduct").html("Please enter a quantity of at least 1 for at least one item.");
+                showErrorSnackbar("Please enter a quantity of at least 1 for at least one item.");
+            }
         }
         return IsValid;
     }
@@ -2556,7 +2580,7 @@
         var nSerial = 1;
         var ItemGridData = G.getData();
         $.each(ItemGridData, function (i, itemrow) {
-            if (itemrow.productID > 0) {
+            if (itemrow.productID > 0 && itemrow.qty > 0) {
                 var listProds = {
                     "ProdID": itemrow.productID,
                     "UomID": itemrow.uomID,
@@ -2663,35 +2687,7 @@
             SaveData();
         }
     });
-    //~Home Draft
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to New PO
-        $("#txtDraftID").val($("#txtID").val())
-        var ID = $("#txtID").val();
-        GetProductViewData(10, ID);
-        nTransMode = 1;
-        $("#dvMain,.dvclsforhdview").show();
-        $("#dvDocuments").hide();
-        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
-        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp,#btnClear").hide();
-        $("#MainHeading").text("Create " + $("#txtFormName").val());
-        setTimeout(() => {
-            var DocDate = $("#dtpDate").val();
-            var Branch = $("#cmbBranch").val();
-            GetDocumentID(DocDate, Branch, 3);
-        }, 1000);
-    }
-    //~View from another form(Home, Fin Rep Space click)
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
-        var ID = $("#txtID").val();
-        GetProductViewData(7, ID);
-        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnClose").prop("disabled", false);
-        $("#dvMain").show();
-        $("#btnEmail,#btnWhatsapp").show();
-        $("#dvDocuments").hide();
-        $("#MainHeading").text("View " + $("#txtFormName").val());
-    }
+   
         var Url = '@Session["url"].ToString()';
 $("#openproduct").click(function (e) {
     var nProd = $("#txtHProdID").val() != "" ? $("#txtHProdID").val() : 0;
@@ -2842,7 +2838,7 @@ $("#openproduct").click(function (e) {
             if (k === 'F8') {
                 if (el.dataset.key === 'itemName') {
                     var productID = el.closest('tr').querySelector('[data-key="productID"]').value;
-                        F8ItemID = e.target.id;
+                    F8ItemID = e.target.id;
                     var dtros = el.closest('tr')
                     F8RowIndex = dtros.dataset.ri
                     let vw = window.innerWidth;
@@ -2858,6 +2854,21 @@ $("#openproduct").click(function (e) {
                     else {
                         showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (productID == 0 ? "Add" : "Edit") + " Product</code></h4>")
                     }
+                }
+            }
+            if (e.altKey && (e.key == 'a')) {
+                if (el.dataset.key === 'itemName') {
+                    startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+                    showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                    ReLoadProductAutolists();
+                }
+            }
+            if (e.altKey && (e.key == 's')) {
+                if (el.dataset.key === 'itemName') {
+                    var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+                    autolistfilterwith = !autolistfilterwith;
+                    showInfoSnackbar(infomessage);
+                    ReLoadProductAutolists();
                 }
             }
             if (k === 'Enter') {
@@ -2980,7 +2991,12 @@ $("#openproduct").click(function (e) {
             if (s.type === 'number') {
                 el.step = 'any'; if (s.readonly) el.readOnly = true;
                 el.onfocus = () => { el.value = f(r[k], 4); el.select() };                         // focus: 4 decimals
-                el.oninput = () => { r[k] = parseFloat(el.value) || 0; ch() };
+                // el.oninput = () => { r[k] = parseFloat(el.value) || 0; ch() };
+                if (!s.allowNeg) el.min = 0;                                                       // grid numbers cannot be negative (set allowNeg:true on a column to opt out)
+                el.oninput = () => {
+                    if (!s.allowNeg && parseFloat(el.value) < 0) { el.value = 0; el.select() }     // negative typed/pasted -> 0
+                    r[k] = parseFloat(el.value) || 0; ch()
+                };
                 el.onblur = () => { el.value = f(r[k], s.dec ?? 2); el.dataset.full = f(r[k], 4); };     // blur: 2 decimals
             } else if (s.type === 'text') { el.onfocus = () => el.select(); el.oninput = () => { r[k] = el.value; ch() } }
             else if (s.type === 'checkbox') el.onchange = () => { r[k] = el.checked; ch() };
@@ -3013,12 +3029,16 @@ $("#openproduct").click(function (e) {
             }   // live flag when value > max
             else if (s.type === 'label') el.textContent = typeof v === 'number' ? f(v, s.dec ?? 2) : v;
             else if (s.type === 'index') el.textContent = this.rows.indexOf(r) + 1;
-            else if (s.type === 'p') el.textContent = s.text(r);
+            else if (s.type === 'p') {
+                el.textContent = s.text(r);
+                if (s.key == "itemCode")
+                    el.style.color = parseFloat(r.stock) > 0 ? 'green' : 'red';
+            }
             else if (s.type === 'checkbox') el.checked = !!v;
             else if (s.type === 'select') { const rb = this.fillSelect(el, s, r); if (rb || el !== document.activeElement) el.value = v ?? '' }   // options may change per row (item UOM list)
             else if (el !== document.activeElement) el.value = v ?? '';
-            const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
-            el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
+            //const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
+            //el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
         }
         changed(r, key) {
             if (this.cfg.calc) this.cfg.calc(r, key);
@@ -3175,12 +3195,12 @@ $("#openproduct").click(function (e) {
             g.rows.forEach((r, i) => {
                 const id = 'itemName_' + i; if (!byId(id)) return;                  // column hidden -> nothing to bind
                 acInst.push(PaginatedAutocomplete({
-                    inputId: id, data: TempAL, startwitfieldname: AC.field, enablefilterstartwith: AC.startsWith,
+                    inputId: id, data: TempAL, startwitfieldname: startwithfield, enablefilterstartwith: autolistfilterwith,//AC.startsWith,
                     onSelect: item => {
                         $('#' + id).val(item.name);                                   // show the NAME (library puts the code by default)
                         var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
 
-                        loadselectedproductdetail(g, i, item.code);
+                        loadselectedproductdetail(g, i, item.code, null, item.absqty);
                         //g.patch(i, {
                         //    itemName: item.name, code: item.code, productID: +item.id || 0, mrp: +item.MRP || 0,
                         //    TrackInentoryYN: +item.TrackInentoryYN || 0, TrackBatchYN: +item.TrackBatchYN || 0, TrackPKDYN: +item.TrackPKDYN || 0,   // hidden columns
@@ -3255,7 +3275,7 @@ $("#openproduct").click(function (e) {
                             { name: 'del', html: IC.del, cls: 'red', title: 'Remove row', onClick: (r, i) => G.deleteRow(i) }]
                     }]
                 },
-                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'text', key: 'itemName', ac: true }, { type: 'p', text: r => `${r.code}` }] },
+                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'text', key: 'itemName', ac: true }, { type: 'p', key: 'itemCode', text: r => `${r.code} | Qty :  ${r.stock}` }] },
                 { id: 'mrp', title: 'MRP', width: 80, controls: [{ type: 'label', key: 'mrp', ro: false }] },
                 { id: 'priceExcl', title: 'Excl / Incl ₹', width: 85, controls: [num('priceExcl'), num('priceIncl')] },
                 { id: 'qty', title: 'Qty', width: 80, total: 'qty', controls: [num('qty')] },
@@ -3489,7 +3509,8 @@ $("#openproduct").click(function (e) {
                             $("#txtSAdd2").val(itemsParty.shipadd2),
                             $("#txtSAdd3").val(itemsParty.Shipadd3),
                             $("#txtPincode").val(itemsParty.Pincode);
-                        $("#lblOpenPOCount").text(itemsParty.POopen), $("#lblOpenAICount").text(itemsParty.AIopen);
+                            $("#lblOpenPOCount").text(itemsParty.POopen),
+                            $("#lblOpenAICount").text(itemsParty.AIopen);
                     });
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                     var hdnfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
@@ -3503,7 +3524,7 @@ $("#openproduct").click(function (e) {
                         }];
                         G.addRow();
                         G.patch(nRowIndex, {
-                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0,
+                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0, stock: parseFloat(itemsProd.ABSQty).toFixed(DecVal),
                             ApponMRPCum: itemsProd.MRPonTax, MRPonTaxAmt: itemsProd.MRPonTax,
                             priceExcl: +itemsProd.ExclPrice || 0, priceIncl: +itemsProd.InclPrice || 0,
                             qty: +itemsProd.Qty || 0,
@@ -3543,11 +3564,15 @@ $("#openproduct").click(function (e) {
             var ProductID = data.productid;
             var code = data.productcode;
             var name = data.productname;
+            $("#" + F8ItemID).val(name);
+            loadselectedproductdetail(G, F8RowIndex, code);
             setTimeout(() => {
                 GetData(2, $("#cmbUOMType").val());
             }, 100);
-            $("#" + F8ItemID).val(name);
-            loadselectedproductdetail(G, F8RowIndex, code);
+            setTimeout(() => {
+                ReLoadProductAutolists();
+            }, 1000);
+            
         }
         else if (data && data.source === "VendorMaster") {
             var code = data.vendorcode;
@@ -3580,25 +3605,8 @@ $("#openproduct").click(function (e) {
             event.preventDefault();
             var fieldid = event.target.id;
             var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
-            autolistfilterwith = !autolistfilterwith;
-            if (fieldid == "txtHProds") {
-                showInfoSnackbar(infomessage);
-
-                PaginatedAutocomplete({
-                    inputId: "txtHProds",// "txtProdName",
-                    data: TempAL,
-                    startwitfieldname: startwithfield,
-                    enablefilterstartwith: autolistfilterwith,
-                    onSelect: function (item) {
-                        $("#txtHProds").val(item.code);
-                        $("#lblABS").html(item.ABS);
-                        $("#clrdivs").html("");
-                        GetData(4, item.code);
-                        return false;
-                    }
-                });
-            }
             if (fieldid == "txtSearch" || fieldid == "txtFilterParty") {
+                autolistfilterwith = !autolistfilterwith;            
                 showInfoSnackbar(infomessage);
                 PaginatedAutocomplete({
                     inputId: "txtSearch",
@@ -3627,25 +3635,8 @@ $("#openproduct").click(function (e) {
         else if (event.altKey && (event.key == 'a')) {//change search field
             event.preventDefault();
             var fieldid = event.target.id;
-            startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
-            if (fieldid == "txtHProds") {
-                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
-
-                PaginatedAutocomplete({
-                    inputId: "txtHProds",// "txtProdName",
-                    data: TempAL,
-                    startwitfieldname: startwithfield,
-                    enablefilterstartwith: autolistfilterwith,
-                    onSelect: function (item) {
-                        $("#txtHProds").val(item.code);
-                        $("#lblABS").html(item.ABS);
-                        $("#clrdivs").html("");
-                        GetData(4, item.code);
-                        return false;
-                    }
-                });
-            }
             if (fieldid == "txtSearch" || fieldid == "txtFilterParty") {
+                startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");            
                 showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
                 PaginatedAutocomplete({
                     inputId: "txtSearch",
@@ -3723,4 +3714,36 @@ $("#openproduct").click(function (e) {
             InfoDialogMsg(alinfo, "Autolist property");
         }
     });
+    function ReLoadProductAutolists() {
+        G.cfg.onRender(G);       
+    }
+    //~Home Draft
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to New PO
+        $("#txtDraftID").val($("#txtID").val())
+        var ID = $("#txtID").val();
+        GetProductViewData(10, ID);
+        nTransMode = 1;
+        $("#dvMain,.dvclsforhdview").show();
+        $("#dvDocuments").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp,#btnClear").hide();
+        $("#MainHeading").text("Create " + $("#txtFormName").val());
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 3);
+        }, 1000);
+    }
+    //~View from another form(Home, Fin Rep Space click)
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
+        var ID = $("#txtID").val();
+        GetProductViewData(7, ID);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnClose").prop("disabled", false);
+        $("#dvMain").show();
+        $("#btnEmail,#btnWhatsapp").show();
+        $("#dvDocuments").hide();
+        $("#MainHeading").text("View " + $("#txtFormName").val());
+    }
 </script>
