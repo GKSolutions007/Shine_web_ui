@@ -497,7 +497,7 @@
         <label id="lblCode" hidden></label>
         <label id="lblMob1" hidden></label>
         <label id="lblGSTIN" hidden></label>
-
+        <label id="lblTempABS" hidden></label>
         <div hidden>
             <table class="table table-borderless" width="100%">
                 <tr hidden>
@@ -1302,7 +1302,7 @@
 var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
 var autolistfilterwith = EnableALStartWith;
 var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
-
+    var F8RowIndex = -1, F8ItemID = '';
 
     var SaleAddnlDiscb4Prod = '@Session["SalesAddnlDiscbeforeProdDisc"]' == '1';
     var SaleTrdDiscb4Prod = '@Session["SalesTradeDiscbeforeProdDisc"]' == '1';
@@ -1342,6 +1342,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $('input[type=number]').focusin(function (e) {
         $(this).select();
     });
+    // Number inputs: Up/Down arrow keys and mouse wheel must not change the value
+    document.addEventListener('keydown', function (e) {
+        if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.target && e.target.type === 'number') e.preventDefault();
+    }, true);
+    document.addEventListener('wheel', function (e) {
+        if (e.target && e.target.type === 'number' && document.activeElement === e.target) e.preventDefault();
+    }, { passive: false, capture: true });
     function SetTagZero() {
         var inputs = $(".txtsettag");
         for (var i = 0; i < inputs.length; i++) {
@@ -1771,7 +1778,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 "name": items.Name,
                                 "code": items.Code,
                                 "id": items.ID,
-                                "line2": "Price : " + items.PurchasePrice + " | ABS Qty : " + items.ABSQty
+                                "line2": "Price : " + items.PurchasePrice + " | ABS Qty : " + items.ABSQty,
+                                "absqty": items.ABSQty
                             }
                             TempAL.push(al);
                         });
@@ -1829,7 +1837,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 else if (nMode == 3) {
                     $.each(data, function (i, items) {
                         var hasqty = parseFloat(document.getElementById("lblPTQty").getAttribute("lbltag"));
-                        $("#cmbPriceType").prop("disabled", hasqty > 0);
                         var bran = $("#cmbBranch").val();
                         var pricetypeval = $("#cmbPriceType").val();
                         if (pricetypeval == 0 || hasqty == 0) {
@@ -2042,9 +2049,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     var PPrice = parseFloat(ApplyPrice * items.SalesCR);
                     var InclPPrice = dApponMRPCum > 0 ? PPrice + dMRPonTax : PPrice * TaxPern;
                     gridrow.patch(rowindex, {
-                        itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0,
+                        itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0, stock: $("#lblTempABS").text() || "0.00",
                         ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, OrgPrice: +baseprice || 0,
-                        priceExcl: +PPrice || 0,
+                        priceExcl: +PPrice || 0,qty : 1,
                         _uoms: uomforselprod, uomID: +items.SalesUomID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
                         taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.GSTPern || 0)
                     }, 'items'); // fills row, recalculates, refreshes totals
@@ -2313,11 +2320,12 @@ function GetFilterData(ClickType = 0) {//arrCustomerName,divErrFTo,divErrFFrom,d
                                 ClearForm();
                                 //  ProductRID++;
                                 //Addprodgridline();
-                                G.addRow();
                                 setTimeout(() => {
                                     var DocDate = $("#dtpDate").val();
                                     var Branch = $("#cmbBranch").val();
+                                    GetData(2, Branch, DocDate, null, 2);
                                     GetDocumentID(DocDate, Branch, 14);
+                                    G.addRow();
                                 }, 1000);
                             }
                         },
@@ -2730,6 +2738,42 @@ function CloseForm() {
             //   const all=this.focusables(this.tb),n=all[all.indexOf(el)+(e.shiftKey?-1:1)];
             //   if(n)this.go(n)
             //   }
+            if (k === 'F8') {
+                if (el.dataset.key === 'itemName') {
+                    var productID = el.closest('tr').querySelector('[data-key="productID"]').value;
+                    F8ItemID = e.target.id;
+                    var dtros = el.closest('tr')
+                    F8RowIndex = dtros.dataset.ri
+                    let vw = window.innerWidth;
+                    let vh = window.innerHeight;
+                    const hasPermission = productID == 0
+                        ? checkAddEditPermission("111")
+                        : checkAddEditPermission("112");
+                    if (hasPermission) {
+
+                        var ProdUrl = Url + "ProductMaster?name=dFLU9MS0CpfVS5wW5G17EQ%3D%3D&strFormID=RjZMX%2BX6NiPSRFI2WDoZJA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + productID;
+                        window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+                    }
+                    else {
+                        showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (productID == 0 ? "Add" : "Edit") + " Product</code></h4>")
+                    }
+                }
+            }
+            if (e.altKey && (e.key == 'a')) {
+                if (el.dataset.key === 'itemName') {
+                    startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
+                    showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                    ReLoadProductAutolists();
+                }
+            }
+            if (e.altKey && (e.key == 's')) {
+                if (el.dataset.key === 'itemName') {
+                    var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+                    autolistfilterwith = !autolistfilterwith;
+                    showInfoSnackbar(infomessage);
+                    ReLoadProductAutolists();
+                }
+            }
             if (k === 'Enter') {
                 e.preventDefault();
                 if (!e.shiftKey && el.dataset.key === 'qty') {                       // Enter on Qty -> Item Name of the NEXT row
@@ -2739,7 +2783,6 @@ function CloseForm() {
                     return;
                 }
                 if (!e.shiftKey && el.dataset.key === 'itemName') {                       // Enter on Qty -> Item Name of the NEXT row
-                    console.log('Enter on Item Name -> Qty of the SAME row : ', el.closest('tr').querySelector('[data-key="productID"]').value);
                     var productID = el.closest('tr').querySelector('[data-key="productID"]').value;
                     if (productID == 0) {
                         const firstInput = $("#dvFooterRow")
@@ -2764,6 +2807,7 @@ function CloseForm() {
                 if (n) this.go(n)
             }
             else if ((k === 'ArrowUp' || k === 'ArrowDown') && !e.altKey && !el.dataset.ac) {          // Alt+Down still opens a select list; autocomplete fields keep Up/Down for their own list
+                if (el.type === 'number') e.preventDefault();                                          // never increment/decrement the number (even on first/last row)
                 const td = el.closest('td'), tr = td.parentElement, pos = this.focusables(td).indexOf(el);
                 const tr2 = k === 'ArrowUp' ? tr.previousElementSibling : tr.nextElementSibling; if (!tr2) return;
                 e.preventDefault(); const fs = this.focusables(tr2.children[td.cellIndex]); if (fs.length) this.go(fs[Math.min(pos, fs.length - 1)])
@@ -2850,7 +2894,11 @@ function CloseForm() {
             if (s.type === 'number') {
                 el.step = 'any'; if (s.readonly) el.readOnly = true;
                 el.onfocus = () => { el.value = f(r[k], 4); el.select() };                         // focus: 4 decimals
-                el.oninput = () => { r[k] = parseFloat(el.value) || 0; ch() };
+                if (!s.allowNeg) el.min = 0;                                                       // grid numbers cannot be negative (set allowNeg:true on a column to opt out)
+                el.oninput = () => {
+                    if (!s.allowNeg && parseFloat(el.value) < 0) { el.value = 0; el.select() }     // negative typed/pasted -> 0
+                    r[k] = parseFloat(el.value) || 0; ch()
+                };
                 el.onblur = () => { el.value = f(r[k], s.dec ?? 2); el.dataset.full = f(r[k], 4); };     // blur: 2 decimals
             } else if (s.type === 'text') { el.onfocus = () => el.select(); el.oninput = () => { r[k] = el.value; ch() } }
             else if (s.type === 'checkbox') el.onchange = () => { r[k] = el.checked; ch() };
@@ -2883,12 +2931,16 @@ function CloseForm() {
             }   // live flag when value > max
             else if (s.type === 'label') el.textContent = typeof v === 'number' ? f(v, s.dec ?? 2) : v;
             else if (s.type === 'index') el.textContent = this.rows.indexOf(r) + 1;
-            else if (s.type === 'p') el.textContent = s.text(r);
+            else if (s.type === 'p') {
+                el.textContent = s.text(r);
+                if (s.key == "itemCode")
+                    el.style.color = parseFloat(r.stock) > 0 ? 'green' : 'red';
+            }
             else if (s.type === 'checkbox') el.checked = !!v;
             else if (s.type === 'select') { const rb = this.fillSelect(el, s, r); if (rb || el !== document.activeElement) el.value = v ?? '' }   // options may change per row (item UOM list)
             else if (el !== document.activeElement) el.value = v ?? '';
-            const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
-            el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
+            //const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
+            //el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
         }
         changed(r, key) {
             if (this.cfg.calc) this.cfg.calc(r, key);
@@ -2975,7 +3027,7 @@ function CloseForm() {
                 base = rnd(grsamt - r[am])
             });
             [['add', 'Addnl %']].forEach(([p, lbl]) => {
-                var grsamt = SaleTrdDiscb4Prod ? r.goods : (r.goods - r.prodAmt);
+                var grsamt = SaleAddnlDiscb4Prod ? r.goods : (r.goods - r.prodAmt);
                 const pc = p + 'Pct', am = p + 'Amt';
                 let pct = n(r[pc]);
                 if (ch === am) pct = rnd(grsamt ? n(r[am]) / grsamt * 100 : (n(r[am]) > 0 ? 101 : 0));        // amount typed -> equivalent % (amount on 0 goods counts as > 100)
@@ -3087,11 +3139,11 @@ function CloseForm() {
             g.rows.forEach((r, i) => {
                 const id = 'itemName_' + i; if (!byId(id)) return;                  // column hidden -> nothing to bind
                 acInst.push(PaginatedAutocomplete({
-                    inputId: id, data: TempAL, startwitfieldname: AC.field, enablefilterstartwith: AC.startsWith,
+                    inputId: id, data: TempAL, startwitfieldname: startwithfield, enablefilterstartwith: autolistfilterwith,//AC.startsWith,
                     onSelect: item => {
                         $('#' + id).val(item.name);                                   // show the NAME (library puts the code by default)
                         var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-
+                        $("#lblTempABS").text(item.absqty);
                         loadselectedproductdetail(g, i, item.code, CustID, null, $("#cmbPriceType").val());
                         //g.patch(i, {
                         //    itemName: item.name, code: item.code, productID: +item.id || 0, mrp: +item.MRP || 0,
@@ -3167,7 +3219,7 @@ function CloseForm() {
                             { name: 'del', html: IC.del, cls: 'red', title: 'Remove row', onClick: (r, i) => G.deleteRow(i) }]
                     }]
                 },
-                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'text', key: 'itemName', ac: true }, { type: 'p', text: r => `${r.code} | Qty: ${f(r.stock, 2)}` }] },
+                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'text', key: 'itemName', ac: true }, { type: 'p', key: 'itemCode', sign: true, text: r => `${r.code} | Qty :  ${r.stock}` }] },
                 { id: 'mrp', title: 'MRP', width: 80, controls: [{ type: 'label', key: 'mrp', ro: false }] },
                 { id: 'priceExcl', title: 'Excl / Incl ₹', width: 85, controls: [num('priceExcl'), num('priceIncl')] },
                 { id: 'qty', title: 'Qty', width: 80, total: 'qty', controls: [num('qty')] },
@@ -3377,7 +3429,7 @@ function CloseForm() {
         //    tradePct: 0, tradeAmt: 0, addPct: 0, addAmt: 0, goods: 0, gross: 0, taxPct: 5, taxAmt: 0, net: 0//, diff: 0
         //}),
         $.each(ItemGridData, function (i, itemrow) {
-            if (itemrow.productID > 0) {
+            if (itemrow.productID > 0 && itemrow.qty > 0) {
                 var listProds = {
                     "ProdID": itemrow.productID,
                     "UomID": itemrow.uomID,
@@ -3450,6 +3502,21 @@ function CloseForm() {
             IsValid = false;
             $("#lblRoundNet").css("color", "red");
             showErrorSnackbar("Net Value should be greater than Zero");
+        }
+        var griditems = G.getData();
+        var items = griditems.filter(item => Number(item.productID) > 0).map(a => a.productID);
+        if (items.length == 0) {
+            IsValid = false;
+            $("#divErrProduct").html("Add atleat one product in Grid");
+            showErrorSnackbar("Add atleast one product in Grid");
+        }
+        else {
+            var sumqty = griditems.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number(a.qty || 0), 0);
+            if (sumqty == 0) {
+                IsValid = false;
+                $("#divErrProduct").html("Please enter a quantity of at least 1 for at least one item.");
+                showErrorSnackbar("Please enter a quantity of at least 1 for at least one item.");
+            }
         }
         return IsValid;
     }
@@ -3600,7 +3667,7 @@ function CloseForm() {
                         $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
                     }
                     $("#cmbPriceType").val(items.PriceID);
-                    $("#cmbPriceType").prop("disabled", true);
+                    $("#cmbPriceType").prop("disabled", nTransMode == 4 || nTransMode == 5);
                     $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);//, $("#txtStatus").val(items.Status)
                     updateInputColumn("txtFright", items.FrightAmt); updateInputColumn("txtOtherChargPern", items.OtherChargePern); updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
                     updateInputColumn("txtProdDiscAmt", items.TotalProdDiscAmt);
@@ -3632,6 +3699,98 @@ function CloseForm() {
                     //}),
 
                     var dataSet = items.lstProdInfo.map(function (itemsProd, nRowIndex) {
+                        console.log(" itemsProd ", itemsProd);
+                        const t = taxById(itemsProd.TaxID) || taxOf(itemsProd.TaxPern);                // item tax (TaxID, else by GST %)
+
+                        G.addRow();
+                        G.patch(nRowIndex, {
+                            itemName: itemsProd.Name, code: itemsProd.Code, productID: +itemsProd.ProdID || 0, mrp: +itemsProd.MRP || 0,
+                            stock: parseFloat(itemsProd.AdjQty).toFixed(DecVal),
+                            ApponMRPCum: itemsProd.CumMRPonTax, MRPonTaxAmt: itemsProd.MRPonTax, OrgPrice: +itemsProd.UomSalePrice || 0,
+                            priceExcl: +itemsProd.UomSalePrice || 0,
+                            qty: +itemsProd.UomQty || 0,
+                            _uoms: itemsProd.UOMList, uomID: +itemsProd.UomID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
+                            prodPct: +itemsProd.ProdDiscPern || 0, prodAmt: +itemsProd.ProdDiscAmt || 0,
+                            tradePct: +itemsProd.TradeDiscPern || 0, tradeAmt: +itemsProd.TradeDiscAmt || 0,
+                            addPct: +itemsProd.AddnlDiscPern || 0, addAmt: +itemsProd.AddnlDiscAmt || 0,
+                            taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.GSTPern || 0),
+                            goods: itemsProd.GoodsAmt, gross: itemsProd.GrossAmt, taxAmt: itemsProd.TaxAmt, net: itemsProd.NetAmt
+                        }, 'itemsProd');
+
+
+                    });
+                    if (nTransMode == 1 || nTransMode == 2 || nTransMode == 3) {
+                        G.addRow();
+                    }
+                    G.setLocked(nTransMode == 4 || nTransMode == 5);   // re-apply after the rows are patched
+                    // patching the rows re-syncs the footer from the grid; restore the saved footer discount values
+                    updateInputColumn("txtTradeDiscPern", items.TradeDiscPern); updateInputColumn("txtAddnlDiscPern", items.AddnlDiscPern);
+                    updateInputColumn("txtTradeDiscAmt", items.TradeDiscAmt); updateInputColumn("txtAddnlDiscAmt", items.AddnlDiscAmt);
+                    if ($("#txtEnableBranch").val() == "1") {
+                        $("#cmbBranch").prop("disabled", true);
+                    }
+                });
+            }, error: function (data) {
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
+                }
+            }
+        });
+    }
+    function GetVariantData(nVariantType, nID, nPartyID) {
+        $.ajax({
+            url: Aurl + "quotation/getvariantdata",
+            type: 'get',
+            contentType: 'json',
+            data: { VariantType: nVariantType, DocID: nID, PartyID: nPartyID },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                G.clearAllRows();
+                G.setLocked(nTransMode == 4 || nTransMode == 5);  
+                $.each(data, function (i, items) {
+                    var rdo1 = $("#rdoMainTableData").is(":checked");
+                    if (rdo1) {
+                        $("#txtID").val(items.ID);
+                    } else {
+                        $("#txtDraftID").val(items.ID);
+                    }
+                    //$("#cmbCreditTerm").val(items.PaymentTermID),$("#cmbPaymode").val(items.PaymentModeID),
+                    $("#txtCustomerID").val(items.CustomerID);
+
+                    $("#dtpDate").val(items.DocDate),
+                        $("#cmbBranch").val(items.BranchID);
+                    if ($("#txtTransType").val() != 3) {
+                        $("#lblDocID").text(items.DocID);
+                    }
+                    $("#cmbPriceType").prop("disabled", false);
+                    $("#cmbPriceType").val(items.PriceID);
+                    $("#txtRefNo").val(items.RefNo), $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), $("#txtStatus").val(items.Status);
+                    updateInputColumn("txtFright", items.FrightAmt); updateInputColumn("txtOtherChargPern", items.OtherChargePern); updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
+                    updateInputColumn("txtProdDiscAmt", items.TotalProdDiscAmt);
+                    updateInputColumn("txtTradeDiscPern", items.TradeDiscPern); updateInputColumn("txtAddnlDiscPern", items.AddnlDiscPern);
+                    updateInputColumn("txtTradeDiscAmt", items.TradeDiscAmt); updateInputColumn("txtAddnlDiscAmt", items.AddnlDiscAmt);
+                    updateInputColumn("txtRoundOff", items.RoundOffAmt);
+                    updateLabelColumn("lblPTGross", parseFloat(items.GrossAmt)); updateLabelColumn("lblPTTax", parseFloat(items.TaxAmt)); updateLabelColumn("lblRoundNet", parseFloat(items.NetAmt));
+
+                    $.each(items.lstPartyInfo, function (i, itemsParty) {
+                        $("#txtSearch").val(itemsParty.Name),
+                            $("#lblCode").text(itemsParty.Code),
+                            $("#cmbRating").text(itemsParty.Ratings),
+                            $("#lblMob1").text(itemsParty.Mob1),
+                            $("#lblGSTIN").text(itemsParty.GSTIN),
+                            $("#txtBAdd1").val(itemsParty.Billadd1),
+                            $("#txtBAdd2").val(itemsParty.Billadd2),
+                            $("#txtBAdd3").val(itemsParty.Billadd3),
+                            $("#txtSAdd1").val(itemsParty.Shipadd1),
+                            $("#txtSAdd2").val(itemsParty.shipadd2),
+                            $("#txtSAdd3").val(itemsParty.Shipadd3),
+                            $("#txtPincode").val(itemsParty.Pincode);
+                    });
+                    var dataSet = items.lstProdInfo.map(function (itemsProd, nRowIndex) {
                         const t = taxById(itemsProd.TaxID) || taxOf(itemsProd.TaxPern);                // item tax (TaxID, else by GST %)
 
                         G.addRow();
@@ -3641,6 +3800,9 @@ function CloseForm() {
                             priceExcl: +itemsProd.UomSalePrice || 0,
                             qty: +itemsProd.UomQty || 0,
                             _uoms: itemsProd.UOMList, uomID: +itemsProd.UomID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
+                            prodPct: +itemsProd.ProdDiscPern || 0, prodAmt: +itemsProd.ProdDiscAmt || 0,
+                            tradePct: +itemsProd.TradeDiscPern || 0, tradeAmt: +itemsProd.TradeDiscAmt || 0,
+                            addPct: +itemsProd.AddnlDiscPern || 0, addAmt: +itemsProd.AddnlDiscAmt || 0,
                             taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.GSTPern || 0),
                             goods: itemsProd.GoodsAmt, gross: itemsProd.GrossAmt, taxAmt: itemsProd.TaxAmt, net: itemsProd.NetAmt
                         }, 'itemsProd');
@@ -3729,5 +3891,241 @@ function CloseForm() {
             var Branch = $("#cmbBranch").val();
             GetDocumentID(DocDate, Branch, 14);
         }, 1000);
+    }
+    function ReLoadProductAutolists() {
+        G.cfg.onRender(G);
+    }
+        var Url = '@Session["url"].ToString()';
+    $("#opencustomer").click(function (e) {
+        var nPartyID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        const hasPermission = nPartyID == 0
+            ? checkAddEditPermission("103")
+            : checkAddEditPermission("104");
+        if (hasPermission) {
+            var ProdUrl = Url + "CustomerMaster?name=rr5Wddu2buz5UA%2BG9dT9Ucj%2FeOlQpQPpxXStNyfzZdQ%3D&strFormID=9PmmH5xzgb%2BC08uj8hAzfA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g==&TranID=jJOtHsRVwYECOhoiBc69dA%3D%3D&ID=" + nPartyID;
+            window.open(ProdUrl, "_blank", "width=" + vw + ",height=" + vh + ",scrollbars=yes,resizable=yes");
+        }
+        else {
+            showErrorSnackbar("You don't have pemission for &ensp;<h4><code> " + (nPartyID == 0 ? "Add" : "Edit") + " Customer </code></h4>");
+        }
+    });
+
+    // Add this once on page load in your invoice JS
+    window.addEventListener("message", function (event) {
+        var data = event.data;
+        console.log("depend data", data);
+        if (data && data.source === "CustomerMaster") {
+            var customerID = data.customerid;
+            var code = data.customercode;
+            var name = data.customername;
+
+            // ✅ Use the returned values — example:
+            $("#txtCustomerID").val(customerID);
+            GetData(3, code);
+            LoadVendorAutolistdata();
+        }
+        else if (data && data.source === "ProductMaster") {
+            var ProductID = data.productid;
+            var code = data.productcode;
+            var name = data.productname;
+            $("#" + F8ItemID).val(name);
+            var PriceID = $("#cmbPriceType").val();
+            var dt = $("#dtpDate").val();
+            var branchdi = $("#cmbBranch").val()
+            GetData(2, branchdi, dt, null, PriceID);
+            var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
+            loadselectedproductdetail(G, F8RowIndex, code, CustID, null, $("#cmbPriceType").val());
+            setTimeout(() => {
+                ReLoadProductAutolists();
+            }, 1000);            
+        }
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F8") {
+            event.preventDefault();
+            var FieldID = event.target.id;
+            var FieldName = event.target.name;
+            if (FieldID == "txtSearch") {
+                $("#opencustomer").trigger("click");
+            }            
+        }
+        else if (event.altKey && (event.key == 's')) {//Switch contains & startwith
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var fieldname = event.target.name;
+            var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
+            if (fieldid == "txtSearch") {
+                autolistfilterwith = !autolistfilterwith;           
+                showInfoSnackbar(infomessage);
+                //~AutoList Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                        window.scrollTo({
+                            top: document.body.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtFilterParty") {
+                autolistfilterwith = !autolistfilterwith;           
+                showInfoSnackbar(infomessage);
+                //~AutoList Filter Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        GetData(3, item.code);
+                        return false;
+                    }
+                });
+            }
+        }
+        else if (event.altKey && (event.key == 'a')) {//change search field
+            event.preventDefault();
+            var fieldid = event.target.id;
+            var fieldname = event.target.name;
+            if (fieldid == "txtSearch") {
+                startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");            
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                PaginatedAutocomplete({
+                    inputId: "txtSearch",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtSearch").val(item.code);
+                        GetData(3, item.code);
+                        window.scrollTo({
+                            top: document.body.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                        return false;
+                    }
+                });
+            }
+            if (fieldid == "txtFilterParty") {
+                startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");            
+                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
+                //~AutoList Filter Vendor
+                PaginatedAutocomplete({
+                    inputId: "txtFilterParty",
+                    data: arrVendor,
+                    startwitfieldname: startwithfield,
+                    enablefilterstartwith: autolistfilterwith,
+                    onSelect: function (item) {
+                        $("#txtFilterParty").val(item.name);
+                        GetData(3, item.code);
+                        return false;
+                    }
+                });
+            }
+        }
+        // autolistfilterwith = 1;
+        else if (event.altKey && (event.key == 'q')) {//Info about Autolist property
+            var containinfo = autolistfilterwith ? "Start With" : "Contains";
+            var searchcolumninfo = startwithfield;
+
+            var alinfo = `
+<div class="p-3" style="min-width:360px;">
+    <!-- Search Mode -->
+    <div class="border rounded-3 p-3 mb-2 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Mode</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${containinfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="border rounded-3 p-3 bg-light">
+        <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success me-2"
+                     style="width:34px;height:34px;">
+                    <i class="bi bi-tag"></i>
+                </div>
+
+                <div>
+                    <div class="text-muted medium fw-semibold">Search Field</div>
+                    <div class="fw-bold text-dark" style="font-size:16px">&emsp;<code>${searchcolumninfo}</code></div>
+                </div>
+            </div>
+
+            <i class="bi bi-chevron-right text-muted"></i>
+        </div>
+    </div>
+
+</div>
+`;
+            InfoDialogMsg(alinfo, "Autolist property");
+        }
+    });
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to New Quotation
+        $("#txtDraftID").val($("#txtID").val())
+        var ID = $("#txtID").val();
+        nTransMode = 1;
+        GetProductViewData(11, ID);
+        //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("#dvMain").show();
+        $("#dvDocuments").hide();
+        $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
+        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp,#btnClear").hide();
+        $("#MainHeading").text("Create Quotation");
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 14);
+        }, 1000);
+    }
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Home Quick Access View
+        var ID = $("#txtID").val();
+        nTransMode = 5;
+        GetProductViewData(7, ID);
+        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
+        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
+        $("#btnSave,#btnClear,#btnDraft,#btnClear").hide();
+        $("#btnPDF,#btnPreview").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnPrint").show();
+        $("#dvMain").show();
+        $("#dvDocuments").hide();
+        $("#btnEmail,#btnWhatsapp").show();
+        $("#MainHeading").text("View Quotation");
+    }
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {//Home Invoice to Quotation Variant
+        var ID = $("#txtID").val();
+        nTransMode = 1;
+        var VarType = $("#txtTransVariantID").val();
+        var PartyID = $("#txtTransVariantPartyID").val();
+        GetVariantData(VarType, ID, PartyID);
+        $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
+        $("#btnTEdit,#btnTCancel,#btnTVariant,#btnEmail,#btnWhatsapp,#btnPreview,#btnPDF,#btnPrint,#btnClear").hide();
+        $("#dvMain").show();
+        $("#dvDocuments").hide();
+        $("#MainHeading").text("Create Quotation");
     }
 </script>
