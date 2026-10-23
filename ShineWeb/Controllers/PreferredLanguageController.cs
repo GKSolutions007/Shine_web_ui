@@ -1,0 +1,41 @@
+﻿using ShineWeb.Models;
+using System;
+using ShineWeb.BuisnessLayer;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Data;
+using System.Web.Mvc;
+
+namespace ShineWeb.Controllers
+{
+    public class PreferredLanguageController : Controller
+    {
+        // GET: PreferredLanguage
+        public ActionResult Index(string Name, string strFormID)
+        {
+            if (Session["LoginUserID"] == null)
+            {
+                return RedirectToAction("Index", "Login");
+            }
+            else
+            {
+                int UID = Convert.ToInt32(Session["LoginUserID"]);
+                DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
+                bool Formhaveanypermission = dtPermission.Select("MenuId = 581", null).Length > 0;
+                if (!Formhaveanypermission && UID != 1)
+                {
+                    return RedirectToAction("nopermission", "Home",
+                        new { emanmrofnoissimerpon = "Fw8gZ0kVtOCg7TWOE72ebsp6bTtGNxoFewh9BSnyHbI=" });
+                }
+                Name = clsEncryptDecrypt.Decrypt(Name);
+                string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
+                ViewData["FormName"] = Name;
+                ViewData["FormID"] = decFormID;
+                SingleMasterModel dam = new SingleMasterModel();
+                dam.FormName = Name;
+                return View(dam);
+            }
+        }
+    }
+}

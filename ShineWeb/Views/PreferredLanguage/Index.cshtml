@@ -1,0 +1,313 @@
+﻿@model ShineWeb.Models.SingleMasterModel
+@{
+    ViewBag.Title = ViewData["FormName"];
+    Layout = "~/Views/Shared/_LayoutBT5.cshtml";
+}
+<link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
+<link href="~/Content/navbar.css" rel="stylesheet" />
+<link href="~/Content/buttonTop.css" rel="stylesheet" />
+<link href="~/Content/Snackbar.css" rel="stylesheet" />
+<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />
+<script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-3.7.1.js"></script>
+<script src="~/Scripts/jquery-ui.js"></script>
+<script src="~/Scripts/dataTables.2.2.2.js"></script>
+<script src="~/Scripts/js/refreshtoken.js"></script>
+<style>
+    .gdInput {
+        width: 100%;
+        height: 25px;
+        border-width: 0 0 0.1px 0;
+        border-color: #e0d6d6;
+    }
+
+    td {
+        font-size: 11px;
+    }
+
+    input[type=number] {
+        text-align: right;
+    }
+
+        input[type=number]::placeholder {
+            text-align: left;
+        }
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .form-label {
+        position: relative;
+        display: block;
+        clear: both;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .labelup {
+        -webkit-transform: translateY(50%);
+        -moz-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        -o-transform: translateY(-50%);
+        transform: translateY(50%);
+        -webkit-transition: all 0.2s ease-in-out;
+        -moz-transition: all 0.2s ease-in-out;
+        transition: all 0.2s ease-in-out;
+        position: absolute;
+        top: -56%;
+        left: 1em;
+        background: #fffefe;
+        color: #2b2828;
+        font-size: 1em;
+        cursor: text;
+        pointer-events: none;
+        font-family: sans-serif;
+    }
+
+    #tblPreferedLanguage tbody tr:hover {
+        background-color: azure !important;
+    }
+</style>
+<body>
+    @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
+
+    <div class="d-flex align-items-center gap-2">
+        <!-- Larger heading -->
+        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    </div>
+    <hr />
+    <div class="toastBox"></div>
+    <div id="dvMainTable">
+
+        <div class="row">
+            <table class="w-100">
+                <tr>
+                    <td style="padding-right:5px;" width="5%">
+                        <span class="form-label">
+                            <select class="form-control FormfilterclrField" id="cmbForm">
+                                <option value="1">Customer</option>
+                                <option value="2">Vendor</option>
+                                <option value="3">Product</option>
+                                <option value="4">Beat</option>
+                                <option value="5">Salesman</option>
+                            </select>
+                            <label class="labelup" for="cmbForm">Form</label>
+                        </span>
+                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrTransaction" class="clrdivs"></div>
+                    </td>
+                    <td style="padding-right:5px;" width="5%">
+                        <span class="form-label" >
+                            <select class="form-control FormfilterclrField" id="cmbShowType">
+                                <option value="0">Value Only</option>
+                                <option value="1">Show All</option>
+                                <option value="2">Blank Only</option>
+                            </select>
+                            <label class="labelup" for="cmbShowType">Show</label>
+                        </span>
+                    </td>
+                    <td width="10%">
+                        <button id="btnFilter" class="btn btn-filter-style"><span class="glyphicon glyphicon-filter" style="color: white"></span>&#x2009;Filter</button>
+                    </td>
+                    <td width="20%">
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-bordered" id="tblPreferedLanguage" style="width:100%">
+                    <thead>
+                        <tr class="trclrforcolheader">
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:0%;">ID</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:2%;">#</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:10%;">Original Name</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:9%;">Name</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Bill Address 1</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:8%;">Bill Address 2</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:12%;">Bill Address 3</th>
+                            <th class="text-center trclrforcolheader" style="font-size:12px;width:15%;">Contact Person</th>
+                        </tr>
+                    </thead>
+
+                    <tfoot>
+                        <tr>
+                            @*<td colspan="9" class="fw-bolder">
+                                <b class="text-primary">Hint :</b>
+                                <code>'Space'</code> - Assign Doc Date,&ensp;
+                                <code>
+                                    ';'
+                                </code>(semi-colon) - Assign Doc Date + 1,&ensp;
+                                <code>'D'</code> - Assign Above Date
+                            </td>*@
+
+                            <td colspan="8">
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-clear-style" id="btnClear">
+                                        <span class="glyphicon glyphicon-refresh"> Clear</span>
+                                    </button>
+
+                                    <button type="button" class="btn btn-save-style" id="btnSave">
+                                        <span class="glyphicon glyphicon-saved"> Save</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    var Aurl = '@Session["APIurl"]';
+    var loadedForm = 1;
+        var UID = '@Session["LoginUserID"]';
+    var DecVal = '@Session["DecimalValues"]';
+    var itemorderby = '@Session["ItemOrderby"]';
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var autolistfilterwith = EnableALStartWith;
+var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
+    function esc(v) {
+        return v ? String(v).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;") : "";
+    }
+    function inputCol(field, name) {
+        return {
+            data: field,
+            render: function (d) {
+                return '<input type="text" name="' + name + '" class="gdInput" value="' + esc(d) + '"/>';
+            }
+        };
+    }
+
+    var Table = $('#tblPreferedLanguage').DataTable({
+        paging: false, info: false, searching: true, ordering: false,
+        scrollY: "400px", scrollX: true, scrollCollapse: true,
+        columns: [
+            { data: "ID", visible: false },
+            { data: null, className: "dt-body-center", render: function (d, t, r, m) { return m.row + 1; } },
+            { data: "OriginalName" },
+            inputCol("Name", "PLName"),
+            inputCol("BillAddress1", "PLBillAdd1"),
+            inputCol("BillAddress2", "PLBillAdd2"),
+            inputCol("BillAddress3", "PLBillAdd3"),
+            inputCol("ContactPerson", "PLContactPerson")
+        ]
+    });
+    function SetColumns() {
+        var isParty = (loadedForm == 1 || loadedForm == 2);
+        Table.columns([4, 5, 6, 7]).visible(isParty);
+        Table.columns.adjust();
+    }
+
+    function GetData() {
+        $.ajax({
+            url: Aurl + "preferredlanguage/getpreferredlanguage",
+            type: 'GET',
+            dataType: 'json',
+            data: {
+                Form: $("#cmbForm").val(),
+                ShowAll: $("#cmbShowType").val()
+            },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                loadedForm = parseInt($("#cmbForm").val());
+                SetColumns();
+                Table.clear().rows.add(data).draw();
+                if (data.length == 0) showErrorSnackbar("No Records Found");
+            },
+            error: function () { }
+        });
+    }
+
+    $(document).ready(function () {
+        $("#cmbForm").focus();
+        GetData();
+    });
+
+    $("#btnFilter").click(function () { GetData(); });
+
+    $('#btnClear').click(function () {
+        if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
+    });
+    function ClearForm() {
+        $("#cmbShowType").val("0");
+        GetData();
+    }
+
+    function norm(v) { return (v === null || v === undefined) ? "" : String(v).trim(); }
+
+    var listPL = [];
+    function addRowsinArray() {
+        listPL = [];
+        var isParty = (loadedForm == 1 || loadedForm == 2);
+        $("#tblPreferedLanguage tbody tr").each(function () {
+            var rowdata = Table.row($(this)).data();
+            if (!rowdata) return;
+
+            var name = norm($(this).find("input[name='PLName']").val());
+            var a1 = isParty ? norm($(this).find("input[name='PLBillAdd1']").val()) : "";
+            var a2 = isParty ? norm($(this).find("input[name='PLBillAdd2']").val()) : "";
+            var a3 = isParty ? norm($(this).find("input[name='PLBillAdd3']").val()) : "";
+            var cp = isParty ? norm($(this).find("input[name='PLContactPerson']").val()) : "";
+
+            var changed = name != norm(rowdata.Name);
+            if (isParty) {
+                changed = changed
+                    || a1 != norm(rowdata.BillAddress1)
+                    || a2 != norm(rowdata.BillAddress2)
+                    || a3 != norm(rowdata.BillAddress3)
+                    || cp != norm(rowdata.ContactPerson);
+            }
+            if (!changed) return;
+
+            listPL.push({
+                "Form": loadedForm,
+                "ID": rowdata.ID,
+                "PLName": name,
+                "PLBillAdd1": a1,
+                "PLBillAdd2": a2,
+                "PLBillAdd3": a3,
+                "PLContactPerson": cp
+            });
+        });
+    }
+
+    $("#btnSave").click(function () {
+        if (Table.rows().count() == 0) { showErrorSnackbar("No Records Found"); return; }
+        addRowsinArray();
+        if (listPL.length == 0) { showErrorSnackbar("No changes to save"); return; }
+        if (cfFocus != 3) { ConfirmDialogMsg("Do you want to save data?"); } else { SaveData(); }
+    });
+
+    function SaveData() {
+        $("#btnSave").prop("disabled", true);
+        $.ajax({
+            url: Aurl + "preferredlanguage/savepreferredlanguage",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(listPL),
+            cache: false,
+            processData: false,
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) { GetData(); showSuccessSnackbar(items.Message); }
+                    else { showErrorSnackbar(items.Message); }
+                });
+            },
+            error: function () { $("#btnSave").prop("disabled", false); }
+        });
+    }
+</script>
