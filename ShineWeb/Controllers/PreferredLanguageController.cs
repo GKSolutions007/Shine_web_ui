@@ -19,6 +19,7 @@ namespace ShineWeb.Controllers
                 return RedirectToAction("Index", "Login");
             }
             else
+
             {
                 int UID = Convert.ToInt32(Session["LoginUserID"]);
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
