@@ -28,12 +28,14 @@ namespace ShineWeb.Controllers
                     return RedirectToAction("nopermission", "Home",
                         new { emanmrofnoissimerpon = "gYNqw95gD6yxD1/0iKRh462Kyyg+TjHXf8IaxBJBTho=" });
                 }
+
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
+
                 string AddPerm = dtPermission.Select("MenuID = 572", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuID = 573", null).Length > 0 || nUID == 1 ? "1" : "0";
                 string VarPerm = dtPermission.Select("MenuID = 574", null).Length > 0 || nUID == 1 ? "1" : "0";
@@ -43,9 +45,11 @@ namespace ShineWeb.Controllers
                 dam.ID = TranID;
                 dam.TransType = TypeID;
                 dam.Add = AddPerm;
+
                 dam.View = ViewPerm;
                 dam.Variant = VarPerm;
                 dam.EnableBranch = EnbBranch;
+
                 return View(dam);
             }
         }
