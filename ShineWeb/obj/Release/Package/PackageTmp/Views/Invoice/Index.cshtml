@@ -1161,10 +1161,15 @@
                         <div class="row g-2">
 
                             <div class="col-12 col-sm-6">
-                                <span class="form-label">
-                                    <select class="form-control FormclrcmbField" id="cmbPaymode"><option value="0">Select Paymode</option></select>
-                                    <label class="labelup">Payment Mode *</label>
-                                </span>
+                                <div class="input-group">
+                                    <span class="form-label flex-grow-1">
+                                        <select class="form-control FormclrcmbField" id="cmbPaymode"><option value="0">Select Paymode</option></select>
+                                        <label class="labelup">Payment Mode *</label>
+                                    </span>
+                                    <span id="icViewPmDetails" class="input-group-text" title="Payment Mode Details" style="cursor:pointer;">
+                                        <i class="fas fa-info-circle"></i>
+                                    </span>
+                                </div>
                                 <div class="text-danger ps-1 clrdivs" id="divErrPaymode"></div>
                             </div>
                             <div class="col-12 col-sm-6">
@@ -2216,6 +2221,7 @@
                 visible: ViewPerm,
                 // $("#txtViewID").val() == 1,
                 handler: (rowdata) => {
+                    GetData(1, RoleID);
                     $(".clrdivs").html("");
                     var ID = rowdata.ID;//[0];
                     var Sts = rowdata.Status;//[10];
@@ -2231,7 +2237,7 @@
                     $("#btnEmail,#btnWhatsapp").show();
                     $("#btnSave,#btnClear,#btnDraft").hide();
                     $("#dvMain").show();
-                    $("#dvDocuments,#btnAddNewProduct").hide();
+                    $("#dvDocuments,#btnAddNewProduct,#btnPaymentClear,#btnPaymentAccept").hide();
                     $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
                     $("#MainHeading").text("View Invoice_" + Sts);
                     GetPrintProfile(4);
@@ -2757,7 +2763,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
     $('#btnPaymentClose').click(function (e) {
         modalPayment.hide();
     });
-
+    $('#icViewPmDetails').click(function (e) {
+        var pmid = $("#cmbPaymode").val();
+        if (pmid == 8) {
+            modalPayment.show();
+        } else {
+            showErrorSnackbar("Paymentmode details shows only for Multimode");
+        }
+    });
+    
 
     var modalCreditLimPassword = new bootstrap.Modal(document.getElementById("mymodalCreditLimPassword"));// document.getElementById("mymodalCreditLimPassword");
     //var spanCreditLimPassword = document.getElementsByClassName("closeCreditLimPassword")[0];
@@ -3161,12 +3175,25 @@ if ($("#txtReurnPricePerm").val() == 0) {
         ApplyMultimodeAmount(roundedNet);
         ProductTable.columns.adjust().draw();
     }
-
+    $("#cmbPaymode").change(function (e) {
+        if ($("#cmbPaymode").val() == 8) {
+            $("#cmbCreditTerm").val(0).prop("disabled", true);
+        } else {
+            $("#cmbCreditTerm").val(0).prop("disabled", false);
+        }
+    });
     function ApplyMultimodeAmount(dNetAmt) {
         updateInputColumn("txtPMPTotal", dNetAmt);
+        updateInputColumn("txtPMPBalance", dNetAmt);
         if ($("#cmbPaymode").val() == 8) {
-            var AdjAmt = parseFloat(document.getElementById("txtPMPRecdAmt").getAttribute("txttag"));
-            var bal = dNetAmt - AdjAmt;
+            var GridAdjAmt = 0;
+            $("#tblPayment tbody tr input[name=PaymentAmount]").each(function () {
+                GridAdjAmt += parseFloat($(this).attr("txttag"));
+            });
+            //var AdjAmt = parseFloat(document.getElementById("txtPMPRecdAmt").getAttribute("txttag"));
+            var bal = dNetAmt - GridAdjAmt;
+            updateInputColumn("txtPMPRecdAmt", GridAdjAmt);
+            updateInputColumn("txtPMPAdjAmt", Math.min(dNetAmt, GridAdjAmt));
             updateInputColumn("txtPMPBalance", bal);
         }
     }
@@ -4615,7 +4642,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         else {
 
             var SumNet = Net + parseFloat(FC);
-            var RoundNetAmt = Math.floor(SumNet);
+            //var RoundNetAmt = Math.floor(SumNet);
+            var RoundNetAmt = ApplyRoundoff(SumNet);
             var Roundoff = (RoundNetAmt - (Net + FC));
             //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
 
@@ -6370,7 +6398,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var crterm = '';// arrAllPaymode[i].ID == 4 ? '<select name="dgvPMTransMode" id="dgvPMTransMode' + i + '" class="gdInput"><option value="0">Select Mode</option>' + strTransmode + ' </select>' : '';
             var bankacc = arrAllPaymode[i].ID == 4 ? '<select name="dgvPMAccNo" id="dgvPMAccNo' + i + '" class="gdInputPMAccNo dgvAccNo"><option value="0">Select A/c No</option>' + strBankAcc + ' </select>&ensp;<i class="glyphicon glyphicon-info-sign iconBankInfo" title="Bank Info" name="iBankInfo"></i><br/>' + crterm :
                 arrAllPaymode[i].ID == 5 ? '<select name="dgvPMAccNo" id="dgvPMAccNo' + i + '" class="gdInputPMAccNo dgvAccNo"><option value="0">Select A/c No</option>' + strBankAcc + ' </select>&ensp;<i class="glyphicon glyphicon-info-sign iconBankInfo" title="Bank Info" name="iBankInfo"></i>'    :
-                arrAllPaymode[i].ID == 7 ? '<select name="dgvPMAccNo" id="dgvPMAccNo' + i + '" class="gdInput"><option value="0">Select Credit Date</option>' + strCreditTerm + ' </select>' :  '';
+                arrAllPaymode[i].ID == 7 ? '<select name="dgvPMAccNo" id="dgvPMAccNo' + i + '" class="gdInput"><option value="0">-- Credit Date --</option>' + strCreditTerm + ' </select>' :  '';
             var neft = arrAllPaymode[i].ID == 4 ? '<input type="number" id="dgvPMNeft' + i + '" name="NEFT" placeholder="Ref No" class="gdInput">' : arrAllPaymode[i].ID == 2 ?
                 '<input type="number" id="dgvPMNeft' + i + '" name="NEFT" class="gdInput">' : '';
             var chqdate = arrAllPaymode[i].ID == 2 ? '<input type="date" id="dgvPMDate' + i + '" name="ChqDate" value="' + $("#dtpDate").val() + '" class="gdInput">' : '';
@@ -6769,7 +6797,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 $.each(data, function (i, items) {
                     var rdo1 = $("#rdoMainTableData").is(":checked");
                     var rdo3 = $("#rdoQTNTableData").is(":checked");
-
+                    LoadPaymentModeData();
                     if (rdo1) { $("#txtID").val(items.ID); }
                     else { $("#txtDraftID").val(items.ID); }
 
@@ -6872,7 +6900,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         });
                         $("#txtCustomerRemarks").val(custRemArr.join("\n"));
                     });
-
+                    if (items.lstPaymodeInfo) {
+                        $.each(items.lstPaymodeInfo, function (i, itemsPaymode) {
+                            ReloadMultimodedata(itemsPaymode)
+                        });
+                    }
                     GetProductList();
                     ProductRID = 0;
 
@@ -7020,6 +7052,51 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 if (data.status == "401") {
                     var msg = data.responseJSON.Message;
                 }
+            }
+        });
+    }
+   function ReloadMultimodedata(rowdetail){        
+        $("#tblPayment tbody tr").each(function () {
+            var allValues = {};
+            rowdata = TablePaymode.row($(this)).data();
+            PMID = rowdata[0];
+            if (rowdetail.Mode == PMID) {
+                $(this).find("input").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "PaymentAmount") {
+                        updateInputColumn(fieldID, rowdetail.RecdAmt)                        
+                    }
+                    if (fieldName == "IFSC") {
+                        $(this).val(rowdetail.IFSC);
+                    }
+                    if (fieldName == "VisaPern") {
+                        updateInputColumn(fieldID, rowdetail.VisaPern)     
+
+                    }
+                    if (fieldName == "VisaAmt") {
+                        updateInputColumn(fieldID, rowdetail.VisaAmt)     
+                    }
+                    if (fieldName == "NEFT") {
+                        $(this).val(rowdetail.Neft);
+                    }
+                    if (fieldName == "ChqDate") {
+                        $(this).val(rowdetail.Date);
+                    }
+                });
+                $(this).find("select").each(function (index) {
+                    const fieldName = $(this).attr("name");
+                    const fieldID = $(this).attr("id");
+                    if (fieldName == "dgvPMAccNo") {
+                        $(this).val(rowdetail.BankAccId);
+                    }
+                    //if (fieldName == "dgvPMTransMode") {
+                    //    TransMode = $(this).val();
+                    //}
+                    if (fieldName == "dgvPMBank") {
+                        $(this).val(rowdetail.BankID);
+                    }
+                });
             }
         });
     }
@@ -7434,7 +7511,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#btnSave,#btnDraft").show();
         $("#btnSave,#btnClose").prop("disabled", false);
         $("#btnDraft").prop("disabled", false);//,#btnDraft
-        $("#dvMain,#btnAddNewProduct").show();
+        $("#dvMain,#btnAddNewProduct,#btnPaymentClear,#btnPaymentAccept").show();
         $("#dvDocuments").hide();
         $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
         $("#MainHeading").text(rdo1 ? "Modify Invoice" : "Create Invoice");
@@ -7500,7 +7577,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
         $("#btnSave").show();
         $("#dvMain").show();
-        $("#dvDocuments,#btnAddNewProduct").hide();
+        $("#dvDocuments,#btnAddNewProduct,#btnPaymentClear,#btnPaymentAccept").hide();
         $("#btnSave").prop("disabled", false);
         $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
         $("#balanceContainer").show();
@@ -7535,7 +7612,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").hide();
         $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
-        $("#btnSave,#btnClear,#btnDraft").show();
+        $("#btnSave,#btnClear,#btnDraft,#btnPaymentClear,#btnPaymentAccept").show();
         $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
         $("#balanceContainer").hide()
         if ($("#txtEnableBranch").val() == 1) {
@@ -7647,7 +7724,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                 visible: $("#txtAddID").val() == 1 && rdo1 == "1",
                                 onClick: (gridInstance, event) => {
                                     nTransMode = 1;
-                                    $("#dvMain,#btnAddNewProduct").show();
+                                    $("#dvMain,#btnAddNewProduct,#btnPaymentClear,#btnPaymentAccept").show();
                                     $("#gotolocation").hide();
                                     $("#dvDocuments").hide();
                                     $("#balanceContainer").hide()
@@ -9039,6 +9116,29 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 else {
                     showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (prodid == 0 ? "Add" : "Edit") + " Product</code></h4>")
                 }
+            }
+        }
+        if (event.code == "Space") {
+            var fid = event.target.id;
+            var fname = event.target.name;
+            var fvalue = event.target.value;
+            if (fname == "PaymentAmount") {
+                var balvalue = parseFloat($("#txtPMPBalance").attr("txttag"));
+                if (balvalue > 0) {
+                    updateInputColumn(fid, (balvalue + parseFloat(fvalue)));
+                    var GridAdjAmt = 0;
+                    var TotAmt = parseFloat(document.getElementById("txtPMPTotal").getAttribute("txttag"));
+                    $("#tblPayment tbody tr input[name=PaymentAmount]").each(function () {
+                        GridAdjAmt += parseFloat($(this).attr("txttag"));
+                    });
+                    GridAdjAmt = GridAdjAmt;
+                    updateInputColumn("txtPMPRecdAmt", GridAdjAmt);
+                    updateInputColumn("txtPMPBalance", 0);
+                    updateInputColumn("txtPMPAdjAmt", GridAdjAmt);
+                } else {
+                    showErrorSnackbar("Balance amount should be greater than 0");
+                }
+
             }
         }
         if (event.key === "F4") {
