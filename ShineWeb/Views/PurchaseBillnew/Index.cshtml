@@ -681,6 +681,13 @@
     </div>
 </div>
 <link href="~/Content/TransGrid/quotation.css" rel="stylesheet" />
+<style>
+    span.gc-itemName {
+        display: block;
+        padding: 3px 4px;
+        text-align: left;
+    }
+</style>
 <body>
     @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
     @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
@@ -947,6 +954,7 @@
                 <input id="txtTempABS" />
                 <input id="txtHProdCode" />
                 <input id="txtMRPonTax" />
+                <input type="hidden" id="txtItemRowIndex" />
             </div>
 
             <!-- Item Details -->
@@ -1032,7 +1040,7 @@
 
             <div class="gwrap" id="grid"></div>
             <div id="msg" hidden></div>
-            <div class="col-sm-12 col-md-12 col-lg-12">
+            <div class="col-sm-12 col-md-12 col-lg-12" hidden>
                 <table class="table table-bordered  row-border order-column" id="tblProductData" width="100%">
                     <thead>
                         <tr>
@@ -3280,6 +3288,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 allValues["TaxID"] = TempProd.PurchaseTaxID;
                 allValues["UOMName"] = $('#cmbUOM option:selected').text()
                 allValues["CheckInclusive"] = isChk;
+                allValues["dMRPonTax"] = dMRPonTax;
+                allValues["ApponMRPCum"] = dApponMRPCum;
+                
                 BatchAcceptArray.push(allValues);
             });
             var TaxID = TempProd.PurchaseTaxID;
@@ -3299,6 +3310,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             //var gross = goods - PDiscAmt;
             //var TAmt = dApponMRPCum > 0 ? gross + TotalMRPonTax : (gross * TPren) / 100;
             //var NAmt = gross + TAmt;
+            var pvabs = TempProd.ABSQty || 0; var pvabsfree = TempProd.ABSFreeQty || 0; var pvabsdmg = TempProd.ABSDmgQty || 0;
             var Q1 = document.getElementById("txtBatchQty").getAttribute("txttag"); //$("#txtBatchQty").val()
             var Q2 = document.getElementById("txtBatchFreeQty").getAttribute("txttag");
             var Q3 = document.getElementById("txtBatchDmgQty").getAttribute("txttag");
@@ -3324,6 +3336,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var diffcalc = parseFloat(gross) / parseFloat(Q1);
                 var Diffval = parseFloat(DiffPrice) - diffcalc;
                 var Diff = Diffval;// Math.abs(Diffval);
+                var InclDiff = (Diffval * TPren) / 100;
                 var DiffClr = Diffval >= 0 ? "green" : "red";
                 var DiffField = '<label name="DiffValue" style="color:' + DiffClr + '" lbltag="' + Diff + '" title="' + Diff + '" class="lblsettag" id="dgvProdDiffValue' + ProductRID + '">' + parseFloat(Diff).toFixed(DecVal) + '</label><br/>' + Reasons;
                 var LocationField = "<select name= 'Location' class='gdInput dgvcmbLocation' id='dgvLocation" + ProductRID + "'>" + strLocation + "</select>";
@@ -3346,39 +3359,20 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 const t = taxById(TaxID) || taxOf($("#txtBatchTaxPern").val());
                 var uomfd = $('#cmbUOM');
                 var uoms = []
-                uomfd.find('option').each(function () {
-                    var option = $(this);
-                    console.log("attrbs : ", this.attributes, Array.from(this.attributes));
-                    var cf = "0.00";
-                    var attrbs = Array.from(this.attributes).reduce((obj, attr) => {
-                        if (attr.name == "name")
-                            cf = attr.value;
-                    }, {})
-                    var opt = {
-                        Name: option.text(),
-                        ID: option.val(),
-                        CF: cf
-                    }
-                    uoms.push(opt)
+                var opt = {
+                    Name: $('#cmbUOM option:selected').text(),
+                    ID: $("#cmbUOM").val(),
+                    CF: selConvFact
+                }
+                uoms.push(opt)
 
-                });
-                console.log("row add data", {
-                    productID: $("#txtHProdID").val(), ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, TransPrice: DiffPrice, ItemBatchdetail: thisitembatch,
-                    itemName: PName, code: $('#txtHProdCode').val(), stock: 0, freestock: 0, dmgstock: 0,
-                    mrp: +firstmrp, hsncode: hsn, qty: +Q1, freeqty: +Q2, dmgqty: +Q3, _uoms: uoms, uomID: $("#cmbUOM").val(), uom: $('#cmbUOM option:selected').text(),
-                    uomCF: selConvFact, reason: 0, locationID: $("#cmbLocation").val(),
-                    taxID: TaxID, prodPct: 0, prodAmt: 0,
-                    tradePct: 0, tradeAmt: 0, addPct: 0, addAmt: 0,
-                    goods: goods, gross: gross, taxPct: $("#txtBatchTaxPern").val(), taxAmt: TAmt, net: NAmt, diff: Diff
-                });
                 G.patch(gridindex, {
-                    productID: $("#txtHProdID").val(), ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, TransPrice: DiffPrice, ItemBatchdetail: thisitembatch,
-                    itemName: PName, code: $('#txtHProdCode').val(), stock: 0, freestock: 0, dmgstock: 0,
+                    productID: $("#txtHProdID").val(), ApponMRPCum: dApponMRPCum, MRPonTaxAmt: TotalMRPonTax, TransPrice: DiffPrice, ItemBatchdetail: thisitembatch,
+                    itemName: PName, code: $('#txtHProdCode').val(), stock: pvabs, freestock: pvabsfree, dmgstock: pvabsdmg,
                     mrp: +firstmrp, hsncode: hsn, qty: +Q1, freeqty: +Q2, dmgqty: +Q3, _uoms: uoms, uomID: $("#cmbUOM").val(), uom: $('#cmbUOM option:selected').text(),
                     uomCF: selConvFact, reason: 0, locationID: $("#cmbLocation").val(),
-                    taxID: TaxID, prodPct: 0, prodAmt: 0,
-                    tradePct: 0, tradeAmt: 0, addPct: 0, addAmt: 0,
-                    goods: goods, gross: gross, taxPct: $("#txtBatchTaxPern").val(), taxAmt: TAmt, net: NAmt, diff: Diff
+                    taxID: TaxID, prodPct: PDiscPren, prodAmt: PDiscAmt, tradePct: TDPern, tradeAmt: TDiscAmt, addPct: ADPern, addAmt: ADiscAmt,
+                    goods: goods, gross: gross, taxPct: $("#txtBatchTaxPern").val(), taxAmt: TAmt, net: NAmt, diff: Diff, Incldiff: InclDiff
                 }, 'items');
                 //ProductTable.ajax.url('new_url').load();
                 ProductTable.row.add([
@@ -3417,6 +3411,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
             else if (BatchMode == 1) {
                 //var TDiscAmt = PurTrdDiscb4Prod ? ((TDPern * goods) / 100) : (TDPern * (goods - PDiscAmt)) / 100;
                 //var ADiscAmt = PurAddnlDiscb4Prod ? ((ADPern * goods) / 100) : (ADPern * (goods - PDiscAmt)) / 100;
+                var editbatchrowindex = $("#txtItemRowIndex").val();
+
                 var PDPern = parseFloat($("#txtGridProdDisc").val());
                 var PDiscAmt = (PDPern * goods) / 100;
                 var TDPern = parseFloat($("#txtGridTradeDisc").val());
@@ -3427,6 +3423,24 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var TAmt = dApponMRPCum > 0 ? TotalMRPonTax : (gross * TPren) / 100;
                 var NAmt = gross + TAmt;
                 var DiffPrice = $("#txtTransBillPrice").val() != "" ? parseFloat($("#txtTransBillPrice").val()) * selConvFact : 0;
+                var val = gross / (parseFloat(Q1) + parseFloat(Q3));
+                var Diff = DiffPrice - val;
+                var InclDiff = (Diffval * TPren) / 100;
+                var thisitembatch = BatchAcceptArray.filter(r => r.ProdID == $("#txtHProdID").val());
+                console.log("thisitembatch ", thisitembatch);
+                var firstmrp = 0;
+                if (thisitembatch.length > 0) {
+                    firstmrp = thisitembatch[0].OrgMRP;
+                }
+                G.patch(editbatchrowindex, {
+                    productID: $("#txtHProdID").val(), ApponMRPCum: dApponMRPCum, MRPonTaxAmt: TotalMRPonTax, TransPrice: DiffPrice, ItemBatchdetail: thisitembatch,
+                    itemName: PName, code: $('#txtHProdCode').val(),
+                    mrp: +firstmrp, hsncode: hsn, qty: +Q1, freeqty: +Q2, dmgqty: +Q3,                    
+                    prodPct: +PDPern, prodAmt: +PDiscAmt,
+                    tradePct: +TDPern, tradeAmt: +TDiscAmt, addPct: +ADPern, addAmt: +ADiscAmt,
+                    goods: goods, gross: gross, taxAmt: TAmt, net: NAmt, diff: Diff, Incldiff: InclDiff
+                }, 'items');
+
                 $("#tblProductData tbody tr").each(function () {
                     rowdata = ProductTable.row($(this)).data();
                     var RIndex = ProductTable.row($(this)).index();
@@ -3512,14 +3526,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
             $('#cmbUOM').val(0);
             $("#cmbLocation").val(0);
             $("#txtGridProdDisc,#txtGridTradeDisc,#txtGridAddnlDisc").val(0)
-            TempProd = [];
-            var $scrollBody = $(ProductTable.table().node()).parent();
-            $scrollBody.scrollTop($scrollBody.get(0).scrollHeight);
+            TempProd = [];           
             setTimeout(() => {
-                calculateProdGrid();
-            }, 750);
-            ReorderSerialNo();
-            setupArrowKeyNavigation();
+                RecalcFooterTotals();
+            }, 750);            
         }
         else {
             //showErrorSnackbar("Qty should not be empty. Give anyone Qty before accept the batch");
@@ -4997,104 +5007,42 @@ var Url = '@Session["url"].ToString()';
         updateLabelColumn("lblRoundNet", RoundNetAmt);
         var ro = document.getElementById('txtRoundOff');
         if (ro) ro.style.color = Roundoff > 0 ? 'var(--pos)' : Roundoff < 0 ? 'var(--neg)' : '';
+
+        var Diff = 0, incldiff = 0;
+        var rowdatas = G.getData();
+        if (rowdatas.length > 0) {
+            Diff = rowdatas.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number((a.diff * (a.qty + a.dmgqty)) || 0), 0);
+            incldiff = rowdatas.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number((a.Incldiff * (a.qty + a.dmgqty)) || 0), 0);
+        }
+        updateInputColumn("txtDiffExcl", Diff); updateInputColumn("txtDiffIncl", incldiff);
+        $("#txtDiffExcl").css("color", incldiff >= 0 ? "green" : "red");
+        $("#txtDiffIncl").css("color", incldiff >= 0 ? "green" : "red");
     }
-    $("#txtFright").change(function (e) {
+    $("#txtFright, #txtWriteoff, #txtTCS").change(function (e) {
         txtValuechanged = true;
-        var FC = e.target.value != "" ? parseFloat(e.target.value) : 0;
-        updateInputColumn("txtFright", FC);
-        var WOAmt = $("#txtWriteoff").val() != "" ? parseFloat(document.getElementById('txtWriteoff').getAttribute('txttag')) : 0;
-        var TCSAmt = $("#txtTCS").val() != "" ? parseFloat(document.getElementById('txtTCS').getAttribute('txttag')) : 0;
-        var OTCAmt = $("#txtOtherChargAmt").val() != "" ? parseFloat(document.getElementById('txtOtherChargAmt').getAttribute('txttag')) : 0;
-        var Net = parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) + WOAmt + TCSAmt + OTCAmt;// $("#lblPTNet").text()
-        var SumNet = Net + parseFloat(FC);
-        //var RoundNetAmt = Math.floor(SumNet);
-        var RoundNetAmt = ApplyRoundoff(SumNet);
-        var Roundoff = (RoundNetAmt - (Net + FC));
-        updateInputColumn("txtFright", FC);
-        updateInputColumn("txtRoundOff", Roundoff); updateLabelColumn("lblRoundNet", RoundNetAmt);
-        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
-        ApplyMultimodeAmount(RoundNetAmt);
-        //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
-    });
-    $("#txtWriteoff").change(function (e) {
-        txtValuechanged = true;
-        var FC = e.target.value != "" ? parseFloat(e.target.value) : 0;
-        var WOAmt = $("#txtFright").val() != "" ? parseFloat(document.getElementById('txtFright').getAttribute('txttag')) : 0;
-        var TCSAmt = $("#txtTCS").val() != "" ? parseFloat(document.getElementById('txtTCS').getAttribute('txttag')) : 0;
-        var OTCAmt = $("#txtOtherChargAmt").val() != "" ? parseFloat(document.getElementById('txtOtherChargAmt').getAttribute('txttag')) : 0;
-        var Net = parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) + WOAmt + TCSAmt + OTCAmt;// $("#lblPTNet").text()
-        var SumNet = Net + parseFloat(FC);
-        //var RoundNetAmt = Math.floor(SumNet);
-        var RoundNetAmt = ApplyRoundoff(SumNet);
-        var Roundoff = (RoundNetAmt - (Net + FC));
-        //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
-        updateInputColumn("txtWriteoff", FC);
-        updateInputColumn("txtRoundOff", Roundoff); updateLabelColumn("lblRoundNet", RoundNetAmt);
-        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
-        ApplyMultimodeAmount(RoundNetAmt);
-    });
-    $("#txtTCS").change(function (e) {
-        txtValuechanged = true;
-        var FC = e.target.value != "" ? parseFloat(e.target.value) : 0;
-        var WOAmt = $("#txtWriteoff").val() != "" ? parseFloat(document.getElementById('txtWriteoff').getAttribute('txttag')) : 0;
-        var TCSAmt = $("#txtFright").val() != "" ? parseFloat(document.getElementById('txtFright').getAttribute('txttag')) : 0;
-        var OTCAmt = $("#txtOtherChargAmt").val() != "" ? parseFloat(document.getElementById('txtOtherChargAmt').getAttribute('txttag')) : 0;
-        var Net = parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) + WOAmt + TCSAmt + OTCAmt;
-        var SumNet = Net + parseFloat(FC);
-        //var RoundNetAmt = Math.floor(SumNet);
-        var RoundNetAmt = ApplyRoundoff(SumNet);
-        var Roundoff = (RoundNetAmt - (Net + FC));
-        //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
-        updateInputColumn("txtTCS", FC);
-        updateInputColumn("txtRoundOff", Roundoff); updateLabelColumn("lblRoundNet", RoundNetAmt);
-        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
-        ApplyMultimodeAmount(RoundNetAmt);
+        var v = e.target.value != "" ? parseFloat(e.target.value) : 0;
+        updateInputColumn(e.target.id, v);
+        RecalcFooterTotals();
     });
     $("#txtOtherChargAmt").change(function (e) {
         txtValuechanged = true;
-        var FC = e.target.value != "" ? parseFloat(e.target.value) : 0;
-        var WOAmt = $("#txtWriteoff").val() != "" ? parseFloat(document.getElementById('txtWriteoff').getAttribute('txttag')) : 0;
-        var TCSAmt = $("#txtFright").val() != "" ? parseFloat(document.getElementById('txtFright').getAttribute('txttag')) : 0;
-        var OTCAmt = $("#txtTCS").val() != "" ? parseFloat(document.getElementById('txtTCS').getAttribute('txttag')) : 0;
-        var Net = parseFloat(parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) + WOAmt + TCSAmt + OTCAmt);
-        var OCPern = (FC / Net) * 100;
-        var SumNet = Net + parseFloat(FC);
-        //var RoundNetAmt = Math.floor(SumNet);
-        var RoundNetAmt = ApplyRoundoff(SumNet);
-        var Roundoff = (RoundNetAmt - (Net + FC));
-        //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
-        updateInputColumn("txtOtherChargAmt", FC);
-        updateInputColumn("txtOtherChargPern", OCPern);
-        updateInputColumn("txtRoundOff", Roundoff); updateLabelColumn("lblRoundNet", RoundNetAmt);
-        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
-        ApplyMultimodeAmount(RoundNetAmt);
+        OCMode = 'amt';
+        var v = e.target.value != "" ? parseFloat(e.target.value) : 0;
+        updateInputColumn("txtOtherChargAmt", v);
+        RecalcFooterTotals();
     });
     $("#txtOtherChargPern").change(function (e) {
         txtValuechanged = true;
-        var OCPern = e.target.value != "" ? parseFloat(e.target.value):0;
-        var WOAmt = $("#txtWriteoff").val() != "" ? parseFloat(document.getElementById('txtWriteoff').getAttribute('txttag')) : 0;
-        var TCSAmt = $("#txtFright").val() != "" ? parseFloat(document.getElementById('txtFright').getAttribute('txttag')) : 0;
-        var OTCAmt = $("#txtTCS").val() != "" ? parseFloat(document.getElementById('txtTCS').getAttribute('txttag')) : 0;
-        var Net = parseFloat(parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) + WOAmt + TCSAmt + OTCAmt);
-        var FC = (OCPern * Net) / 100;
-        var SumNet = Net + parseFloat(FC);
-        //var RoundNetAmt = Math.floor(SumNet);
-        var RoundNetAmt = ApplyRoundoff(SumNet);
-        var Roundoff = (RoundNetAmt - (Net + FC));
-        //$("#txtRoundOff").val(Roundoff.toFixed(DecVal)); $("#lblRoundNet").text(RoundNetAmt.toFixed(DecVal));
-        updateInputColumn("txtOtherChargAmt", FC);
-        updateInputColumn("txtOtherChargPern", OCPern);
-        updateInputColumn("txtRoundOff", Roundoff); updateLabelColumn("lblRoundNet", RoundNetAmt);
-        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
-        ApplyMultimodeAmount(RoundNetAmt);
+        OCMode = 'pct';
+        var v = e.target.value != "" ? parseFloat(e.target.value) : 0;
+        updateInputColumn("txtOtherChargPern", v);
+        RecalcFooterTotals();
     });
     $("#txtRoundOff").change(function (e) {
         txtValuechanged = true;
-        var Round = e.target.value != "" ?parseFloat(e.target.value):0;
-        var Net = parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag'));
-        var RoundNetAmt = Net + Round;
-        updateInputColumn("txtRoundOff", Round); updateLabelColumn("lblRoundNet", RoundNetAmt);
-        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
+        var v = e.target.value != "" ? parseFloat(e.target.value) : 0;
+        updateInputColumn("txtRoundOff", v);
+        RecalcFooterTotals(v);
     });
     var EditRowID = -1;
     $('#tblProductData tbody').on('click', '.clseditprod', function () {
@@ -5148,6 +5096,44 @@ var Url = '@Session["url"].ToString()';
         //calculateProdGrid();
         //ReorderSerialNo();
     });
+    function EditItemBatch(row, rowindex) {
+        BatchMode = 1;
+        $("#txtItemRowIndex").val(rowindex);
+        var ProdID = row.productID;
+        var ProdCode = row.code;
+        var UOMID = row.uomID;
+        $("#txtHProdID").val(ProdID);
+
+        var PDPern = row.prodPct;
+        var TDPern = row.tradePct;
+        var ADPern = row.addPct;
+        $("#txtGridProdDisc").val(PDPern);
+        $("#txtGridTradeDisc").val(TDPern);
+        $("#txtGridAddnlDisc").val(ADPern);
+
+        GetData(4, ProdCode);
+        $('#cmbUOM').val(UOMID);
+
+        var prodarr = BatchAcceptArray.filter(a => a.ProdID == ProdID);
+        if (prodarr.length > 0) {
+            var uomid = prodarr[0].UomID;
+            var strHSN = prodarr[0].HSN;
+            var conv = prodarr[0].ConversionRate;
+            var struomname = prodarr[0].UOMName;
+            $('#cmbUOM').find("option").remove();
+            $('#cmbUOM').append($('<option/>', {
+                value: uomid,
+                text: struomname,
+                name: conv
+            }));
+            ConvFact = conv;
+            $("#cmbUOM").val(uomid); $("#txtHSN").val(strHSN); $("#txtBatchConversion").val(conv);
+        }
+        //
+        setTimeout(function () {
+            LoadProductBatches(true);
+        }, 750);
+    }
     $("#btnBatchProdInfo").click(function (e) {
         if ($("#txtVendorID").val() != "") {
             modalPinfo.show();
@@ -5284,6 +5270,9 @@ var Url = '@Session["url"].ToString()';
     var arrPurchaseTaxDetails = [];
     function GetData(nMode, strName = null, strID = null, dtpDt = null,drpdwnselid = 0) {
         //~Preload Data
+        if (nMode == 4) {
+            strID = $("#cmbBranch").val() ?? 0;
+        }
         $.ajax({
             url: Aurl + "purchasebill/get",
             type: 'get',
@@ -5593,8 +5582,8 @@ var Url = '@Session["url"].ToString()';
                 withCredentials: true
             },
             success: function (data) {
-                ProductTable.draw().clear(); ProductTable.draw().clear();
-
+                G.clearAllRows();
+                G.setLocked(nTransMode == 4 || nTransMode == 5);
                 $.each(data, function (i, items) {
                     LoadPaymentModeData();
                     var rdo1 = $("#rdoMainTableData").is(":checked");
@@ -5662,6 +5651,15 @@ var Url = '@Session["url"].ToString()';
                     var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
                     var hdnfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
                     var dataSet = items.lstProdGrid.map(function (itemsProd, nRowIndex) {
+                        console.log(" itemsProd ", itemsProd);
+                        var itembatch = items.lstBatchInfo.filter(a => a.ProdID == itemsProd.ProdID);
+                        var firstmrp = 0, CFValue = 1, TaxID = 0;
+                        if (itembatch.length > 0) {
+                            firstmrp = itembatch[0].MRP || 0;
+                            CFValue = parseFloat(itembatch[0].ConversionRate) || 1;
+                            TaxID = itembatch[0].TaxID || 0;
+                        } 
+
                         console.log("itemsProd ", itemsProd);
                         var gross = parseFloat(itemsProd.GrossAmt);
                         var goods = parseFloat(itemsProd.GoodsAmt)
@@ -5674,110 +5672,41 @@ var Url = '@Session["url"].ToString()';
                         var TradeDiscAmt = itemsProd.TradeAmt != "" ? parseFloat(itemsProd.TradeAmt) : 0;// parseFloat((trdgross * TradeDiscPern) / 100);
                         var AddnlDiscPern = itemsProd.AddnlPern != "" ? parseFloat(itemsProd.AddnlPern) : 0;
                         var AddnlDiscAmt = itemsProd.AddnlAmt != "" ? parseFloat(itemsProd.AddnlAmt) : 0;//parseFloat((addnlgross * AddnlDiscPern) / 100);
-                        var ReasonoptionsHtml = strReasons.replace(
-                            new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
-                            'value="' + itemsProd.ReasonID + '" selected'
-                        );
-                        var Reasons = "<select name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
 
+                        const t = taxById(TaxID) || taxOf(itemsProd.TaxPern);                // item tax (TaxID, else by GST %)
                         var Diffval = parseFloat(itemsProd.DiffAmt);
-                        var DiffClr = Diffval >= 0 ? "green" : "red";
-                        var DiffField = '<label name="DiffValue" style="color:' + DiffClr + '" lbltag="' + Diffval + '" title="' + Diffval + '" class="lblsettag" id="dgvProdDiffValue' + nRowIndex + '">' + parseFloat(Diffval).toFixed(DecVal) + '</label><br/>' + Reasons;
-                        var LocationoptionsHtml = strLocation.replace(
-                            new RegExp('value="' + itemsProd.LocationID + '"', 'g'),
-                            'value="' + itemsProd.LocationID + '" selected'
-                        );
-                        var LocationField = "<select name= 'Location' " + disbfields + " class='gdInput dgvcmbLocation' id='dgvLocation" + nRowIndex + "'>" + LocationoptionsHtml + "</select>";
-                        $('#dgvReasons' + nRowIndex).val(itemsProd.ReasonID);
-                        $('#dgvLocation' + nRowIndex).val(itemsProd.LocationID);
-                        // Modify sel to add 'selected' to the matching option
-                        var forItemUOM = items.lstBatchInfo.filter(bt => bt.ProdID == itemsProd.ProdID);
-                        var CFValue = 1;
-                        if (forItemUOM.length > 0) {
-                            CFValue = parseFloat(forItemUOM[0].ConversionRate) || 1;
+                        var DiffInclval = Diffval * (1 + (parseFloat(itemsProd.TaxPern) / 100)) || 0;
+                        var uoms = [];
+                        var opt = {
+                            Name: itemsProd.UOM,
+                            ID: itemsProd.UomID,
+                            CF: CFValue
                         }
-                        var dTransactionPrice = parseFloat(itemsProd.TransactionPrice) * CFValue
-                        return [
-                            itemsProd.ProdID,
-                            itemsProd.Code,///'<label name="ProdCode">' +
-                            itemsProd.UomID,//'<label name="UOMID">' +
-                            itemsProd.TaxPern,
-                            '<span ' + hdnfields +' style="font-size:16px;" class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span><br/> <span style="font-size:16px;" class="glyphicon glyphicon-edit clseditprod"  title="Edit Product"></span>' +
-                            '&ensp;<a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
-                            '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
-                            '<input name = "ProName" class="gdInput" value="' + itemsProd.Name + '" disabled title="' + itemsProd.Name + '"/><br/>' + itemsProd.Code,
-                            '<input type="number" step="any" class="gdInput" name="HSN" value="' + itemsProd.HSNCode + '" disabled title="' + itemsProd.HSNCode + '"/>',
-                            itemsProd.UOM,
-                            '<input type="number" txttag ="' + itemsProd.Qty + '" title ="' + itemsProd.Qty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.Qty).toFixed(DecVal) + '" disabled  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input type="number" txttag ="' + itemsProd.FreeQty + '" title ="' + itemsProd.FreeQty + '" step="any" id="dgvProdFreeQty' + nRowIndex + '" name="FreeQty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.FreeQty).toFixed(DecVal) + '" disabled  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input type="number" txttag ="' + itemsProd.DmgQty + '" title ="' + itemsProd.DmgQty + '" step="any" id="dgvProdDmgQty' + nRowIndex + '" name="DmgQty" class="gdInput txtsettag" value="' + parseFloat(itemsProd.DmgQty).toFixed(DecVal) + '" disabled  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-
-                            '<input type="number" txttag ="' + ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input type="number" txttag ="' + ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="' + parseFloat(ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + '  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-
-                            '<input type="number" txttag ="' + TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvTradediscPernchange" value="' + parseFloat(TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input type="number" txttag ="' + TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvTradediscAmtchange" value="' + parseFloat(TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + '  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-
-                            '<input type="number" txttag ="' + AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvAddnldiscPernchange" value="' + parseFloat(AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<input type="number" txttag ="' + AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + '  onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<label class="lblsettag" name="Goods" lbltag=' + goods + ' id="dgvProdGoods' + nRowIndex + '" title="' + goods + '">' + parseFloat(goods).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="Gross" lbltag=' + gross + ' id="dgvProdGross' + nRowIndex + '" title="' + gross + '">' + parseFloat(gross).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>' +
-                            '<label hidden name="ApponMRPCum" class="lblsettag" lbltag="' + itemsProd.CumMRPonTax + '"  title="' + itemsProd.CumMRPonTax + '" id="dgvProdApponMRPCum' + ProductRID + '">' + parseFloat(itemsProd.CumMRPonTax).toFixed(DecVal) + '</label>' +
-                            '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + itemsProd.MRPonTax + '"   title="' + itemsProd.MRPonTax + '"id="dgvProdTotalMRPonTax' + ProductRID + '">' + parseFloat(itemsProd.MRPonTax).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="NetAmt" lbltag=' + itemsProd.NetAmt + ' id="dgvProdNet' + nRowIndex + '" title="' + itemsProd.NetAmt + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
-                            DiffField, dTransactionPrice , LocationField
-                        ];
+                        uoms.push(opt)
+                        G.addRow();
+                        G.patch(nRowIndex, {
+                            productID: itemsProd.ProdID, ApponMRPCum: itemsProd.CumMRPonTax, MRPonTaxAmt: itemsProd.MRPonTax, TransPrice: itemsProd.TransactionPrice,
+                            ItemBatchdetail: itembatch,
+                            itemName: itemsProd.Name, code: itemsProd.Code, stock: itemsProd.ABSQty, freestock: itemsProd.ABSFreeQty, dmgstock: itemsProd.ABSDmgQty,
+                            mrp: +firstmrp, hsncode: itemsProd.HSNCode, qty: +itemsProd.Qty, freeqty: +itemsProd.FreeQty, dmgqty: +itemsProd.DmgQty, _uoms: uoms,
+                            uomID: itemsProd.UomID, uom: itemsProd.UOM,
+                            uomCF: +CFValue, reason: itemsProd.ReasonID, locationID: itemsProd.LocationID,
+                            taxID: +TaxID, prodPct: +ProdDiscPern, prodAmt: +ProdDiscAmt, tradePct: +TradeDiscPern,
+                            tradeAmt: +TradeDiscAmt, addPct: +AddnlDiscPern, addAmt: +AddnlDiscAmt,
+                            goods: goods, gross: gross, taxPct: +itemsProd.TaxPern, taxAmt: +itemsProd.TaxAmt,
+                            net: +itemsProd.NetAmt, diff: +Diffval, Incldiff: +DiffInclval
+                        }, 'items');
 
                     });
                     //{ "targets": [15, 16, 18, 17, 19], "class": "text-end" }
-                    $('#tblProductData').DataTable({
-                        scrollY: "450px",
-                        scrollX: true,
-                        scrollCollapse: true,
-                        paging: false,
-                        destroy: true,
-                        data: dataSet,
-                        fixedColumns: false,
-                        searching: false,
-                        ordering: false,
-                        sorting: false,
-                        info: false,
-                        columns: [
-                            { title: "ProdID", visible: false, className: "dt-body-left" },
-                            { title: "ProdCode", visible: false, className: "dt-body-left" },
-                            { title: "UOMID", visible: false, className: "dt-body-left" },
-                            { title: "TaxPern", visible: false, className: "dt-body-left" },
-                            { title: "Action", orderable: false, className: "dt-body-left", width: "5%" },
-                            { title: "#", className: "dt-body-left", width: "3%" },
-                            { title: "Item Names", className: "dt-body-left", width: "40%" },
-                            { title: "HSN Code", className: "text-end", width: "7%" },
-                            { title: "UOM", className: "text-end", width: "7%" },
-                            { title: "Quantity", className: "text-end", width: "6%" },
-                            { title: "Free Qty", className: "dt-body-left", width: "6%" },
-                            { title: "Dmg Qty", className: "dt-body-left", width: "6%" },
-                            { title: "Prod % / ₹", className: "text-end", width: "7%" },
-                            { title: "Trade %/ ₹", className: "text-end", width: "7%" },
-                            { title: "Addnl % / ₹", className: "text-end", width: "6%" },
-                            { title: "Goods ₹", className: "text-end", width: "9%" },
-                            { title: "Gross ₹", className: "text-end", width: "9%" },
-                            { title: "Tax ₹ / %", className: "dt-body-left", width: "9%" },
-                            { title: "Net ₹", className: "text-end", width: "9%" },
-                            { title: 'Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span>', className: "text-end", width: "9%" },
-                            { title: "TransPrice", visible: false, className: "dt-body-left", width: "9%" },
-                            { title: "Location", className: "text-end", width: "9%" }
-                        ]
-                    });
-                    ProductTable = $('#tblProductData').DataTable();
-                    ProductRID = ProductTable.rows().count() + 1;
+                   
                     BatchAcceptArray = items.lstBatchInfo;
                     if (nTransMode != 5 && nTransMode != 4)
-                        CalculateDiffPrice();
+                        //CalculateDiffPrice();
 
                     setTimeout(() => {
-                        calculateProdGrid();
+                        RecalcFooterTotals();
                     }, 1000);
-                    setupArrowKeyNavigation();
                 });
                 var UVP = '@Session["UpdateVendorinProduct"].ToString()';
                 $("#chkUpdateVendor").prop("checked", UVP == "1");
@@ -6344,7 +6273,6 @@ var Url = '@Session["url"].ToString()';
                                         var DocDate = $("#dtpDate").val();
                                         var Branch = $("#cmbBranch").val();
                                         GetDocumentID(DocDate, Branch, 1);
-                                        G.addRow();
                                     }, 1000);
                                 }
                             },
@@ -6440,8 +6368,8 @@ var Url = '@Session["url"].ToString()';
         $("#lblName,#lblProdCodeAS,#lblABSLoc").text(""), $("#cmbRating").text(""), $("#lblMob1").text(""), $("#lblGSTIN").text("");
         $("#txtNoofCopies").val("1");
         TableBatch.draw().clear();
-        ProductTable.draw().clear();
-        ProductTable.draw().clear();
+        G.setLocked(false);
+        G.clearAllRows();
         GetData(1);
         //GetData(6);
         SetTagZero();
@@ -6877,10 +6805,12 @@ var Url = '@Session["url"].ToString()';
                 showErrorSnackbar("Net Amount should be greater than Zero")
             }
         }
-        if (ProductTable.rows().count() == 0) {
+        var griditems = G.getData();
+        var items = griditems.filter(item => Number(item.productID) > 0).map(a => a.productID);
+        if (items.length == 0) {
             IsValid = false;
-            $("#divErrProduct").html("Add atleat one product");
-            showErrorSnackbar("Add atleat one product");
+            $("#divErrProduct").html("Add atleat one product in Grid");
+            showErrorSnackbar("Add atleast one product in Grid");
         }
         else {
             if (BatchAcceptArray.length == 0) {
@@ -7151,144 +7081,38 @@ var Url = '@Session["url"].ToString()';
     var ProductArray = [];
     function addProdinArray() {
         ProductArray = [];
-        var dPTQty = 0, dPTFreeQty = 0, dPTDmgQty = 0, dPTGoods = 0, dPTGross = 0, dPTTax = 0, dPTNet = 0, nProdID = 0, nUOMID = 0, PDPern = 0, PDAmt = 0,
-            TDPern = 0, TDAmt = 0, ADPern = 0, ADAmt = 0, TotProdDisc = 0, TotTradeDisc = 0, TotAddnlDisc = 0, nSerial = 1, strHSN = "", nReasonID = "0",
-            nLocationID = 0,dDiffAmt = 0;
-        $("#tblProductData tbody tr").each(function () {
-            var allValues = {};
-            rowdata = ProductTable.row($(this)).data();
-            nProdID = rowdata[0];
-            nUOMID = rowdata[2];
-
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "HSN") {
-                    strHSN = $(this).val();
+        var nSerial = 1;
+        var ItemGridData = G.getData();
+        $.each(ItemGridData, function (i, itemrow) {
+            if (itemrow.productID > 0) {               
+                var listProds = {
+                    "ProdID": itemrow.productID,
+                    "UomID": itemrow.uomID,
+                    "HSN": itemrow.hsncode,
+                    "UomQty": itemrow.qty,
+                    "UomFreeQty": itemrow.freeqty,
+                    "UomDamageQty": itemrow.dmgqty,
+                    "ProdDiscPern": itemrow.prodPct,
+                    "TradeDiscPern": itemrow.tradePct,
+                    "AddnlDiscPern": itemrow.addPct,
+                    "ProdDiscAmt": itemrow.prodAmt,
+                    "TradeDiscAmt": itemrow.tradeAmt,
+                    "AddnlDiscAmt": itemrow.addAmt,
+                    "GrossAmt": itemrow.gross,
+                    "GoodsAmt": itemrow.goods,
+                    "TaxAmt": itemrow.taxAmt,
+                    "NetAmt": itemrow.net,
+                    "ReasonId": itemrow.reason,
+                    "LocationID": itemrow.locationID,
+                    "Serial": nSerial,
+                    "DiffAmt": itemrow.dDiffAmt
                 }
-                if (fieldName == "Qty") {
-                    dPTQty = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "FreeQty") {
-                    dPTFreeQty = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "DmgQty") {
-                    dPTDmgQty = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "ProdDiscPern") {
-                    PDPern = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "TradeDiscPern") {
-                    TDPern = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "AddnlDiscPern") {
-                    ADPern = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "ProdDiscAmt") {
-                    PDAmt = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "TradeDiscAmt") {
-                    TDAmt = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "AddnlDiscAmt") {
-                    ADAmt = parseFloat($(this).attr("txttag"));
-                }
-                //allValues[fieldName] = $(this).val();
-            });
-            $(this).find("select").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "Reasons") {
-                    nReasonID = parseInt($(this).val());
-                }
-                if (fieldName == "Location") {
-                    nLocationID = parseInt($(this).val());
-                }
-            });
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "Goods") {
-                    dPTGoods = parseFloat($(this).attr("lbltag"));
-                }
-                if (fieldName == "Gross") {
-                    dPTGross = parseFloat($(this).attr("lbltag"));
-                }
-                if (fieldName == "TaxAmt") {
-                    dPTTax = parseFloat($(this).attr("lbltag"));
-                }
-                if (fieldName == "NetAmt") {
-                    dPTNet = parseFloat($(this).attr("lbltag"));
-                }
-                if (fieldName == "DiffValue") {
-                    dDiffAmt = parseFloat($(this).attr("lbltag"));
-                }
-                //allValues[fieldName] = $(this).val();
-            });
-            var listProds = {
-                "ProdID": nProdID,
-                "UomID": nUOMID,
-                "HSN": strHSN,
-                "UomQty": dPTQty,
-                "UomFreeQty": dPTFreeQty,
-                "UomDamageQty": dPTDmgQty,
-                "ProdDiscPern": PDPern,
-                "TradeDiscPern": TDPern,
-                "AddnlDiscPern": ADPern,
-                "ProdDiscAmt": PDAmt,
-                "TradeDiscAmt": TDAmt,
-                "AddnlDiscAmt": ADAmt,
-                "GrossAmt": dPTGross,
-                "GoodsAmt": dPTGoods,
-                "TaxAmt": dPTTax,
-                "NetAmt": dPTNet,
-                "ReasonId": nReasonID,
-                "LocationID": nLocationID,
-                "Serial": nSerial,
-                "DiffAmt" : dDiffAmt
+                ProductArray.push(listProds);
+                nSerial++;
             }
-            ProductArray.push(listProds);
-            nSerial++;
         });
     }
 
-    window.addEventListener("message", function (event) {
-        var data = event.data;
-        console.log("depend data", data);
-        if (data && data.source === "CustomerMaster") {
-            var customerID = data.customerid;
-            var code = data.customercode;
-            var name = data.customername;
-
-            // ✅ Use the returned values — example:
-            GetData(3, code);
-            var BeatID = $("#cmbBeat").val();
-            var SalesmanID = $("#cmbSalesman").val();
-            GetData(33, BeatID, SalesmanID);
-        }
-        else if (data && data.source === "ProductMaster") {
-            var ProductID = data.productid;
-            var code = data.productcode;
-            var name = data.productname;
-
-            GetProductList()
-            setTimeout(() => {
-                ReLoadProductAutolists(name);
-            }, 1000);
-            if (gridprodfieldid) {
-                var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                GetData(4, code, CustID);
-            }
-        }
-        else if (data && data.source === "Credit Term") {
-            var CreditTermID = data.id;
-            var CreditTermName = data.name;
-
-            console.log("Return Type received:", CreditTermID, CreditTermName);
-
-            ReloadF8Autolistdata("creditterm", null, null, CreditTermID);
-        }
-    });
 
     $("#opencreditterm").click(function (e) {
         var nvhID = $("#cmbCreditTerm").val() != "" ? $("#cmbCreditTerm").val() : 0;
@@ -7394,7 +7218,6 @@ var Url = '@Session["url"].ToString()';
                         text: "-- Select --",
                     }));
                     $.each(data, function (i, items) {
-                        console.log("Adding item:", items);
                         $('#cmbCreditTerm').append($('<option/>', {
                             value: items.ID,
                             text: items.Name,
@@ -7404,14 +7227,12 @@ var Url = '@Session["url"].ToString()';
                 }
                 if (strForm == "taxtran") {
                     gsttax = data;
-                    console.log("gsttax function ", gsttax);
                 }
                 if (strForm == "reason") {
-                    locationlist = data;
+                    reasonlist = data;
                 }
                 if (strForm == "location") {
                     locationlist = data;
-                    console.log("location list ", locationlist);
                 }
             }
         });
@@ -7574,6 +7395,19 @@ var Url = '@Session["url"].ToString()';
         $("#dvDocuments,#dvUpdateVendor").hide();
         $("#btnEmail,#btnWhatsapp").show();
         $("#MainHeading").text("View Purchase Bill");
+    }
+    function ProductInfoPopup(nProdID) {
+        if ($("#txtVendorID").val() != "") {
+            if (nProdID > 0) {
+                GetData(14, $("#txtVendorID").val(), nProdID)
+            }
+            else {
+                showErrorSnackbar("Select Product");
+            }
+        }
+        else {
+            showErrorSnackbar("Select Customer");
+        }
     }
 </script>
 <script title="grid.js">
@@ -7787,7 +7621,7 @@ var Url = '@Session["url"].ToString()';
                         const i = document.createElement('i'); i.className = 'gi ' + (ic.cls || ''); i.id = `${key}_${ic.name}_${ri}`; i.title = ic.title || ic.name;
                         i.innerHTML = ic.html || ''; i.onclick = e => ic.onClick(r, this.rows.indexOf(r), e); el.append(i)
                     }); return el;
-                case 'select': el = document.createElement('select'); this.fillSelect(el, s, r); break;
+                case 'select': el = document.createElement('select'); this.fillSelect(el, s, r); el.disabled = s.disabled; break;
                 default: el = document.createElement('input'); el.type = s.type;
             }
             el.id = id; el.setAttribute('name', name);
@@ -7798,13 +7632,20 @@ var Url = '@Session["url"].ToString()';
             const k = s.key, ch = () => this.changed(r, k);
             if (s.type === 'number') {
                 el.step = 'any'; if (s.readonly) el.readOnly = true;
-                el.onfocus = () => { el.value = f(r[k], 4); el.select() };                         // focus: 4 decimals
+                if (s.key == "hsncode") {
+                    el.maxlength = 8;
+                }
+                el.onfocus = () => {
+
+                    el.value = s.key == "hsncode" ? r[k]: f(r[k], 4);
+                    el.select()
+                };                         // focus: 4 decimals
                 if (!s.allowNeg) el.min = 0;                                                       // grid numbers cannot be negative (set allowNeg:true on a column to opt out)
                 el.oninput = () => {
                     if (!s.allowNeg && parseFloat(el.value) < 0) { el.value = 0; el.select() }     // negative typed/pasted -> 0
                     r[k] = parseFloat(el.value) || 0; ch()
                 };
-                el.onblur = () => { el.value = f(r[k], s.dec ?? 2); el.dataset.full = f(r[k], 4); };     // blur: 2 decimals
+                el.onblur = () => { el.value = s.key == "hsncode" ? r[k] : f(r[k], s.dec ?? 2); el.dataset.full = s.key == "hsncode" ? r[k] : f(r[k], 4); };     // blur: 2 decimals
             } else if (s.type === 'text') { el.onfocus = () => el.select(); el.oninput = () => { r[k] = el.value; ch() } }
             else if (s.type === 'checkbox') el.onchange = () => { r[k] = el.checked; ch() };
             else if (s.type === 'select') el.onchange = () => { r[k] = s.num ? +el.value : el.value; ch() };
@@ -7828,10 +7669,13 @@ var Url = '@Session["url"].ToString()';
             const s = el._s, v = r[s.key];
             if (s.type === 'number') {
                 const act = el === document.activeElement;
-                if (!act) el.value = f(v, s.dec ?? 2);
+                if (!act) el.value = s.key == "hsncode" ? v : f(v, s.dec ?? 2);
                 else if (Math.abs((parseFloat(el.value) || 0) - (+v || 0)) > 1e-9) { el.value = f(v, 4); el.select() }   // focused field whose value was changed by calc (e.g. % reset to 0) -> show it
-                el.dataset.full = f(v, 4);
-                el.title = f(v, 4);
+                el.dataset.full = s.key == "hsncode" ? v : f(v, 4);
+                el.title = s.key == "hsncode" ? v : f(v, 4);
+                if (s.key == "hsncode") {
+                    el.maxlength = 8;                    
+                }
                 if (s.max != null) { const bad = (+v || 0) > s.max; el.classList.toggle('bad', bad); el.title = bad ? `Cannot exceed ${s.max}` : '' }
             }   // live flag when value > max
             else if (s.type === 'label') el.textContent = typeof v === 'number' ? f(v, s.dec ?? 2) : v;
@@ -7844,8 +7688,10 @@ var Url = '@Session["url"].ToString()';
             else if (s.type === 'checkbox') el.checked = !!v;
             else if (s.type === 'select') { const rb = this.fillSelect(el, s, r); if (rb || el !== document.activeElement) el.value = v ?? '' }   // options may change per row (item UOM list)
             else if (el !== document.activeElement) el.value = v ?? '';
-            //const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
-            //el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
+            if (s.key == "diff") {
+                const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
+                el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
+            }
         }
         changed(r, key) {
             if (this.cfg.calc) this.cfg.calc(r, key);
@@ -7930,7 +7776,8 @@ var Url = '@Session["url"].ToString()';
             }
             if (ch === 'priceIncl') r.priceExcl = r.priceIncl ? n(r.ApponMRPCum) > 0 ? rnd(n(r.priceIncl) - n(r.MRPonTaxAmt)) : rnd(n(r.priceIncl) / (1 + n(r.taxPct) / 100))
                 : rnd(n(r.priceIncl) / (1 + n(r.taxPct) / 100));
-            r.goods = rnd(n(r.qty) * n(r.priceExcl));
+            console.log("row calc data", r);
+            //r.goods = rnd(n(r.qty) * n(r.priceExcl));
             let base = r.goods;
             [['prod', 'Prod %']].forEach(([p, lbl]) => {
                 const pc = p + 'Pct', am = p + 'Amt';
@@ -7962,7 +7809,11 @@ var Url = '@Session["url"].ToString()';
             r.taxAmt = n(r.ApponMRPCum) > 0 ? rnd(r.MRPonTaxAmt * r.qty) : rnd(r.gross * n(r.taxPct) / 100);
             r.net = rnd(r.gross + r.taxAmt);
             if (ch !== 'priceIncl') r.priceIncl = n(r.ApponMRPCum) > 0 ? rnd(n(r.priceExcl) + n(r.MRPonTaxAmt)) : rnd(n(r.priceExcl) * (1 + n(r.taxPct) / 100));
-            r.diff = rnd(n(r.mrp) * n(r.qty) - r.net);
+            var valdf = rnd(n(r.gross) / n(r.qty) + n(r.dmgqty));
+            var Diff = (n(r.TransPrice) * n(r.uomCF)) - valdf;
+            var InclDiff = (Diff * ((n(r.taxPct) /100) +1));
+            r.diff = rnd(Diff);
+            r.Incldiff = rnd(InclDiff)
             /* hidden column values are available here too: r.productID, r.TrackInentoryYN, r.TrackBatchYN, r.TrackPKDYN */
         }
 
@@ -8121,7 +7972,7 @@ var Url = '@Session["url"].ToString()';
 
             columns: buildGridColumns([
                 /* mandatory hidden columns: always in every row (calc, validate, getData, save), never drawn, never in the Columns list */
-                hid('ProductID', 'productID'), hid('ApponMRPCum', 'ApponMRPCum'), hid('MRPonTax', 'MRPonTaxAmt'), hid('TransPrice', 'TransPrice'), hid('ItemBatchdetail', 'ItemBatchdetail'),
+                hid('ProductID', 'productID'), hid('ApponMRPCum', 'ApponMRPCum'), hid('MRPonTax', 'MRPonTaxAmt'), hid('TransPrice', 'TransPrice'), hid('InclDiff', 'Incldiff'), hid('ItemBatchdetail', 'ItemBatchdetail'),
                 { id: 'Sno', title: '#', width: 50, controls: [{ type: 'drag' }, { type: 'index' }] },
                 {
                     id: 'Actions', title: 'Actions', width: 70, controls: [{
@@ -8130,12 +7981,12 @@ var Url = '@Session["url"].ToString()';
                                 name: 'info', html: IC.info, cls: 'blue', title: 'Item info', onClick: r =>
                                     ProductInfoPopup(r.productID || 0)
                             },
-                            { name: 'edit', html: IC.edit, title: 'Edit item', onClick: (r, i) => { const e = byId('itemName_' + i); e && e.focus() } },
-                            { name: 'cart', html: IC.cart, cls: 'blue', title: 'Add to cart', onClick: r => ProductInfoPopup(r.productID || 0) },                            
+                            { name: 'edit', html: IC.edit, title: 'Edit item', onClick: (r, i) => { EditItemBatch(r, i); } },
+                            { name: 'cart', html: IC.cart, cls: 'blue', title: 'Add to cart', onClick: r => GetBranchwiseABSQty(r.productID || 0) },                            
                             { name: 'del', html: IC.del, cls: 'red', title: 'Remove row', onClick: (r, i) => G.deleteRow(i) }]
                     }]
                 },
-                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'label', key: 'itemName', ac: true }, { type: 'p', key: 'itemCode', sign: true, text: r => `${r.code} | Qty :  ${r.stock}` }] },
+                { id: 'itemName', title: 'Item Name', width: 230, controls: [{ type: 'label', key: 'itemName', ac: true }, { type: 'p', key: 'itemCode', sign: true, text: r => `${r.code} | Qty :  ${r.stock} + ${r.freestock} + ${r.dmgstock}` }] },
                 { id: 'hsncode', title: 'HSN Code', width: 80, controls: [{ type: 'number', key: 'hsncode' }] },
                 { id: 'mrp', title: 'MRP', width: 80, controls: [{ type: 'label', key: 'mrp', ro: false }] },
                 //{ id: 'priceExcl', title: 'Excl / Incl ₹', width: 85, controls: [num('priceExcl'), num('priceIncl')] },
@@ -8156,19 +8007,22 @@ var Url = '@Session["url"].ToString()';
                 {
                     id: 'taxAmt', title: 'Tax ₹ / %', width: 90, total: 'taxAmt', controls: [{ type: 'label', key: 'taxAmt' },
                     {
-                        type: 'select', key: 'taxID', num: true,   // value = ID, text = Name, TaxPern / MRPONTax kept in data-taxpern / data-mrpontax
+                        type: 'select', key: 'taxID', num: true, disabled: true,  // value = ID, text = Name, TaxPern / MRPONTax kept in data-taxpern / data-mrpontax
                         options: gsttax.map(v => ({ v: v.ID, t: v.Name, attrs: { TaxPern: v.TaxPern, MRPONTax: v.MRPONTax } }))
                     }]
                 },
                 { id: 'net', title: 'Net ₹', width: 95, total: 'net', controls: [{ type: 'label', key: 'net' }] },
                 {
                     title: 'Diff', width: 90, total: 'diff', sign: true, controls: [{ type: 'label', key: 'diff', sign: true },
-                    { type: 'select', key: 'reason', options: [{ v: '', t: '-- Reason --' }, ...reasonlist.map(v => ({ v: v.ID, t: v.Name }))] }]
+                        {
+                            type: 'select', key: 'reason',
+                            options: [{ v: '0', t: '-- Reason --' }, ...reasonlist.map(v => ({ v: v.ID, t: v.Name }))]
+                        }]
                 },
                 {
                     id: 'locationID', title: 'Location', width: 85, controls: [{
                         type: 'select', key: 'locationID',   // value = UOM ID, options come from the row's own item UOM list; CF kept in data-cf
-                        options: [{ v: '', t: '-- Location --' }, ...locationlist.map(v => ({ v: v.ID, t: v.Name }))]
+                        options: [{ v: '0', t: '-- Location --' }, ...locationlist.map(v => ({ v: v.ID, t: v.Name }))]
                     }]
                 },
             ], colSettSource())          // <- initial order / header / width / visibility come from colsettcols
