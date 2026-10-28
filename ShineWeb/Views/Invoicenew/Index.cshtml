@@ -1413,16 +1413,7 @@
 
         <!-- ── SECTION 3: Product DataTable ── -->
         @*CLASS: inv-section-card*@
-        <div class="row">
-            @*<div class="inv-section-header is-open" data-target="sec-products">
-                    <span class="inv-section-title">
-                        <span class="sec-icon">📦</span> Products
-                        <span class="badge success ms-1" id="badgeProductCount">0 items</span>
-                    </span>
-                    <span class="inv-section-toggle">&#9660;</span>
-                </div>*@
-            @*CLASS: inv-section-body id="sec-products"  style="overflow-x:auto;padding:6px;"*@
-            <hr style="width:98%" />
+        <div class="row">           
             <div class="bar">
                 <button id="bAdd">+ Add Row</button>
 
@@ -1435,9 +1426,9 @@
                 <button id="bSave" class="save" hidden>Save Invoice</button>
             </div>
 
-            <div class="gwrap" id="grid"></div>
+            <div class="gwrap mb-3" id="grid"></div>
             <div id="msg" hidden></div>
-            <div class="col-12">
+            <div class="col-12" hidden>
 
 
                 <table class="table table-bordered row-border order-column" id="tblProductData" width="100%">
@@ -1507,7 +1498,7 @@
         <!-- ── SECTION 4: Discounts & Charges (collapsed by default) ── -->
         <!-- data-target="sec-discounts"  -->
         <div class="row" style="margin-bottom:50px" id="dvFooterRow">
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-5">
                 <div class="inv-section-card">
                     <div class="inv-section-header">
                         <span class="inv-section-title">
@@ -1710,12 +1701,12 @@
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-md-3 col-lg-1"></div>
+            <div class="col-12 col-md-1"></div>
             <!-- Totals -->
-            <div class="col-12 col-md-2">
+            <div class="col-12 col-md-3">
                 <table class="table table-borderless w-100">
                     <tr class="bgclrfortr">
-                        <td style="border:none;" align="right"><label>Gross Amount :</label></td>
+                        <td style="border:none;" align="right" width="70%"><label>Gross Amount :</label></td>
                         <td style="border:none;" align="right">
                             <label lbltag="0" id="lblGross" class="lblPT lblsettag fw-bold fs-5">23430.00</label>
                         </td>
@@ -2303,6 +2294,7 @@
                     var sts = rowdata.Status;//[10];
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
+                        GetData(1, RoleID);
                         EditActionTrigger(rowdata);
                     }
                     else {
@@ -2321,6 +2313,7 @@
                     var ID = rowdata.ID;//[0];
                     var sts = rowdata.Status;//[10];
                     $("#txtID").val(ID);
+                    GetData(1, RoleID);
                     VariantActionTrigger(rowdata);
                 }
             },
@@ -2356,6 +2349,7 @@
                     var stsID = rowdata.CurrentStatus;
                     if (sts != "Cancelled") {
                         $("#txtID").val(ID);
+                        GetData(1, RoleID);
                         if (rdo1) {
                             CancelActionTrigger(rowdata);
                         }
@@ -2957,10 +2951,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var bran = $("#cmbBranch").val();
         var val = e.target.value;
         //ProductTable.draw().clear();
-        //ProductTable.draw().clear();
-        var row = $("#tblProductData tbody tr");
+        //ProductTable.draw().clear();         
+        var row = G.getData();
         ////console.log(row);
-        $("#tblProductData tbody tr").each(function () {
+        $.each(row, function (i, items) {
+            var ProdID = items.productID;
+            if (ProdID > 0) {
+                ReassignPricetypechangevalues(ProdID, items, i);
+            }
+        });
+        $("#tblProductData123 tbody tr").each(function () {
             rowdata = ProductTable.row($(this)).data();
             var RIndex = ProductTable.row($(this)).index();
             var ProdID = rowdata[0];
@@ -2981,14 +2981,76 @@ if ($("#txtReurnPricePerm").val() == 0) {
             if (ProdID > 0) {
                 var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
                 GetData(23, ProdID, invid, null, uomval, RIndex, itmMRP);
+                
             }
         });
 
         setTimeout(function () {
-            calculateProdGrid();
+            RecalcFooterTotals();
         }, 1500);
         setTimeout(function () {$("#loadingDiv").remove();}, 2000);
     });
+    function ReassignPricetypechangevalues(nProductID, itemRow, ItemRowIndex) {
+        var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
+        $.ajax({
+            url: Aurl + "invoice/get",
+            type: 'get',
+            contentType: 'json',
+            data: {
+                Mode: 23, CodeName: nProductID, ID: invid, BranchID: $("#cmbBranch").val(), Date: $("#dtpDate").val(),
+                PriceID: $("#cmbPriceType").val(), SchemeApply: $("#txtCustomerScheme").val()
+            },
+            xhrFields: {
+                withCredentials: true
+            },
+            async: false,
+            success: function (data) {
+                modal.hide();
+                var trkbat = "False", trkpkd = "False";
+                //showErrorSnackbar("Track Inv : "+trkInv);
+                console.log("all Product Batch : ", data);
+                if (data.length == 0) {
+                    return;
+                }
+                var ItemMRP = itemRow.mrp;
+                var dConvFact = itemRow.uomCF;
+                var arrMRPbatch = [];
+                var batchdata = data.filter(bt => bt.MRP == ItemMRP);
+                if (batchdata.length > 0) {
+                    var tb = batchdata[0];
+                    arrMRPbatch.push(tb);
+                } else {
+                    var tb = data[0];
+                    arrMRPbatch.push(tb);
+                }
+                console.log("Filter Product Batch : ", arrMRPbatch);
+                $.each(arrMRPbatch, function (i, items) {//data
+                    var Actq = items.ActQty;
+                    var orgpr = items.SalesPrice;
+                    var mrps = items.MRP;
+                    var Btno = items.BatchNo;
+                    var Btpkd = items.PKDDate;
+                    var Btexp = items.ExpiryDate;
+                    var actq = parseFloat(items.ActQty / dConvFact);//.toFixed(DecVal);
+                    var shpri = parseFloat(items.SalesPrice * dConvFact);//.toFixed(DecVal);
+                    var QtyType = items.QtyTag;
+                    //parseFloat(items.MRP).toFixed(DecVal)
+                    ////console.log("Price Type change :" ,Prodrowdata);'
+                    var NewMRPonAmt = getSalesMRPontax(mrps);
+                    //5,6,7
+                    var TaxPern = itemRow.taxPct;
+                    var tx = 1 + (TaxPern / 100);
+                    var incl = itemRow.ApponMRPCum > 0 ? parseFloat(shpri) + itemRow.MRPonTaxAmt : parseFloat(shpri) * tx;
+
+                    G.patch(ItemRowIndex, {
+                        qtytype: QtyType, OrgPrice: orgpr, MRPonTaxAmt: NewMRPonAmt,
+                        priceExcl: +shpri || 0, priceIncl: +incl, mrp: mrps, batchno: Btno, pkd: Btpkd, expiry: Btexp,
+                        maxbatchqty: Actq
+                    }, 'items');
+                });
+            }
+        });
+    }
     //GetData(2, DefBranch, $("#dtpDate").val());
     GetProductList();
     $("#cmbBranch").change(function (e) {
@@ -3379,177 +3441,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         calculateProdGrid();
     }
 
-    /* --- Shared: compute pern from amt and validate, then call calc fn --- */
-    function _applyDiscAmt(amtFieldID, pernFieldID, calcFn) {
-        var amt = getTag(amtFieldID) || 0;
-        var goods = getTag('lblPTGoods');
-        var pdisc = getTag('lblPTPDiscAmt');
-        var base = amtFieldID == "txtTradeDiscAmt" ? (SaleTrdDiscb4Prod ? goods : (goods - pdisc)) :
-            (SaleAddnlDiscb4Prod ? goods : (goods - pdisc));
-        var pern = base > 0 ? (amt / base) * 100 : 0;
-        if (!validateDiscPern(pern, "Invalid Discount Value")) {
-            updateInputColumn(pernFieldID, 0);
-            updateInputColumn(amtFieldID, 0);
-            calcFn(0);
-        } else {
-            updateInputColumn(pernFieldID, pern);
-            calcFn(pern);
-        }
-    }
-
-    $("#txtTradeDiscAmt").change(function (e) {
-        txtValuechanged = true;
-        updateInputColumn("txtTradeDiscAmt", e.target.value);
-        _applyDiscAmt("txtTradeDiscAmt", "txtTradeDiscPern", CalculateTradediscpern);
-    });
-
-    //~Addnl Disc Calc
-    $("#txtAddnlDiscPern").change(function (e) {
-        CalculateAddnldiscpern(e.target.value);
-        txtValuechanged = true;
-    });
-    $("#txtAddnlDiscAmt").change(function (e) {
-        txtValuechanged = true;
-        updateInputColumn("txtAddnlDiscAmt", e.target.value);
-        _applyDiscAmt("txtAddnlDiscAmt", "txtAddnlDiscPern", CalculateAddnldiscpern);
-    });
-    function CalculateAddnldiscpern(value) {
-        var dPTGross = 0, dPTGoods = 0, dPTTax = 0, dPTNet = 0, Proddiscamt = 0, Tradediscamt = 0, Addnldiscamt = 0, CFValue = 1;
-        $("#tblProductData tbody tr").each(function () {
-            dPTGross = 0, dPTGoods = 0, dPTTax = 0, dPTNet = 0, Proddiscamt = 0, Tradediscamt = 0, Addnldiscamt = 0, CFValue = 1;
-            var rowdata = ProductTable.row($(this)).data();
-            var taxpern = parseFloat(rowdata[2]);
-            var TInvoicePrice = parseFloat(rowdata[28]);
-            var ProdID = rowdata[0];
-            var ExclPrice = 0, InclPrice = 0, Qty = 0, ProdDisc = 0, ProdDiscAmt = 0;
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "Excl") {
-                    ExclPrice = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "Incl") {
-                    InclPrice = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "Qty") {
-                    Qty = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "ProdDiscPern") {
-                    ProdDisc = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "ProdDiscAmt") {
-                    //ProdDisc = parseFloat($(this).attr("txttag"));
-                    var price = (ExclPrice * Qty);
-                    ProdDiscAmt = parseFloat((price * ProdDisc) / 100);
-                    //updateInputColumn(fieldID, ProdDiscAmt);
-                    dPTGoods = price;
-                }
-            });
-            dPTGoods = (ExclPrice * Qty);
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "TradeDiscAmt") {
-                    var val = $(this).attr("txttag") != "" ? parseFloat($(this).attr("txttag")) : 0;
-                    Tradediscamt = val;
-                }
-                if (fieldName == "ProdDiscAmt") {
-                    var val = $(this).attr("txttag") != "" ? parseFloat($(this).attr("txttag")) : 0;
-                    Proddiscamt = val;
-                }
-                if (fieldName == "AddnlDiscAmt") {
-                    $(this).prop("disabled", value > 0 ? true : false);
-                    var val = value != "" ? parseFloat(value) : 0;
-                    var grsamt = SaleAddnlDiscb4Prod ? dPTGoods : (dPTGoods - Proddiscamt);
-                    var damt = parseFloat(((val * grsamt) / 100));//.toFixed(DecVal)
-                    //$(this).val(damt);
-                    updateInputColumn(fieldID, damt);
-                    Addnldiscamt = damt;
-                }
-                if (fieldName == "AddnlDiscPern") {
-                    $(this).prop("disabled", value > 0 ? true : false);
-                    var val = parseFloat(value);//.toFixed(DecVal)
-                    updateInputColumn(fieldID, val);
-                    //$(this).val(val);
-                    //setTagValue(fieldID, fieldName, value);
-                }
-            });
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "ProdDiscAmt") {
-                    Proddiscamt = parseFloat(document.getElementById(fieldID).getAttribute('txttag'));
-                }
-                if (fieldName == "TradeDiscAmt") {
-                    Tradediscamt = parseFloat(document.getElementById(fieldID).getAttribute('txttag'));
-                }
-                if (fieldName == "AddnlDiscAmt") {
-                    Addnldiscamt = parseFloat(document.getElementById(fieldID).getAttribute('txttag'));
-                }
-            });
-            $(this).find("select").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "UOM") {
-                    var val = $('option:selected', this).attr('name');
-                    CFValue = parseFloat(val);
-                }
-            });
-            var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
-            var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 1;
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "Goods") {
-                    var gds = parseFloat(dPTGoods);
-                    //$(this).text(gds);
-                    updateLabelColumn(fieldID, gds);
-                    dPTGoods = gds;
-                }
-                if (fieldName == "Gross") {
-                    var grs = (parseFloat(dPTGoods) - (Tradediscamt + Addnldiscamt + Proddiscamt));
-                    //$(this).text(grs);
-                    updateLabelColumn(fieldID, grs);
-                    dPTGross = grs;
-                }
-                if (fieldName == "TaxAmt") {
-                    var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt) * Qty) : ((taxpern * dPTGross) / 100);
-                    updateLabelColumn(fieldID, tamt);
-                    //$(this).text(tamt);
-                    dPTTax = tamt;
-                }
-                if (fieldName == "NetAmt") {
-                    var neta = (parseFloat(dPTGross) + parseFloat(dPTTax));
-                    updateLabelColumn(fieldID, neta);
-                    //$(this).text(neta);
-                    //dPTNet = parseFloat($(this).text());
-                }
-                if (fieldName == "DiffValue") {
-                    var dDiffGross = 0, dDiffNet = 0;
-                    var dQty = Qty;
-                    if (dQty > 0) {
-                        var val = dPTGross / dQty;
-                        var Diff = val - (TInvoicePrice * CFValue);
-                        var AbsDiff = Diff;// Math.abs(Diff);
-                        updateLabelColumn(fieldID, AbsDiff);
-                        var clrcolor = Diff >= 0 ? "green" : "red";
-                        $(this).css("color", clrcolor);
-                        dDiffGross += (AbsDiff * dQty);
-                        val = dPTNet / dQty;
-                        Diff = val - (TInvoicePrice * CFValue);
-                        AbsDiff = Diff;// Math.abs(Diff);
-                        dDiffNet += (AbsDiff * dQty);
-                    } else {
-                        updateLabelColumn(fieldID, 0);
-                        $(this).css("color", "black");
-                        dDiffGross += 0;
-                        dDiffNet += 0;
-                    }
-                }
-            });
-        });
-        calculateProdGrid();
-    }
     //dgvPMVisaPern,dgvPMVisaAmt
 
     $('#tblPayment tbody').on('change', '.dgvPMPayAmt,.dgvPMVisaPern', function (e) {
@@ -3618,88 +3509,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         nPaymodeRowIndex = TablePaymode.row(this).index();
     });
     var nCurrentRowIndex = -1;
-    //~Excl change
-    $('#tblProductData tbody').on('change', '.dgvexcl', function (e) {
-        var currrowdata = ProductTable.row(nCurrentRowIndex).data();
-        var ProdID = currrowdata[0];
-        var id = e.target.id;
-        var val = e.target.value;
-        var name = e.target.name;
-        ProdGridChange = true;
-        var Qty = 0;
-        updateInputColumn(id, val);
-        $("#tblProductData tbody tr").each(function () {
-            var rowdata = ProductTable.row($(this)).data();
-            var RowIndex = ProductTable.row($(this)).index();
-            var GridProdID = rowdata[0];
-            var TaxPern = parseFloat(rowdata[2]);
-            var TP = (TaxPern / 100) + 1;
-            var ExclPrice = parseFloat(val), InclPrice = 0;
-            if (nCurrentRowIndex == RowIndex) {//ProdID == GridProdID
-                var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
-                var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 1;
-                $(this).find("input").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "Incl") {
-                        InclPrice = ApponMRPCum > 0 ? ExclPrice + parseFloat(TotMRPonTaxAmt) : (ExclPrice * TP);
-                        updateInputColumn(fieldID, InclPrice);
-                        //return true;
-                    }
-                    if (fieldName == "Qty") {
-                        Qty = $(this).attr("txttag");
-                        return true;
-                    }
-                });
-                ProductPriceQtyChange(Qty);
-            }
-        });
-    });
-    //~Incl change
-    $('#tblProductData tbody').on('change', '.dgvincl', function (e) {
-        var currrowdata = ProductTable.row(nCurrentRowIndex).data();
-        var ProdID = currrowdata[0];
-        var id = e.target.id;
-        var val = e.target.value;
-        var name = e.target.name;
-        ProdGridChange = true;
-        var Qty = 0;
-        updateInputColumn(id, val);
-        $("#tblProductData tbody tr").each(function () {
-            var rowdata = ProductTable.row($(this)).data();
-            var RowIndex = ProductTable.row($(this)).index();
-            var GridProdID = rowdata[0];
-            var TaxPern = parseFloat(rowdata[2]);
-            var TP = (TaxPern / 100) + 1;
-            var ExclPrice =0, InclPrice = parseFloat(val);
-            if (nCurrentRowIndex == RowIndex) {//ProdID == GridProdID
-                var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
-                var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 1;
-                $(this).find("input").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "Excl") {
-                        ExclPrice = ApponMRPCum > 0 ? InclPrice - parseFloat(TotMRPonTaxAmt) : (InclPrice / TP);
-                        updateInputColumn(fieldID, ExclPrice);
-                        //return true;
-                    }
-                    if (fieldName == "Qty") {
-                        Qty = $(this).attr("txttag");
-                        return true;
-                    }
-                });
-                ProductPriceQtyChange(Qty);
-            }
-        });
-    });
-    //~Qty change
-    $('#tblProductData tbody').on('change', '.dgvqty', function (e) {
-        var qty = e.target.value != "" ? parseFloat(e.target.value) : 0;
-        var id = e.target.id;
-        ProdGridChange = true;
-        updateInputColumn(id, qty);
-        ProductPriceQtyChange(qty, id);
-    });
 
     function ProductPriceQtyChange(dQty, id = null, IdxType = 1, RIdx = 0) {
         var RowNo = IdxType == 1 ? nCurrentRowIndex : RIdx;
@@ -4629,6 +4438,16 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateLabelColumn("lblRoundNet", RoundNetAmt);
         var ro = document.getElementById('txtRoundOff');
         if (ro) ro.style.color = Roundoff > 0 ? 'var(--pos)' : Roundoff < 0 ? 'var(--neg)' : '';
+        var Diff = 0, incldiff = 0;
+        var rowdatas = G.getData();
+        if (rowdatas.length > 0) {
+            Diff = rowdatas.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number((a.diff * (a.qty)) || 0), 0);
+            incldiff = rowdatas.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number((a.Incldiff * (a.qty)) || 0), 0);
+        }
+        updateInputColumn("txtDiffExcl", Diff); updateInputColumn("txtDiffIncl", incldiff);
+        $("#txtDiffExcl").css("color", incldiff >= 0 ? "green" : "red");
+        $("#txtDiffIncl").css("color", incldiff >= 0 ? "green" : "red");
+        ApplyMultimodeAmount(RoundNetAmt);
     }
     $("#txtFright, #txtWriteoff, #txtTCS").change(function (e) {
         txtValuechanged = true;
@@ -4833,6 +4652,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 var trkbat = "False", trkpkd = "False";
                 //showErrorSnackbar("Track Inv : "+trkInv);
                 var dConvFact = row.uomCF;
+                if (data.length > 0) {
+                    modal.show();   
                 $.each(data, function (i, items) {
                     trkbat = items.TrackBatch;
                     trkpkd = items.TrackPKD;
@@ -4857,8 +4678,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 $(".modalBatch").css("width", "30%");
                 if (trkpkd == "True")
                     $(".modalBatch").css("width", "35%");
-                if (TableBatch.rows().count() > 0) {
-                    modal.show();
+                
                     //5,6,7
                     //newRow: () => ({
                     //    productID: 0, ApponMRPCum: 0, MRPonTaxAmt: 0, OrgPrice: 0, TrkInvYN: 0, TrkBatchYN: 0, TrkPKDYN: 0, TrkSerial: 0,
@@ -4885,7 +4705,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $(this).closest('tr').addClass("selected");
                             //TableBatch.row($(this)).scrollTo();
                             //TableBatch.scrollTo({ left: 0, top: 30, behavior: "smooth" });
-                            ProductTable.cell(editingRow, 26).data(BTQty).draw();
+                            //ProductTable.cell(editingRow, 26).data(BTQty).draw();
                             // Scroll to the selected row
                             var $scrollBatchBody = $(TableBatch.table().node()).parent();
                             var rowOffsetTop = $(this)[0].offsetTop;
@@ -5017,7 +4837,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
         G.patch(updatebatchrowindex, {
             qtytype: QtyType, OrgPrice: Price, MRPonTaxAmt: NewMRPonAmt,
-            priceExcl: +ShowPrice || 0, priceIncl: +InclPrice, mrp: MRP,  batchno: BatchNo, pkd: PKD, expiry: Expiry
+            priceExcl: +ShowPrice || 0, priceIncl: +InclPrice, mrp: MRP, batchno: BatchNo, pkd: PKD, expiry: Expiry,
+            maxbatchqty: ShownQty
         }, 'itemsProd');
         modal.hide();
     }
@@ -5815,8 +5636,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             //GetData(2, bran, $("#dtpDate").val());
                             GetProductList();
                             setTimeout(function () {
-                                Addprodgridline();
-                                G.addRow();
+                                var prodrowcount = G.getData();
+                                if (prodrowcount.length == 0) {
+                                    G.addRow();
+                                }
                             }, 750);
                         }
 
@@ -6397,7 +6220,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     //    tradePct: 0, tradeAmt: 0, addPct: 0, addAmt: 0, goods: 0, gross: 0, taxPct: 5, taxAmt: 0, net: 0, diff: 0
                     //}),
                     gridrow.patch(rowindex, {
-                        productID: +items.ProdID || 0, ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, OrgPrice: orgPrice,
+                        productID: +items.ProdID || 0, shinecode: items.Shinecode, ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, OrgPrice: orgPrice,
                         TrkInvYN: trkivYN, TrkBatchYN: batchYN, TrkPKDYN: pkdYN, TrkSerial: SerYN, batchno: BTbat, pkd: BTpkd, expiry: BTexp,
                         qtytype: btTag, TransPrice: items.ItemTransactionPrice, stock: parseFloat(items.ActQty).toFixed(DecVal), freestock: parseFloat(items.ActFreeQty).toFixed(DecVal),
                         itemName: items.Name, code: items.Code,
@@ -6405,7 +6228,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         qty: +DefQty,
                         priceExcl: +PPrice || 0, priceIncl: +InclPPrice || 0,
                         _uoms: uomforselprod, uomID: +TempProd.SalesUomID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
-                        taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.TaxPern || 0), reasonID: 0
+                        taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.TaxPern || 0), reasonID: 0, maxbatchqty: btQty
                     }, 'items');                    
                     startAutoDraftSave();
                     setTimeout(() => {
@@ -6658,285 +6481,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
         return dTaxAmt;
     }
     //~View data by id
-    function GetProductViewData_OLD(nMode, strName = null) {
-        //let sb = document.getElementById("RepLoadersnackbar");
-        //sb.classList.add("show");
-        $.ajax({
-            url: Aurl + "invoice/get",
-            type: 'get',
-            contentType: 'json',
-            data: { Mode: nMode, CodeName: strName },
-            xhrFields: {
-                withCredentials: true
-            },
-            //async: false,
-            success: function (data) {
-                ProductTable.draw().clear(); ProductTable.draw().clear();
-                $("#lblPartyCloseBal,#lblPartyACDRating").text("");
-                $("#eivoiceexists").hide();
-                $.each(data, function (i, items) {
-                    var rdo1 = $("#rdoMainTableData").is(":checked");
-                    var rdo3 = $("#rdoQTNTableData").is(":checked");
-                    if (rdo1) {
-                        $("#txtID").val(items.ID);
-                    } else {
-                        $("#txtDraftID").val(items.ID);
-                    }
-                    $("#cmbCreditTerm").val(items.PaymentTermID),$("#cmbPaymode").val(items.PaymentModeID),
-                        $("#txtCustomerID").val(items.CustomerID); $("#cmbBranch").val(items.BranchID);
-                    $("#cmbPriceType").val(items.PriceID);//$("#cmbPriceType").prop("disabled", true);
-
-                    if (rdo1) {
-                        $("#dtpDate").val(items.DocDate);
-                    }
-                    else {
-                        if (RetainDate == 0) {
-                            setDate("dtpDate", 0);
-                        } else {
-                            $("#dtpDate").val(items.DocDate);
-                        }
-                    }
-                    if (nTransMode != 3) {
-                        $("#lblDocID").text(items.DocId).attr("docprefix", items.DocPrefix);
-                    }
-                    if (rdo3) {
-                        $("#txtRefNo").val(items.DocId);
-
-                    } else {
-                        $("#txtRefNo").val(items.RefNo);
-                    }
-
-                        $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration), //$("#txtStatus").val(items.Status),
-                        $("#cmbBeat").val(items.BeatID), $("#cmbSalesman").val(items.SalesmanID);
-                    updateInputColumn("txtFright", items.FrightAmt); updateInputColumn("txtOtherChargPern", items.OtherChargePern); updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
-                    updateInputColumn("txtProdDiscAmt", items.TotalProdDiscAmt);updateInputColumn("txtTradeDiscPern", items.TradeDiscPern); updateInputColumn("txtAddnlDiscPern", items.AddnlDiscPern);
-                    updateInputColumn("txtTradeDiscAmt", items.TradeDiscAmt); updateInputColumn("txtAddnlDiscAmt", items.AddnlDiscAmt);updateInputColumn("txtRoundOff", items.RoundOffAmt);
-                    updateLabelColumn("lblPTGross", parseFloat(items.GrossAmt)); updateLabelColumn("lblPTTax", parseFloat(items.TaxAmt));
-                    updateLabelColumn("lblRoundNet", parseFloat(items.NetAmt));
-                    updateLabelColumn("lblRoundNetFooter", parseFloat(items.NetAmt));
-                    updateInputColumn("txtTCS", items.TCSTaxAmt); updateInputColumn("txtTDS", items.TDSAmount); updateInputColumn("txtWriteoff", items.WriteOffAmt);
-                    updateInputColumn("txtDiffExcl", items.DiffValueGross); updateInputColumn("txtDiffIncl", items.DiffValueNet);
-                    $("#txtDiffExcl").css("color", items.DiffValueGross >= 0 ? "green" : "red");
-                    $("#txtDiffIncl").css("color", items.DiffValueNet >= 0 ? "green" : "red");
-                    $("#cmbVehicleNo").val(items.VehicleNo), $("#txtDistance").val(items.Distance), $("#lblRoundBalanceFooter").text(items.Balance);
-
-                        $("#txtTransportID").val(items.TransactionID), $("#txtTransportName").val(items.TransactionName);
-                    selectDropdownByText('cmbTransportType', items.TransportType);
-                    selectDropdownByText('cmbTransportMode', items.TransportMode);
-
-
-                    $("#lblIRNNo").text(items.IRN);
-                    $("#lblAckNo").text(items.AckNo);
-                    $("#lblAckDate").text(items.AckDate);
-                    $("#lblEwayNo").text(items.EWBNo);
-                    $("#lblSignedQR").text(items.SignedQRCode);
-                    if (items.IRN || items.EWBNo) {
-                        $("#eivoiceexists").show();
-                    }
-                    if (items.SignedQRCode) {
-                        $("#btnShowSignQR").show();
-                    } else {
-                        $("#btnShowSignQR").hide();
-                    }
-                    $.each(items.lstPartyInfo, function (i, itemsParty) {
-                        $("#txtSearch").val(itemsParty.Name),
-                            $("#lblName").text(itemsParty.Code),
-                            $("#cmbRating").text(itemsParty.Ratings),
-                            $("#lblShinecode").text(itemsParty.Shinecode),
-                            $("#lblMob1").text(itemsParty.Mob1),
-                            $("#txtGSTIN").val(itemsParty.GSTIN),
-                            $("#lblGSTIN").text(itemsParty.GSTIN),
-                            $("#txtBAdd1").val(itemsParty.Billadd1),
-                            $("#txtBAdd2").val(itemsParty.Billadd2),
-                            $("#txtBAdd3").val(itemsParty.Billadd3),
-                            $("#txtSAdd1").val(itemsParty.Shipadd1),
-                            $("#txtSAdd2").val(itemsParty.shipadd2),
-                            $("#txtSAdd3").val(itemsParty.Shipadd3),
-                            $("#txtPincode").val(itemsParty.Pincode);
-                        $("#txtCustomerRemarks,#txtDiffExcl,#txtDiffIncl").prop("disabled", true);
-                        $("#txtCustomerScheme").val(itemsParty.CustomerScheme);
-                        if (itemsParty.CustomerScheme == "1")
-                            $("#lblCustomerScheme").show();
-                        else
-                            $("#lblCustomerScheme").hide();
-                        if (itemsParty.CloseBal > 0) {
-                            $("#lblPartyCloseBal,#lblPartyACDRating").show();
-                            if (itemsParty.OSType == 'Cr') {
-                                $("#lblPartyCloseBal").css("color", "green");
-                            } else {
-                                $("#lblPartyCloseBal").css("color", "red");
-                            }
-                            $("#lblPartyCloseBal").text("₹ " + parseFloat(itemsParty.CloseBal).toFixed(DecVal) + " " + itemsParty.OSType);
-                            $("#lblPartyACDRating").text("ACD : " + itemsParty.ACDate + ", Rating :" + itemsParty.RatingName);
-                        } else {
-                            $("#lblPartyCloseBal,#lblPartyACDRating").hide();
-                        }
-                        var custRem = "";
-                        $.each(itemsParty.lstCustRemark, function (j, itemsRemarks) {
-                            custRem += (j + 1) + ". " + itemsRemarks.Remarks + "\n";
-                        });
-                        $("#txtCustomerRemarks").val(custRem);
-                    });
-                    GetProductList();
-                    ProductRID = 0;
-                    var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
-                    var visbfields = nTransMode == 4 || nTransMode == 5 ? "hidden" : "";
-                    var dataSet = items.lstProdInfo.map(function (itemsProd, nRowIndex) {
-                        var strUOMs = "";
-                        for (var j = 0; j < itemsProd.UOMList.length; j++) {
-                            strUOMs += '<option value="' + itemsProd.UOMList[j].ID + '" name="' + itemsProd.UOMList[j].ConvRate + '">' + itemsProd.UOMList[j].Name + '</option>';
-                        }
-                        var strUOMsoptionsHtml = "";
-                        strUOMsoptionsHtml = strUOMs.replace(
-                            new RegExp('value="' + itemsProd.UomID + '"', 'g'),
-                            'value="' + itemsProd.UomID + '" selected'
-                        );
-                        var uomfield = "<select name= 'UOM' class='gdInput dgvcmbUOM' " + disbfields + " id='dgvUOM" + nRowIndex + "' >" + strUOMsoptionsHtml + "</select>";
-                        var ReasonoptionsHtml = "";
-                        ReasonoptionsHtml = strReasons.replace(
-                            new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
-                            'value="' + itemsProd.ReasonID + '" selected'
-                        );
-                        var Reasons = "<select name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
-                        var Diffval = parseFloat(itemsProd.DiffAmt);
-                        var DiffClr = Diffval >= 0 ? "green" : "red";
-                        var DiffField = '<label name="DiffValue" style="color:' + DiffClr + '" lbltag="' + Diffval + '" title="' + Diffval + '" class="lblsettag" id="dgvProdDiffValue' + nRowIndex + '">' + parseFloat(Diffval).toFixed(DecVal) + '</label><br/>' + Reasons;
-                        ////console.log("al data", TempAL);
-                        return [
-                            itemsProd.ProdID,
-                            itemsProd.TaxID,
-                            itemsProd.TaxPern, itemsProd.OrgPrice, itemsProd.UomID, itemsProd.BatchNo, itemsProd.PKD, itemsProd.Expiry,
-                            itemsProd.InvYN, itemsProd.BatchYN, itemsProd.PKDYN, itemsProd.SerialYN,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>&ensp;<span style="font-size:16px;" '+visbfields+' class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/><span style="font-size:16px;" '+visbfields+' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;'+
-                            ' <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
-                            '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
-                            '<input data-shinecode="' + itemsProd.Shinecode +'" name = "ProdName"  autocomplete="off" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
-                            '<input disabled min="0" type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" title="' + itemsProd.MRP + '"' + disbfields + '/>',
-                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePrice + '" step="any" id="dgvProdExl' + nRowIndex + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(itemsProd.UomSalePrice).toFixed(DecVal) + '" title="' + itemsProd.UomSalePrice + '"' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/><br/>' +
-                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePriceIncl + '" step="any" id="dgvProdIncl' + nRowIndex + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(itemsProd.UomSalePriceIncl).toFixed(DecVal) + '" title="' + itemsProd.UomSalePriceIncl + '"' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="' + itemsProd.UomQty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + parseFloat(itemsProd.UomQty).toFixed(DecVal) + '" title="' + itemsProd.UomQty + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            uomfield,
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvTradediscPernchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvTradediscAmtchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvAddnldiscPernchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-
-                            '<label class="lblsettag" name="Goods" lbltag=' + itemsProd.GoodsAmt + ' id="dgvProdGoods' + nRowIndex + '" title="' + itemsProd.GoodsAmt + '">' + parseFloat(itemsProd.GoodsAmt).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="Gross" lbltag=' + itemsProd.GrossAmt + ' id="dgvProdGross' + nRowIndex + '" title="' + itemsProd.GrossAmt + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>' +
-                            '<label hidden name="ApponMRPCum" class="lblsettag" lbltag="' + itemsProd.CumMRPonTax + '"  title="' + itemsProd.CumMRPonTax + '" id="dgvProdApponMRPCum' + nRowIndex + '">' + parseFloat(itemsProd.CumMRPonTax).toFixed(DecVal) + '</label>' +
-                            '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + itemsProd.MRPonTax + '"   title="' + itemsProd.MRPonTax + '"id="dgvProdTotalMRPonTax' + nRowIndex + '">' + parseFloat(itemsProd.MRPonTax).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="NetAmt" lbltag=' + itemsProd.NetAmt + ' id="dgvProdNet' + nRowIndex + '" title="' + itemsProd.NetAmt + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
-                            (parseFloat(itemsProd.UomQty) + 10000), DiffField, itemsProd.ProductTransPrice, 0, itemsProd.QtyType
-                        ];
-                    });
-                    $('#tblProductData').DataTable({
-                        scrollY: "450px",
-                        scrollX: true,
-                        scrollCollapse: true,
-                        paging: false,
-                        destroy: true,
-                        //deferRender: true,
-                        data: dataSet,
-                        fixedColumns: false,
-                        searching: false,
-                        ordering: false,
-                        sorting: false,
-                        info: false,
-                        columns: [
-                            { title: "ProdID", visible: false, className: "dt-body-left" },
-                            { title: "TaxID", visible: false, className: "dt-body-left" },
-                            { title: "TaxPern", visible: false, className: "dt-body-left" },
-                            { title: "OrgPrice", visible: false, className: "dt-body-left" },
-                            { title: "OrgUOMID", visible: false, className: "dt-body-left" },
-                            { title: "BatchNo", visible: false, className: "dt-body-left" },
-                            { title: "PKD", visible: false, className: "dt-body-left" },
-                            { title: "Expiry", visible: false, className: "dt-body-left" },
-                            { title: "TrkInvYN", visible: false, className: "dt-body-left" },
-                            { title: "BatchYN", visible: false, className: "dt-body-left" },
-                            { title: "PKDYN", visible: false, className: "dt-body-left" },
-                            { title: "TrkkSerYN", visible: false, className: "dt-body-left" },
-                            { title: '<button class="btn-add-style" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-center", width: "3%" },
-                            { title: "#", className: "dt-body-left", width: "2%" },
-                            { title: "Item Names", className: "dt-body-left", width: "20%" },
-                            { title: "MRP", className: "dt-body-right", width: "8%" },
-                            { title: "Excl Incl ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Qty", className: "dt-body-right", width: "8%" },
-                            { title: "UOM", className: "dt-body-left", width: "6%" },
-                            { title: "Prod % / ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Trade %/ ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Addnl % / ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Goods ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Gross ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Tax ₹ / %", className: "dt-body-right", width: "7%" },
-                            { title: "Net ₹", className: "dt-body-right", width: "8%" },
-                            { title: "BatchTempQty", visible: false, className: "dt-body-left" },
-                            { title: 'Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span>', className: "dt-body-right", width: "10%" },
-                            { title: "TransPrice", visible: false, className: "dt-body-left" },
-                            { title: "BatchTempQty", visible: false, className: "dt-body-left" },
-                            { title: "QtyType", visible: false, className: "dt-body-left" },
-                        ]
-                    });
-                    ProductTable = $('#tblProductData').DataTable();
-                    if (nTransMode != 5 && nTransMode != 4) {
-                        $("#tblProductData tbody tr").each(function () {
-                            $(this).find("input[name=ProdName]").each(function (index) {
-                                const fieldName = $(this).attr("name");
-                                const fieldID = $(this).attr("id");
-                                //~AutoList
-                                PaginatedAutocomplete({
-                                    inputId: fieldID,
-                                    data: TempAL,
-                                    startwitfieldname: startwithfield,
-                                    enablefilterstartwith: autolistfilterwith,
-                                    onSelect: function (item) {
-                                        ItemALEnterClicked = true;
-                                        $("#dgvProdName" + ProductRID).val(item.code);
-                                        $("#txtTempABS").val(item.ABS + item.Location);
-                                        $("#clrdivs").html("");
-                                        var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                                        GetData(4, item.code, CustID);
-                                        return false;
-                                    }
-                                });
-                            });
-
-                            if (nTransMode != 5 && nTransMode != 4)//nMode == 21 || //not view & cancel
-                            {
-                                var drrowdata = ProductTable.row($(this)).data();
-                                var drRowIndex = ProductTable.row($(this)).index();
-                                var $tr = $(this);
-                                $tr.find("input[name=Qty]").each(function (index) {
-                                    const fieldName = $(this).attr("name");
-                                    const fieldID = $(this).attr("id");
-                                    const dQty = $(this).attr("txttag");
-                                    //ProductPriceQtyChange(dQty, fieldID, 0, drRowIndex);
-                                    ProductEditmodeRecalculate(dQty, fieldID, $tr);
-                                });
-                            }
-                        });
-                    }
-
-                    ProductRID = ProductTable.rows().count() + 1;
-                    calculateProdGrid();
-                    setupArrowKeyNavigation1();
-                    //sb.classList.remove("show");
-                    ProductTable.columns.adjust().draw();
-                });
-
-            }, error: function (data) {
-                //sb.classList.remove("show");
-                if (data.status == "401") {
-                    var msg = data.responseJSON.Message;
-                    //showErrorSnackbar(msg + " Logout and Login again.");
-                }
-            }
-        });
-    }
     function GetProductViewData(nMode, strName = null) {
         $.ajax({
             url: Aurl + "invoice/get",
@@ -6948,7 +6492,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 // removed redundant ProductTable.draw().clear() x2 — destroy:true below handles it
                 $("#lblPartyCloseBal,#lblPartyACDRating").text("");
                 $("#eivoiceexists").hide();
-
+                G.clearAllRows();
+                G.setLocked(nTransMode == 4 || nTransMode == 5);
                 $.each(data, function (i, items) {
                     var rdo1 = $("#rdoMainTableData").is(":checked");
                     var rdo3 = $("#rdoQTNTableData").is(":checked");
@@ -7068,139 +6613,32 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                     var dataSet = items.lstProdInfo.map(function (itemsProd, nRowIndex) {
 
-                        // --- build UOM options WITHOUT regex, mark selected inline ---
-                        var uomParts = [];
-                        for (var j = 0; j < itemsProd.UOMList.length; j++) {
-                            var u = itemsProd.UOMList[j];
-                            var isSel = (u.ID == itemsProd.UomID) ? ' selected' : '';
-                            uomParts.push('<option value="' + u.ID + '" name="' + u.ConvRate + '"' + isSel + '>' + u.Name + '</option>');
-                        }
-                        var uomfield = "<select name='UOM' class='gdInput dgvcmbUOM' " + disbfields +
-                            " id='dgvUOM" + nRowIndex + "'>" + uomParts.join('') + "</select>";
+                        console.log(" itemsProd ", itemsProd);
+                        const t = taxById(itemsProd.TaxID) || taxOf(itemsProd.TaxPern);                // item tax (TaxID, else by GST %)
+                        const um = itemsProd.UOMList.find(x => +x.ID == +itemsProd.UomID);
+                        let transprice = parseFloat(itemsProd.ProductTransPrice);
+                        var Diffval = parseFloat(itemsProd.DiffAmt).toFixed(4);
+                        var InclDiffval = parseFloat(Diffval + ((Diffval * itemsProd.TaxPern) / 100)).toFixed(4);
+                        G.addRow();
+                        G.patch(nRowIndex, {
+                            productID: +itemsProd.ProdID, shinecode: itemsProd.Shinecode, ApponMRPCum: itemsProd.CumMRPonTax, MRPonTaxAmt: itemsProd.MRPonTax,
+                            OrgPrice: itemsProd.OrgPrice, TrkInvYN: itemsProd.InvYN, TrkBatchYN: itemsProd.BatchYN, TrkPKDYN: itemsProd.PKDYN, TrkSerial: itemsProd.SerialYN,
+                            batchno: itemsProd.BatchNo, pkd: itemsProd.PKD, expiry: itemsProd.Expiry, qtytype: itemsProd.QtyType, TransPrice: itemsProd.ProductTransPrice,
+                            stock: itemsProd.AdjQty, freestock: itemsProd.AdjFreeQty,
+                            itemName: itemsProd.Name, code: itemsProd.Code, mrp: itemsProd.MRP, priceExcl: itemsProd.UomSalePrice, priceIncl: itemsProd.UomSalePriceIncl,
+                            qty: itemsProd.UomQty, _uoms: itemsProd.UOMList, uomID: itemsProd.UomID, uom: um.Name, uomCF: um.ConvRate, reason: itemsProd.ReasonID,
+                            prodPct: +itemsProd.ProdDiscPern || 0, prodAmt: +itemsProd.ProdDiscAmt || 0,
+                            tradePct: +itemsProd.TradeDiscPern || 0, tradeAmt: +itemsProd.TradeDiscAmt || 0,
+                            addPct: +itemsProd.AddnlDiscPern || 0, addAmt: +itemsProd.AddnlDiscAmt || 0,
+                            taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.GSTPern || 0),
+                            goods: itemsProd.GoodsAmt, gross: itemsProd.GrossAmt, taxAmt: itemsProd.TaxAmt, net: itemsProd.NetAmt, diff: Diffval, Incldiff: InclDiffval
+                        }, 'itemsProd');
 
-                        // --- Reasons: still a shared string, but split/join is cheaper than regex ---
-                        var reasonToken = 'value="' + itemsProd.ReasonID + '"';
-                        var ReasonoptionsHtml = strReasons.split(reasonToken).join(reasonToken + ' selected');
-                        var Reasons = "<select name='Reasons' " + disbfields +
-                            " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
-
-                        var Diffval = parseFloat(itemsProd.DiffAmt);
-                        var DiffClr = Diffval >= 0 ? "green" : "red";
-                        var DiffField = '<label name="DiffValue" style="color:' + DiffClr + '" lbltag="' + Diffval + '" title="' + Diffval + '" class="lblsettag" id="dgvProdDiffValue' + nRowIndex + '">' + Diffval.toFixed(DecVal) + '</label><br/>' + Reasons;
-
-                        return [
-                            itemsProd.ProdID, itemsProd.TaxID, itemsProd.TaxPern, itemsProd.OrgPrice,
-                            itemsProd.UomID, itemsProd.BatchNo, itemsProd.PKD, itemsProd.Expiry,
-                            itemsProd.InvYN, itemsProd.BatchYN, itemsProd.PKDYN, itemsProd.SerialYN,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>&ensp;<span style="font-size:16px;" ' + visbfields + ' class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/><span style="font-size:16px;" ' + visbfields + ' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;' +
-                            ' <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
-                            '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
-                            '<input data-shinecode="' + itemsProd.Shinecode + '" name="ProdName" autocomplete="off" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
-                            '<input disabled min="0" type="number" txttag="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" title="' + itemsProd.MRP + '"' + disbfields + '/>',
-                            '<input ' + isEnable + ' min="0" type="number" txttag="' + itemsProd.UomSalePrice + '" step="any" id="dgvProdExl' + nRowIndex + '" name="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(itemsProd.UomSalePrice).toFixed(DecVal) + '" title="' + itemsProd.UomSalePrice + '"' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/><br/>' +
-                            '<input ' + isEnable + ' min="0" type="number" txttag="' + itemsProd.UomSalePriceIncl + '" step="any" id="dgvProdIncl' + nRowIndex + '" name="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(itemsProd.UomSalePriceIncl).toFixed(DecVal) + '" title="' + itemsProd.UomSalePriceIncl + '"' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag="' + itemsProd.UomQty + '" step="any" id="dgvProdQty' + nRowIndex + '" name="Qty" class="gdInput dgvqty txtsettag" value="' + parseFloat(itemsProd.UomQty).toFixed(DecVal) + '" title="' + itemsProd.UomQty + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            uomfield,
-                            '<label>%</label><input min="0" type="number" txttag="' + itemsProd.ProdDiscPern + '" title="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag="' + itemsProd.ProdDiscAmt + '" title="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<label>%</label><input min="0" type="number" txttag="' + itemsProd.TradeDiscPern + '" title="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvTradediscPernchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag="' + itemsProd.TradeDiscAmt + '" title="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvTradediscAmtchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<label>%</label><input min="0" type="number" txttag="' + itemsProd.AddnlDiscPern + '" title="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvAddnldiscPernchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag="' + itemsProd.AddnlDiscAmt + '" title="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericOnlyBeforeInput(event, this,null)" oninput="sanitizeNumericOnly(this, null)"/>',
-                            '<label class="lblsettag" name="Goods" lbltag=' + itemsProd.GoodsAmt + ' id="dgvProdGoods' + nRowIndex + '" title="' + itemsProd.GoodsAmt + '">' + parseFloat(itemsProd.GoodsAmt).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="Gross" lbltag=' + itemsProd.GrossAmt + ' id="dgvProdGross' + nRowIndex + '" title="' + itemsProd.GrossAmt + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>' +
-                            '<label hidden name="ApponMRPCum" class="lblsettag" lbltag="' + itemsProd.CumMRPonTax + '" title="' + itemsProd.CumMRPonTax + '" id="dgvProdApponMRPCum' + nRowIndex + '">' + parseFloat(itemsProd.CumMRPonTax).toFixed(DecVal) + '</label>' +
-                            '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + itemsProd.MRPonTax + '" title="' + itemsProd.MRPonTax + '" id="dgvProdTotalMRPonTax' + nRowIndex + '">' + parseFloat(itemsProd.MRPonTax).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="NetAmt" lbltag=' + itemsProd.NetAmt + ' id="dgvProdNet' + nRowIndex + '" title="' + itemsProd.NetAmt + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
-                            (parseFloat(itemsProd.UomQty) + 10000), DiffField, itemsProd.ProductTransPrice, 0, itemsProd.QtyType
-                        ];
                     });
-
-                    $('#tblProductData').DataTable({
-                        scrollY: "450px",
-                        scrollX: true,
-                        scrollCollapse: true,
-                        paging: false,
-                        destroy: true,
-                        deferRender: true,   // <-- only builds DOM rows as they scroll into view
-                        data: dataSet,
-                        fixedColumns: false,
-                        searching: false,
-                        ordering: false,
-                        info: false,
-                        columns: [
-                            { title: "ProdID", visible: false, className: "dt-body-left" },
-                            { title: "TaxID", visible: false, className: "dt-body-left" },
-                            { title: "TaxPern", visible: false, className: "dt-body-left" },
-                            { title: "OrgPrice", visible: false, className: "dt-body-left" },
-                            { title: "OrgUOMID", visible: false, className: "dt-body-left" },
-                            { title: "BatchNo", visible: false, className: "dt-body-left" },
-                            { title: "PKD", visible: false, className: "dt-body-left" },
-                            { title: "Expiry", visible: false, className: "dt-body-left" },
-                            { title: "TrkInvYN", visible: false, className: "dt-body-left" },
-                            { title: "BatchYN", visible: false, className: "dt-body-left" },
-                            { title: "PKDYN", visible: false, className: "dt-body-left" },
-                            { title: "TrkkSerYN", visible: false, className: "dt-body-left" },
-                            { title: '<button class="btn-add-style" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-center", width: "3%" },
-                            { title: "#", className: "dt-body-left", width: "2%" },
-                            { title: "Item Names", className: "dt-body-left", width: "20%" },
-                            { title: "MRP", className: "dt-body-right", width: "8%" },
-                            { title: "Excl Incl ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Qty", className: "dt-body-right", width: "8%" },
-                            { title: "UOM", className: "dt-body-left", width: "6%" },
-                            { title: "Prod % / ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Trade %/ ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Addnl % / ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Goods ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Gross ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Tax ₹ / %", className: "dt-body-right", width: "7%" },
-                            { title: "Net ₹", className: "dt-body-right", width: "8%" },
-                            { title: "BatchTempQty", visible: false, className: "dt-body-left" },
-                            { title: 'Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span>', className: "dt-body-right", width: "10%" },
-                            { title: "TransPrice", visible: false, className: "dt-body-left" },
-                            { title: "BatchTempQty", visible: false, className: "dt-body-left" },
-                            { title: "QtyType", visible: false, className: "dt-body-left" },
-                        ]
-                    });
-
-                    ProductTable = $('#tblProductData').DataTable();
-
-                    // --- rewritten init loop: no DOM traversal, direct index-based access ---
-                    if (nTransMode != 5 && nTransMode != 4) {
-                        var rowCount = items.lstProdInfo.length;
-                        for (var r = 0; r < rowCount; r++) {
-                            var prodFieldID = "dgvProdName" + r;
-                            var qtyFieldID = "dgvProdQty" + r;
-                            var qtyVal = items.lstProdInfo[r].UomQty;
-
-                            // ~AutoList — init directly by known id, no $(this).find() traversal
-                            PaginatedAutocomplete({
-                                inputId: prodFieldID,
-                                data: TempAL,
-                                startwitfieldname: startwithfield,
-                                enablefilterstartwith: autolistfilterwith,
-                                onSelect: function (item) {
-                                    ItemALEnterClicked = true;
-                                    $("#dgvProdName" + ProductRID).val(item.code);
-                                    $("#txtTempABS").val(item.ABS + item.Location);
-                                    $("#clrdivs").html("");
-                                    var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                                    GetData(4, item.code, CustID);
-                                    return false;
-                                }
-                            });
-
-                            // recalc using known index/data instead of row($(this))
-                            var $tr = ProductTable.row(r).node();
-                            ProductEditmodeRecalculate(qtyVal, qtyFieldID, $($tr));
-                        }
+                    RecalcFooterTotals();      
+                    if ([1, 2, 3].includes(nTransMode)) {
+                        G.addRow();
                     }
-
-                    ProductRID = ProductTable.rows().count() + 1;
-                    calculateProdGrid();
-                    setupArrowKeyNavigation1();
-                    ProductTable.columns.adjust().draw();
                 });
             },
             error: function (data) {
@@ -7272,6 +6710,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 ProductTable.draw().clear(); ProductTable.draw().clear();
                 $("#lblPartyCloseBal,#lblPartyACDRating").text("");
                 $("#eivoiceexists").hide();
+                G.clearAllRows();
+                G.setLocked(nTransMode == 4 || nTransMode == 5);
                 $.each(data, function (i, items) {
 
                     $("#cmbCreditTerm").val(items.PaymentTermID), $("#cmbPaymode").val(items.PaymentModeID),
@@ -7362,155 +6802,32 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                     }
                     var dataSet = items.lstProdInfo.map(function (itemsProd, nRowIndex) {
-                        var strUOMs = "";
-                        for (var j = 0; j < itemsProd.UOMList.length; j++) {
-                            strUOMs += '<option value="' + itemsProd.UOMList[j].ID + '" name="' + itemsProd.UOMList[j].ConvRate + '">' + itemsProd.UOMList[j].Name + '</option>';
-                        }
-                        var strUOMsoptionsHtml = "";
-                        strUOMsoptionsHtml = strUOMs.replace(
-                            new RegExp('value="' + itemsProd.UomID + '"', 'g'),
-                            'value="' + itemsProd.UomID + '" selected'
-                        );
-                        var uomfield = "<select name= 'UOM' class='gdInput dgvcmbUOM' " + disbfields + " id='dgvUOM" + nRowIndex + "' >" + strUOMsoptionsHtml + "</select>";
-                        var ReasonoptionsHtml = "";
-                        ReasonoptionsHtml = strReasons.replace(
-                            new RegExp('value="' + itemsProd.ReasonID + '"', 'g'),
-                            'value="' + itemsProd.ReasonID + '" selected'
-                        );
-                        var Reasons = "<select name= 'Reasons' " + disbfields + " class='gdInput dgvcmbReasons' id='dgvReasons" + nRowIndex + "'>" + ReasonoptionsHtml + "</select>";
-                        var Diffval = parseFloat(itemsProd.DiffAmt);
-                        var DiffClr = Diffval >= 0 ? "green" : "red";
-                        var DiffField = '<label name="DiffValue" style="color:' + DiffClr + '" lbltag="' + Diffval + '" title="' + Diffval + '" class="lblsettag" id="dgvProdDiffValue' + nRowIndex + '">' + parseFloat(Diffval).toFixed(DecVal) + '</label><br/>' + Reasons;
-                        ////console.log("al data", TempAL);
-                        return [
-                            itemsProd.ProdID,
-                            itemsProd.TaxID,
-                            itemsProd.TaxPern, itemsProd.OrgPrice, itemsProd.UomID, itemsProd.BatchNo, itemsProd.PKD, itemsProd.Expiry,
-                            itemsProd.InvYN, itemsProd.BatchYN, itemsProd.PKDYN, itemsProd.SerialYN,
-                            '<span style="font-size:16px;" class="glyphicon glyphicon-info-sign clsinfoprod" title="Prodct Info"></span>&ensp;<span style="font-size:16px;" ' + visbfields + ' class="glyphicon glyphicon-edit clsbatchprod" title="Product Batch"></span><br/><span style="font-size:16px;" ' + visbfields + ' class="glyphicon glyphicon-remove-circle clsremoveprod" title="Remove Product"></span>&ensp;' +
-                            ' <a href="javascript:void(0) style="cursor: pointer;"><span class="glyphicon glyphicon-home clsABSBranchInfo" style="font-size:14px" title="Branch wise Qty"></span></a>',
-                            '<p style="font-size:14px;">' + (nRowIndex + 1) + '</p>',
-                            '<input data-shinecode="' + itemsProd.Shinecode + '" name = "ProdName"  autocomplete="off" class="gdInput dgvProdName gkbsautocomplete" id="dgvProdName' + nRowIndex + '" value="' + itemsProd.Name + '" title="' + itemsProd.Name + '"' + disbfields + '/><br/>' + itemsProd.Code,
-                            '<input disabled min="0" type="number" txttag ="' + itemsProd.MRP + '" step="any" id="dgvProdMRP' + nRowIndex + '" name ="MRP" class="gdInput txtsettag" value="' + parseFloat(itemsProd.MRP).toFixed(DecVal) + '" title="' + itemsProd.MRP + '"' + disbfields + '/>',
-                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePrice + '" step="any" id="dgvProdExl' + nRowIndex + '" name ="Excl" class="gdInput dgvexcl txtsettag" value="' + parseFloat(itemsProd.UomSalePrice).toFixed(DecVal) + '" title="' + itemsProd.UomSalePrice + '"' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/><br/>' +
-                            '<input ' + isEnable + ' min="0" type="number" txttag ="' + itemsProd.UomSalePriceIncl + '" step="any" id="dgvProdIncl' + nRowIndex + '" name ="Incl" class="gdInput dgvincl txtsettag" value="' + parseFloat(itemsProd.UomSalePriceIncl).toFixed(DecVal) + '" title="' + itemsProd.UomSalePriceIncl + '"' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            '<input min="0" type="number" txttag ="' + itemsProd.UomQty + '" step="any" id="dgvProdQty' + nRowIndex + '" name ="Qty" class="gdInput dgvqty txtsettag" value="' + parseFloat(itemsProd.UomQty).toFixed(DecVal) + '" title="' + itemsProd.UomQty + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-                            uomfield,
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.ProdDiscPern + '" title ="' + itemsProd.ProdDiscPern + '" step="any" id="dgvProdPDPern' + nRowIndex + '" name="ProdDiscPern" class="gdInput ProdDisc txtsettag dgvProddiscPernchange" value="' + parseFloat(itemsProd.ProdDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.ProdDiscAmt + '" title ="' + itemsProd.ProdDiscAmt + '" step="any" id="dgvProdPDAmt' + nRowIndex + '" name="ProdDiscAmt" class="gdInput ProdDisc txtsettag dgvProddiscAmtchange" value="' + parseFloat(itemsProd.ProdDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
 
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.TradeDiscPern + '" title ="' + itemsProd.TradeDiscPern + '" step="any" id="dgvProdTDPern' + nRowIndex + '" name="TradeDiscPern" class="gdInput TradeDisc txtsettag dgvTradediscPernchange" value="' + parseFloat(itemsProd.TradeDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.TradeDiscAmt + '" title ="' + itemsProd.TradeDiscAmt + '" step="any" id="dgvProdTDAmt' + nRowIndex + '" name="TradeDiscAmt" class="gdInput TradeDisc txtsettag dgvTradediscAmtchange" value="' + parseFloat(itemsProd.TradeDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
+                        console.log(" itemsProd ", itemsProd);
+                        const t = taxById(itemsProd.TaxID) || taxOf(itemsProd.TaxPern);                // item tax (TaxID, else by GST %)
+                        const um = itemsProd.UOMList.find(x => +x.ID == +itemsProd.UomID);
+                        let transprice = parseFloat(itemsProd.ProductTransPrice);
+                        var Diffval = parseFloat(itemsProd.DiffAmt).toFixed(4);
+                        var InclDiffval = parseFloat(Diffval + ((Diffval * itemsProd.TaxPern) / 100)).toFixed(4);
+                        G.addRow();
+                        G.patch(nRowIndex, {
+                            productID: +itemsProd.ProdID, shinecode: itemsProd.Shinecode, ApponMRPCum: itemsProd.CumMRPonTax, MRPonTaxAmt: itemsProd.MRPonTax,
+                            OrgPrice: itemsProd.OrgPrice, TrkInvYN: itemsProd.InvYN, TrkBatchYN: itemsProd.BatchYN, TrkPKDYN: itemsProd.PKDYN, TrkSerial: itemsProd.SerialYN,
+                            batchno: itemsProd.BatchNo, pkd: itemsProd.PKD, expiry: itemsProd.Expiry, qtytype: itemsProd.QtyType, TransPrice: itemsProd.ProductTransPrice,
+                            stock: itemsProd.AdjQty, freestock: itemsProd.AdjFreeQty,
+                            itemName: itemsProd.Name, code: itemsProd.Code, mrp: itemsProd.MRP, priceExcl: itemsProd.UomSalePrice, priceIncl: itemsProd.UomSalePriceIncl,
+                            qty: itemsProd.UomQty, _uoms: itemsProd.UOMList, uomID: itemsProd.UomID, uom: um.Name, uomCF: um.ConvRate, reason: itemsProd.ReasonID,
+                            prodPct: +itemsProd.ProdDiscPern || 0, prodAmt: +itemsProd.ProdDiscAmt || 0,
+                            tradePct: +itemsProd.TradeDiscPern || 0, tradeAmt: +itemsProd.TradeDiscAmt || 0,
+                            addPct: +itemsProd.AddnlDiscPern || 0, addAmt: +itemsProd.AddnlDiscAmt || 0,
+                            taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.GSTPern || 0),
+                            goods: itemsProd.GoodsAmt, gross: itemsProd.GrossAmt, taxAmt: itemsProd.TaxAmt, net: itemsProd.NetAmt, diff: Diffval, Incldiff: InclDiffval
+                        }, 'itemsProd');
 
-                            '<label>%</label><input min="0" type="number" txttag ="' + itemsProd.AddnlDiscPern + '" title ="' + itemsProd.AddnlDiscPern + '" step="any" id="dgvProdADPern' + nRowIndex + '" name="AddnlDiscPern" class="gdInput AddnlDisc txtsettag dgvAddnldiscPernchange" value="' + parseFloat(itemsProd.AddnlDiscPern).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput="return NumericPercentageBeforeInput(event, this,null)" oninput="sanitizeNumericPercentage(this, null)"/><br/>' +
-                            '<label>₹</label><input min="0" type="number" txttag ="' + itemsProd.AddnlDiscAmt + '" title ="' + itemsProd.AddnlDiscAmt + '" step="any" id="dgvProdADAmt' + nRowIndex + '" name="AddnlDiscAmt" class="gdInput AddnlDisc txtsettag dgvAddnldiscAmtchange" value="' + parseFloat(itemsProd.AddnlDiscAmt).toFixed(DecVal) + '" ' + disbfields + ' onbeforeinput = "return NumericOnlyBeforeInput(event, this,null)" oninput = "sanitizeNumericOnly(this, null)"/>',
-
-                            '<label class="lblsettag" name="Goods" lbltag=' + itemsProd.GoodsAmt + ' id="dgvProdGoods' + nRowIndex + '" title="' + itemsProd.GoodsAmt + '">' + parseFloat(itemsProd.GoodsAmt).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="Gross" lbltag=' + itemsProd.GrossAmt + ' id="dgvProdGross' + nRowIndex + '" title="' + itemsProd.GrossAmt + '">' + parseFloat(itemsProd.GrossAmt).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="TaxAmt" lbltag=' + itemsProd.TaxAmt + ' id="dgvProdTax' + nRowIndex + '" title="' + itemsProd.TaxAmt + '">' + parseFloat(itemsProd.TaxAmt).toFixed(DecVal) + '</label><br/><label name="Tax">' + itemsProd.TaxName + '</label>' +
-                            '<label hidden name="ApponMRPCum" class="lblsettag" lbltag="' + itemsProd.CumMRPonTax + '"  title="' + itemsProd.CumMRPonTax + '" id="dgvProdApponMRPCum' + nRowIndex + '">' + parseFloat(itemsProd.CumMRPonTax).toFixed(DecVal) + '</label>' +
-                            '<label hidden name="TotalMRPonTax" class="lblsettag" lbltag="' + itemsProd.MRPonTax + '"   title="' + itemsProd.MRPonTax + '"id="dgvProdTotalMRPonTax' + nRowIndex + '">' + parseFloat(itemsProd.MRPonTax).toFixed(DecVal) + '</label>',
-                            '<label class="lblsettag" name="NetAmt" lbltag=' + itemsProd.NetAmt + ' id="dgvProdNet' + nRowIndex + '" title="' + itemsProd.NetAmt + '">' + parseFloat(itemsProd.NetAmt).toFixed(DecVal) + '</label>',
-                            (parseFloat(itemsProd.UomQty) + 10000), DiffField, itemsProd.ProductTransPrice, 0, itemsProd.QtyType
-                        ];
                     });
-                    $('#tblProductData').DataTable({
-                        scrollY: "450px",
-                        scrollX: true,
-                        scrollCollapse: true,
-                        paging: false,
-                        destroy: true,
-                        data: dataSet,
-                        fixedColumns: false,
-                        searching: false,
-                        ordering: false,
-                        sorting: false,
-                        info: false,
-                        columns: [
-                            { title: "ProdID", visible: false, className: "dt-body-left" },
-                            { title: "TaxID", visible: false, className: "dt-body-left" },
-                            { title: "TaxPern", visible: false, className: "dt-body-left" },
-                            { title: "OrgPrice", visible: false, className: "dt-body-left" },
-                            { title: "OrgUOMID", visible: false, className: "dt-body-left" },
-                            { title: "BatchNo", visible: false, className: "dt-body-left" },
-                            { title: "PKD", visible: false, className: "dt-body-left" },
-                            { title: "Expiry", visible: false, className: "dt-body-left" },
-                            { title: "TrkInvYN", visible: false, className: "dt-body-left" },
-                            { title: "BatchYN", visible: false, className: "dt-body-left" },
-                            { title: "PKDYN", visible: false, className: "dt-body-left" },
-                            { title: "TrkkSerYN", visible: false, className: "dt-body-left" },
-                            { title: '<button class="btn-add-style" id="btnNewProd" title="Add Row"><span class="glyphicon glyphicon-plus-sign"></span></button>', className: "dt-body-center", width: "3%" },
-                            { title: "#", className: "dt-body-left", width: "2%" },
-                            { title: "Item Names", className: "dt-body-left", width: "20%" },
-                            { title: "MRP", className: "dt-body-right", width: "8%" },
-                            { title: "Excl Incl ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Qty", className: "dt-body-right", width: "8%" },
-                            { title: "UOM", className: "dt-body-left", width: "6%" },
-                            { title: "Prod % / ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Trade %/ ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Addnl % / ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Goods ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Gross ₹", className: "dt-body-right", width: "7%" },
-                            { title: "Tax ₹ / %", className: "dt-body-right", width: "7%" },
-                            { title: "Net ₹", className: "dt-body-right", width: "8%" },
-                            { title: "BatchTempQty", visible: false, className: "dt-body-left" },
-                            { title: 'Diff&ensp;<span class="glyphicon glyphicon-pencil clsSchema" style="font-size:14px;" title="Reason"></span>', className: "dt-body-right", width: "10%" },
-                            { title: "TransPrice", visible: false, className: "dt-body-left" },
-                            { title: "BatchTempQty", visible: false, className: "dt-body-left" },
-                            { title: "QtyType", visible: false, className: "dt-body-left" },
-                        ]
-                    });
-                    ProductTable = $('#tblProductData').DataTable();
-                    console.time("prodeditrecalc");
-                    const startTime = performance.now();
-                    $("#tblProductData tbody tr").each(function () {
-
-                        $(this).find("input[name=ProdName]").each(function (index) {
-                            const fieldName = $(this).attr("name");
-                            const fieldID = $(this).attr("id");
-                            //~AutoList
-                            PaginatedAutocomplete({
-                                inputId: fieldID,
-                                data: TempAL,
-                                startwitfieldname: startwithfield,
-                                enablefilterstartwith: autolistfilterwith,
-                                onSelect: function (item) {
-                                    ItemALEnterClicked = true;
-                                    $("#dgvProdName" + ProductRID).val(item.code);
-                                    $("#txtTempABS").val(item.ABS + item.Location);
-                                    $("#clrdivs").html("");
-                                    var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                                    GetData(4, item.code, CustID);
-                                    return false;
-                                }
-                            });
-                        });
-
-                        if (nTransMode != 5 && nTransMode != 4)//nMode == 21 || //not view & cancel
-                        {
-                            var drrowdata = ProductTable.row($(this)).data();
-                            var drRowIndex = ProductTable.row($(this)).index();
-                            var $tr = $(this);
-                            $tr.find("input[name=Qty]").each(function (index) {
-                                const fieldName = $(this).attr("name");
-                                const fieldID = $(this).attr("id");
-                                const dQty = $(this).attr("txttag");
-                                //ProductPriceQtyChange(dQty, fieldID, 0, drRowIndex);
-                                ProductEditmodeRecalculate(dQty, fieldID, $tr);
-                            });
-                        }
-                    });
-                    console.timeEnd("prodeditrecalc");
-                    const endTime = performance.now();
-
-                    console.log(
-                        `prodeditrecalc execution time: ${(endTime - startTime).toFixed(3)} ms`
-                    );
-                    ProductRID = ProductTable.rows().count() + 1;
-                    calculateProdGrid();
-                    setupArrowKeyNavigation1();
+                    RecalcFooterTotals();
+                    G.addRow();                    
                     sb.classList.remove("show");
-                    ProductTable.columns.adjust().draw();
                 });
 
             }, error: function (data) {
@@ -7885,7 +7202,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                     $("#balanceContainer").hide()
                                     $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
                                     ClearForm();
-                                    Addprodgridline();
                                     setTimeout(() => {
                                         var DocDate = $("#dtpDate").val();
                                         var Branch = $("#cmbBranch").val();
@@ -8073,7 +7389,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
         // Clear tables
         TableBatch.draw().clear();
-        ProductTable.draw().clear(); ProductTable.draw().clear();
+        G.setLocked(false);
+        G.clearAllRows();
 
         // Load initial data
         GetData(1, RoleID);
@@ -8244,11 +7561,20 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 showErrorSnackbar("Net Amount should be greater than Zero");
             }
         }
-        var ProdRowCounts = ProductTable.rows().count();
-        if (ProdRowCounts == 0) {
+        var griditems = G.getData();
+        var items = griditems.filter(item => Number(item.productID) > 0).map(a => a.productID);
+        if (items.length == 0) {
             IsValid = false;
-            $("#divErrProduct").html("Add atleat one product");
-            showErrorSnackbar("Add atleat one product");
+            $("#divErrProduct").html("Add atleat one product in Grid");
+            showErrorSnackbar("Add atleast one product in Grid");
+        }
+        else {
+            var sumqty = griditems.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number(a.qty || 0), 0);
+            if (sumqty == 0) {
+                IsValid = false;
+                $("#divErrProduct").html("Please enter a quantity of at least 1 for at least one item.");
+                showErrorSnackbar("Please enter a quantity of at least 1 for at least one item.");
+            }
         }
         $("#lblRoundNet").css("color", "black");
         var valu = document.getElementById("lblRoundNet").getAttribute("lbltag");
@@ -8262,44 +7588,32 @@ if ($("#txtReurnPricePerm").val() == 0) {
             //lblShinecode
             var shinecode = $("#lblShinecode").text();
             var inclerroritems = 0, inclerroritemnames = '';
-            $("#tblProductData tbody tr").each(function () {
-                const $r = $(this);
-                let Balance = getTagEl($r, "label[name='NetAmt']");
-                let InclPrice = getTagEl($r, "input[name='Incl']");
-                let MRP = getTagEl($r, "input[name='MRP']");
-                let currentNetAmtid = $r.find("label[name='NetAmt']").attr("id");
-                let ProdFieldID = $r.find("input[name='ProdName']").attr("id");
-                let ProdNames = $r.find("input[name='ProdName']").val();
-                let ItemShinecode = $r.find("input[name='ProdName']").data("shinecode"); //ProdName
-                $("#" + ProdFieldID).css("color", "black");
-                if (Balance < 0) {
-                    $(this).find('td').css("background-color", "#FFB6C1").attr("title", "Some items are have nagative values");
-                    $("#" + currentNetAmtid).css("color", "red");
-                    IsValid = false;
-                    if (!errorthrowwed) {
-                        showErrorSnackbar("Some items are have nagative values");
-                    }
+            var row = G.getData();
+            ////console.log(row);
+            $.each(row, function (i, items) {                
+                let NetAmt = items.net;
+                let InclPrice = items.priceIncl;
+                let MRP = items.mrp;
+                let ItemShinecode = items.shinecode;
+                let ProdNames = items.itemName;
+                if (NetAmt < 0) {
+                    showErrorSnackbar("Row " + (i + 1) + " have nagative values");
                 }
-                else {
-                    $(this).find('td').css("background-color", "white").attr("title", "");
-                    $("#" + currentNetAmtid).css("color", "black");
-                }
-
                 if (shinecode != "" && ItemShinecode == "") {
-                    $("#" + ProdFieldID).css("color", "red");
-                    $(this).find('td').css("background-color", "#fe7d65");
+                    //$("#" + ProdFieldID).css("color", "red");
+                    //$(this).find('td').css("background-color", "#fe7d65");
                     shinecodeerror = true;
                     IsValid = false;
                 }
                 if (InclPrice > MRP) {
-                    $("#" + ProdFieldID).css("color", "red");
+                    //$("#" + ProdFieldID).css("color", "red");
                     inclerroritems++;
                     inclerroritemnames += ProdNames + "\n";
-                    $(this).find('td').css("background-color", "#fe7d65").attr("title", "Item Inclusive Price(" + InclPrice + ") cannot exceed MRP(" + MRP + ")");
+                    //$(this).find('td').css("background-color", "#fe7d65").attr("title", "Item Inclusive Price(" + InclPrice + ") cannot exceed MRP(" + MRP + ")");
                     InclGreaterMRPError = true;
 
                 }
-            });
+            });            
             if (shinecodeerror) {
                 showErrorSnackbar("Some items are don't have Shinecode");
             }
@@ -8671,129 +7985,51 @@ if ($("#txtReurnPricePerm").val() == 0) {
     var ProductArray = [];
     function addProdinArray() {
         ProductArray = [];
-        var dPTQty = 0, dPTGoods = 0, dPTGross = 0, dPTTax = 0, dPTNet = 0, nProdID = 0, nUOMID = 0, PDPern = 0, PDAmt = 0, dMRP = 0,
-            TDPern = 0, TDAmt = 0, ADPern = 0, ADAmt = 0, TotProdDisc = 0, TotTradeDisc = 0, TotAddnlDisc = 0, nSerial = 1, strHSN = "", dSalePrice = 0,
-            strBatNo = "", strPKD = "", strExp = "", dOrgPrice = 0, dOrgUOMID = 0, dUOMConvFact = 0,dDiffAmt = 0,strQtyType = 1;
-        $("#tblProductData tbody tr").each(function () {
-            var allValues = {};
-            rowdata = ProductTable.row($(this)).data();
-            nProdID = rowdata[0];
-            nTaxID = rowdata[1];
-            nTaxPern = rowdata[2];
-            dOrgPrice = rowdata[3];
-            dOrgUOMID = rowdata[4];
-            strBatNo = rowdata[5];
-            strPKD = rowdata[6];
-            strExp = rowdata[7];
-            strInvYN = rowdata[8];
-            strBatNoYN = rowdata[9];
-            strPKDYN = rowdata[10];
-            strSerYN = rowdata[11];
-            strScheme = rowdata[29];
-            strQtyType = rowdata[30];
-            if (nProdID != "") {
-                $(this).find("input").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "MRP") {
-                        dMRP = parseFloat($(this).attr("txttag"));
-                    }
-                    if (fieldName == "Excl") {
-                        dSalePrice = parseFloat($(this).attr("txttag"));
-                    }
-                    if (fieldName == "Qty") {
-                        dPTQty = parseFloat($(this).attr("txttag"));
-                    }
-                    if (fieldName == "ProdDiscPern") {
-                        PDPern = parseFloat($(this).attr("txttag"));
-                    }
-                    if (fieldName == "TradeDiscPern") {
-                        TDPern = parseFloat($(this).attr("txttag"));
-                    }
-                    if (fieldName == "AddnlDiscPern") {
-                        ADPern = parseFloat($(this).attr("txttag"));
-                    }
-                    if (fieldName == "ProdDiscAmt") {
-                        PDAmt = parseFloat($(this).attr("txttag"));
-                    }
-                    if (fieldName == "TradeDiscAmt") {
-                        TDAmt = parseFloat($(this).attr("txttag"));
-                    }
-                    if (fieldName == "AddnlDiscAmt") {
-                        ADAmt = parseFloat($(this).attr("txttag"));
-                    }
-                    //allValues[fieldName] = $(this).val();
-                });
-                $(this).find("select").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "UOM") {
-                        nUOMID = parseInt($(this).val());
-                        dUOMConvFact = $('option:selected', this).attr('name');
-                    }
-                    if (fieldName == "Reasons") {
-                        strScheme = parseInt($(this).val());
-                    }
-                });
-                $(this).find("label").each(function (index) {
-                    const fieldName = $(this).attr("name");
-                    const fieldID = $(this).attr("id");
-                    if (fieldName == "Goods") {
-                        dPTGoods = parseFloat($(this).attr("lbltag"));
-                    }
-                    if (fieldName == "Gross") {
-                        dPTGross = parseFloat($(this).attr("lbltag"));
-                    }
-                    if (fieldName == "TaxAmt") {
-                        dPTTax = parseFloat($(this).attr("lbltag"));
-                    }
-                    if (fieldName == "NetAmt") {
-                        dPTNet = parseFloat($(this).attr("lbltag"));
-                    }
-                    if (fieldName == "DiffValue") {
-                        dDiffAmt = parseFloat($(this).attr("lbltag"));
-                        //dPTNet = ReturnTagValue(fieldID, fieldName);
-                    }
-                    //allValues[fieldName] = $(this).val();
-                });
-                if (dPTQty > 0) {
-                    var listProds =
-                    {
-                        "ProdID": nProdID,
-                        "UomID": nUOMID,
-                        "TaxPern": nTaxPern,
-                        "TaxID": nTaxID,
-                        "OrgUomID": dOrgUOMID,
-                        "ConvFact": dUOMConvFact,
-                        "OrgPrice": dOrgPrice,
-                        "BatchNo": strBatNo,
-                        "PKD": strPKD,
-                        "Expiry": strExp,
-                        "UomQty": dPTQty,
-                        "SalePrice": dSalePrice,
-                        "MRP": dMRP,
-                        "ProdDiscPern": PDPern,
-                        "TradeDiscPern": TDPern,
-                        "AddnlDiscPern": ADPern,
-                        "ProdDiscAmt": PDAmt,
-                        "TradeDiscAmt": TDAmt,
-                        "AddnlDiscAmt": ADAmt,
-                        "GrossAmt": dPTGross,
-                        "GoodsAmt": dPTGoods,
-                        "TaxAmt": dPTTax,
-                        "NetAmt": dPTNet,
-                        "Serial": nSerial,
-                        "InvYN": strInvYN,
-                        "BatchYN": strBatNoYN,
-                        "PKDYN": strPKDYN,
-                        "SerialYN": strSerYN,
-                        "DiffAmt": dDiffAmt,
-                        "QtyType": strQtyType,
-                        "ReasonId": strScheme
-                    }
-                    ProductArray.push(listProds);
-                    nSerial++;
+        var nSerial = 1;
+        var ItemGridData = G.getData();
+        $.each(ItemGridData, function (i, itemrow) {
+            if (itemrow.productID > 0 && itemrow.qty > 0) {
+                //newRow: () => ({
+                //    productID: 0, shinecode: '', ApponMRPCum: 0, MRPonTaxAmt: 0, OrgPrice: 0, TrkInvYN: 0, TrkBatchYN: 0, TrkPKDYN: 0, TrkSerial: 0,
+                //    batchno: '', pkd: '', expiry: '', qtytype: 1, TransPrice: 0, Incldiff: 0, stock: 0, freestock: 0,
+                //    itemName: '', code: '', mrp: 0, priceExcl: 0, priceIncl: 0, qty: 0, uomID: 1, uom: 'PCS', uomCF: 1, reason: 0, taxID: 2, prodPct: 0, prodAmt: 0,
+                //    tradePct: 0, tradeAmt: 0, addPct: 0, addAmt: 0, goods: 0, gross: 0, taxPct: 5, taxAmt: 0, net: 0, diff: 0, maxbatchqty: 0
+                //}),
+                var listProds =
+                {
+                    "ProdID": itemrow.productID,
+                    "UomID": itemrow.uomID,
+                    "TaxPern": itemrow.taxPct,
+                    "TaxID": itemrow.taxID,
+                    "OrgUomID": itemrow.uomID,
+                    "ConvFact": itemrow.uomCF,
+                    "OrgPrice": itemrow.OrgPrice,
+                    "BatchNo": itemrow.batchno,
+                    "PKD": itemrow.pkd,
+                    "Expiry": itemrow.expiry,
+                    "UomQty": itemrow.qty,
+                    "SalePrice": itemrow.priceExcl,
+                    "MRP": itemrow.mrp,
+                    "ProdDiscPern": itemrow.prodPct,
+                    "TradeDiscPern": itemrow.tradePct,
+                    "AddnlDiscPern": itemrow.addPct,
+                    "ProdDiscAmt": itemrow.prodAmt,
+                    "TradeDiscAmt": itemrow.tradeAmt,
+                    "AddnlDiscAmt": itemrow.addAmt,
+                    "GrossAmt": itemrow.gross,
+                    "GoodsAmt": itemrow.goods,
+                    "TaxAmt": itemrow.taxAmt,
+                    "NetAmt": itemrow.net,//TrkInvYN: 0, TrkBatchYN: 0, TrkPKDYN: 0, TrkSerial: 0,
+                    "InvYN": itemrow.TrkInvYN,
+                    "BatchYN": itemrow.TrkBatchYN,
+                    "PKDYN": itemrow.TrkPKDYN,
+                    "SerialYN": itemrow.TrkSerial,
+                    "DiffAmt": itemrow.diff,
+                    "QtyType": itemrow.qtytype,
+                    "ReasonId": itemrow.reason
                 }
+                ProductArray.push(listProds);
+                nSerial++;
             }
         });
     }
@@ -8804,26 +8040,26 @@ if ($("#txtReurnPricePerm").val() == 0) {
         const duplicates = [];
         var grt = 1;
         var TempProdid = 0;
-        // Loop through all rows
-        table.rows().every(function () {
-            const data = this.data();
-            const prodID = data[0];      // ProdID (hidden)
-            const netAmtid = $(data[16])[2].id; // Net Amount (label)
-            const netAmtStr = document.getElementById(netAmtid).getAttribute('txttag');// $(data[25]).text(); // Net Amount (label)
-            const netAmt = parseFloat(netAmtStr) || 0;
-            if (prodMap[prodID]) {
-                prodMap[prodID].count++;
-                prodMap[prodID].netAmt += netAmt;
-                if (parseFloat(netAmt).toFixed(2) <= 1)
-                    prodMap[prodID].lesser1rs++;
-                //if (parseFloat(netAmt).toFixed(2) > 1)
-                else
-                    prodMap[prodID].greater1rs++;
+        var ItemGridData = G.getData();
+        $.each(ItemGridData, function (i, itemrow) {
+            if (itemrow.productID > 0 && itemrow.qty > 0) {
+                const prodID = itemrow.productID;
+                const netAmt = itemrow.net;
 
-            } else {
-                prodMap[prodID] = { count: 1, netAmt: netAmt, lesser1rs: 0, greater1rs: netAmt > 1 ? 1 : 0 };//greater1rs: netAmt > 1 ? grt++ : 0
-            }
-            TempProdid = prodID;
+                if (prodMap[prodID]) {
+                    prodMap[prodID].count++;
+                    prodMap[prodID].netAmt += netAmt;
+                    if (parseFloat(netAmt).toFixed(2) <= 1)
+                        prodMap[prodID].lesser1rs++;
+                    //if (parseFloat(netAmt).toFixed(2) > 1)
+                    else
+                        prodMap[prodID].greater1rs++;
+
+                } else {
+                    prodMap[prodID] = { count: 1, netAmt: netAmt, lesser1rs: 0, greater1rs: netAmt > 1 ? 1 : 0 };//greater1rs: netAmt > 1 ? grt++ : 0
+                }
+                TempProdid = prodID;
+            } 
         });
         // Extract duplicates
         for (const prodID in prodMap) {
@@ -8837,25 +8073,19 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 });
             }
         }
-
-        // Output results
         if (duplicates.length > 0) {
-            console.table(duplicates);
-            //alert("Duplicate Products Found!\n" + JSON.stringify(duplicates, null, 2));
-            $("#tblProductData tbody tr").each(function () {
-                $(this).find('td').css("background-color", "white");
-            });
+            console.table("New Table duplicates", duplicates);
             if (Invoiceallowduplicateitem == 0) {
                 for (var i = 0; i < duplicates.length; i++) {
                     if (duplicates[i].One_rs_greater_count > 1) {
                         var dupProdid = duplicates[i].ProdID;
                         $("#tblProductData tbody tr").each(function () {
-                            var rdata = ProductTable.row($(this)).data();
-                            var rowprodid = rdata[0];
-                            if (rowprodid == dupProdid) {
-                                $(this).find('td').css("background-color", "lightskyblue");
-                                isTrue = false;
-                            }
+                            $.each(ItemGridData, function (i, itemrow) {
+                                if (itemrow.productID == dupProdid) {
+                                    //$(this).find('td').css("background-color", "lightskyblue");
+                                    isTrue = false;
+                                }
+                            });                            
                             //else {
                             //    $(this).css("background-color", "white");
                             //}
@@ -8863,10 +8093,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     }
                 }
             }
-
-        } else {
-            //alert("✅ No Duplicate Products Found.");
         }
+
         if (!isTrue) {
             showErrorSnackbar("Highlighted items are have multiple batches with greater than 1 Rs value");
         }
@@ -8915,8 +8143,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 "TCSTaxAmt": document.getElementById("txtTCS").getAttribute("txttag"),//$("#txtTCS").val(),
                 "TDSAmount": document.getElementById("txtTDS").getAttribute("txttag"),//$("#txtTDS").val(),
                 "RoundOffAmt": document.getElementById("txtRoundOff").getAttribute("txttag"),//$("#txtRoundOff").val(),
-                "GrossAmt": document.getElementById("lblPTGross").getAttribute("lbltag"),//$("#lblPTGross").text(),
-                "TaxAmt": document.getElementById("lblPTTax").getAttribute("lbltag"),//$("#lblPTTax").text(),
+                "GrossAmt": document.getElementById("lblGross").getAttribute("lbltag"),//$("#lblPTGross").text(),
+                "TaxAmt": document.getElementById("lblTaxAmount").getAttribute("lbltag"),//$("#lblPTTax").text(),
                 "NetAmt": document.getElementById("lblRoundNet").getAttribute("lbltag"),//$("#lblRoundNet").text(),
                 "DiffValueGross": document.getElementById("txtDiffExcl").getAttribute("txttag"),
                 "DiffValueNet": document.getElementById("txtDiffIncl").getAttribute("txttag"),
@@ -9029,7 +8257,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp,#btnClear").hide();
         $("#dvMain").show();
         $("#dvDocuments").hide();
-        Addprodgridline();
+        
         $("#MainHeading").text("Create Invoice");
         setTimeout(() => {
             var DocDate = $("#dtpDate").val();
@@ -9076,8 +8304,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             $("#cmbBranch").prop("disabled", true);
         }
         $("#balanceContainer").hide();
-        //setTimeout(() => {
-        Addprodgridline();
+        //setTimeout(() => {        
         $("#MainHeading").text("Create Invoice");
         setTimeout(() => {
             var DocDate = $("#dtpDate").val();
@@ -9295,38 +8522,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 }
 
             }
-        }
-        if (event.key === "F4") {
-            if ($("#txtCustomerID").val() != "") {
-                modalPinfo.show();
-                var prodid = 0
-                var gridrowdata = editingRow.data();
-                if (gridrowdata) {
-                    prodid = gridrowdata[0] || 0;
-                }
-                if (prodid > 0) {
-                    GetData(14, $("#txtCustomerID").val(), prodid)
-                }
-            }
-            else {
-                showErrorSnackbar("Select Customer");
-            }
-        }
-        if (event.ctrlKey && (event.key === 'F12')) {
-            event.preventDefault();
-            var prodid = 0
-            var gridrowdata = editingRow.data();
-            if (gridrowdata) {
-                prodid = gridrowdata[0] || 0;
-            }
-            if (prodid > 0) {//
-                var BranchID = $("#cmbBranch").val() || 0;
-                openproductpricechange(prodid, BranchID)
-            }
-            else {
-                showErrorSnackbar("Select valid Product");
-            }
-        }
+        }        
+        
         else if (event.altKey && (event.key == 's')) {//Switch contains & startwith
             event.preventDefault();
             var fieldid = event.target.id;
@@ -9788,6 +8985,20 @@ if ($("#txtReurnPricePerm").val() == 0) {
             //   const all=this.focusables(this.tb),n=all[all.indexOf(el)+(e.shiftKey?-1:1)];
             //   if(n)this.go(n)
             //   }
+            if (k == 'F4') {
+                if ($("#txtCustomerID").val() != "") {
+                    var productID = el.closest('tr').querySelector('[data-key="productID"]').value;
+                    if (productID > 0) {
+                        GetData(14, $("#txtCustomerID").val(), productID)
+                    }
+                    else {
+                        showErrorSnackbar("Select valid product");
+                    }
+                }
+                else {
+                    showErrorSnackbar("Select Customer");
+                }
+            }
             if (k === 'F8') {
                 if (el.dataset.key === 'itemName') {
                     var productID = el.closest('tr').querySelector('[data-key="productID"]').value;
@@ -9807,6 +9018,17 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     else {
                         showErrorSnackbar("You don't have pemission for &ensp;<h4><code>" + (productID == 0 ? "Add" : "Edit") + " Product</code></h4>")
                     }
+                }
+            }
+            if (e.ctrlKey && (e.key == 'F12')) {
+                var productID = el.closest('tr').querySelector('[data-key="productID"]').value;
+
+                if (productID > 0) {//
+                    var BranchID = $("#cmbBranch").val() || 0;
+                    openproductpricechange(productID, BranchID)
+                }
+                else {
+                    showErrorSnackbar("Select valid Product");
                 }
             }
             if (e.altKey && (e.key == 'a')) {
@@ -9910,7 +9132,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         applyLock(tr) {
             const L = this.locked;
             tr.querySelectorAll('input,select,textarea').forEach(x => x.disabled = L);
-            tr.querySelectorAll('.gc-drag,[id^="act_del_"]').forEach(x => { x.style.pointerEvents = L ? 'none' : ''; x.style.opacity = L ? '.4' : '' });
+            tr.querySelectorAll('.gc-drag,[id^="act_del_"],[id^="act_edit_"]').forEach(x => { x.style.pointerEvents = L ? 'none' : ''; x.style.opacity = L ? '.4' : '' });
             if (L) tr.draggable = false;
         }
         setLocked(v) {
@@ -9981,7 +9203,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 el.title = f(v, 4);
                 if (s.max != null) { const bad = (+v || 0) > s.max; el.classList.toggle('bad', bad); el.title = bad ? `Cannot exceed ${s.max}` : '' }
             }   // live flag when value > max
-            else if (s.type === 'label') el.textContent = typeof v === 'number' ? f(v, s.dec ?? 2) : v;
+            else if (s.type === 'label') {
+                el.textContent = typeof v === 'number' ? f(v, s.dec ?? 2) : v;
+                if (s.key == "mrp") {
+                    el.textContent = f(v, s.dec ?? 2);
+                    el.dataset.full = f(v, 4);
+                    el.title = f(v, 4);
+                }
+            }
             else if (s.type === 'index') el.textContent = this.rows.indexOf(r) + 1;
             else if (s.type === 'p') {
                 el.textContent = s.text(r);
@@ -9991,8 +9220,10 @@ if ($("#txtReurnPricePerm").val() == 0) {
             else if (s.type === 'checkbox') el.checked = !!v;
             else if (s.type === 'select') { const rb = this.fillSelect(el, s, r); if (rb || el !== document.activeElement) el.value = v ?? '' }   // options may change per row (item UOM list)
             else if (el !== document.activeElement) el.value = v ?? '';
-            //const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
-            //el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
+            if (s.key == "diff") {
+                const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
+                el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
+            }
         }
         changed(r, key) {
             if (this.cfg.calc) this.cfg.calc(r, key);
@@ -10091,7 +9322,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
             r.taxAmt = n(r.ApponMRPCum) > 0 ? rnd(r.MRPonTaxAmt * r.qty) : rnd(r.gross * n(r.taxPct) / 100);
             r.net = rnd(r.gross + r.taxAmt);
             if (ch !== 'priceIncl') r.priceIncl = n(r.ApponMRPCum) > 0 ? rnd(n(r.priceExcl) + n(r.MRPonTaxAmt)) : rnd(n(r.priceExcl) * (1 + n(r.taxPct) / 100));
-            r.diff = rnd(n(r.mrp) * n(r.qty) - r.net);
+            var valdf = rnd(n(r.gross) / n(r.qty));
+            var Diff = valdf - (n(r.TransPrice) * n(r.uomCF));
+            var InclDiff = (Diff * ((n(r.taxPct) / 100) + 1));
+            r.diff = rnd(Diff);
+            r.Incldiff = rnd(InclDiff);
             /* hidden column values are available here too: r.productID, r.TrackInentoryYN, r.TrackBatchYN, r.TrackPKDYN */
         }
 
@@ -10240,18 +9475,18 @@ if ($("#txtReurnPricePerm").val() == 0) {
             calc, onChange: updateSummary, onBeforeRender: acDestroy, onRender: acBind,
             onLock: l => { const b = byId('bAdd'); if (b) b.disabled = l },
             newRow: () => ({
-                productID: 0, ApponMRPCum: 0, MRPonTaxAmt: 0, OrgPrice: 0, TrkInvYN: 0, TrkBatchYN: 0, TrkPKDYN: 0, TrkSerial: 0,
+                productID: 0, shinecode:'', ApponMRPCum: 0, MRPonTaxAmt: 0, OrgPrice: 0, TrkInvYN: 0, TrkBatchYN: 0, TrkPKDYN: 0, TrkSerial: 0,
                 batchno: '', pkd: '', expiry: '', qtytype: 1, TransPrice: 0, Incldiff: 0, stock: 0, freestock: 0,
                 itemName: '', code: '',mrp: 0, priceExcl: 0, priceIncl: 0, qty: 0, uomID: 1, uom: 'PCS', uomCF: 1, reason: 0, taxID: 2,prodPct: 0, prodAmt: 0,
-                tradePct: 0, tradeAmt: 0, addPct: 0, addAmt: 0, goods: 0, gross: 0, taxPct: 5, taxAmt: 0, net: 0, diff: 0
+                tradePct: 0, tradeAmt: 0, addPct: 0, addAmt: 0, goods: 0, gross: 0, taxPct: 5, taxAmt: 0, net: 0, diff: 0, maxbatchqty : 0
             }),
 
             columns: buildGridColumns([
                 /* mandatory hidden columns: always in every row (calc, validate, getData, save), never drawn, never in the Columns list */
-                hid('ProductID', 'productID'), hid('ApponMRPCum', 'ApponMRPCum'), hid('MRPonTax', 'MRPonTaxAmt'),
+                hid('ProductID', 'productID'), hid('Shinecode', 'shinecode'), hid('ApponMRPCum', 'ApponMRPCum'), hid('MRPonTax', 'MRPonTaxAmt'),
                 hid('OrgPrice', 'OrgPrice'), hid('TrkInvYN', 'TrkInvYN'), hid('TrkBatchYN', 'TrkBatchYN'), hid('TrkPKDYN', 'TrkPKDYN'), hid('TrkSerial', 'TrkSerial'),
                 hid('BatchNo', 'batchno'), hid('PKD', 'pkd'), hid('Expiry', 'expiry'), hid('QtyType', 'qtytype'),
-                hid('TransPrice', 'TransPrice'), hid('InclDiff', 'Incldiff'),
+                hid('TransPrice', 'TransPrice'), hid('InclDiff', 'Incldiff'), hid('MaxBatchQty', 'maxbatchqty'),
                 { id: 'Sno', title: '#', width: 50, controls: [{ type: 'drag' }, { type: 'index' }] },
                 {
                     id: 'Actions', title: 'Actions', width: 70, controls: [{
