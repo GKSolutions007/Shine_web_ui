@@ -4436,6 +4436,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn("txtOtherChargPern", OCPern);
         updateInputColumn("txtRoundOff", Roundoff);
         updateLabelColumn("lblRoundNet", RoundNetAmt);
+        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
+        
         var ro = document.getElementById('txtRoundOff');
         if (ro) ro.style.color = Roundoff > 0 ? 'var(--pos)' : Roundoff < 0 ? 'var(--neg)' : '';
         var Diff = 0, incldiff = 0;
@@ -4895,34 +4897,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $scrollBody.scrollTop($scrollBody.get(0).scrollHeight);
         setupArrowKeyNavigation1();
     }
-
-    function ReLoadProductAutolists(prodname) {
-        const ProdALInputs = document.querySelectorAll('#tblProductData tbody input[name=ProdName]');
-        ProdALInputs.forEach((input, index) => {
-            var FID = ProdALInputs[index].id;
-            //~AutoList Product
-            PaginatedAutocomplete({
-                inputId: FID,
-                data: TempAL,
-                startwitfieldname: startwithfield,
-                enablefilterstartwith: autolistfilterwith,
-                onSelect: function (item) {
-                    ItemALEnterClicked = true;
-                    $("#" + FID).val(item.code);
-                    $("#txtTempABS").val(item.ABS + item.Location);
-                    $("#clrdivs").html("");
-                    var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                    GetData(4, item.code, CustID);
-                    return false;
-                }
-                //focus: function (event, ui) {
-                //    modal.hide();
-                //    return false;
-                //},
-            });
-        });
-        $('#' + gridprodfieldid).val(prodname);
-    }
+    
     // 👇 Function to apply keydown listener to all input elements in the table
     function setupArrowKeyNavigation1() {
         var qssts = document.getElementById('myModal');
@@ -6636,6 +6611,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
 
                     });
                     RecalcFooterTotals();      
+                    var BeatID = $("#cmbBeat").val();
+                    var SalesmanID = $("#cmbSalesman").val();
+                    GetData(33, BeatID, SalesmanID);
                     if ([1, 2, 3].includes(nTransMode)) {
                         G.addRow();
                     }
@@ -7590,26 +7568,36 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var inclerroritems = 0, inclerroritemnames = '';
             var row = G.getData();
             ////console.log(row);
-            $.each(row, function (i, items) {                
+            var GRIDrows = $(".g tbody tr"); 
+            console.log("ROW DTA", GRIDrows);
+            $.each(row, function (i, items) {
+                let ProductID = items.productID;
                 let NetAmt = items.net;
                 let InclPrice = items.priceIncl;
                 let MRP = items.mrp;
                 let ItemShinecode = items.shinecode;
                 let ProdNames = items.itemName;
+                GRIDrows.eq(i).find('td').css("background-color", "").attr("title", "");
                 if (NetAmt < 0) {
-                    showErrorSnackbar("Row " + (i + 1) + " have nagative values");
+                    GRIDrows.eq(i).find('td').css("background-color", "#FFB6C1").attr("title", "Some items are have nagative values");
+                    $("#" + currentNetAmtid).css("color", "red");
+                    IsValid = false;
+                    if (!errorthrowwed) {
+                        showErrorSnackbar("Some items are have nagative values");
+                    }
                 }
-                if (shinecode != "" && ItemShinecode == "") {
+                if ((shinecode != "" && ItemShinecode == "") && ProductID > 0) {
                     //$("#" + ProdFieldID).css("color", "red");
                     //$(this).find('td').css("background-color", "#fe7d65");
+                    GRIDrows.eq(i).find("td").css("background-color", "#fe7d65").attr("title","This item don't have a shine code");
                     shinecodeerror = true;
                     IsValid = false;
                 }
-                if (InclPrice > MRP) {
+                if ((InclPrice > MRP) && ProductID > 0) {
                     //$("#" + ProdFieldID).css("color", "red");
                     inclerroritems++;
                     inclerroritemnames += ProdNames + "\n";
-                    //$(this).find('td').css("background-color", "#fe7d65").attr("title", "Item Inclusive Price(" + InclPrice + ") cannot exceed MRP(" + MRP + ")");
+                    GRIDrows.eq(i).find('td').css("background-color", "#fe7d65").attr("title", "Item Inclusive Price(" + InclPrice + ") cannot exceed MRP(" + MRP + ")");
                     InclGreaterMRPError = true;
 
                 }
@@ -8076,13 +8064,17 @@ if ($("#txtReurnPricePerm").val() == 0) {
         if (duplicates.length > 0) {
             console.table("New Table duplicates", duplicates);
             if (Invoiceallowduplicateitem == 0) {
+                var GRIDrows = $(".g tbody tr"); 
                 for (var i = 0; i < duplicates.length; i++) {
                     if (duplicates[i].One_rs_greater_count > 1) {
                         var dupProdid = duplicates[i].ProdID;
-                        $("#tblProductData tbody tr").each(function () {
+                        $(".g tbody tr").each(function () {
+                            console.log(".g tbody tr", $(this).find('td'));
                             $.each(ItemGridData, function (i, itemrow) {
                                 if (itemrow.productID == dupProdid) {
                                     //$(this).find('td').css("background-color", "lightskyblue");
+                                    GRIDrows.eq(i).find('td').css("background-color", "lightskyblue").attr("title", "Same item with multiple greater than 1 Rs value");
+                                    showErrorSnackbar("Error id : " + itemrow.productID);
                                     isTrue = false;
                                 }
                             });                            
@@ -8206,31 +8198,25 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         }
                         else if (items.Message == "13") {
                             var ErrorRowID = parseInt(items.RowID);
-                            $("#tblProductData tbody tr").each(function () {
-                                var RowIndex = ProductTable.row($(this)).index();
-                                if (RowIndex == (ErrorRowID - 1)) {
-                                    $(this).find('td').css("background-color", "red");
-                                }
-                                else {
-                                    $(this).find('td').css("background-color", "white");
-                                }
-                            });
+                            var GRIDrows = $(".g tbody tr");
+                            if (GRIDrows.length) {
+                                GRIDrows.eq(ErrorRowID).find('td').css("background-color", "red").attr("title", "No Qty in Inventory");
+                            }                           
                             showErrorSnackbar("No Qty in Inventory");
                         }
                         else {
                             modalPayment.hide();
                             showErrorSnackbar(items.Message);
-                            $("#tblProductData tbody tr").each(function () {
-                                var rowdata = ProductTable.row($(this)).data();
-                                var ProdID = rowdata[0];
-                                var itemfield = $(rowdata[14]);
-                                var itemname = itemfield[0].value;
-                                var RIndex = (ProductTable.row($(this)).index()) + 1;
+                            var ItemGridData = G.getData();
+                            var GRIDrows = $(".g tbody tr"); 
+                            $.each(ItemGridData, function (i, itemrow) {
+                                var ProdID = itemrow.productID;
+                                var itemname = itemrow.itemName;
                                 $(this).css("color", "black");
                                 $(this).find("p,label,input, select").animate({ color: 'black' }, 100);
+                                GRIDrows.eq(i).find('td').css("background-color", "").attr("title", "");
                                 if (ProdID == items.RowID) {
-                                    $(this).css("color", "red");
-                                    $(this).find("p,label,input, select").animate({ color: 'red' }, 1000);
+                                    GRIDrows.eq(i).find('td').css("background-color", "red").attr("title", items.Message);
                                     showErrorSnackbar("Error in Product : " + itemname);
                                 }
                             });
@@ -8421,15 +8407,15 @@ if ($("#txtReurnPricePerm").val() == 0) {
             var ProductID = data.productid;
             var code = data.productcode;
             var name = data.productname;
-
             GetProductList()
-            setTimeout(() => {
-                ReLoadProductAutolists(name);
-            }, 1000);
+            $("#" + F8ItemID).val(name);
             if (gridprodfieldid) {
-                var CustID = $("#txtCustomerID").val() != "" ? $("#txtCustomerID").val() : 0;
-                GetData(4, code, CustID);
+                var item = TempAL.filter(p => p.id == ProductID);
+                loadselectedproductdetail(item, G, F8RowIndex); 
             }
+            setTimeout(() => {
+                ReLoadProductAutolists();
+            }, 1000);
         }
         else if (data && data.source === "Vehicle") {
             var VehicleID = data.vehicleid;
@@ -8920,7 +8906,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     }
     ];
     async function LoadColumnSettings() {
-        //colsettcols = await TransactionColumnSettingsData(3, 4, 1, 3);
+        colsettcols = await TransactionColumnSettingsData(3, 6, 1, 3);
         //console.log("colsettcols ", colsettcols);
     }
     /* DynGrid - reusable editable grid. No dependencies. */
@@ -9625,7 +9611,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         function saveColumnSettingsToServer(list, done) {
             if (!ColSettingsSaveUrl) { console.warn('ColSettingsSaveUrl not set - settings applied on screen only', list); done(); return }
             const ColumnSettingData = {
-                FormID: 1,
+                FormID: 6,
                 FormType: 3,
                 TableID: 1,
                 ColumnSettings: list   // rename to match your server-side property name
@@ -9700,4 +9686,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
         //bindInvoice(dbInvoice);
     }   // end InitInvoiceGrid
     InitInvoiceGrid();
+</script>
+<script>
+    function ReLoadProductAutolists() {
+        G.cfg.onRender(G);
+    }
 </script>
