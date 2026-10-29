@@ -785,40 +785,63 @@ document.addEventListener("keydown", function (event) {
     }
     if (event.key === "F10") {
         event.preventDefault();
-        //$("#tblProductData tbody tr:first")
-        //    .find("input:enabled, select:enabled, textarea:enabled")
-        //    .first()
-        //    .focus();
-        var rows = $("#tblProductData tbody tr");
-        var rowCount = rows.length;
+        
+        //var rows = $("#tblProductData tbody tr");
+        //var rowCount = rows.length;
 
-        if (rowCount === 1) {
-            rows.first()
-                .find("input:enabled, select:enabled, textarea:enabled")
+        //if (rowCount === 1) {
+        //    rows.first()
+        //        .find("input:enabled, select:enabled, textarea:enabled")
+        //        .first()
+        //        .focus();
+        //} else if (rowCount > 1) {
+        //    rows.last()
+        //        .find("input:enabled, select:enabled, textarea:enabled")
+        //        .first()
+        //        .focus();
+        //}
+        var rows = $(".g tbody tr"); 
+        if (!rows.length) {
+            rows = $("#tblProductData tbody tr");
+        }
+
+        if (rows.length) {
+            var row = rows.length === 1 ? rows.first() : rows.last();
+            console.log("focus row data",
+                row.find("input:enabled:visible, select:enabled, textarea:enabled"),
+                row.find("input:enabled:visible, select:enabled, textarea:enabled").first());
+            row.find("input:enabled:visible, select:enabled, textarea:enabled")
                 .first()
-                .focus();
-        } else if (rowCount > 1) {
-            rows.last()
-                .find("input:enabled, select:enabled, textarea:enabled")
-                .first()
-                .focus();
+                .trigger("focus");
         }
     }
 });
 function Gridautofocus() {
-    var rows = $("#tblProductData tbody tr");
-    var rowCount = rows.length;
+    //var rows = $("#tblProductData tbody tr");
+    //var rowCount = rows.length;
 
-    if (rowCount === 1) {
-        rows.first()
-            .find("input:enabled, select:enabled, textarea:enabled")
+    //if (rowCount === 1) {
+    //    rows.first()
+    //        .find("input:enabled, select:enabled, textarea:enabled")
+    //        .first()
+    //        .focus();
+    //} else if (rowCount > 1) {
+    //    rows.last()
+    //        .find("input:enabled, select:enabled, textarea:enabled")
+    //        .first()
+    //        .focus();
+    //}
+    var rows = $(".g tbody tr");
+    if (!rows.length) {
+        rows = $("#tblProductData tbody tr");
+    }
+
+    if (rows.length) {
+        var row = rows.length === 1 ? rows.first() : rows.last();
+
+        row.find("input:enabled:visible, select:enabled, textarea:enabled")
             .first()
-            .focus();
-    } else if (rowCount > 1) {
-        rows.last()
-            .find("input:enabled, select:enabled, textarea:enabled")
-            .first()
-            .focus();
+            .trigger("focus");
     }
 }
 function numberToIndianCurrencyWords(amount) {
