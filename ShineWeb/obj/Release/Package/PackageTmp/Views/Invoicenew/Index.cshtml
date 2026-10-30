@@ -2959,32 +2959,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             if (ProdID > 0) {
                 ReassignPricetypechangevalues(ProdID, items, i);
             }
-        });
-        $("#tblProductData123 tbody tr").each(function () {
-            rowdata = ProductTable.row($(this)).data();
-            var RIndex = ProductTable.row($(this)).index();
-            var ProdID = rowdata[0];
-            var uomval = 1;
-            var itmMRP = 0
-            $(this).find("select").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "UOM") {
-                    uomval = $("#" + fieldID + " option:selected").attr('name');
-                }
-            });
-            $(this).find("input[name=MRP]").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                itmMRP = $(this).attr("txttag");
-            });
-            if (ProdID > 0) {
-                var invid = $("#txtID").val() != "" ? $("#txtID").val() : "0";
-                GetData(23, ProdID, invid, null, uomval, RIndex, itmMRP);
-                
-            }
-        });
-
+        });       
         setTimeout(function () {
             RecalcFooterTotals();
         }, 1500);
@@ -3098,7 +3073,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         ReorderSerialNo();
     });
     function CalculateItemDiffPrice() {
-
+        return;
         $("#tblProductData tbody tr").each(function () {
 
             const rowData = ProductTable.row(this).data();
@@ -3136,6 +3111,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
     }
     //~Calculation Prod Grid
     function calculateProdGrid() {
+        return;
         // Reset footer labels to zero
         $(".lblPT").text("0.00");
 
@@ -3290,156 +3266,6 @@ if ($("#txtReurnPricePerm").val() == 0) {
             }
         }
     });
-    //~Trade Disc Calc
-    $("#txtTradeDiscPern").change(function (e) {
-        var value = e.target.value;
-        //setTagValue("txtTradeDiscPern", "", value);
-        //updateInputColumn("txtTradeDiscPern", value);
-        CalculateTradediscpern(value);
-        txtValuechanged = true;
-    });
-    function CalculateTradediscpern(value) {
-        var dPTGross = 0, dPTGoods = 0, dPTTax = 0, dPTNet = 0, Proddiscamt = 0, Tradediscamt = 0, Addnldiscamt = 0;
-        $("#tblProductData tbody tr").each(function () {
-            dPTGross = 0, dPTGoods = 0, dPTTax = 0, dPTNet = 0, Proddiscamt = 0, Tradediscamt = 0, Addnldiscamt = 0;
-            var rowdata = ProductTable.row($(this)).data();
-            var taxpern = parseFloat(rowdata[2]);
-            var TInvoicePrice = parseFloat(rowdata[28]);
-            var ProdID = rowdata[0];
-
-            var ExclPrice = 0, InclPrice = 0, Qty = 0, ProdDisc = 0, ProdDiscAmt = 0,CFValue = 1;
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "Excl") {
-                    ExclPrice = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "Incl") {
-                    InclPrice = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "Qty") {
-                    Qty = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "ProdDiscPern") {
-                    ProdDisc = parseFloat($(this).attr("txttag"));
-                }
-                if (fieldName == "ProdDiscAmt") {
-                    var price = (ExclPrice * Qty);
-                    ProdDiscAmt = parseFloat((price * ProdDisc) / 100);
-                    dPTGoods = price;
-                }
-            });
-            dPTGoods = (ExclPrice * Qty);
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "AddnlDiscAmt") {
-                    const fullValue = document.getElementById(fieldID).getAttribute('txttag');
-                    var val = fullValue != "" ? parseFloat(fullValue) : 0;
-                    Addnldiscamt = val;
-                }
-                if (fieldName == "ProdDiscAmt") {
-                    const fullValue = document.getElementById(fieldID).getAttribute('txttag');
-                    var val = fullValue != "" ? parseFloat(fullValue) : 0;
-                    Proddiscamt = val;
-                }
-                if (fieldName == "TradeDiscAmt") {
-                    $(this).prop("disabled", value > 0 ? true : false);
-
-                    var grsamt = SaleTrdDiscb4Prod ? dPTGoods : (dPTGoods - Proddiscamt);
-                    var damt = parseFloat((value * grsamt) / 100);
-                    updateInputColumn(fieldID, damt);
-                    Tradediscamt = damt;
-                }
-                if (fieldName == "TradeDiscPern") {
-                    $(this).prop("disabled", value > 0 ? true : false);
-                    updateInputColumn(fieldID, value);
-                }
-            });
-            $(this).find("input").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "ProdDiscAmt") {
-                    const fullValue = document.getElementById(fieldID).getAttribute('txttag');
-                    Proddiscamt = parseFloat(fullValue);
-                }
-                if (fieldName == "TradeDiscAmt") {
-                    const fullValue = document.getElementById(fieldID).getAttribute('txttag');
-                    Tradediscamt = parseFloat(fullValue);
-                }
-                if (fieldName == "AddnlDiscAmt") {
-                    const fullValue = document.getElementById(fieldID).getAttribute('txttag');
-                    Addnldiscamt = parseFloat(fullValue);
-                }
-            });
-            $(this).find("select").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "UOM") {
-                    var val = $('option:selected', this).attr('name');
-                    CFValue = parseFloat(val);
-                }
-            });
-            var ApponMRPCum = $(this).find("label[name='ApponMRPCum']").attr("lbltag") || 0;
-            var TotMRPonTaxAmt = $(this).find("label[name='TotalMRPonTax']").attr("lbltag") || 1;
-            $(this).find("label").each(function (index) {
-                const fieldName = $(this).attr("name");
-                const fieldID = $(this).attr("id");
-                if (fieldName == "Goods") {
-                    var gds = (parseFloat(dPTGoods));
-                    //$(this).text(gds.toFixed(DecVal));
-                    updateLabelColumn(fieldID, gds);
-                    //setTagValue(fieldID, fieldName, grs,2);
-                    dPTGoods = gds.toFixed(DecVal);
-                }
-                if (fieldName == "Gross") {
-                    var grs = (parseFloat(dPTGoods) - (Tradediscamt + Addnldiscamt + Proddiscamt));
-                    //$(this).text(grs.toFixed(DecVal));
-                    updateLabelColumn(fieldID, grs);
-                    //setTagValue(fieldID, fieldName, grs,2);
-                    dPTGross = grs.toFixed(DecVal);
-                }
-                if (fieldName == "TaxAmt") {
-                    var tamt = parseFloat(ApponMRPCum) > 0 ? (parseFloat(TotMRPonTaxAmt) * Qty) : ((taxpern * dPTGross) / 100);
-                    //$(this).text(tamt.toFixed(DecVal));
-                    updateLabelColumn(fieldID, tamt);
-                    //setTagValue(fieldID, fieldName, tamt,2);
-                    dPTTax = tamt.toFixed(DecVal);
-                }
-                if (fieldName == "NetAmt") {
-                    var neta = (parseFloat(dPTGross) + parseFloat(dPTTax));
-                    //$(this).text(neta.toFixed(DecVal));
-                    updateLabelColumn(fieldID, neta);
-                    //setTagValue(fieldID, fieldName, neta, 2);
-                    //dPTNet = parseFloat($(this).text());
-                }
-                if (fieldName == "DiffValue") {
-                    var dDiffGross = 0, dDiffNet = 0;
-                    var dQty = Qty;
-                    if (dQty > 0) {
-                        var val = dPTGross / dQty;
-                        var Diff = val - (TInvoicePrice * CFValue);
-                        var AbsDiff = Diff;// Math.abs(Diff);
-                        updateLabelColumn(fieldID, AbsDiff);
-                        var clrcolor = Diff >= 0 ? "green" : "red";
-                        $(this).css("color", clrcolor);
-                        dDiffGross += (AbsDiff * dQty);
-                        val = dPTNet / dQty;
-                        Diff = val - (TInvoicePrice * CFValue);
-                        AbsDiff = Diff;// Math.abs(Diff);
-                        dDiffNet += (AbsDiff * dQty);
-                    } else {
-                        updateLabelColumn(fieldID, 0);
-                        $(this).css("color", "black");
-                        dDiffGross += 0;
-                        dDiffNet += 0;
-                    }
-                }
-            });
-
-        });
-        calculateProdGrid();
-    }
 
     //dgvPMVisaPern,dgvPMVisaAmt
 
@@ -6200,7 +6026,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         qtytype: btTag, TransPrice: items.ItemTransactionPrice, stock: parseFloat(items.ActQty).toFixed(DecVal), freestock: parseFloat(items.ActFreeQty).toFixed(DecVal),
                         itemName: items.Name, code: items.Code,
                         mrp: +btmrp || 0,
-                        qty: +DefQty,
+                        qty: +DefQty, prodPct: parseFloat(items.ProductDiscPerc), tradePct: parseFloat(items.TradeDiscPerc),
                         priceExcl: +PPrice || 0, priceIncl: +InclPPrice || 0,
                         _uoms: uomforselprod, uomID: +TempProd.SalesUomID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
                         taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.TaxPern || 0), reasonID: 0, maxbatchqty: btQty
@@ -8014,7 +7840,8 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     "SerialYN": itemrow.TrkSerial,
                     "DiffAmt": itemrow.diff,
                     "QtyType": itemrow.qtytype,
-                    "ReasonId": itemrow.reason
+                    "ReasonId": itemrow.reason,
+                    "Serial": nSerial,
                 }
                 ProductArray.push(listProds);
                 nSerial++;
@@ -9210,6 +9037,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 const c = s.style ? s.style(v, r) : s.sign ? { color: v > 0 ? 'var(--pos)' : v < 0 ? 'var(--neg)' : '' } : null;
                 el.style.color = (c && c.color) || ''; el.style.background = (c && c.bg) || '';
             }
+            if (r.productID > 0 && (s.key != "itemName" && s.key != "itemCode")) {
+                el.style.backgroundColor = parseFloat(r.net) <= 0 ? 'lightgrey' : 'white';
+            }
         }
         changed(r, key) {
             if (this.cfg.calc) this.cfg.calc(r, key);
@@ -9639,7 +9469,9 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 ov = document.createElement('div'); ov.className = 'cs-ov';
                 ov.innerHTML = `<div class="cs-box"><div class="cs-hd">Column Settings<span class="cs-x" title="Close">&times;</span></div>
               <div class="cs-bd"><table class="cs-t"><thead><tr><th style="width:55px">Show</th><th>Column</th><th>Header Text</th><th style="width:90px">Width (px)</th></tr></thead><tbody></tbody></table></div>
-              <div class="cs-ft"><button class="cs-reset d-none" type="button">Reset to default</button><span style="flex:1"></span><button class="cs-cancel" type="button">Cancel</button><button class="cs-save" type="button">Save</button></div></div>`;
+              <div class="cs-ft"><button class="cs-reset d-none" type="button">Reset to default</button>
+              <button class="cs-script btn-filter-style `+ (UID != 1 ? 'd-none': '') +`" type="button">Script</button>
+              <span style="flex:1"></span><button class="cs-cancel" type="button">Cancel</button><button class="cs-save" type="button">Save</button></div></div>`;
                 const tb = ov.querySelector('tbody');
                 list().forEach(c => {
                     const s = find(c), tr = document.createElement('tr'); tr.dataset.id = cid(c);
@@ -9656,6 +9488,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
                 ov.querySelector('.cs-reset').onclick = () => tb.querySelectorAll('tr').forEach(tr => {
                     const c = list().find(x => cid(x) === tr.dataset.id);
                     tr.querySelector('.cs-v').checked = true; tr.querySelector('.cs-h').value = c.defTitle; tr.querySelector('.cs-w').value = c.defWidth
+                });
+                ov.querySelector('.cs-script').onclick = () => tb.querySelectorAll('tr').forEach(tr => {
+                    const c = list().find(x => cid(x) === tr.dataset.id);
+                    console.log("cs-script click : ", tr, tr.dataset.id);
+                    //tr.querySelector('.cs-v').checked = true;
+                    //tr.querySelector('.cs-h').value = c.defTitle;
+                    //tr.querySelector('.cs-w').value = c.defWidth
+                    location.href = Aurl + 'columnsettingssript?FormType=3&FormID=6';
                 });
                 ov.querySelector('.cs-save').onclick = () => {
                     const out = db.map(x => ({ ...x })); let shown = 0;                        // keep every existing DB row (incl. hidden columns)
