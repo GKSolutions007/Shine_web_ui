@@ -182,6 +182,130 @@
             display: none;
         }
 </style>
+<style>
+    /* ===== Accounts module redesign (header card + buttons + modal chrome) ===== */
+    .sm-header-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 4px 10px rgba(30,41,59,0.10);
+        padding: 12px 18px;
+        margin: 4px 0 14px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .sm-header-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: var(--header-bg, #2563eb);
+        }
+
+    .sm-header-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border-radius: 10px;
+        background: #eff6ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .sm-header-text #MainHeading {
+        font-size: 18px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+        padding: 0;
+    }
+
+    .sm-header-sub {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    #myModalfg .modal-content {
+        border: none;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 18px 44px rgba(15,23,42,0.28);
+    }
+
+    #myModalfg .modal-header {
+        background: var(--header-bg, #2563eb);
+        color: #ffffff;
+        border-bottom: none;
+    }
+
+        #myModalfg .modal-header .modal-title {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        #myModalfg .modal-header .btn-close {
+            filter: invert(1);
+            opacity: 0.85;
+        }
+
+    .btn-clear-style,
+    .btn-save-style,
+    .btn-close-style,
+    .btn-filter-style,
+    #myModalfg .modal-footer .btn {
+        border-radius: 9px !important;
+        font-weight: 600;
+        padding: 7px 18px;
+        border: none;
+        transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+        .btn-clear-style:active,
+        .btn-save-style:active,
+        .btn-close-style:active,
+        #myModalfg .modal-footer .btn:active {
+            transform: scale(0.97);
+        }
+
+    .btn-clear-style {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+        .btn-clear-style:hover {
+            background: #cbd5e1;
+            color: #334155;
+        }
+
+    .btn-save-style {
+        background: #16a34a;
+        color: #ffffff;
+    }
+
+        .btn-save-style:hover {
+            background: #15803d;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(22,163,74,0.30);
+        }
+
+    .btn-close-style {
+        background: #64748b;
+        color: #ffffff;
+    }
+
+        .btn-close-style:hover {
+            background: #475569;
+            color: #fff;
+        }
+</style>
 <body>
     @Html.HiddenFor(model => model.Add, new { @autocomplete = "off", @class = "form-control", @id = "txtAddID" })
     @Html.HiddenFor(model => model.Modify, new { @autocomplete = "off", @class = "form-control", @id = "txtModifyID" })
@@ -194,31 +318,33 @@
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
     @Html.HiddenFor(model => model.EnableBranch, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableBranch" })
     <input hidden id="txtStatus" />
-
-    <div class="d-flex align-items-center gap-2">
-        <!-- Larger heading -->
-        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
-    </div>
-    <hr />
     <div class="toastBox"></div>
-    
-    <div id="dvMainTable">
-        <div class="row text-end mb-3">
+
+    <div class="sm-inline-bar">
+        <div class="sm-header-card sm-header-inline">
+            <div class="sm-header-icon"><i class="fas fa-book"></i></div>
+            <div class="sm-header-text">
+                <div class="sm-header-sub">Accounts</div>
+                <h4 id="MainHeading">@ViewData["FormName"]</h4>
+            </div>
+        </div>
+        <div class="row text-end mb-2 g-2 align-items-end sm-filter-row">
             <!-- Blank -->
             <div class="col-12 col-md-3"></div>
             <!-- Branch (NEW) -->
             <div class="col-12 col-md-2">
-                <span class="form-label">
-                    <select class="form-control FormfilterclrField" id="cmbFilterBranch">
+                <span class="form-label sm-pill">
+                    <i class="fas fa-building sm-pill-ico"></i>
+                    <select class="form-control FormclrcmbField" id="cmbFilterBranch">
                         <option value="0">Select Branch</option>
                     </select>
-                    <label class="labelup">Branch</label>
+                    <label class="labelup" for="cmbFilterBranch">Branch</label>
                 </span>
             </div>
 
             <!--Account Name -->
             <div class="col-12 col-md-2">
-                <span class="form-label">
+                <span class="form-label sm-pill">
                     <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterAccount" placeholder="">
                     <label class="labelup" for="txtCode"> Account Name</label>
                 </span>
@@ -256,8 +382,10 @@
 
             </div>
         </div>
-        <div id="my-grid" style="width: 100%;"></div>
     </div>
+
+        
+        <div id="my-grid" style="width: 100%;"></div>
 
     <div class="modal fade " id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-lg">
@@ -363,43 +491,43 @@
                                         <label class="labelup" for="txtCode">Account Name </label>
                                     </span>
                                 </div>
-                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="dvErrorAccountName" class="clrdivs"></div>
-                                </div>
-                                <div class="col-12 col-md-1 mb-3">
-                                    <span class="form-label">
-                                        <select tabindex="3" class="form-control" id="cmbAdjustment" disabled>
-                                            <option value="0">No</option>
-                                            <option value="1">Yes</option>
-                                        </select>
-                                        <label class="labelup">Adjustment </label>
-                                    </span>
-                                </div>
-                                <div class="col-12 col-md-2 mb-3">
-                                    <span class="form-label">
-                                        <input tabindex="4" txttag="0" class="form-control FormclrField txtsettag" type="number" step="any" id="txtValue"
-                                               onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
-                                               oninput="sanitizeNumericOnly(this, '#dvErrorValue')" />
-                                        <label class="labelup">Value </label>
-                                    </span>
-                                    <div style="color: red; padding-top: 5px; padding-left: 5px;" id="dvErrorValue" class="clrdivs"></div>
-                                </div>
-                                <div class="col-12 col-md-3 mb-3">
-                                    <span class="form-label">
-                                        <input tabindex="5" class="form-control FormclrField" type="text" step="any" id="txtRemarks"
-                                               onbeforeinput="return AlphaNumericBeforeInput(event, this,'#dvErrorremark')"
-                                               oninput="sanitizeAlphaNumeric(this, '#dvErrorremark')" />
-                                        <label class="labelup">Remarks </label>
-                                    </span>
-                                    <div class="clrdiv" id="dvErrorremark" style="color:red"></div>
-                                </div>
-                                <div class="col-12 col-md-1 mb-3">
-                                    <span class="form-label">
-                                        <button tabindex="6" class="btn btn-add-style" id="btnAddAccount">
-                                            Add
-                                        </button>
-                                    </span>
-                                </div>
+                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="dvErrorAccountName" class="clrdivs"></div>
                             </div>
+                            <div class="col-12 col-md-1 mb-3">
+                                <span class="form-label">
+                                    <select tabindex="3" class="form-control" id="cmbAdjustment" disabled>
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select>
+                                    <label class="labelup">Adjustment </label>
+                                </span>
+                            </div>
+                            <div class="col-12 col-md-2 mb-3">
+                                <span class="form-label">
+                                    <input tabindex="4" txttag="0" class="form-control FormclrField txtsettag" type="number" step="any" id="txtValue"
+                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorValue')"
+                                           oninput="sanitizeNumericOnly(this, '#dvErrorValue')" />
+                                    <label class="labelup">Value </label>
+                                </span>
+                                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="dvErrorValue" class="clrdivs"></div>
+                            </div>
+                            <div class="col-12 col-md-3 mb-3">
+                                <span class="form-label">
+                                    <input tabindex="5" class="form-control FormclrField" type="text" step="any" id="txtRemarks"
+                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#dvErrorremark')"
+                                           oninput="sanitizeAlphaNumeric(this, '#dvErrorremark')" />
+                                    <label class="labelup">Remarks </label>
+                                </span>
+                                <div class="clrdiv" id="dvErrorremark" style="color:red"></div>
+                            </div>
+                            <div class="col-12 col-md-1 mb-3">
+                                <span class="form-label">
+                                    <button tabindex="6" class="btn btn-add-style" id="btnAddAccount">
+                                        Add
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
 
                         <div class="row">
                             <table class="table table-bordered" id="tblJVData" width="100%">

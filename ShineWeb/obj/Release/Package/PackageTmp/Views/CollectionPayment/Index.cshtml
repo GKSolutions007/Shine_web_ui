@@ -778,80 +778,173 @@
     <label id="lblMob1" hidden></label>
     <label id="lblGSTIN" hidden></label>
 
-    <div class="d-flex align-items-center gap-2">
-        <!-- Larger heading -->
-        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
-    </div>
+    <style>
+        /* ===== Accounts module redesign (header card + buttons + modal chrome) ===== */
+        .sm-header-card {
+            display: flex; align-items: center; gap: 14px; background: #ffffff;
+            border-radius: 14px; box-shadow: 0 4px 10px rgba(30,41,59,0.10);
+            padding: 12px 18px; margin: 4px 0 14px 0; position: relative; overflow: hidden;
+        }
+            .sm-header-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--header-bg, #2563eb); }
+        .sm-header-icon { width: 40px; height: 40px; min-width: 40px; border-radius: 10px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .sm-header-text #MainHeading { font-size: 18px; font-weight: 800; color: #0f172a; margin: 0; padding: 0; }
+        .sm-header-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+        #myModalfg .modal-content { border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 18px 44px rgba(15,23,42,0.28); }
+        #myModalfg .modal-header { background: var(--header-bg, #2563eb); color: #ffffff; border-bottom: none; }
+            #myModalfg .modal-header .modal-title { color: #ffffff; font-weight: 700; }
+            #myModalfg .modal-header .btn-close { filter: invert(1); opacity: 0.85; }
+        .btn-clear-style, .btn-save-style, .btn-close-style, .btn-filter-style, #myModalfg .modal-footer .btn {
+            border-radius: 9px !important; font-weight: 600; padding: 7px 18px; border: none; transition: transform .12s ease, box-shadow .12s ease;
+        }
+        .btn-clear-style { background: #e2e8f0; color: #475569; }
+            .btn-clear-style:hover { background: #cbd5e1; color: #334155; }
+        .btn-save-style { background: #16a34a; color: #ffffff; }
+            .btn-save-style:hover { background: #15803d; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,0.30); }
+        .btn-close-style { background: #64748b; color: #ffffff; }
+            .btn-close-style:hover { background: #475569; color: #fff; }
+
+        /* Inline header + filters on one row */
+        .sm-inline-bar { display: flex; align-items: stretch; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+        .sm-header-inline { margin: 0; flex: 0 0 auto; min-width: 180px; }
+        .sm-inline-bar .row { margin-left: 0; margin-right: 0; }
+        @@media (max-width: 991px) { .sm-header-inline { width: 100%; } }
+
+        /* Pill filter fields */
+        .sm-filter-row .form-control, .sm-filter-row .gdInput {
+            border-radius: 20px !important; background: #f8fafc; border: 1px solid #e2e8f0; padding-left: 30px; height: 34px;
+        }
+            .sm-filter-row .form-control:focus { background: #fff; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+        .sm-pill { position: relative; }
+        .sm-pill > .sm-pill-ico { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #94a3b8; pointer-events: none; z-index: 2; }
+        .sm-pill .labelup { left: 1.6em; }
+
+        /* Search-select pill: dropdown caret on the right */
+        .sm-selectpill .sm-pill-caret { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #94a3b8; pointer-events: none; z-index: 2; }
+        .sm-searchselect { padding-right: 28px !important; cursor: pointer; }
+
+        /* On/Off status toggle */
+        .sm-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+        .sm-toggle input { display: none; }
+        .sm-toggle .sm-switch { width: 36px; height: 20px; border-radius: 12px; background: #cbd5e1; position: relative; transition: background .15s ease; flex: 0 0 auto; }
+        .sm-toggle .sm-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s ease; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+        .sm-toggle input:checked + .sm-switch { background: #2563eb; }
+        .sm-toggle input:checked + .sm-switch::after { left: 18px; }
+        .sm-toggle .sm-toggle-label { font-size: 13px; color: #475569; white-space: nowrap; }
+        .sm-filter-row #btnFilter.btn-filter-style { border-radius: 20px !important; padding: 7px 20px; }
+
+        /* Single date-range field + popover */
+        .sm-daterange { position: relative; }
+        .sm-daterange-pop { display: none; position: absolute; z-index: 1200; top: calc(100% + 4px); left: 0; width: 300px; background: #fff; border: 1px solid #d7dee8; border-radius: 12px; box-shadow: 0 18px 44px rgba(15,23,42,0.18); padding: 12px; }
+        .sm-daterange-pop.open { display: block; }
+        .sm-dr-presets { display: flex; gap: 8px; margin-bottom: 10px; }
+        .sm-dr-chip { border: 1px solid #bfdbfe; background: #eff6ff; color: #2563eb; border-radius: 20px; font-size: 11px; font-weight: 600; padding: 4px 12px; cursor: pointer; }
+            .sm-dr-chip:hover { background: #dbeafe; }
+        .sm-dr-period { margin-bottom: 12px; }
+        .sm-dr-fields { display: flex; gap: 10px; }
+            .sm-dr-fields .form-label { flex: 1; }
+        .sm-dr-actions { text-align: right; margin-top: 10px; }
+    </style>
 
     <div class="toastBox"></div>
 
-    <div id="dvDocuments">
-        <hr />
-        <div class="w-100">
-            <div class="d-flex flex-wrap align-items-end gap-2 justify-content-end mb-2">
-
-                <button id="btnAdd" class="btn btn-info" hidden>
-                    <span class="glyphicon glyphicon-plus" style="color:white"></span>&#x2009;Add
-                </button>
-
-                <div hidden>
-                    <span class="form-label">
-                        <select class="form-control FormfilterclrField" id="cmbFilterBranch">
-                            <option value="0">Select Branch</option>
-                        </select>
-                        <label class="labelup">Branch</label>
-                    </span>
-                </div>
-
-                <div>
-                    <span class="form-label">
-                        <input class="form-control FormfilterclrField" type="text" id="txtFilterParty">
-                        <label class="labelup">Party</label>
-                    </span>
-                    <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrFParty" class="clrdivs"></div>
-                </div>
-
-                <div>
-                    <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
-                </div>
-
-                <div>
-                    <span class="form-label">
-                        <input class="form-control FormfilterclrField" type="date" id="dtpFFrom"
-                               oninput="if (this.value > this.max) { this.value = this.max; }">
-                        <label class="labelup">From</label>
-                    </span>
-                    <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrFFrom" class="clrdivs"></div>
-                </div>
-
-                <div>
-                    <span class="form-label">
-                        <input class="form-control FormfilterclrField" type="date" id="dtpFTo"
-                               oninput="if (this.value > this.max) { this.value = this.max; }">
-                        <label class="labelup">To</label>
-                    </span>
-                    <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrFTo" class="clrdivs"></div>
-                </div>
-
-                <div class="form-check pb-3">
-                    <input class="form-check-input FormfilterclrField" type="checkbox" id="chkShowAll">
-                    <label class="form-check-label" for="chkShowAll">All Status</label>
-                </div>
-
-                <div>
-                    <button id="btnFilter" class="btn btn-filter-style">
-                        <i class="bi bi-funnel-fill"></i> Filter
-                    </button>
-                </div>
-
+    <!-- Header card + list filters on one row. The header stays visible on the entry form;
+         #dvDocFilters is shown/hidden together with .dvDocuments. -->
+    <div class="sm-inline-bar">
+        <div class="sm-header-card sm-header-inline dvDocuments">
+            <div class="sm-header-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+            <div class="sm-header-text">
+                <h4 id="FormHead">@ViewData["FormName"]</h4>
             </div>
+        </div>
+        <div class="dvMain">
+            <div class="d-flex align-items-center gap-2">
+                <!-- Larger heading -->
+                <h4 class="mb-0" style="font-size:14px; padding-top:5px;" id="MainHeading">@ViewData["FormName"]</h4>
+            </div>
+        </div>
+        <div class="row text-end mb-0 g-2 align-items-end flex-grow-1 sm-filter-row dvDocuments">
+            <button id="btnAdd" class="btn btn-info" hidden>
+                <span class="glyphicon glyphicon-plus" style="color:white"></span>&#x2009;Add
+            </button>
+            <!-- Branch -->
+            <div class="col-12 col-md-2 col-lg-2">
+                <span class="form-label sm-pill">
+                    <i class="fas fa-building sm-pill-ico"></i>
+                    <select class="form-control FormfilterclrField" id="cmbFilterBranch">
+                        <option value="0">Select Branch</option>
+                    </select>
+                    <label class="labelup" for="cmbFilterBranch">Branch</label>
+                </span>
+            </div>
+            <!-- Party Name -->
+            <div class="col-12 col-md-3 col-lg-3">
+                <span class="form-label sm-pill sm-selectpill">
+                    <input tabindex="1" autocomplete="off" class="form-control FormfilterclrField sm-searchselect" type="text" id="txtFilterParty" placeholder="" data-al-nameonly>
+                    <label class="labelup" for="txtFilterParty"> Party Name</label>
+                </span>
+                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFParty"></div>
+            </div>
+            <!-- Date Range (single field -> popover with Period + From/To) -->
+            <div class="col-12 col-md-3 col-lg-2">
+                <div class="sm-daterange">
+                    <span class="form-label sm-pill">
+                        <i class="fas fa-calendar-days sm-pill-ico"></i>
+                        <input type="text" readonly class="form-control FormfilterclrField" id="txtDateRangeDisplay" placeholder="Select date range" style="cursor:pointer;" aria-haspopup="dialog" aria-controls="dvDateRangePop">
+                        <label class="labelup" for="txtDateRangeDisplay">Date Range</label>
+                    </span>
+                    <div class="sm-daterange-pop" id="dvDateRangePop" role="dialog" aria-label="Select date range">
+                        <div class="sm-dr-presets">
+                            <button type="button" class="sm-dr-chip" data-range="today">Today</button>
+                            <button type="button" class="sm-dr-chip" data-range="month">This Month</button>
+                        </div>
+                        <div class="sm-dr-period">
+                            <select class="gdInput w-100" id="cmbFilterDatetype" aria-label="Period" onchange="SetFilterDate(); SyncDateRangeDisplay();"></select>
+                        </div>
+                        <div class="sm-dr-fields">
+                            <span class="form-label">
+                                <input class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="if (this.value > this.max) { this.value = this.max; } SyncDateRangeDisplay();">
+                                <label class="labelup" for="dtpFFrom">From</label>
+                            </span>
+                            <span class="form-label">
+                                <input class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="if (this.value > this.max) { this.value = this.max; } SyncDateRangeDisplay();">
+                                <label class="labelup" for="dtpFTo">To</label>
+                            </span>
+                        </div>
+                        <div class="sm-dr-actions">
+                            <button type="button" class="btn btn-sm btn-filter-style" id="btnDateRangeDone">Done</button>
+                        </div>
+                        <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFFrom"></div>
+                        <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFTo"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- All Status -->
+            <div class="col-12 col-md-2 col-lg-1">
+                <div class="mb-2">
+                    <label class="sm-toggle">
+                        <input tabindex="1" class="FormfilterclrField" type="checkbox" id="chkShowAll">
+                        <span class="sm-switch" aria-hidden="true"></span>
+                        <span class="sm-toggle-label">All Status</span>
+                    </label>
+                </div>
+            </div>
+            <!-- Filter -->
+            <div class="col-12 col-md-2 col-lg-1">
+                <div class="col-auto">
+                    <button id="btnFilter" class="btn btn-filter-style ps-2"><span class="glyphicon glyphicon-filter" style="color: white"></span>&#x2009;Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <div class="dvDocuments">
+        <div class="w-100">
             <div id="my-grid" style="height:600px;width:100%;"></div>
 
         </div>
     </div>
 
-    <div id="dvMain">
+    <div class="dvMain">
         <hr />
         <div class="row g-1 cp-wrap" id="dvCollection">
             <!-- Column 1: Party / Doc Search -->
@@ -1215,7 +1308,7 @@
                         <div>
                             <span class="form-label">
                                 <input class="form-control FormclrField txtsettag" readonly type="text" id="txtBalance" txttag="0">
-                                <label class="labelup">Balance</label>
+                                <label class="labelup" id="lbltxtBalance">Balance</label>
                             </span>
                             <div style="color:red;padding-top:5px;padding-left:5px;" id="divErrBalance" class="clrdivs"></div>
                         </div>
@@ -1482,10 +1575,10 @@
                     $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
                     $("#btnPreview,#btnPDF,#btnPrint").show();
                     $("#btnSave,#btnClear,#btnDraft").hide();
-                    $("#dvMain").show();
-                    $("#dvDocuments").hide();
+                    $(".dvMain").show();
+                    $(".dvDocuments,#dvDocFilters").hide();
                     $("#btnEmail,#btnWhatsapp").show();
-                    $("#txtClosingBalance,#txtBalance").hide();
+                    $("#txtClosingBalance,#txtBalance,#lbltxtBalance").hide();
                     $("#MainHeading").text("View " + $("#txtFormName").val() + "_" + sts);
                 }
             },
@@ -1683,7 +1776,7 @@
 
 <script type="text/javascript">
     $("#txtDocID").prop("disabled", true);
-    $("#dvMain").hide();
+    $(".dvMain").hide();
     $(".FormBtField").prop("disabled", true);
 
     var TableGrid1Data = $('#tblGridoneData').DataTable({
@@ -1726,7 +1819,7 @@
 var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
 var autolistfilterwith = EnableALStartWith;
 var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
-    LoadBranchByRoles('#cmbBranch');
+    LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
     var ConfigRoundtype = '@Session["RoundoffType"]';
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
     var ConfigWriteoffAmt = '@Session["WriteoffAmt"]';
@@ -1739,6 +1832,43 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     setDate("dtpDate", 0);
     setDate("dtpFFrom", 0);
     setDate("dtpFTo", 0);
+
+    // ===== Single Date-Range field behaviour =====
+    function fmtDMY(v) {
+        if (!v) return "";
+        var p = v.split("-"); // yyyy-mm-dd
+        return p.length === 3 ? (p[2] + "-" + p[1] + "-" + p[0]) : v;
+    }
+    function SyncDateRangeDisplay() {
+        var f = $("#dtpFFrom").val(), t = $("#dtpFTo").val();
+        var txt = (f || t) ? (fmtDMY(f) + "  \u2192  " + fmtDMY(t)) : "";
+        $("#txtDateRangeDisplay").val(txt);
+    }
+    window.SyncDateRangeDisplay = SyncDateRangeDisplay;
+    $("#txtDateRangeDisplay").on("click", function (e) {
+        e.stopPropagation();
+        $("#dvDateRangePop").toggleClass("open");
+    });
+    $("#dvDateRangePop").on("click", function (e) { e.stopPropagation(); });
+    $(document).on("click", function () { $("#dvDateRangePop").removeClass("open"); });
+    $("#btnDateRangeDone").on("click", function () { $("#dvDateRangePop").removeClass("open"); });
+    $(".sm-dr-chip").on("click", function () {
+        var r = $(this).data("range");
+        var now = new Date();
+        // Local-time yyyy-mm-dd (toISOString() is UTC and gives the previous day in IST before 05:30)
+        function iso(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+        if (r === "today") {
+            $("#dtpFFrom").val(iso(now));
+            $("#dtpFTo").val(iso(now));
+        } else if (r === "month") {
+            $("#dtpFFrom").val(iso(new Date(now.getFullYear(), now.getMonth(), 1)));
+            $("#dtpFTo").val(iso(new Date(now.getFullYear(), now.getMonth() + 1, 0)));
+        }
+        SyncDateRangeDisplay();
+    });
+    SyncDateRangeDisplay();
+
+    // Search-select click-to-open for #txtFilterParty is handled globally in Scripts/js/sm-daterange.js.
 
     setTimeout(function () {
         GetFilterData();
@@ -3518,7 +3648,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                     });
                     SetAutlistforFields();
                     //$("#cmbBranch").val(DefBranch);
-                    LoadBranchByRoles('#cmbBranch');
+                    LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
 
                 }
                 else if (nMode == 2) {
@@ -3602,18 +3732,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                         arrVendorName[nIndexarrVendor] = items.Name;
                         nIndexarrVendor++;
                     });
-                    //~AutoList Customer
-                    PaginatedAutocomplete({
-                        inputId: "txtSearch",
-                        data: arrVendor,
-                        startwitfieldname: startwithfield,
-                        enablefilterstartwith: autolistfilterwith,
-                        onSelect: function (item) {
-                            $("#txtSearch").val(item.name);
-                            GetData(2, item.code);
-                            return false;
-                        }
-                    });
+                    //~AutoList Party + Filter Party (both use the refreshed list)
+                    SetAutlistforFields();
                     //$("#txtSearch").autocomplete({
                     //    minLength: 0, autoFocus: true,
                     //    source: arrVendor,
@@ -4240,10 +4360,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#btnTEdit,#btnTCancel").hide();
         $("#btnSave").show();
         $("#btnSave,#btnClose").prop("disabled", false);
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
+        $(".dvMain").show();
+        $(".dvDocuments,#dvDocFilters").hide();
         $("#btnEmail,#btnWhatsapp").hide();
-        $("#txtClosingBalance,#txtBalance").show();
+        $("#txtClosingBalance,#txtBalance,#lbltxtBalance").show();
         $("#MainHeading").text("Modify " + $("#txtFormName").val());
     }
     $('#btnTCancel').click(function (e) {
@@ -4285,9 +4405,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
         $("#btnTEdit,#btnTCancel").hide();
         $("#btnSave").show();
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
-        $("#txtClosingBalance,#txtBalance").hide();
+        $(".dvMain").show();
+        $(".dvDocuments,#dvDocFilters").hide();
+        $("#txtClosingBalance,#txtBalance,#lbltxtBalance").hide();
         $("#btnEmail,#btnWhatsapp").hide();
     }
     function VariantActionTrigger(rowData) {
@@ -4300,10 +4420,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#btnTEdit,#btnTCancel").hide();
         $("#btnSave").show();
         $("#btnSave,#btnClose").prop("disabled", false);
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
+        $(".dvMain").show();
+        $(".dvDocuments,#dvDocFilters").hide();
         $("#btnEmail,#btnWhatsapp").hide();
-        $("#txtClosingBalance,#txtBalance").show();
+        $("#txtClosingBalance,#txtBalance,#lbltxtBalance").show();
         $("#MainHeading").text("Variant " + $("#txtFormName").val());
     }
     function GetVariantData(strID) {
@@ -4886,17 +5006,20 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         if ($("#dtpFFrom").val() == "") {
             IsValid = false;
             $("#divErrFFrom").html("From date should not be empty");
+            $("#dvDateRangePop").addClass("open");
         }
         if ($("#dtpFTo").val() == "") {
             IsValid = false;
             $("#divErrFTo").html("To date should not be empty");
+            $("#dvDateRangePop").addClass("open");
         }
         if ($("#dtpFFrom").val() > $("#dtpFTo").val()) {
             IsValid = false;
             $("#divErrFFrom").html("From date should be lessthan To Date");
+            $("#dvDateRangePop").addClass("open");
         }
         if (IsValid) {
-            var strBranch = 0, strParty = $("#txtFilterParty").val(), dFrom = $("#dtpFFrom").val(),
+            var strBranch = $("#cmbFilterBranch").val() || "0", strParty = $("#txtFilterParty").val().trim(), dFrom = $("#dtpFFrom").val(),
                 dTo = $("#dtpFTo").val(), chkshow = $("#chkShowAll").is(":checked") ? "1" : "0";
             $.ajax({
                 url: Aurl + "collectionpayment/getfilterdata",
@@ -4907,7 +5030,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                     withCredentials: true
                 },
                 success: function (data) {
-                    console.log("columns ", columns, " data ", data);
+                    // uspFilterCollectionPayment has no Branch parameter, so filter by BranchID here.
+                    if (strBranch != "0" && Array.isArray(data)) {
+                        data = data.filter(function (r) { return String(r.BranchID) === String(strBranch); });
+                    }
                     CollectionPayment = data;
                     var currentSearchValue = '';
                     if (grid) { currentSearchValue = grid ? grid.state.searchTerm : ''; }
@@ -4948,10 +5074,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                                 visible: $("#txtAddID").val() == 1,
                                 onClick: (gridInstance, event) => {
                                     nTransMode = 1;
-                                    $("#dvMain").show();
-                                    $("#dvDocuments").hide();
+                                    $(".dvMain").show();
+                                    $(".dvDocuments,#dvDocFilters").hide();
                                     $("#btnTEdit,#btnTCancel").hide();
-                                    $("#txtClosingBalance,#txtBalance").show();
+                                    $("#txtClosingBalance,#txtBalance,#lbltxtBalance").show();
                                     ClearForm();
                                     //Addprodgridline();
                                     setTimeout(() => {
@@ -4991,8 +5117,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         if ($("#txtTransType").val() == 3 || $("#txtTransType").val() == 2) {
             this.close();
         } else {
-            $("#dvMain").hide();
-            $("#dvDocuments").show();
+            $(".dvMain").hide();
+            $(".dvDocuments,#dvDocFilters").show();
             $("#MainHeading").text($("#txtFormName").val());
             GetFilterData();
         }
@@ -5106,7 +5232,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         }
         //if (event.ctrlKey && (event.key === 'Insert' || event.which === 45)) {
         //    event.preventDefault();
-        //    const dvMainisShow = $("#dvMain").is(":visible"); //
+        //    const dvMainisShow = $(".dvMain").is(":visible"); //
         //    const dvMasterModels = $("#myModalfg").is(":visible");
         //    if (dvMainisShow || dvMasterModels) {
         //        //open current form in new tab
@@ -5199,6 +5325,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         setDate("dtpDate", 0);
         $("#txtNoofCopies").val("1");
         SetFilterDate();
+        SyncDateRangeDisplay();
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles('#cmbBranch');
         $("#cmbFromAccount").val(DefBankAcc);
@@ -5210,8 +5337,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         DocsArray = [];
         TempProd = [];
         if (nTransMode != 1) {
-            $("#dvMain").hide();
-            $("#dvDocuments").show();
+            $(".dvMain").hide();
+            $(".dvDocuments,#dvDocFilters").show();
         }
         if (nDocPrefix == 19) {
             $("#lblrdoAdv").text("Payable");
@@ -5233,6 +5360,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
     }
 
+    // Binds the party autolist on both the entry field (txtSearch) and the list filter
+    // (txtFilterParty) with the current search settings, same as Purchase Order.
+    // Call it whenever arrVendor or the search mode/field changes so both stay in sync.
     function SetAutlistforFields() {
         //~AutoList Party
         PaginatedAutocomplete({
@@ -5246,7 +5376,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                 return false;
             }
         });
-        //~AutoList Filter Party
+        //~AutoList Filter Party (data-al-nameonly on the input: name-only rows sorted A-Z)
         PaginatedAutocomplete({
             inputId: "txtFilterParty",
             data: arrVendor,
@@ -5759,8 +5889,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         GetDocViewData(3, ID);
         $(".FormclrField,.FormclrcmbField").prop("disabled", true);
         $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
+        $(".dvMain").show();
+        $(".dvDocuments,#dvDocFilters").hide();
         $("#btnEmail,#btnWhatsapp").show();
         $("#MainHeading").text("View " + $("#txtFormName").val());
     }
@@ -5779,8 +5909,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#cmbPaymode,#txtAmount,#txtSearch,#cmbBeat,#cmbSalesman").prop("disabled", true);
         $("#btnSave,#btnClose").show();
         $("#btnPreview,#btnPDF,#btnPrint,#btnClear,#btnDraft").hide();
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
+        $(".dvMain").show();
+        $(".dvDocuments,#dvDocFilters").hide();
         $("#btnEmail,#btnWhatsapp").hide();
         $("#MainHeading").text("Create " + $("#txtFormName").val());
         $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
@@ -5873,20 +6003,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             var fieldid = event.target.id;
             var infomessage = "Search mode changed to&ensp;" + (autolistfilterwith ? "<h4><code>Contains </code></h4>" : "<h4><code>Start with</code></h4>");
             autolistfilterwith = !autolistfilterwith;
-            if (fieldid == "txtSearch") {
+            if (fieldid == "txtSearch" || fieldid == "txtFilterParty") {
                 showInfoSnackbar(infomessage);
-                //~AutoList Customer
-                PaginatedAutocomplete({
-                    inputId: "txtSearch",
-                    data: arrVendor,
-                    startwitfieldname: startwithfield,
-                    enablefilterstartwith: autolistfilterwith,
-                    onSelect: function (item) {
-                        $("#txtSearch").val(item.name);
-                        GetData(2, item.code);
-                        return false;
-                    }
-                });
+                //~AutoList Party + Filter Party (same as Purchase Order)
+                SetAutlistforFields();
             }
             //if (fieldid == "txtSearch") {
             //    showInfoSnackbar(infomessage);
@@ -5903,40 +6023,15 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             //        }
             //    });
             //}
-            if (fieldid == "txtFilterParty") {
-                showInfoSnackbar(infomessage);
-                //~AutoList Filter Party
-                PaginatedAutocomplete({
-                    inputId: "txtFilterParty",
-                    data: arrVendor,
-                    startwitfieldname: startwithfield,
-                    enablefilterstartwith: autolistfilterwith,
-                    onSelect: function (item) {
-                        $("#txtFilterParty").val(item.name);
-                        return false;
-                    }
-                });
-            }
         }
         else if (event.altKey && (event.key == 'a')) {//change search field
             event.preventDefault();
             var fieldid = event.target.id;
             startwithfield = (startwithfield == "code" ? "name" : startwithfield == "search" ? "code" : "search");
-            if (fieldid == "txtSearch") {
+            if (fieldid == "txtSearch" || fieldid == "txtFilterParty") {
                 showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
-
-                //~AutoList Customer
-                PaginatedAutocomplete({
-                    inputId: "txtSearch",
-                    data: arrVendor,
-                    startwitfieldname: startwithfield,
-                    enablefilterstartwith: autolistfilterwith,
-                    onSelect: function (item) {
-                        $("#txtSearch").val(item.name);
-                        GetData(2, item.code);
-                        return false;
-                    }
-                });
+                //~AutoList Party + Filter Party (same as Purchase Order)
+                SetAutlistforFields();
             }
             //if (fieldid == "txtSearch") {
             //    showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
@@ -5952,20 +6047,6 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             //        }
             //    });
             //}
-            if (fieldid == "txtFilterParty") {
-                showInfoSnackbar("Search field changed to&ensp; <h4><code>'" + startwithfield + "'</code></h4>");
-                //~AutoList Filter Party
-                PaginatedAutocomplete({
-                    inputId: "txtFilterParty",
-                    data: arrVendor,
-                    startwitfieldname: startwithfield,
-                    enablefilterstartwith: autolistfilterwith,
-                    onSelect: function (item) {
-                        $("#txtFilterParty").val(item.name);
-                        return false;
-                    }
-                });
-            }
         }
         // autolistfilterwith = 1;
         else if (event.altKey && (event.key == 'q')) {//Info about Autolist property

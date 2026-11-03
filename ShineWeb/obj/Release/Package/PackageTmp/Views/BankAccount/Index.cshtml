@@ -18,7 +18,7 @@
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
-<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+@* Phase 1/2: removed duplicate legacy jQuery 1.10.2 (layout already provides 3.6.4). *@
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
@@ -130,6 +130,105 @@
         pointer-events: none;
         font-family: sans-serif;
     }
+
+    /* ===== Master redesign (grid + modal chrome; header already modern) ===== */
+    :root {
+        --sm-accent: var(--header-bg, #2563eb);
+        --sm-radius: 14px;
+        --sm-card-shadow: 0 4px 10px rgba(30,41,59,0.10);
+    }
+
+    #dvMainTable {
+        background: #ffffff;
+        border-radius: var(--sm-radius);
+        box-shadow: var(--sm-card-shadow);
+        padding: 8px;
+    }
+
+    #myModalfg .modal-content {
+        border: none;
+        border-radius: var(--sm-radius);
+        overflow: hidden;
+        box-shadow: 0 18px 44px rgba(15,23,42,0.28);
+    }
+
+    #myModalfg .modal-header {
+        background: var(--sm-accent);
+        color: #ffffff;
+        border-bottom: none;
+    }
+
+        #myModalfg .modal-header .modal-title {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        #myModalfg .modal-header .btn-close {
+            filter: invert(1);
+            opacity: 0.85;
+        }
+
+    #myModalfg .modal-footer {
+        background: #f8fafc;
+        border-top: 1px solid #eef2f7;
+        padding: 12px 18px;
+    }
+
+    #myModalfg .modal-footer .btn {
+        border-radius: 9px;
+        font-weight: 600;
+        padding: 7px 18px;
+        border: none;
+        transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+        #myModalfg .modal-footer .btn:active {
+            transform: scale(0.97);
+        }
+
+    .btn-clear-style {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+        .btn-clear-style:hover {
+            background: #cbd5e1;
+            color: #334155;
+        }
+
+    .btn-save-style {
+        background: #16a34a;
+        color: #ffffff;
+    }
+
+        .btn-save-style:hover {
+            background: #15803d;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(22,163,74,0.30);
+        }
+
+    .btn-close-style {
+        background: #64748b;
+        color: #ffffff;
+    }
+
+        .btn-close-style:hover {
+            background: #475569;
+            color: #fff;
+        }
+
+    .form-switch .form-check-input {
+        width: 3em;
+        height: 1.5em;
+        margin-top: 0.1em;
+        cursor: pointer;
+    }
+
+    .form-switch .form-check-label {
+        font-size: 1rem;
+        margin-left: 1.5rem;
+        cursor: pointer;
+    }
 </style>
 <body>
 
@@ -140,41 +239,32 @@
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
 
-    <div class="d-flex align-items-center gap-2">
-        <!-- Larger heading -->
-        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    @* Phase 2/3: modernised page header using the app-theme toolbar pattern.
+        #MainHeading id preserved — JS reads its text for modal titles. *@
+    @*<div class="app-toolbar app-fade-in">
+            <div>
+                <h2 id="MainHeading">@ViewData["FormName"]</h2>
+                <div class="app-toolbar-crumb">Masters &rsaquo; @ViewData["FormName"]</div>
+            </div>
+        </div>*@
+    <div class="sm-inline-bar">
+        <div class="sm-header-card sm-header-inline">
+            <div class="sm-header-icon"><i class="fas fa-bank"></i></div>
+            <div class="sm-header-text">
+                <div class="sm-header-sub">Master</div>
+                <h4 id="FormHead">@ViewData["FormName"]</h4>
+            </div>
+        </div>
     </div>
     <label id="lblIsDepend" hidden>@ViewData["isDepend"]</label>
     <label id="lblParentMenuID" hidden>@ViewData["ParentMenuID"]</label>
     <label id="lblParentFormFieldID" hidden>@ViewData["ParentFormFieldID"]</label>
-    <hr />
     <div class="toastBox"></div>
     <div id="dvMainTable">
-        <div id="my-grid" style="width: 100%;"></div>
-        <div hidden>
-            <table class="tab   le table-bordered" id="tblMasterData" width="100%">
-                <thead>
-                    <tr class="trclrforcolheader">
-                        <th style="text-align:center;font-size: 12px;width:0%;">ID</th>
-                        <th style="text-align:center;font-size: 12px;width:0%;">BankID</th>
-                        <th style="text-align:center;font-size: 12px;width:15%;">A/c No</th>
-                        <th style="text-align:center;font-size: 12px;width:15%;">A/c Name</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">Bank</th>
-                        <th style="text-align:center;font-size: 12px;width:15%;">Branch</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">IFSC</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">MICR</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">Set Default</th>
-                        <th style="text-align:center;font-size: 12px;width:5%;">Active</th>
-                        <th style="text-align:center;font-size: 12px;width:10%;">User</th>
-                        <th style="text-align:center;font-size: 12px;width:5%;" title="Edit"><span class="glyphicon glyphicon-pencil"></span></th>
-                        <th style="text-align:center;font-size: 12px;width:5%;" title="View"><span class="glyphicon glyphicon-eye-open"></span></th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
+        <div id="my-grid" style="width: 100%;"></div>       
     </div>
     <div class="modal fade" id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-sm">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
 
                 <!-- Modal Header -->
@@ -185,9 +275,10 @@
                     <button type="button" class="btn-close" style="filter: invert(1);" id="modelcloseX"></button>
                 </div>
 
-                <!-- Modal body -->
+                <!-- Modal body : modernised card + responsive field grid.
+                     All field ids / FormclrField / clrdiv / tabindex / handlers preserved. -->
                 <div class="modal-body">
-                    <div class="text-center pt-1">
+                    <div class="pt-1">
                         <table class="table w-100">
                             <tr>
                                 <td style="border:none;padding-left:12px;padding-right:7px" colspan="2">
@@ -263,18 +354,22 @@
                             </tr>
 
                             <tr>
-                                <td align="left" style="border:none">
-                                    <label for="chkDefault">Set default :</label>
-                                    <input tabindex="7" type="checkbox" id="chkDefault" />
-
-                                    <div class="clrdiv text-danger" id="dvErrorDefault"></div>
-                                </td>
-
-                                <td align="left" style="border:none">
-                                    <label for="chkActive">Active :</label>
-                                    <input tabindex="8" type="checkbox" id="chkActive" checked disabled />
-
-                                    <div class="clrdiv text-danger" id="dvErrorActive"></div>
+                                <td colspan="2">
+                                    <!-- Toggles (placed in the grid, after MICR) -->
+                                    <div class="app-field ms-2">
+                                        <div class="d-flex align-items-center gap-5">
+                                            <div class="form-check form-switch">
+                                                <input tabindex="7" type="checkbox" role="switch" id="chkDefault" class="form-check-input" />
+                                                <label for="chkDefault" class="form-check-label">Set as default</label>
+                                                <div class="clrdiv text-danger" id="dvErrorDefault"></div>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input tabindex="8" type="checkbox" role="switch" id="chkActive" class="form-check-input" checked disabled />
+                                                <label for="chkActive" class="form-check-label">Active</label>
+                                                <div class="clrdiv text-danger" id="dvErrorActive"></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
 
@@ -282,17 +377,17 @@
                     </div>
                 </div>
 
-                <!-- Modal footer -->
+                <!-- Modal footer : icons modernised to Font Awesome 6, button ids/handlers preserved -->
                 <div class="modal-footer">
-                    <div class="text-end w-100">
+                    <div class="d-flex justify-content-end gap-2 w-100">
                         <button tabindex="10" type="button" class="btn btn-clear-style" id="btnClear">
-                            <span class="glyphicon glyphicon-refresh"> Clear</span>
+                            <i class="fa-solid fa-arrows-rotate"></i> Clear
                         </button>
                         <button tabindex="9" type="button" class="btn btn-save-style" id="btnSave">
-                            <span class="glyphicon glyphicon-saved"> Save</span>
+                            <i class="fa-solid fa-floppy-disk"></i> Save
                         </button>
                         <button tabindex="11" type="button" class="btn btn-close-style" id="btnClose">
-                            <i class="bi bi-x-circle"></i> Close
+                            <i class="fa-solid fa-circle-xmark"></i> Close
                         </button>
                     </div>
                 </div>
@@ -408,10 +503,11 @@ var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
 var autolistfilterwith = EnableALStartWith;
 var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     var grid, BankAccount;
-    GetColumnSettingsData(2, 9, 1);
+    
     var UID = '@Session["LoginUserID"]';
-    var nMode = 1;
-    var FID = $("#txtFormID").val();
+var nMode = 1;
+var FID = $("#txtFormID").val();
+    GetColumnSettingsData(2, 9, 1);
     GetData(3);
     GetData(5);
     var arrData = [];
@@ -456,9 +552,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                         rowActionsMenu: menuActions,       // Pass the Delete/Print actions
                         //onCellChange: handleCellUpdate,
                         customCellRenderer: (el, col, rowData) => {
+                            console.log(col.field)
                             if (col.field === 'Active') {
                                 const val = rowData[col.field];
-                                console.log("Active : ", val);
                                 if (val === 'True') {
                                     el.innerHTML = `<div class="dg-status-badge dg-status-active">
                       <span class="dg-status-circle"></span> Active
@@ -467,6 +563,18 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                                     el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
                       <span class="dg-status-circle"></span> In-Active
                   </div>`;
+                                }
+                            }
+                            if (col.field === 'SetDefault') {
+                                const val = rowData[col.field];
+                                if (val === 'True') {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-active">
+    <span class="dg-status-circle"></span> Yes
+</div>`;
+                                } else if (val === 'False') {
+                                    el.innerHTML = `<div class="dg-status-badge dg-status-inactive">
+    <span class="dg-status-circle"></span> No
+</div>`;
                                 }
                             }
                         },

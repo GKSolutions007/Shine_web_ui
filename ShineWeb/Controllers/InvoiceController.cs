@@ -121,30 +121,11 @@ namespace ShineWeb.Controllers
                     }
                 }
             }
-            //Build the File Path.
-            //string path = Server.MapPath("~/Files/") + fileName;
-            //string path = @"E:\Print Document\PrintSpool\" + fileName;
-
-            //if (!string.IsNullOrEmpty(FileLocationwithname))
-            //{
-            string pathwithFileName = FileLocationwithname;// @"E:\Print Document\PrintSpool\half.pdf";
-                                                           //Read the File data into Byte Array.
-            byte[] bytes = System.IO.File.ReadAllBytes(pathwithFileName);
-            string exts = Path.GetExtension(pathwithFileName);
-            string ctype = GetMimeType(exts);
-            string fileName = Path.GetFileName(pathwithFileName);
-            //string pth = pathwithFileName.Replace(Filena, "");
-            //Send the File to Download.
-            //return File(bytes, "application/pdf", fileName);
-            //Directory.Delete(pth, true);
-
-            //return File(bytes, ctype, fileName);
+            // Only the file name is returned to the client (the client then requests the
+            // actual bytes via DownloadFile/ExportData). We do NOT read the whole file into
+            // memory here — that was wasted disk I/O and memory since the bytes were discarded.
+            string fileName = Path.GetFileName(FileLocationwithname);
             return Json(fileName, JsonRequestBehavior.AllowGet);
-            //}
-            //else
-            //{
-            //    return File(null,"");
-            //}
         }
         public FileResult ExportData(string Fname)
         {

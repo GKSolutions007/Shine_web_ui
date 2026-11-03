@@ -14,6 +14,17 @@ using System.Windows.Forms;
 
 namespace ShineWeb.BuisnessLayer
 {
+    // ============================================================================
+    // ARCHITECTURE NOTE (Phase 1 of removing UI->DB direct access):
+    //   This class opens a DIRECT SQL Server connection from the UI tier, bypassing
+    //   the API (and therefore its auth, logging, query-timeout and SP-parameter cache).
+    //   All NEW data access from the UI MUST go through the API (call the api/... endpoints
+    //   from the view's JavaScript, or proxy via HttpClient), NOT through this class.
+    //
+    //   The remaining internal callers are the PDF/print subsystem (PrintBase) and the
+    //   Excel import flow, which are scheduled to move to the API in Phases 2-3. Once those
+    //   are migrated, this class, DALHelper, and the UI connection string should be deleted.
+    // ============================================================================
     public class clsBusinessLayer
     {
         DALHelper.clsDAL ObjDL = new DALHelper.clsDAL();
@@ -25,6 +36,14 @@ namespace ShineWeb.BuisnessLayer
         public DataTable BL_ExecuteSqlQuery(string strquery)
         {
             return ObjDL.dl_ExecuteSqlQuery(strquery);
+        }
+        /// <summary>
+        /// Parameterised ad-hoc query (same contract as the API's BL_ExecuteParamQuery).
+        /// Reference params as @p0, @p1, ... in the query text.
+        /// </summary>
+        public DataTable BL_ExecuteParamQuery(string strquery, params object[] parameters)
+        {
+            return ObjDL.dl_ExecuteParamQuery(strquery, parameters);
         }
         public string BL_AppConfigValuebyID(int AppID)
         {
@@ -66,64 +85,7 @@ namespace ShineWeb.BuisnessLayer
             DataTable dt = BL_ExecuteParamSP("uspCheckPermission", UID, FormName, RoleID);
             HasPermission = dt.Rows.Count > 0 ? true : false;
             return HasPermission;
-        }
-        public bool SendEmail(string Subject, string Body, string ToMailID)
-        {
-            bool MailSend = false;
-            try
-            {
-                string HostName = "", EMail = "", Pwd = "";
-                //DataTable dtNames = BL_ExecuteParamSP("uspApplicationConfigValue");
-                //if (dtNames.Rows.Count > 0)
-                //{
-                //    HostName = dtNames.Rows[0]["HostName"].ToString();
-                //    EMail = dtNames.Rows[0]["EMailID"].ToString();
-                //    Pwd = dtNames.Rows[0]["Password"].ToString();
-                //}
-                HostName = "smtp.gmail.com";
-                EMail = "gksolutions.work007@gmail.com";
-                Pwd = "ujrx zkfl kpfo dehr";
-                if (!string.IsNullOrEmpty(HostName) && !string.IsNullOrEmpty(EMail) && !string.IsNullOrEmpty(Pwd))
-                {
-                    //
-                    MailMessage message = new MailMessage();
-                    SmtpClient smtp = new SmtpClient();
-                    //message.From = new MailAddress("gks.helpdesk@gmail.com");//gks.helpdesk@gmail.com
-                    message.From = new MailAddress(EMail);//gks.helpdesk@gmail.com//"vipassana.pveasllp@gmail.com"
-                    message.To.Add(new MailAddress(ToMailID));
-                    message.Subject = Subject;
-                    message.IsBodyHtml = true; //to make message body as html  
-                    message.Body = Body;
-                    smtp.Port = 587;
-                    smtp.Host = HostName;// "smtp.gmail.com"; //for gmail host  
-                    smtp.EnableSsl = true;
-                    smtp.UseDefaultCredentials = false;
-                    //smtp.Credentials = new NetworkCredential("gks.helpdesk@gmail.com", "mkolocmylhzuuvdk");
-                    //smtp.Credentials = new NetworkCredential("vipassana.pveasllp@gmail.com", "eyilfwmebqgydnjg");//pveasllp@2021
-                    smtp.Credentials = new NetworkCredential(EMail, Pwd);
-                    smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
-
-                    smtp.Send(message);
-                    MailSend = true;
-                }
-                else
-                {
-                    MailSend = false;
-                    //BL_WriteErrorMsginLog("BL", "Mail Send", "E-Mail config details are empty in App Config. You should give the details there.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MailSend = false;
-                //BL_WriteErrorMsginLog("BL", "Mail Send - Exception", ex.Message);
-                throw ex;
-            }
-            finally
-            {
-
-            }
-            return MailSend;
-        }
+        }        
         public static CultureInfo SetSysCulture = new CultureInfo("es-ES");
         public DateTime? BL_DateFormatChange(string strdate)
         {
@@ -131,7 +93,6 @@ namespace ShineWeb.BuisnessLayer
             try
             {
                 string TempDate = strdate;
-                DateTime dtTemp;
                 //string[] formats = { "dd/MM/yyyy", "dd-MM-yyyy", "dd.MM.yyyy" };
                 //if (DateTime.TryParse(strdate, SetSysCulture.DateTimeFormat, DateTimeStyles.None, out dtTemp))
                 //{
@@ -140,9 +101,9 @@ namespace ShineWeb.BuisnessLayer
                 dtReturnDate = DateTime.ParseExact(strdate, "yyyy-MM-dd",
                                        System.Globalization.CultureInfo.InvariantCulture);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw; // preserve original stack trace
             }
             return dtReturnDate;
         }
@@ -416,9 +377,9 @@ namespace ShineWeb.BuisnessLayer
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw; // preserve original stack trace
             }
             return false;
         }
@@ -432,9 +393,9 @@ namespace ShineWeb.BuisnessLayer
                     return true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw; // preserve original stack trace
             }
             return false;
         }
@@ -596,9 +557,9 @@ namespace ShineWeb.BuisnessLayer
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw; // preserve original stack trace
             }
             return bIsDate;
         }
@@ -778,7 +739,8 @@ namespace ShineWeb.BuisnessLayer
         public bool IsNumvericValue(string Value)
         {
             bool IsNumeric = false;
-            DataTable dt = this.BL_ExecuteSqlQuery("SELECT ISNUMERIC('" + Value + "')");
+            // Value comes from user-typed document ranges; pass it as a parameter (was concatenated -> SQL injection).
+            DataTable dt = this.BL_ExecuteParamQuery("SELECT ISNUMERIC(@p0)", Value ?? string.Empty);
             if (dt.Rows.Count > 0)
             {
                 IsNumeric = dt.Rows[0][0].ToString() == "1";

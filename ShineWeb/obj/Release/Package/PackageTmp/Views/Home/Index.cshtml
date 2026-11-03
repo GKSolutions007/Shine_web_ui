@@ -12,7 +12,9 @@
 <link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />
 @*<script src="~/Scripts/bootstrap.min.js"></script>*@
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
-<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+@* Phase 1: removed duplicate legacy jQuery 1.10.2. The layout already provides
+   jQuery 3.6.4; this view loads 3.7.1 for jQuery UI + DataTables 2.2.2. Loading
+   1.10.2 on top previously reset $ and risked breaking plugins. *@
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
@@ -642,50 +644,83 @@
 
 
         <div class="modern-card brand-overlay-filters">
-            <div class="row">
+            <div class="sm-inline-bar" style="margin:0 !important">
+                <div class="sm-header-card sm-header-inline">
+                    <div class="sm-header-icon" style="color:black"><i class="glyphicon glyphicon-stats"></i></div>
+                    <div class="sm-header-text">
+                        <h4 id="FormHead">Brand Summary</h4>
+                    </div>
+                </div>
 
-                <div class="col-xs-12 col-sm-6 col-md-4 form-group form-label">
-                    <div class="brand-overlay-header">
-                        <h4><span class="glyphicon glyphicon-stats"></span> Brand Summary</h4>
-                    </div>
-                </div>
-                <div class="col-xs-12 col-sm-6 col-md-3 form-group form-label">
-                    <div class="form-group form-label">
-                        <select class="form-control" id="cmbOverlayBranch">
-                            <option value="0">-- All --</option>
-                        </select>
-                        <label class="labelup">Branch</label>
-                    </div>
+                <div class="row sm-filter-row  align-items-end justify-content-end">
 
-                </div>
-                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
-                    <select class="form-control gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
-                </div>
-                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
-                    <div class="form-group form-label">
-                        <input type="date" class="form-control" id="dtpFFrom" autocomplete="off" />
-                        <label class="labelup">From Date</label>
+                    @*<div class="col-xs-12 col-sm-6 col-md-4 form-group form-label">
+            <div class="brand-overlay-header">
+                <h4><span class="glyphicon glyphicon-stats"></span> Brand Summary</h4>
+            </div>
+        </div>*@
+                   
+                    <!-- Branch -->
+                    <div class="col-12 col-md-2">
+                        <span class="form-label sm-pill">
+                            <i class="fas fa-building sm-pill-ico"></i>
+                            <select class="form-control FormclrcmbField" id="cmbOverlayBranch">
+                                <option value="0">Select Branch</option>
+                            </select>
+                            <label class="labelup" for="cmbOverlayBranch">Branch</label>
+                        </span>
                     </div>
-                </div>
-                <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
-                    <div class="form-group form-label">
-                        <input type="date" class="form-control" id="dtpFTo" autocomplete="off" />
-                        <label class="labelup">To Date</label>
+                    <!-- Period / From / To: become the Date Range pill -->
+                    <div class="col-auto">
+                        <select class="form-select" id="cmbFilterDatetype" aria-label="Period" onchange="SetFilterDate();"></select>
                     </div>
-                </div>
-                <div class="col-xs-6 col-sm-3 col-md-1">
-                    <div class="brand-overlay-inclusive">
+                    <div class="col-auto">
+                        <span class="form-label">
+                            <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom">
+                            <label class="labelup" for="dtpFFrom">From</label>
+                        </span>
+                        <div id="divErrFFrom" class="clrdivs text-danger pt-1 ps-1"></div>
+                    </div>
+                    <div class="col-auto">
+                        <span class="form-label">
+                            <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo">
+                            <label class="labelup" for="dtpFTo">To</label>
+                        </span>
+                        <div id="divErrFTo" class="clrdivs text-danger pt-1 ps-1"></div>
+                    </div>
+                    <!-- All Status: becomes a toggle -->
+                    <div class="col-auto d-flex align-items-center mb-2">
                         <input type="checkbox" id="chkOverlayInclusive" />
                         <label for="chkOverlayInclusive">With Tax</label>
                     </div>
-                </div>
-                <div class="col-xs-6 col-sm-3 col-md-1">
-                    <button type="button" id="btnOverlayGenerate" class="btn btn-filter-style btn-block">
-                        <span class="glyphicon glyphicon-play"></span> Generate
-                    </button>
-                </div>
+                    <!-- Filter -->
+                    <div class="col-auto">
+                        <button id="btnOverlayGenerate" class="btn btn-filter-style">
+                            <span id="btnLoadSpinner" class="btn-spinner" style="display:none;"></span>
+                            <i class="bi bi-funnel" id="btnLoadIcon"></i>
+                            <span id="btnLoadText">Filter</span>
+                        </button>
+                    </div>
+                    @*<div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+            <select class="form-control gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+            <div class="form-group form-label">
+                <input type="date" class="form-control" id="dtpFFrom" autocomplete="off" />
+                <label class="labelup">From Date</label>
             </div>
-            <div style="color: red; font-size: 11px;" id="divErrOverlayFilter"></div>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-1 form-group form-label">
+            <div class="form-group form-label">
+                <input type="date" class="form-control" id="dtpFTo" autocomplete="off" />
+                <label class="labelup">To Date</label>
+            </div>
+        </div>*@
+
+
+                </div>
+                <div style="color: red; font-size: 11px;" id="divErrOverlayFilter"></div>
+            </div>
         </div>
 
         <div class="modern-card brand-overlay-table">

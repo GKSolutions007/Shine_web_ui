@@ -1618,40 +1618,45 @@ class GKBSDynamicGrid {
         // 3. Build the content inside the popup
         const isSelected = (optionValue) => optionValue === savedOperator ? 'selected' : '';
         // --- Sorting Options ---
+        const isNumberColB1 = columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml' || columnType === 'labeldecimal' || columnType === 'decimal';
+        const isDateColB1 = columnType === 'labeldate';
+        const filterTypeLabelB1 = isDateColB1 ? 'Date Filters' : (isNumberColB1 ? 'Number Filters' : 'Text Filters');
+        const colTitleB1 = col.header || col.field;
         popup.innerHTML += `
-    <div class="dg-filter-group">
-    <div class="dg-filter-group">
-            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}" hidden>Sort A to Z</div>
-            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}" hidden>Sort Z to A</div>
-            <hr hidden/>
+        <div class="dg-filter-header">
+            <span class="dg-filter-title" title="${colTitleB1}">Filter: ${colTitleB1}</span>
+            <span class="dg-filter-x dg-filter-cancel" title="Close">&times;</span>
+        </div>
+        <div class="dg-filter-group dg-filter-sortgroup">
+            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}"><i class="bi bi-sort-alpha-down"></i> Sort A to Z</div>
+            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}"><i class="bi bi-sort-alpha-up-alt"></i> Sort Z to A</div>
+            <div class="dg-filter-option dg-filter-clear-row" data-action="clear-filter" data-field="${col.field}"><i class="bi bi-funnel"></i> Clear Filter From "${colTitleB1}"</div>
             <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}"><i class="bi bi-layout-text-sidebar-reverse"></i> Auto Fit This Column</div>
             <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}"><i class="bi bi-layout-three-columns"></i> Auto Fit All Columns</div>
-            <div class="dg-filter-option dg-filter-clear" data-action="clear-filter" data-field="${col.field}"><i class="bi bi-arrow-clockwise"></i> Clear Filter</div>
         </div>
-        <hr/>
-           <div class="dg-filter-group">
+        <hr class="hrgricline"/>
+        <div class="dg-filter-group">
+            <div class="dg-filter-grouplabel">${filterTypeLabelB1}</div>
             <div class="dg-filter-text-input" style="display: flex; gap: 5px;">
                 <select class="dg-text-filter-operator">
                     ${operatorOptionsHtml}
                 </select>
-                <input type="text" placeholder="${columnType === 'number' || columnType === 'labelnumber' || columnType === 'labeldeciaml' ? 'Value or Range (e.g., 10-20)' : 'Value...'}" 
+                <input type="text" placeholder="${isNumberColB1 ? 'Value or Range (e.g., 10-20)' : 'Value...'}" 
                        class="dg-text-filter-input" style="flex-grow: 1;" value="${savedValue}">
             </div>
         </div>
-        <hr/>
-        
+        <hr class="hrgricline"/>
         <div class="dg-filter-group">
             <div class="dg-filter-text-input">
                 <input type="text" placeholder="Search..." class="dg-text-search-input">
             </div>
         </div>
-        <hr/>
         <div class="dg-filter-checkbox-list">
             </div>
         <div class="dg-filter-actions">
-            <button class="dg-btn dg-filter-apply" data-field="${col.field}">Apply</button>
+            <button class="dg-btn dg-filter-apply dg-btn-primary" data-field="${col.field}">OK</button>
+            <button class="dg-btn dg-filter-cancel">Cancel</button>
             <button class="dg-btn dg-filter-clear d-none" data-field="${col.field}">Clear Filter</button>
-            <button class="dg-btn dg-filter-cancel">Cancel</button>            
         </div>
     `;
 
@@ -1764,18 +1769,23 @@ class GKBSDynamicGrid {
         // 3. Build the content inside the popup
         const isSelected = (optionValue) => optionValue === savedOperator ? 'selected' : '';
         // --- Sorting Options ---
+        const filterTypeLabel = isDateCol ? 'Date Filters' : (isNumberCol ? 'Number Filters' : 'Text Filters');
+        const colTitle = col.header || col.field;
         popup.innerHTML += `
-    <div class="dg-filter-group">
-    <div class="dg-filter-group">
-            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}" hidden>Sort A to Z</div>
-            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}" hidden>Sort Z to A</div>
-            <hr class"hrgricline" hidden/>
+        <div class="dg-filter-header">
+            <span class="dg-filter-title" title="${colTitle}">Filter: ${colTitle}</span>
+            <span class="dg-filter-x dg-filter-cancel" title="Close">&times;</span>
+        </div>
+        <div class="dg-filter-group dg-filter-sortgroup">
+            <div class="dg-filter-option" data-action="sort-asc" data-field="${col.field}"><i class="bi bi-sort-alpha-down"></i> Sort A to Z</div>
+            <div class="dg-filter-option" data-action="sort-desc" data-field="${col.field}"><i class="bi bi-sort-alpha-up-alt"></i> Sort Z to A</div>
+            <div class="dg-filter-option dg-filter-clear-row" data-action="clear-filter" data-field="${col.field}"><i class="bi bi-funnel"></i> Clear Filter From "${colTitle}"</div>
             <div class="dg-filter-option" data-action="autofit-col" data-field="${col.field}"><i class="bi bi-layout-text-sidebar-reverse"></i> Auto Fit This Column</div>
             <div class="dg-filter-option" data-action="autofit-all" data-field="${col.field}"><i class="bi bi-layout-three-columns"></i> Auto Fit All Columns</div>
-            <div class="dg-filter-option dg-filter-clear" data-action="clear-filter" data-field="${col.field}"><i class="bi bi-arrow-clockwise"></i> Clear Filter</div>
         </div>
-        <hr class"hrgricline"/>
-           <div class="dg-filter-group">
+        <hr class="hrgricline"/>
+        <div class="dg-filter-group">
+            <div class="dg-filter-grouplabel">${filterTypeLabel}</div>
             <div class="dg-filter-text-input" style="display: flex; gap: 5px;">
                 <select class="dg-text-filter-operator form-select" style="${isDateCol ? 'width: 100%;' : ''}">
                     ${operatorOptionsHtml}
@@ -1784,20 +1794,18 @@ class GKBSDynamicGrid {
                        class="dg-text-filter-input" style="${isDateCol ? 'display: none;' : 'flex-grow: 1;'}" value="${savedValue}">
             </div>
         </div>
-        <hr class"hrgricline"/>
-        
+        <hr class="hrgricline"/>
         <div class="dg-filter-group">
             <div class="dg-filter-text-input">
                 <input type="text" placeholder="Search..." class="dg-text-search-input">
             </div>
         </div>
-        <hr class"hrgricline"/>
         <div class="dg-filter-checkbox-list">
             </div>
         <div class="dg-filter-actions">
-            <button class="dg-btn dg-filter-apply">Apply</button>
-            <button class="dg-btn dg-filter-clear d-none" data-field="${col.field}">Clear Filter</button>
+            <button class="dg-btn dg-filter-apply dg-btn-primary">OK</button>
             <button class="dg-btn dg-filter-cancel">Cancel</button> 
+            <button class="dg-btn dg-filter-clear d-none" data-field="${col.field}">Clear Filter</button>
         </div>
     `;
 
@@ -3239,7 +3247,8 @@ class GKBSDynamicGrid {
         });
         popup.querySelectorAll('.dg-filter-option').forEach(el => {
             el.addEventListener('click', (e) => {
-                const action = e.target.getAttribute('data-action');
+                const action = e.currentTarget.getAttribute('data-action');
+                if (!action) return;
 
                 if (action.startsWith('sort-')) {
                     const direction = action.split('-')[1]; // Extracts 'asc' or 'desc'
@@ -3252,6 +3261,13 @@ class GKBSDynamicGrid {
                     this.closeAllPopups();
                 } else if (action === 'autofit-all') {
                     this.autoFitAllColumns();
+                    this.closeAllPopups();
+                } else if (action === 'clear-filter') {
+                    delete this.state.colFilters[field];
+                    delete this.state.textFilters[field];
+                    this.updateFilterOrder(field, false);
+                    this.processData();
+                    this.render();
                     this.closeAllPopups();
                 }
             });
@@ -3276,9 +3292,10 @@ class GKBSDynamicGrid {
             this.closeAllPopups();
         });
         
-        popup.querySelector('.dg-filter-cancel').addEventListener('click', () => {
-           
-            this.closeAllPopups();
+        popup.querySelectorAll('.dg-filter-cancel').forEach(cancelEl => {
+            cancelEl.addEventListener('click', () => {
+                this.closeAllPopups();
+            });
         });
         
         // Listen for Clear Filter
@@ -3472,7 +3489,8 @@ class GKBSDynamicGrid {
         });
         popup.querySelectorAll('.dg-filter-option').forEach(el => {
             el.addEventListener('click', (e) => {
-                const action = e.target.getAttribute('data-action');
+                const action = e.currentTarget.getAttribute('data-action');
+                if (!action) return;
 
                 if (action.startsWith('sort-')) {
                     const direction = action.split('-')[1]; // Extracts 'asc' or 'desc'
@@ -3486,12 +3504,21 @@ class GKBSDynamicGrid {
                 } else if (action === 'autofit-all') {
                     this.autoFitAllColumns();
                     this.closeAllPopups();
+                } else if (action === 'clear-filter') {
+                    delete this.state.colFilters[field];
+                    delete this.state.textFilters[field];
+                    this.updateFilterOrder(field, false);
+                    this.processData();
+                    this.render();
+                    this.closeAllPopups();
                 }
             });
         });
 
-        popup.querySelector('.dg-filter-cancel').addEventListener('click', () => {
-            this.closeAllPopups();
+        popup.querySelectorAll('.dg-filter-cancel').forEach(cancelEl => {
+            cancelEl.addEventListener('click', () => {
+                this.closeAllPopups();
+            });
         });
         // Listen for Clear Filter (both menu option and button)
         popup.querySelectorAll('.dg-filter-clear').forEach(clearBtn => {

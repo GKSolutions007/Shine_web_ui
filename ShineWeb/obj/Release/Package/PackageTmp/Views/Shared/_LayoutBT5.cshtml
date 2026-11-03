@@ -14,14 +14,19 @@
     @*<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">*@
     <link href="~/Content/bootstrap-glyphicons.css" rel="stylesheet" />
     <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
-    <link href="~/Content/font-awesome.min.css" rel="stylesheet" />
+    @* Phase 1 design foundation: tokens + safe component polish.
+       Loaded after Bootstrap so tokens are available, and before the
+       page inline styles + DB-driven theme variables so those still win. *@
+    <link href="~/Content/app-theme.css" rel="stylesheet" />
     <link href="~/Content/Snackbar.css" rel="stylesheet" />
-    @*<link href="~/GKBS_GRID_2.0/css/gridui.css" rel="stylesheet" />*@
-    @*<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">*@
+    @* Phase 1 icon consolidation: a single Font Awesome (6) which is backward
+       compatible with the older .fa classes. The duplicate legacy
+       font-awesome.min.css (FA4) was removed. Bootstrap Icons stays on the CDN
+       (the self-hosted copy's font paths point at ~/fonts which doesn't resolve
+       in plain CSS, so the CDN is the reliable source for now). *@
     <link href="~/Content/fontawesome.6.0.0.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/Content/jquery-ui.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    @*<link href="~/Content/bootstrap-icons.1.11.3.min.css" rel="stylesheet" />*@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700&family=Epilogue:wght@400;500&display=swap" rel="stylesheet" />
     <link href="~/Unauth/unauth.css" rel="stylesheet" />
     <link href="~/Content/gkbsbuttonstyle.css" rel="stylesheet" />
@@ -29,6 +34,10 @@
     <script src="~/Scripts/Validation.js"></script>
     <script src="~/Autocomplete/GKBSautocomplete.js"></script>
     <script src="~/Unauth/unathjs.js"></script>
+    @* Converts legacy Period/From/To + All Status filters to the Date Range pill + toggle. *@
+    <script src="~/Scripts/js/sm-daterange.js"></script>
+    @* Gives every form under the "Master" menu the Bank Account style header card. *@
+    <script src="~/Scripts/js/sm-header.js"></script>
 
 
     <style>
@@ -1534,6 +1543,27 @@
         System.Data.DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
         System.Data.DataTable dtCompany = (System.Data.DataTable)Session["dtCompany"];
 
+        // Which sidebar group (e.g. "Master") the current controller belongs to. Used by
+        // Scripts/js/sm-header.js to give every Master form the same header card.
+        string smController = Convert.ToString(ViewContext.RouteData.Values["controller"]);
+        string smMenuGroup = "";
+        if (dtParent != null && dtPermission != null && !string.IsNullOrEmpty(smController)
+            && dtPermission.Columns.Contains("LocationName") && dtPermission.Columns.Contains("MenuParentId"))
+        {
+            foreach (System.Data.DataRow smRow in dtPermission.Select("LocationName = '" + smController.Replace("'", "''") + "'"))
+            {
+                int smParentId;
+                if (!int.TryParse(Convert.ToString(smRow["MenuParentId"]), out smParentId)) { continue; }
+                System.Data.DataRow[] smParent = dtParent.Select("MenuId = " + smParentId);
+                if (smParent.Length == 0) { continue; }
+                string smName = Convert.ToString(smParent[0]["MenuName"]);
+                if (smName.StartsWith("Favourite", StringComparison.OrdinalIgnoreCase)) { continue; } // favourites duplicate real menus
+                smMenuGroup = smName;
+                break;
+            }
+        }
+        <script>window.smPage = { controller: @Html.Raw(HttpUtility.JavaScriptStringEncode(smController, true)), menuGroup: @Html.Raw(HttpUtility.JavaScriptStringEncode(smMenuGroup, true)) };</script>
+
         string apiurl = Convert.ToString(Session["APIurl"]) + "backupfile";
         if (LayoutName == "LogOn")
         {
@@ -1553,7 +1583,7 @@
 
 
                 <div style="top: 0; position: fixed; width: 100%;height:40px;z-index:10000;" class="dvmainmenuheader">
-                    <div id="icQS" onclick="focussearch();" data-bs-toggle="modal" data-bs-target="#myModal" class="widesearchfield">
+                    <div id="icQS" onclick="focussearch();" class="widesearchfield">
                         <img src="~/Images/search-icon.png" style="width: 14px; height: 14px; opacity: 0.7;" alt="Search" />
                         <span>Search</span>
                     </div>
@@ -1717,7 +1747,7 @@
 
                         }
                     }
-                    <button class="dropdown-btn"><i class="fa fa-table"></i> New Trans Table</button>
+                    <button class="dropdown-btn"><i class="fa-solid fa-table"></i> New Trans Table</button>
                     <div class="dropdown-container">
                         <ul class="linkforecolor">
                             <li>
@@ -1743,7 +1773,7 @@
                                 <span>@User</span>
                             </a>
                         </div>
-                        <i class="fa fa-sign-out" style="font-size: 18px; font-weight: bold; color: var(--main-menutext); padding: 5px "></i>
+                        <i class="fa-solid fa-right-from-bracket" style="font-size: 18px; font-weight: bold; color: var(--main-menutext); padding: 5px "></i>
                         @*@Html.ActionLink("Test Level Rep", "Index", "TestLevelReport", new { name = "ONuKr1oIASSV+koj5n/Zz0ymu1AOgX8YlbLqAg8l8rQ=", strFormID = "BOII5FUynjpl5RZJJ8nW1g==" }, new { @class = "dropdown linkforecolor", @style = "font-weight:bold;", @title = User, @id = "algot" })<br />*@
                         @Html.ActionLink("LogOut", "LogOff", "Login", null, new { @class = "dropdown linkforecolor", @style = "font-weight:bold; color: var(--CompanyNameColor)", @title = User, @id = "algot1", onclick = "localStorage.removeItem('FilterDatelist');localStorage.removeItem('ThemeData');localStorage.removeItem('MenusData'); sessionStorage.clear();" })
                     </div>
@@ -1805,33 +1835,143 @@
                 </div>
             </div>
         </div>-->
+        <style>
+            /* ===== Quick Search: command palette ===== */
+            .qs-dialog { max-width: 640px; margin-top: 8vh; }
+            .qs-content {
+                border: none;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 24px 60px rgba(15,23,42,0.30);
+                font-family: 'Segoe UI', system-ui, sans-serif;
+            }
+            .qs-searchbar {
+                display: flex; align-items: center; gap: 10px;
+                margin: 14px 14px 8px; padding: 0 12px;
+                height: 48px; border-radius: 12px;
+                background: #f8fafc; border: 1.5px solid #2563eb;
+            }
+            .qs-search-ico { color: #64748b; font-size: 15px; }
+            .qs-input {
+                flex: 1; border: none; outline: none; background: transparent;
+                font-size: 15px; color: #0f172a; min-width: 0;
+            }
+            .qs-kbd {
+                font-size: 11px; color: #475569; background: #e2e8f0;
+                border-radius: 6px; padding: 3px 8px; white-space: nowrap;
+            }
+            .qs-close {
+                border: none; background: transparent; color: #94a3b8;
+                font-size: 22px; line-height: 1; padding: 0 2px; cursor: pointer;
+            }
+                .qs-close:hover { color: #475569; }
+            .qs-chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 2px 14px 8px; }
+            .qs-chip {
+                border: none; border-radius: 14px; padding: 4px 12px;
+                font-size: 11.5px; font-weight: 600; cursor: pointer;
+                background: #f1f5f9; color: #475569;
+            }
+                .qs-chip:hover { background: #e2e8f0; }
+                .qs-chip.qs-chip-active { background: #2563eb; color: #fff; }
+            .qs-results { max-height: 55vh; overflow-y: auto; padding: 0 8px 8px; }
+            .qs-group {
+                font-size: 10px; font-weight: 700; letter-spacing: 1px;
+                text-transform: uppercase; color: #94a3b8;
+                padding: 12px 10px 4px;
+            }
+            .qs-item {
+                position: relative; display: flex; align-items: center; gap: 12px;
+                padding: 7px 10px; border-radius: 10px; cursor: pointer;
+                text-decoration: none; color: inherit;
+            }
+                .qs-item:hover { background: #f8fafc; }
+                .qs-item.qs-active { background: #eff6ff; }
+                .qs-item.qs-active::before {
+                    content: ""; position: absolute; left: 0; top: 6px; bottom: 6px;
+                    width: 3px; border-radius: 2px; background: #2563eb;
+                }
+            .qs-ico {
+                width: 30px; height: 30px; min-width: 30px; border-radius: 8px;
+                display: flex; align-items: center; justify-content: center;
+                background: #eff6ff; color: #2563eb; font-size: 13px;
+            }
+            .qs-text { flex: 1; min-width: 0; }
+            .qs-name {
+                font-size: 13px; font-weight: 600; color: #0f172a;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            }
+                .qs-name mark { background: transparent; color: #2563eb; padding: 0; font-weight: 800; }
+            .qs-crumb { font-size: 10.5px; color: #64748b; }
+            .qs-enter {
+                display: none; font-size: 10px; color: #2563eb;
+                border: 1px solid #bfdbfe; border-radius: 6px; padding: 1px 6px; background: #fff;
+            }
+            .qs-item.qs-active .qs-enter { display: inline-block; }
+            .qs-star {
+                border: none; background: transparent; cursor: pointer;
+                color: #cbd5e1; font-size: 14px; padding: 2px 4px;
+            }
+                .qs-star:hover { color: #f59e0b; }
+                .qs-star.qs-starred { color: #f59e0b; }
+            .qs-empty { padding: 28px 10px; text-align: center; color: #94a3b8; font-size: 13px; }
+            .qs-footer {
+                display: flex; gap: 16px; align-items: center;
+                padding: 10px 16px; border-top: 1px solid #eef2f7;
+                font-size: 11px; color: #64748b; background: #fbfcfe;
+            }
+                .qs-footer kbd {
+                    background: #fff; border: 1px solid #e2e8f0; border-radius: 4px;
+                    color: #475569; font-size: 10px; padding: 0 5px; margin-right: 2px;
+                    box-shadow: none;
+                }
+            .qs-count { margin-left: auto; color: #94a3b8; }
+            @@media (max-width: 576px) {
+                .qs-dialog { margin: 8px; }
+                .qs-kbd, .qs-footer span:not(.qs-count) { display: none; }
+            }
+        </style>
         <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content" style="max-height:450px;overflow:auto">
+            <div class="modal-dialog qs-dialog">
+                <div class="modal-content qs-content">
 
-                    <!-- Modal Header -->
-                    <div class="modal-header" style="background-color:lightgoldenrodyellow">
-                        <h5 class="modal-title" id="myModalLabel">Quick Search</h5>
-                        <button type="button" class="btn-close" style="filter:invert(1)" id="icoQSClose" aria-label="Close"></button>
+                    <h5 class="visually-hidden" id="myModalLabel">Quick Search</h5>
+
+                    <!-- Search bar -->
+                    <div class="qs-searchbar">
+                        <i class="fas fa-magnifying-glass qs-search-ico" aria-hidden="true"></i>
+                        <input type="text"
+                               placeholder="Search screens... (Masters, Accounts, Reports...)"
+                               id="myInput"
+                               class="qs-input"
+                               aria-label="Search screens"
+                               autocomplete="off">
+                        <span class="qs-kbd" title="Shortcut">Ctrl K</span>
+                        <button type="button" class="qs-close" id="icoQSClose" aria-label="Close">&times;</button>
                     </div>
 
+                    <!-- Module filter chips (built by JS) -->
+                    <div class="qs-chips" id="qsChips" role="tablist" aria-label="Filter by module"></div>
 
+                    <!-- Results (built by JS) -->
+                    <div class="qs-results" id="qsResults" role="listbox" aria-labelledby="myModalLabel"></div>
 
-                    <!-- Modal Body -->
-                    <div class="modal-body">
+                    <!-- Footer hints -->
+                    <div class="qs-footer">
+                        <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate</span>
+                        <span><kbd>&crarr;</kbd> open</span>
+                        <span><kbd>Esc</kbd> close</span>
+                        <span class="qs-count" id="qsCount"></span>
+                    </div>
 
-                        <input type="text"
-                               placeholder="Search.."
-                               id="myInput"
-                               class="form-control"
-                               autocomplete="off">
-
-                        <div class="list-container" id="listContainer" style="padding-top:3px;">
+                    <!-- Source data: menu items the user has permission for (rendered server-side) -->
+                    <div class="list-container" id="listContainer" hidden>
 
                             @{
                                 if (Session["dtPermission"] != null && dtPermission.Rows.Count > 0)
                                 {
                                     System.Data.DataRow[] drrr = dtPermission.Select("MenuChildLevel = 2", "MenuName");
+                                    bool qsHasParent = dtParent != null && dtPermission.Columns.Contains("MenuParentId");
+                                    var qsSeen = new System.Collections.Generic.HashSet<string>();
                                     if (drrr.Count() > 0)
                                     {
                                         for (int i = 0; i < drrr.Length; i++)
@@ -1844,25 +1984,36 @@
                                             if (drrr[i]["IsMenu"].ToString() == "1" && drrr[i]["IsMobileApp"].ToString() == "0"
                                                  && drrr[i]["MenuTree"].ToString() != "0")
                                             {
+                                                // Module (parent menu) name for grouping in Quick Search
+                                                string qsModule = "Other";
+                                                if (qsHasParent)
+                                                {
+                                                    int qsParentId;
+                                                    if (int.TryParse(Convert.ToString(drrr[i]["MenuParentId"]), out qsParentId))
+                                                    {
+                                                        System.Data.DataRow[] qsParent = dtParent.Select("MenuId = " + qsParentId);
+                                                        if (qsParent.Length > 0) { qsModule = Convert.ToString(qsParent[0]["MenuName"]); }
+                                                    }
+                                                }
+                                                // Favourite rows duplicate real menus - skip them here
+                                                if (qsModule.StartsWith("Favourite", StringComparison.OrdinalIgnoreCase)) { continue; }
+
                                                 string reflink = drrr[i]["LocationName"].ToString()
                                                     + "?name=" + EncName
                                                     + "&strFormID=" + EncFID
                                                     + "&TypeID=" + EncTypeID
                                                     + "&TranID=" + EncTranID;
 
+                                                if (!qsSeen.Add(reflink)) { continue; }
+                                                string qsName = drrr[i]["MenuName"].ToString();
 
-                                                <div class="list-item">
-                                                    <a href="@reflink" target="_blank">
-                                                        @drrr[i]["MenuName"].ToString()
-                                                    </a>
-                                                </div>
+                                                <span class="qs-src" data-n="@qsName" data-m="@qsModule" data-h="@reflink"></span>
                                             }
                                         }
                                     }
                                 }
                             }
 
-                        </div>
                     </div>
 
                     <!-- Modal Footer -->
@@ -2402,68 +2553,175 @@
     </div>
     <style>
         /* Modern Header */
+        /* ===== Redesigned confirm dialog ===== */
+        #confirmModal .modal-content {
+            border: none;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 18px 50px rgba(15,23,42,0.30);
+            --cfd-accent: #f59e0b; /* default (close) */
+            --cfd-accent-soft: #fff7ed;
+            --cfd-accent-ring: #fdba74;
+        }
+
+        /* action-specific accent colors */
+        #confirmModal.cfd-save .modal-content {
+            --cfd-accent: var(--SaveButton);
+            --cfd-accent-soft: #eff6ff;
+            --cfd-accent-ring: var(--SaveButton);
+        }
+
+        #confirmModal.cfd-clear .modal-content {
+            --cfd-accent: var(--ClearButton);
+            --cfd-accent-soft: #f0fdfa;
+            --cfd-accent-ring: var(--ClearButton);
+        }
+
+        #confirmModal.cfd-close .modal-content {
+            --cfd-accent: var(--CloseButton);
+            --cfd-accent-soft: #fff7ed;
+            --cfd-accent-ring: var(--CloseButton);
+        }
+
         .modern-header {
-            background-color: #f8f9fa;
+            position: relative;
+            background: transparent;
             border-bottom: none;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem 0.5rem 0 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 0;
+            border-radius: 0;
         }
+
+            /* top accent strip */
+            .modern-header::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 6px;
+                background: var(--cfd-accent);
+            }
 
             .modern-header .modal-title {
-                font-weight: 600;
-                color: #343a40;
+                font-weight: 800;
+                color: #0f172a;
+                font-size: 1.05rem;
+                text-align: center;
+                padding-top: 86px; /* room for the badge */
             }
+
+                .modern-header .modal-title i {
+                    display: none; /* use the badge instead */
+                }
 
         .modern-close {
-/*            background: transparent;*/
+            position: absolute;
+            top: 14px;
+            right: 14px;
             border: none;
-            font-size: 1.2rem;
-            color: #6c757d;
+            font-size: 0.85rem;
+            color: #94a3b8;
             cursor: pointer;
+            opacity: 0.8;
         }
 
-        /* Modern Footer */
-        .modern-footer {
-            background-color: #f8f9fa;
-            border-top: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0 0 0.5rem 0.5rem;
-            justify-content: flex-start;
+        /* Icon badge centered above heading */
+        #modalIcon {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: var(--cfd-accent-soft);
+            border: 2px solid var(--cfd-accent-ring);
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            flex-direction: row !important;
+            z-index: 2;
         }
 
-        /* Buttons */
-        .btn-modern {
-            border-radius: 0.5rem;
-            padding: 0.5rem 1.2rem;
-            font-weight: 500;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: all 0.2s;
-        }
-
-            .btn-modern:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            #modalIcon i {
+                color: var(--cfd-accent);
+                font-size: 1.8rem;
+                margin: 0 !important;
+                animation: cfdZoom 1.4s ease-in-out infinite;
             }
 
-        /* Optional: Icon Animation */
-        #modalIcon i {
-            color: #007bff;
-            animation: zoomInOut 1s infinite;
-        }
-
-        @@keyframes zoomInOut {
+        @@keyframes cfdZoom {
             0%, 100% {
                 transform: scale(1);
             }
 
             50% {
-                transform: scale(1.3);
+                transform: scale(1.12);
             }
         }
+
+        #confirmModal .modal-body {
+            padding: 6px 24px 8px 24px;
+            text-align: center;
+        }
+
+        #confirmModal #modalContent {
+            display: block !important;
+        }
+
+        #confirmModal #confirmMessage {
+            color: #64748b;
+            font-size: 1.4rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        /* Modern Footer */
+        .modern-footer {
+            background: transparent;
+            border-top: none;
+            padding: 16px 24px 22px 24px;
+            justify-content: center !important;
+            gap: 12px;
+        }
+
+        /* Buttons */
+        .btn-modern {
+            border-radius: 11px;
+            padding: 0.6rem 1.6rem;
+            font-weight: 700;
+            min-width: 120px;
+            border: none;
+            transition: all 0.18s ease;
+        }
+
+            .btn-modern:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 14px rgba(0,0,0,0.14);
+            }
+
+        #btnYes.btn-modern {
+            background: #16a34a;
+            color: #fff;
+        }
+
+            #btnYes.btn-modern:hover {
+                background: #15803d;
+            }
+
+        #btnNo.btn-modern {
+            background: #ffffff;
+            color: #475569;
+            border: 1.5px solid #e2e8f0;
+        }
+
+            #btnNo.btn-modern:hover {
+                background: #f8fafc;
+                color: #334155;
+            }
     </style>
     <div class="modal fade" id="confirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index:5002">
         <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -2471,21 +2729,21 @@
 
                 <!-- Modern Header -->
                 <div class="modern-header">
+                    <!-- Icon badge (one shows at a time, set by JS) -->
+                    <div id="modalIcon">
+                        <i class="fas fa-save" id="savecfdicon"></i>
+                        <i class="fas fa-arrows-rotate" id="clearcfdicon"></i>
+                        <i class="fas fa-close" id="closecfdicon"></i>
+                    </div>
                     <h4 class="modal-title" id="confirmHeading">
-                        <i class="fas fa-exclamation-circle me-2"></i> Confirm
+                        <i class="fas fa-close me-2"></i> Confirm
                     </h4>
                     <button type="button" class="btn-close modern-close"  data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body text-start">
                     <div id="modalContent" class="d-flex align-items-center">
-                        <!-- Icons on the left -->
-                        <div id="modalIcon" class="me-3 d-flex flex-column">
-                            <i class="fas fa-save fa-2x mb-2" id="savecfdicon"></i>
-                            <i class="fas fa-refresh fa-2x mb-2" id="clearcfdicon"></i>
-                            <i class="fas fa-times fa-2x" id="closecfdicon"></i>
-                        </div>
-                        <!-- Message on the right -->
+                        <!-- Message -->
                         <div id="confirmMessageWrapper">
                             <h5 id="confirmMessage">Are you sure you want to proceed?</h5>
                         </div>
@@ -2494,8 +2752,8 @@
 
                 <!-- Modern Footer -->
                 <div class="modern-footer d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-save-style btn-modern" id="btnYes">Yes</button>
-                    <button type="button" class="btn btn-close-style btn-modern" id="btnNo">No</button>
+                    <button type="button" class="btn btn-save-style btn-modern" id="btnYes"><i class="bi bi-check-circle"></i> Yes</button>
+                    <button type="button" class="btn btn-close-style btn-modern" id="btnNo"><i class="bi bi-x-circle"></i> No</button>
                 </div>
 
             </div>
@@ -3060,80 +3318,245 @@
         //$(firstelement).addClass('first-row');
         //$(firstelement).select();
     }
+    // ===================== Quick Search (command palette) =====================
     let currentIndex = -1;
-    let filteredItems = [];
+    let filteredItems = [];          // visible .qs-item elements, in display order
+    var qsActiveModule = "All";
+    var qsAllItems = null;           // [{ name, module, href }]
+    var qsUid = '@Session["LoginUserID"]';
+    var qsRecentKey = "qs_recent_" + qsUid, qsFavKey = "qs_fav_" + qsUid;
+    var qsMaxRecent = 6;
 
-    document.getElementById("myInput").addEventListener("keyup", function (event) {
-        if (event.key !== "ArrowDown" && event.key !== "ArrowUp" && event.key !== "Enter" && event.key !== "Escape") {
-            searchDivs();
-        }
-        handleKeyNavigation(event);
-    });
+    var qsModuleIcons = {
+        'sales': 'fas fa-shopping-cart',
+        'purchase': 'fas fa-shopping-bag',
+        'inventory': 'fas fa-warehouse',
+        'accounts': 'fas fa-calculator',
+        'reports': 'fas fa-chart-bar',
+        'analytics reports': 'fas fa-chart-line',
+        'financial reports': 'fa-solid fa-briefcase',
+        'master': 'fas fa-database',
+        'masters': 'fas fa-database',
+        'tools': 'fas fa-tools'
+    };
 
-    function searchDivs() {
-        let input = document.getElementById("myInput").value.toLowerCase();
-        let items = document.querySelectorAll(".list-item");
-        filteredItems = [];
-
-        items.forEach(item => {
-            item.classList.remove("highlight1", "selected");
-            if (item.textContent.toLowerCase().includes(input)) {
-                item.style.display = "block";
-                filteredItems.push(item);
-            } else {
-                item.style.display = "none";
-            }
+    function qsLoadList(key) {
+        try { var v = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(v) ? v : []; }
+        catch (e) { return []; }
+    }
+    function qsSaveList(key, list) {
+        try { localStorage.setItem(key, JSON.stringify(list)); } catch (e) { /* storage full/blocked: ignore */ }
+    }
+    function qsGetItems() {
+        if (qsAllItems) return qsAllItems;
+        qsAllItems = [];
+        document.querySelectorAll("#listContainer .qs-src").forEach(function (s) {
+            qsAllItems.push({ name: s.dataset.n || "", module: s.dataset.m || "Other", href: s.dataset.h || "" });
+        });
+        return qsAllItems;
+    }
+    function qsIconFor(module) {
+        return qsModuleIcons[(module || "").trim().toLowerCase()] || "fas fa-file-lines";
+    }
+    // Append text into el, wrapping the first case-insensitive match of q in <mark> (no innerHTML: safe)
+    function qsAppendHighlighted(el, text, q) {
+        var idx = q ? text.toLowerCase().indexOf(q) : -1;
+        if (idx < 0) { el.appendChild(document.createTextNode(text)); return; }
+        el.appendChild(document.createTextNode(text.slice(0, idx)));
+        var m = document.createElement("mark");
+        m.textContent = text.slice(idx, idx + q.length);
+        el.appendChild(m);
+        el.appendChild(document.createTextNode(text.slice(idx + q.length)));
+    }
+    function qsRenderChips() {
+        var chips = document.getElementById("qsChips");
+        if (!chips) return;
+        var modules = [];
+        qsGetItems().forEach(function (it) { if (modules.indexOf(it.module) < 0) modules.push(it.module); });
+        modules.sort();
+        chips.innerHTML = "";
+        ["All"].concat(modules).forEach(function (m) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "qs-chip" + (m === qsActiveModule ? " qs-chip-active" : "");
+            b.textContent = m;
+            b.setAttribute("role", "tab");
+            b.setAttribute("aria-selected", m === qsActiveModule ? "true" : "false");
+            b.addEventListener("click", function () {
+                qsActiveModule = m;
+                qsRenderChips();
+                searchDivs();
+                document.getElementById("myInput").focus();
+            });
+            chips.appendChild(b);
+        });
+    }
+    function qsOpen(item) {
+        if (!item || !item.href) return;
+        var recent = qsLoadList(qsRecentKey).filter(function (h) { return h !== item.href; });
+        recent.unshift(item.href);
+        qsSaveList(qsRecentKey, recent.slice(0, qsMaxRecent));
+        window.open(item.href, "_blank");
+        modalQS.hide();
+    }
+    function qsToggleFav(item) {
+        var favs = qsLoadList(qsFavKey);
+        var i = favs.indexOf(item.href);
+        if (i >= 0) favs.splice(i, 1); else favs.push(item.href);
+        qsSaveList(qsFavKey, favs);
+        searchDivs();
+        document.getElementById("myInput").focus();
+    }
+    function qsBuildRow(item, q, favs) {
+        var a = document.createElement("a");
+        a.className = "qs-item";
+        a.href = item.href;
+        a.target = "_blank";
+        a.setAttribute("role", "option");
+        a.addEventListener("click", function (e) { e.preventDefault(); qsOpen(item); });
+        a.addEventListener("mousemove", function () {
+            var idx = filteredItems.indexOf(a);
+            if (idx >= 0 && idx !== currentIndex) qsSetActive(idx, false);
         });
 
-        // Reset selection
-        currentIndex = filteredItems.length > 0 ? 0 : -1;
-        if (filteredItems.length > 0) {
-            filteredItems[0].classList.add("selected");
+        var ico = document.createElement("span");
+        ico.className = "qs-ico";
+        ico.innerHTML = '<i class="' + qsIconFor(item.module) + '"></i>';
+
+        var txt = document.createElement("span");
+        txt.className = "qs-text";
+        var nm = document.createElement("div");
+        nm.className = "qs-name";
+        qsAppendHighlighted(nm, item.name, q);
+        var cr = document.createElement("div");
+        cr.className = "qs-crumb";
+        qsAppendHighlighted(cr, item.module, q);
+        txt.appendChild(nm); txt.appendChild(cr);
+
+        var enter = document.createElement("span");
+        enter.className = "qs-enter";
+        enter.textContent = "Enter \u21B5";
+
+        var isFav = favs.indexOf(item.href) >= 0;
+        var star = document.createElement("button");
+        star.type = "button";
+        star.className = "qs-star" + (isFav ? " qs-starred" : "");
+        star.title = isFav ? "Remove from favorites" : "Add to favorites";
+        star.setAttribute("aria-label", star.title);
+        star.innerHTML = isFav ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
+        star.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); qsToggleFav(item); });
+
+        a.appendChild(ico); a.appendChild(txt); a.appendChild(enter); a.appendChild(star);
+        a._qsItem = item;
+        return a;
+    }
+    function qsAddGroup(container, title, items, q, favs) {
+        if (!items.length) return;
+        var h = document.createElement("div");
+        h.className = "qs-group";
+        h.textContent = title;
+        container.appendChild(h);
+        items.forEach(function (it) {
+            var row = qsBuildRow(it, q, favs);
+            container.appendChild(row);
+            filteredItems.push(row);
+        });
+    }
+    function qsSetActive(idx, scroll) {
+        if (currentIndex >= 0 && filteredItems[currentIndex]) filteredItems[currentIndex].classList.remove("qs-active");
+        currentIndex = idx;
+        var el = filteredItems[idx];
+        if (el) {
+            el.classList.add("qs-active");
+            if (scroll) el.scrollIntoView({ block: "nearest" });
         }
+    }
+
+    // Kept the original name: called on open and on every keystroke
+    function searchDivs() {
+        var results = document.getElementById("qsResults");
+        if (!results) return;
+        var q = (document.getElementById("myInput").value || "").trim().toLowerCase();
+        var all = qsGetItems();
+        var favs = qsLoadList(qsFavKey), recent = qsLoadList(qsRecentKey);
+        var byHref = {};
+        all.forEach(function (it) { byHref[it.href] = it; });
+
+        var pool = all.filter(function (it) {
+            if (qsActiveModule !== "All" && it.module !== qsActiveModule) return false;
+            if (!q) return true;
+            return it.name.toLowerCase().indexOf(q) >= 0 || it.module.toLowerCase().indexOf(q) >= 0;
+        });
+
+        results.innerHTML = "";
+        filteredItems = [];
+        currentIndex = -1;
+
+        // Favorites + Recent only on the default view (no query, All modules)
+        if (!q && qsActiveModule === "All") {
+            qsAddGroup(results, "Favorites", favs.map(function (h) { return byHref[h]; }).filter(Boolean), q, favs);
+            qsAddGroup(results, "Recent", recent.map(function (h) { return byHref[h]; }).filter(Boolean), q, favs);
+        }
+
+        // Group the rest by module (alphabetical), items alphabetical within each group
+        var groups = {};
+        pool.forEach(function (it) { (groups[it.module] = groups[it.module] || []).push(it); });
+        Object.keys(groups).sort().forEach(function (m) {
+            groups[m].sort(function (a, b) { return a.name.localeCompare(b.name); });
+            qsAddGroup(results, m, groups[m], q, favs);
+        });
+
+        if (!pool.length) {
+            var empty = document.createElement("div");
+            empty.className = "qs-empty";
+            empty.textContent = q ? 'No screens match "' + q + '"' : "No screens available";
+            results.appendChild(empty);
+        }
+        var cnt = document.getElementById("qsCount");
+        if (cnt) cnt.textContent = pool.length + (pool.length === 1 ? " result" : " results");
+        if (filteredItems.length) qsSetActive(0, false);
+        results.scrollTop = 0;
     }
 
     function handleKeyNavigation(event) {
-        if (filteredItems.length === 0) return;
-
+        if (event.key === "Escape") { event.preventDefault(); modalQS.hide(); return; }
+        if (!filteredItems.length) return;
         if (event.key === "ArrowDown") {
-            if (currentIndex < filteredItems.length - 1) {
-                filteredItems[currentIndex].classList.remove("selected");
-                currentIndex++;
-                filteredItems[currentIndex].classList.add("selected");
-                filteredItems[currentIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
-            }
+            event.preventDefault();
+            qsSetActive(Math.min(currentIndex + 1, filteredItems.length - 1), true);
         } else if (event.key === "ArrowUp") {
-            if (currentIndex > 0) {
-                filteredItems[currentIndex].classList.remove("selected");
-                currentIndex--;
-                filteredItems[currentIndex].classList.add("selected");
-                filteredItems[currentIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
-            }
-            else{
-                document.getElementById("myInput").focus();
-                document.getElementById("myModalLabel").scrollIntoView({ block: "nearest", behavior: "smooth" });
-            }
+            event.preventDefault();
+            qsSetActive(Math.max(currentIndex - 1, 0), true);
         } else if (event.key === "Enter") {
-            if (currentIndex !== -1) {
-                let link = filteredItems[currentIndex].querySelector("a");
-                if (link) {
-                    //window.location.href = link.href; // Redirect to the selected link
-                    window.open(link.href, '_blank');
-
-                }
-            }
-        }
-        else if (event.key === "Escape") {
-            document.getElementById("myModal").style.display = "none";
+            event.preventDefault();
+            if (currentIndex >= 0 && filteredItems[currentIndex]) qsOpen(filteredItems[currentIndex]._qsItem);
         }
     }
+
+    var qsInputEl = document.getElementById("myInput");
+    if (qsInputEl) {
+        qsInputEl.addEventListener("input", function () { searchDivs(); });
+        qsInputEl.addEventListener("keydown", handleKeyNavigation);
+    }
+    // Focus the search box each time the palette opens (registered once)
+    document.getElementById('myModal').addEventListener('shown.bs.modal', function () {
+        $("#myInput").focus();
+        $("#myInput").select();
+    });
+    // Ctrl+K / Cmd+K opens Quick Search (F3 still works via the existing handler)
+    document.addEventListener("keydown", function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+            e.preventDefault();
+            previousFocus = e.target && e.target.id ? e.target.id : previousFocus;
+            focussearch();
+        }
+    });
+
     function focussearch() {
-        modalQS.show();
-        document.getElementById('myModal').addEventListener('shown.bs.modal', function () {
-            $("#myInput").focus();
-            $("#myInput").select();
-        });
+        qsActiveModule = "All";
+        qsRenderChips();
         searchDivs();
+        modalQS.show();
     }
     // document.getElementById("myModal");
     //var spanQS = document.getElementsByClassName("close")[0];
@@ -3142,10 +3565,18 @@
     //    document.getElementById("myModal").style.display = "none";
     //}
     $('#btnCloseQS,#icoQSClose').click(function (e) {
-        document.getElementById("myModal").style.display = "none";
-        modalQS.hide();       
-        if (previousFocus)
-            $('#' + previousFocus).focus();
+        modalQS.hide();
+    });
+    // After Quick Search closes: clear any leftover backdrop (e.g. from a duplicate
+    // Bootstrap instance) so the page stays usable, then restore focus.
+    document.getElementById('myModal').addEventListener('hidden.bs.modal', function () {
+        if (!document.querySelector('.modal.show')) {
+            document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }
+        if (previousFocus) $('#' + previousFocus).focus();
     });
     var modaldtpDateSelection = new bootstrap.Modal(document.getElementById('mydtpDateSelection'));
 
@@ -3380,7 +3811,7 @@
         $.each(JSON.parse(FilterDate), function (i, items) {
             $('#cmbFilterDatetype').append($('<option/>', {
                 value: items.ID,
-                text: items.Code,
+                text: items.Name,//Code,
                 title: items.Name
             }));
         });
@@ -3776,6 +4207,7 @@
     //For Save Confirm Dialog
     function ConfirmDialogMsg(message) {
         $("#confirmMessage").text(message);
+        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close").addClass("cfd-save");
         $("#confirmModal").modal("show");
         $("#savecfdicon").show();
         $("#clearcfdicon,#closecfdicon").hide();
@@ -3795,6 +4227,7 @@
     //For Close Confirm Dialog
     function CloseConfirmDialogMsg(message) {
         $("#confirmMessage").text(message);
+        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close").addClass("cfd-close");
         $("#confirmModal").modal("show");
         $("#closecfdicon").show();
         $("#clearcfdicon,#savecfdicon").hide();
@@ -3811,6 +4244,7 @@
     //For Clear Confirm Dialog
     function ClearConfirmDialogMsg(message) {
         $("#confirmMessage").text(message);
+        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close").addClass("cfd-clear");
         $("#confirmModal").modal("show");
         $("#clearcfdicon").show();
         $("#closecfdicon,#savecfdicon").hide();

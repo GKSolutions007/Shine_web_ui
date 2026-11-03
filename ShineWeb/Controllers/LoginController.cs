@@ -1,6 +1,7 @@
 ﻿//using BuinessLayer;
 using Newtonsoft.Json;
 using ShineWeb.BuisnessLayer;
+using ShineWeb.Helpers;
 using ShineWeb.Models;
 using System;
 using System.Collections.Generic;
@@ -10,14 +11,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web;
 using System.Web.Mvc;
-using System.Web.Security;
 using static System.Net.WebRequestMethods;
 
 namespace ShineWeb.Controllers
 {
     public class LoginController : Controller
     {
-        string sdfk = "";
         //clsBusinessLayer bl = new clsBusinessLayer();
         //ShineWeb.BuisnessLayer bl = new ShineWeb.BuisnessLayer();
         BuisnessLayer.clsBusinessLayer bl = new BuisnessLayer.clsBusinessLayer();
@@ -37,7 +36,7 @@ namespace ShineWeb.Controllers
             string nv = Convert.ToString(Session["NavBarVisible"]);
             string userAgent = Request.UserAgent;
             //bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
-            string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
+            string APIurl = ApiClient.ApiUrl; // decrypted once, cached
             Session["APIurl"] = APIurl;
             HttpContext.Session.Add("APIurl", APIurl);
 
@@ -51,11 +50,8 @@ namespace ShineWeb.Controllers
             {
                 Session["NavBarVisible"] = "LogOn";
             }
-            HttpClient _client = new HttpClient();            
-            _client.BaseAddress = new Uri(APIurl);// APILink from app config
-            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             DataTable dataTable = new DataTable();
-            HttpResponseMessage result = _client.GetAsync("companyregistration").Result;
+            HttpResponseMessage result = ApiClient.Shared.GetAsync("companyregistration").Result;
             if (result.IsSuccessStatusCode)
             {
                 var jsonString = result.Content.ReadAsStringAsync();
@@ -93,7 +89,7 @@ namespace ShineWeb.Controllers
             string nv = Convert.ToString(Session["NavBarVisible"]);
             string userAgent = Request.UserAgent;
             //bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
-            string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
+            string APIurl = ApiClient.ApiUrl; // decrypted once, cached
             Session["APIurl"] = APIurl;
             HttpContext.Session.Add("APIurl", APIurl);
 
@@ -116,7 +112,7 @@ namespace ShineWeb.Controllers
             char isslash = url[url.Length - 1];
             url = isslash == '/' ? url : url + "/";
             string ALink = url + "Login/AACM?AAlk=" + Url.Encode(clsEncryptDecrypt.Encrypt(ID));
-            bool Issend = bl.SendEmail("Shine Activation mail", "Hii user, your activation link given below. Click the link to activate your account.\n" + ALink, ToMail);
+            bool Issend = false;
             return Json(Issend ? 0 : 1, JsonRequestBehavior.AllowGet);
         }
         public JsonResult SendMail(string ToMail, string ID)
@@ -132,12 +128,8 @@ namespace ShineWeb.Controllers
             //bool Issend = bl.SendEmail(subject, body, ToMail); // ensure IsBodyHtml = true inside SendEmail
             string sitelink = Url.Encode(clsEncryptDecrypt.Encrypt(url));
             string EncID = Url.Encode(clsEncryptDecrypt.Encrypt(ID));
-            string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
-            HttpClient _client = new HttpClient();
-            _client.BaseAddress = new Uri(APIurl);// APILink from app config
-            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            HttpResponseMessage result = _client.GetAsync("signup/sendaam?SiteLink=" + sitelink + "&ToEmailID=" + ToMail + "&ID=" + EncID).Result;
+            HttpResponseMessage result = ApiClient.Shared.GetAsync("signup/sendaam?SiteLink=" + sitelink + "&ToEmailID=" + ToMail + "&ID=" + EncID).Result;
             if (result.IsSuccessStatusCode)
             {
                 var jsonString = result.Content.ReadAsStringAsync();
@@ -244,13 +236,9 @@ namespace ShineWeb.Controllers
                 string msg = "";
                 if (!string.IsNullOrEmpty(AAlk))
                 {
-                    string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
                     string uid =  clsEncryptDecrypt.Decrypt((AAlk));//HttpUtility.UrlDecode
-                    HttpClient _client = new HttpClient();
-                    _client.BaseAddress = new Uri(APIurl);// APILink from app config
-                    _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                    HttpResponseMessage result = _client.GetAsync("activateaccount?UID=" + uid).Result;
+                    HttpResponseMessage result = ApiClient.Shared.GetAsync("activateaccount?UID=" + uid).Result;
                     if (result.IsSuccessStatusCode)
                     {
                         //var jsonString = result.Content.ReadAsStringAsync();
@@ -269,20 +257,37 @@ namespace ShineWeb.Controllers
             }
             catch (Exception ex)
             {
+                bl.BL_WriteErrorMsginLog("Login", "AACM", ex.Message);
+                return RedirectToAction("AAP", "Login",
+                    new { Msg = "Account activation failed. Please try again later." });
             }
             return View();
         }
         public ActionResult LogOff()
         {
-            string APIurl = clsEncryptDecrypt.Decrypt(ConfigurationManager.AppSettings["apiurl"].ToString());
-            HttpClient _client = new HttpClient();
-            _client.BaseAddress = new Uri(APIurl);// APILink from app config
-            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             var authcookie = HttpContext.Request.Cookies["AuthToken"];
             var Sessionidcookie = HttpContext.Request.Cookies["ASP.NET_SessionId"];
             if (authcookie != null)
             {
-                HttpResponseMessage result = _client.GetAsync("resetlogin?token=" + authcookie.Value + "&sessionid=" + Sessionidcookie.Value).Result;
+                try
+                {
+                    // Send the token in request headers (not the query string) so it does not
+                    // leak into server access logs, browser history, or referrer headers.
+
+                    var req = new HttpRequestMessage(HttpMethod.Get, "resetlogin");
+                    req.Headers.Add("X-Auth-Token", authcookie.Value);
+                    if (Sessionidcookie != null)
+                        req.Headers.Add("X-Session-Id", Sessionidcookie.Value);
+                    HttpResponseMessage result = ApiClient.Shared.SendAsync(req).Result;
+                    if(result != null)
+                    {
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    bl.BL_WriteErrorMsginLog("Login", "LogOff", ex.Message);
+                }
             }
 
             HttpContext.Response.Cache.SetExpires(DateTime.UtcNow.AddMinutes(-1));
@@ -292,8 +297,6 @@ namespace ShineWeb.Controllers
             Session.Clear();
             Session.Abandon();
             Session.RemoveAll();
-            // Sign out Forms Authentication
-            FormsAuthentication.SignOut();
 
             // Expire all cookies
             foreach (string cookieName in Request.Cookies.AllKeys)

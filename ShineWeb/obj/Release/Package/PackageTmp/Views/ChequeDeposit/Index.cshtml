@@ -233,55 +233,187 @@
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransType" })
 
-    <div class="d-flex align-items-center gap-2">
-        <!-- Larger heading -->
-        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
-    </div>
+    <style>
+        /* ===== Accounts module redesign (header card + buttons + modal chrome) ===== */
+        .sm-header-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 4px 10px rgba(30,41,59,0.10);
+            padding: 12px 18px;
+            margin: 4px 0 14px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .sm-header-card::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 5px;
+                background: var(--header-bg, #2563eb);
+            }
+
+        .sm-header-icon {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 10px;
+            background: #eff6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .sm-header-text #MainHeading {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sm-header-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        #myModalfg .modal-content {
+            border: none;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 18px 44px rgba(15,23,42,0.28);
+        }
+
+        #myModalfg .modal-header {
+            background: var(--header-bg, #2563eb);
+            color: #ffffff;
+            border-bottom: none;
+        }
+
+            #myModalfg .modal-header .modal-title {
+                color: #ffffff;
+                font-weight: 700;
+            }
+
+            #myModalfg .modal-header .btn-close {
+                filter: invert(1);
+                opacity: 0.85;
+            }
+
+        .btn-clear-style,
+        .btn-save-style,
+        .btn-close-style,
+        .btn-filter-style {
+            border-radius: 9px !important;
+            font-weight: 600;
+            padding: 7px 18px;
+            border: none;
+            transition: transform .12s ease, box-shadow .12s ease;
+        }
+
+        .btn-clear-style {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+            .btn-clear-style:hover {
+                background: #cbd5e1;
+                color: #334155;
+            }
+
+        .btn-save-style {
+            background: #16a34a;
+            color: #ffffff;
+        }
+
+            .btn-save-style:hover {
+                background: #15803d;
+                color: #fff;
+                box-shadow: 0 4px 12px rgba(22,163,74,0.30);
+            }
+
+        .btn-close-style {
+            background: #64748b;
+            color: #ffffff;
+        }
+
+            .btn-close-style:hover {
+                background: #475569;
+                color: #fff;
+            }
+    </style>
     <div class="toastBox"></div>
-    <div id="dvDocuments">
+    <div class="sm-inline-bar">
+        <div class="sm-header-card sm-header-inline dvDocuments">
+            <div class="sm-header-icon"><i class="fas fa-money-check-dollar"></i></div>
+            <div class="sm-header-text">
+                <div class="sm-header-sub">Accounts</div>
+                <h4 id="FormHead">@ViewData["FormName"]</h4>
+            </div>
+        </div>
+        <div class="dvMain">
+            <div class="d-flex align-items-center gap-2">
+                <!-- Larger heading -->
+                <h4 class="mb-0" style="font-size:14px; padding-top:5px;" id="MainHeading">@ViewData["FormName"]</h4>
+            </div>
+        </div>
+        <div class="row text-end mb-0 g-2 justify-content-end align-items-end sm-filter-row mb-4 dvDocuments">
+            <div class="col-12 col-md-2">
+                <span class="form-label sm-pill">
+                    <select class="form-control FormclrcmbField" id="cmbFilterAccountNo"><option value="0">Select Account No</option></select>
+                    <label class="labelup" for="txtCode"> Account No </label>
+                </span>
+            </div>
+            <div class="col-12 col-md-2">
+                <span class="form-label sm-pill">
+                    <input required tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
+                    <label class="labelup" for="txtCode"> Party</label>
+                </span>
+                <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFParty" class="clrdivs"></div>
+            </div>
+            <!-- Period / From / To: become the Date Range pill -->
+            <div class="col-auto">
+                <select class="gdInput" id="cmbFilterDatetype" aria-label="Period" onchange="SetFilterDate();"></select>
+            </div>
+            <div class="col-auto">
+                <span class="form-label">
+                    <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom">
+                    <label class="labelup" for="dtpFFrom">From</label>
+                </span>
+                <div id="divErrFFrom" class="clrdivs text-danger pt-1 ps-1"></div>
+            </div>
+            <div class="col-auto">
+                <span class="form-label">
+                    <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo">
+                    <label class="labelup" for="dtpFTo">To</label>
+                </span>
+                <div id="divErrFTo" class="clrdivs text-danger pt-1 ps-1"></div>
+            </div>
+            <!-- All Status: becomes a toggle -->
+            <div class="col-auto d-flex align-items-center mb-2">
+                <input tabindex="1" class="FormfilterclrField" type="checkbox" id="chkShowAll">
+                <label for="chkShowAll">All Status</label>
+            </div>
+            <!-- Filter -->
+            <div class="col-auto">
+                <button id="btnFilter" class="btn btn-filter-style">
+                    <span id="btnLoadSpinner" class="btn-spinner" style="display:none;"></span>
+                    <i class="bi bi-funnel" id="btnLoadIcon"></i>
+                    <span id="btnLoadText">Filter</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="dvDocuments">
         <hr />
-        <div>
-            <table class="w-100">
-                <tr>
-                    <td width="8%">
-                        <span class="form-label">
-                            <select class="form-control FormclrcmbField" id="cmbFilterAccountNo"><option value="0">Select Account No</option></select>
-                            <label class="labelup" for="txtCode"> Account No </label>
-                        </span>
-                    </td>
-                    <td width="10%">
-                        <span class="form-label">
-                            <input required tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
-                            <label class="labelup" for="txtCode"> Party</label>
-                        </span>
-                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFParty" class="clrdivs"></div>
-                    </td>
-                    <td width="3%">
-                        <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
-                    </td>
-                    <td width="1%">
-                        <span class="form-label">
-                            <input tabindex="1" class="clsdtpfield FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
-                            <label class="labelup" for="txtCode"> From</label>
-                        </span>
-                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFFrom" class="clrdivs"></div>
-                    </td>
-                    <td width="1%">
-                        <span class="form-label">
-                            <input tabindex="1" class="clsdtpfield FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
-                            <label class="labelup" for="txtCode"> To</label>
-                        </span>
-                        <div style="color: red; padding-top: 5px; padding-left: 5px;" id="divErrFTo" class="clrdivs"></div>
-                    </td>
-                    <td width="3%">
-                        <input tabindex="1" style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowAll">
-                        <label for="chkShowAll" style="font-size:14px;">All Status</label>
-                    </td>
-                    <td width="5%">
-                        <button id="btnFilter" class="btn btn-filter-style"><span class="glyphicon glyphicon-export" style="color: white"></span>&#x2009;Filter</button>
-                    </td>
-                </tr>
-            </table>
+        <div>           
             <div id="my-grid" style="width: 100%;"></div>
         </div>
         <div hidden>
@@ -315,8 +447,8 @@
             </table>
         </div>
     </div>
-    <div id="dvMain">
-        <hr />
+    <div class="dvMain">
+        <hr/>
         <div class="row">
             <input id="cmbAccountNoID" hidden />
 
@@ -384,7 +516,7 @@
         </div>
 
         <div class="row">
-            <hr />
+            <hr  style="width:98%"/>
             <!-- Deposit To -->
             <div class="col-12 col-md-2 mb-3">
                 <span class="form-label flex-grow-1">
@@ -393,7 +525,7 @@
                     </select>
                     <label class="labelup"> Deposit To* </label>
                 </span>
-                    <div class="text-danger pt-1 ps-1 clrdivs" id="divErrDepAccountNo"></div>
+                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrDepAccountNo"></div>
             </div>
             <!-- Bank Name -->
             <div class="col-12 col-md-2 mb-3">
@@ -431,7 +563,7 @@
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ColID</th>
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">DepID</th>
                             <th style="text-align:center;font-size: 12px;width:0%;" class="trclrforcolheader">ChqStatus</th>
-                            <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader"><input id="chkSelectAll" type="checkbox"/></th>
+                            <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader"><input id="chkSelectAll" type="checkbox" /></th>
                             <th style="text-align:center;font-size: 12px;width:2%;" class="trclrforcolheader">#</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Party Name</th>
                             <th style="text-align:center;font-size: 12px;width:10%;" class="trclrforcolheader">Cheque/DD No</th>
@@ -444,8 +576,8 @@
                         </tr>
                     </thead>
 
-                    <tfoot>                        
-                        <tr>                            
+                    <tfoot>
+                        <tr>
                             <td align="left" colspan="9">
                                 Selected Cheques : <label id="lblChqCountValue" style="font-size:16px;font-weight:500;padding-right:30px">0.00 / 0</label>
                                 <input style="height:15px;width:15px;background-color:white" disabled /> <label> : Today Cheques</label>&emsp;
@@ -548,7 +680,7 @@
     //document.body.style.zoom = "85%";
     $("#txtDocID").prop("disabled", true);
     //dvDocuments,
-    $("#dvMain").hide();
+    $(".dvMain").hide();
     var Table = $('#tblMasterData').DataTable({pageLength: ItemsperPage,lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
         "bFilter": true,
         "bSearchable": true,
@@ -616,8 +748,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         nTransMode = 1;
         //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
         $("#btnPreview,#btnPDF,#btnClear").prop("disabled", true);
-        $("#dvMain").show();
-        $("#dvDocuments").hide();
+        $(".dvMain").show();
+        $(".dvDocuments").hide();
         $("#MainHeading").text("Create Cheque Deposit");
     }
 
@@ -631,8 +763,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     function CloseForm() {
         //dvDocuments,
         var rdo1 = $("#rdoMainTableData").is(":checked");
-        $("#dvMain").hide();
-        $("#dvDocuments").show();
+        $(".dvMain").hide();
+        $(".dvDocuments").show();
         GetFilterData();
         $("#MainHeading").text("Cheque Deposit");
     }
@@ -981,8 +1113,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
                                 onClick: (gridInstance, event) => {
                                     //dvDocuments,
                                     nTransMode = 1;
-                                    $("#dvMain").show();
-                                    $("#dvDocuments").hide();
+                                    $(".dvMain").show();
+                                    $(".dvDocuments").hide();
                                     document.getElementById("cmbAccountNo").focus();
                                     ClearForm();
                                     setTimeout(function () {
@@ -1062,8 +1194,8 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         setDate("dtpAsonDate", 0);
         $("#lblTotAmt").text("0.00");
         if (nTransMode != 1) {
-            $("#dvMain").hide();
-            $("#dvDocuments").show();
+            $(".dvMain").hide();
+            $(".dvDocuments").show();
         }
         setTimeout(function () { GetFilterData(); }, 800);
         $("#MainHeading").text("Cheque Deposit");

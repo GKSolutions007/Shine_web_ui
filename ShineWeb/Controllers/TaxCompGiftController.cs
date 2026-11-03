@@ -1,20 +1,16 @@
-﻿using Newtonsoft.Json;
-using ShineWeb.BuisnessLayer;
+﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using System.Web.Script.Serialization;
 
 namespace ShineWeb.Controllers
 {
     public class TaxCompGiftController : Controller
     {
-        clsBusinessLayer objBL = new clsBusinessLayer();
+        // NOTE: This controller no longer holds a direct-DB clsBusinessLayer. The view
+        // (Views/TaxCompGift/Index.cshtml) loads its grid data straight from the API
+        // (taxcompgift/get), so no server-side DB access is needed here.
         public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string ID = "0", string DepFrom = "0")
         {
             if (Session["LoginUserID"] == null)
@@ -52,55 +48,9 @@ namespace ShineWeb.Controllers
                 return View(dam);
             }
         }
-        public JsonResult Get(string FormID, string Mode, string Name)
-        {
-            DataTable DDT = objBL.BL_ExecuteParamSP(Name,  Mode, 0, null);
-            //System.Web.Script.Serialization.JavaScriptSerializer serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
-            string JSONresult;
-            JSONresult = JsonConvert.SerializeObject(DDT);
-            //string sonj = DataTableToJSONWithJavaScriptSerializer(DDT);
-            //List<SingleMasterModel> list = new List<SingleMasterModel>();
-            //for (int i = 0; i < DDT.Rows.Count; i++)
-            //{
-            //    list.Add(new SingleMasterModel
-            //    {
-            //        ID = DDT.Rows[i]["ID"].ToString(),
-            //        Name = DDT.Rows[i]["Name"].ToString(),
-            //        Value = DDT.Rows[i]["Value"].ToString(),
-            //        Active = DDT.Rows[i]["Active"].ToString(),
-            //    });
-            //}
-            //var jsonData = new
-            //{
-            //    data = from users in list
-            //           select
-            //               new
-            //               {
-            //                   ProspID = users.ID,
-            //                   ClientName = users.Name,
-            //                   ClientMobNo = users.Value,
-            //                   ClientEmail = users.Active                               
-            //               },
-
-                           
-            //};
-            return Json(JSONresult, JsonRequestBehavior.AllowGet);
-        }
-        public string DataTableToJSONWithJavaScriptSerializer(DataTable table)
-        {
-            JavaScriptSerializer jsSerializer = new JavaScriptSerializer();
-            List<Dictionary<string, object>> parentRow = new List<Dictionary<string, object>>();
-            Dictionary<string, object> childRow;
-            foreach (DataRow row in table.Rows)
-            {
-                childRow = new Dictionary<string, object>();
-                foreach (DataColumn col in table.Columns)
-                {
-                    childRow.Add(col.ColumnName, row[col]);
-                }
-                parentRow.Add(childRow);
-            }
-            return jsSerializer.Serialize(parentRow);
-        }
+        // SECURITY: the previous Get(FormID, Mode, Name) action executed BL_ExecuteParamSP(Name, ...)
+        // where `Name` was the stored-procedure name supplied by the client — allowing arbitrary
+        // stored-procedure execution from the browser. It was also dead code (the view calls the
+        // API's taxcompgift/get endpoint directly), so it has been removed entirely.
     }
 }

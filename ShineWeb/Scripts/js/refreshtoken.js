@@ -3,38 +3,11 @@
 // Base URL of API
 var baseURL = document.getElementById("hdnApiurl").value;
 var UIURL = document.getElementById("hdnurl").value;
-// Function to refresh access token globally
-function refreshAccessToken1(callback) {
-    //console.log("Attempting to refresh access token...");
 
-    $.ajax({
-        url: baseURL + "token/refresh",
-        type: "POST",
-        contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-        xhrFields: {
-            withCredentials: true  //
-        },
-        success: function (response) {
-            //console.log("Refresh token success");
-            if (callback) {
-                callback();
-            }
-        },
-        error: function (response) {
-            console.log("err response", response);
-            //console.log("Refresh token expired, redirecting to login.");
-            showUnauthorizedPopup({ redirectUrl: UIURL, seconds: 5 });
-
-            //showErrorSnackbar("Unauthorized request detected. Redirecting to login")
-            //setTimeout(() => { 
-            //    window.location.href = UIURL;// "/";
-            //}, 3200)
-        }
-    }); 
-}
-//new refresh function
+// Token refresh state
 let isRefreshing = false;
 let refreshQueue = [];
+const TOKEN_REFRESH_URL = baseURL + "token/refresh";
 
 function refreshAccessToken(callback) {
 
@@ -47,7 +20,7 @@ function refreshAccessToken(callback) {
     isRefreshing = true;
 
     $.ajax({
-        url: baseURL + "token/refresh",
+        url: TOKEN_REFRESH_URL,
         type: "POST",
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         xhrFields: {
@@ -82,14 +55,21 @@ function refreshAccessToken(callback) {
     });
 }
 
-// Automatically refresh token before making API calls
+// Automatically refresh token on a 401, then retry the original request once.
 $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
-    if (jqxhr.status === 401) { // If unauthorized, try refreshing token
-        //console.log("401 Unauthorized - Refreshing token...");
-        refreshAccessToken(function () {
-            // Retry the original request after refreshing token
-            $.ajax(settings);
-        });
+    if (jqxhr.status === 401) {
+        // Guard 1: never try to refresh in response to the refresh call itself failing —
+        // that would recurse. The refresh error handler already redirects to login.
+        var isRefreshCall = settings && settings.url &&
+            settings.url.indexOf("token/refresh") !== -1;
+
+        // Guard 2: only retry a given request once, so a persistent 401 cannot loop.
+        if (!isRefreshCall && !settings._retriedAfterRefresh) {
+            settings._retriedAfterRefresh = true;
+            refreshAccessToken(function () {
+                $.ajax(settings);
+            });
+        }
     }
     //var now = new Date();
     //var timestamp =     

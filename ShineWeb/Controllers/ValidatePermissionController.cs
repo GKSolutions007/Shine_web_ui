@@ -8,8 +8,8 @@ using System.Web;
 using System.Web.Mvc;
 using Newtonsoft.Json;
 using ShineWeb.BuisnessLayer;
+using ShineWeb.Helpers;
 using System.Net;
-using System.Windows.Interop;
 namespace ShineWeb.Controllers
 {
     public class ValidatePermissionController : Controller
@@ -20,32 +20,10 @@ namespace ShineWeb.Controllers
         clsBusinessLayer bl = new clsBusinessLayer();
         public ActionResult Index(string ID)
         {
-            string APIurl = Session["APIurl"].ToString();
-            var handler = new HttpClientHandler()
+            // Forward the current request's auth cookies to the API so the validatepermissions
+            // call is authenticated even if the API endpoint is protected by [CookieAuthorize].
+            using (HttpClient _client = ApiClient.CreateClientWithCookies(Request))
             {
-                UseCookies = true,
-                CookieContainer = new CookieContainer()
-            };
-            HttpClient _client = new HttpClient(handler);
-            _client.BaseAddress = new Uri(APIurl);// APILink from app config
-            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-
-            //var authCookie = Request.Cookies["AuthToken"]; // or your custom cookie name
-            //var RefreshCookie = Request.Cookies["RefreshToken"]; // or your custom cookie name
-            //var sessionidCookie = Request.Cookies["ASP.NET_SessionId"]; // or your custom cookie name
-            ////ASP.NET_SessionId
-            //CookieCollection cookieCollection = new CookieCollection();
-            //cookieCollection.Add(new Cookie(authCookie.Name, authCookie.Value));
-            //cookieCollection.Add(new Cookie(RefreshCookie.Name, RefreshCookie.Value));
-            //cookieCollection.Add(new Cookie(sessionidCookie.Name, sessionidCookie.Value));
-            //if (authCookie != null)
-            //{
-            //    handler.CookieContainer.Add(
-            //        new Uri(APIurl),
-            //        cookieCollection
-            //    );
-            //}
             try
             {
                 HttpResponseMessage result = _client.GetAsync("validatepermissions?UID=" + ID).Result;
@@ -150,6 +128,7 @@ namespace ShineWeb.Controllers
             catch(Exception ex)
             {
                 return RedirectToAction("Index", "Error",new { Msg = ex.Message});
+            }
             }
         }
     }

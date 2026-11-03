@@ -10,7 +10,7 @@
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
 
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
-<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+@* Phase 1/2: removed duplicate legacy jQuery 1.10.2 (layout already provides 3.6.4). *@
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
 <script src="~/Scripts/dataTables.2.2.2.js"></script>
@@ -122,6 +122,92 @@
         pointer-events: none;
         font-family: sans-serif;
     }
+
+    /* ===== Master redesign (grid + modal chrome; header already modern) ===== */
+    :root {
+        --sm-accent: var(--header-bg, #2563eb);
+        --sm-radius: 14px;
+        --sm-card-shadow: 0 4px 10px rgba(30,41,59,0.10);
+    }
+
+    #dvMainTable {
+        background: #ffffff;
+        border-radius: var(--sm-radius);
+        box-shadow: var(--sm-card-shadow);
+        padding: 8px;
+    }
+
+    #myModalfg .modal-content {
+        border: none;
+        border-radius: var(--sm-radius);
+        overflow: hidden;
+        box-shadow: 0 18px 44px rgba(15,23,42,0.28);
+    }
+
+    #myModalfg .modal-header {
+        background: var(--sm-accent);
+        color: #ffffff;
+        border-bottom: none;
+    }
+
+        #myModalfg .modal-header .modal-title {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        #myModalfg .modal-header .btn-close {
+            filter: invert(1);
+            opacity: 0.85;
+        }
+
+    #myModalfg .modal-footer {
+        background: #f8fafc;
+        border-top: 1px solid #eef2f7;
+        padding: 12px 18px;
+    }
+
+    #myModalfg .modal-footer .btn {
+        border-radius: 9px;
+        font-weight: 600;
+        padding: 7px 18px;
+        border: none;
+        transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+        #myModalfg .modal-footer .btn:active {
+            transform: scale(0.97);
+        }
+
+    .btn-clear-style {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+        .btn-clear-style:hover {
+            background: #cbd5e1;
+            color: #334155;
+        }
+
+    .btn-save-style {
+        background: #16a34a;
+        color: #ffffff;
+    }
+
+        .btn-save-style:hover {
+            background: #15803d;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(22,163,74,0.30);
+        }
+
+    .btn-close-style {
+        background: #64748b;
+        color: #ffffff;
+    }
+
+        .btn-close-style:hover {
+            background: #475569;
+            color: #fff;
+        }
 </style>
 <body>
 
@@ -131,18 +217,20 @@
     @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control", @id = "txtFormName" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
 
-    <div class="d-flex align-items-center gap-2">
-        <!-- Larger heading -->
-        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
+    @* Modernised page header (app-theme toolbar). #MainHeading id preserved for JS. *@
+    <div class="app-toolbar app-fade-in">
+        <div>
+            <h2 id="MainHeading">@ViewData["FormName"]</h2>
+            <div class="app-toolbar-crumb">Masters &rsaquo; @ViewData["FormName"]</div>
+        </div>
     </div>
-    <hr />
     <div class="toastBox"></div>
     <div id="dvMainTable">
         <div id="my-grid" style="width: 100%;"></div>
     </div>
 
     <div class="modal fade" id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-sm">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
 
                 <!-- Modal Header -->
@@ -154,122 +242,115 @@
                     <button type="button" class="btn-close" style="filter: invert(1);" id="modelcloseX"></button>
                 </div>
 
-                <!-- Modal body -->
+                <!-- Modal body : modernised card + responsive field grid.
+                     All field ids / FormclrField / clrdiv / tabindex / handlers preserved. -->
                 <div class="modal-body">
-                    <div class="text-center pt-1">                      
-                            <table class="table w-100">
+                    <table class="table w-100">
 
-                                <tr>
-                                    <td class="border-0 px-2" colspan="2">
+                        <tr>
+                            <td class="border-0 px-2" colspan="2">
 
-                                        <span class="form-label">
-                                            <input tabindex="1" type="text" id="txtName"
-                                                   class="form-control FormclrField"
-                                                   onbeforeinput="return AlphaNumericBeforeInput(event, this,'#dvErrorName')"
-                                                   oninput="sanitizeAlphaNumeric(this, '#dvErrorName')" />
+                                <span class="form-label">
+                                    <input tabindex="1" type="text" id="txtName"
+                                           class="form-control FormclrField"
+                                           onbeforeinput="return AlphaNumericBeforeInput(event, this,'#dvErrorName')"
+                                           oninput="sanitizeAlphaNumeric(this, '#dvErrorName')" />
 
-                                            <label class="labelup">Service Name *</label>
-                                        </span>
+                                    <label class="labelup">Service Name *</label>
+                                </span>
 
-                                        <div class="clrdiv text-danger" id="dvErrorName"></div>
-                                    </td>
-                                </tr>
+                                <div class="clrdiv text-danger" id="dvErrorName"></div>
+                            </td>
+                        </tr>
 
-                                <tr>
-                                    <td class="border-0 px-2" colspan="2">
+                        <tr>
+                            <td class="border-0 px-2" colspan="2">
 
-                                        <span class="form-label">
-                                            <select tabindex="2" id="cmbTax" class="form-control"></select>
-                                            <label class="labelup">Tax *</label>
-                                        </span>
+                                <span class="form-label">
+                                    <select tabindex="2" id="cmbTax" class="form-control"></select>
+                                    <label class="labelup">Tax *</label>
+                                </span>
 
-                                        <div class="clrdiv text-danger" id="dvErrorTax"></div>
-                                    </td>
-                                </tr>
+                                <div class="clrdiv text-danger" id="dvErrorTax"></div>
+                            </td>
+                        </tr>
 
-                                <tr>
-                                    <td class="border-0 px-2" colspan="2">
+                        <tr>
+                            <td class="border-0 px-2" colspan="2">
 
-                                        <span class="form-label">
-                                            <input tabindex="3" type="number"
-                                                   id="txtSAC"
-                                                   class="form-control FormclrField"
-                                                   maxlength="6"
-                                                   oninput="if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
+                                <span class="form-label">
+                                    <input tabindex="3" type="number"
+                                           id="txtSAC"
+                                           class="form-control FormclrField"
+                                           maxlength="6"
+                                           oninput="if (this.value.length > this.maxLength) { this.value = this.value.slice(0, this.maxLength); }" />
 
-                                            <label class="labelup">SAC Code</label>
-                                        </span>
+                                    <label class="labelup">SAC Code</label>
+                                </span>
 
-                                        <div class="clrdiv text-danger" id="dvErrorSAC"></div>
-                                    </td>
-                                </tr>
+                                <div class="clrdiv text-danger" id="dvErrorSAC"></div>
+                            </td>
+                        </tr>
 
-                                <tr>
-                                    <td class="border-0 px-2" colspan="2">
+                        <tr>
+                            <td class="border-0 px-2">
 
-                                        <span class="form-label">
-                                            <input tabindex="4" type="number"
-                                                   txttag="0"
-                                                   id="txtInwardPrice"
-                                                   class="form-control FormclrField txtsettag"
-                                                   onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorInwardPrice')"
-                                                   oninput="sanitizeNumericOnly(this, '#dvErrorInwardPrice')" />
+                                <span class="form-label">
+                                    <input tabindex="4" type="number"
+                                           txttag="0"
+                                           id="txtInwardPrice"
+                                           class="form-control FormclrField txtsettag"
+                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorInwardPrice')"
+                                           oninput="sanitizeNumericOnly(this, '#dvErrorInwardPrice')" />
 
-                                            <label class="labelup">Inward Price</label>
-                                        </span>
+                                    <label class="labelup">Inward Price</label>
+                                </span>
 
-                                        <div class="clrdiv text-danger" id="dvErrorInwardPrice"></div>
-                                    </td>
-                                </tr>
+                                <div class="clrdiv text-danger" id="dvErrorInwardPrice"></div>
+                            </td>
+                            <td class="border-0 px-2">
 
-                                <tr>
-                                    <td class="border-0 px-2" colspan="2">
+                                <span class="form-label">
+                                    <input tabindex="5" type="number"
+                                           txttag="0"
+                                           id="txtOutwardPrice"
+                                           class="form-control FormclrField txtsettag"
+                                           onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorOutwardPrice')"
+                                           oninput="sanitizeNumericOnly(this, '#dvErrorOutwardPrice')" />
 
-                                        <span class="form-label">
-                                            <input tabindex="5" type="number"
-                                                   txttag="0"
-                                                   id="txtOutwardPrice"
-                                                   class="form-control FormclrField txtsettag"
-                                                   onbeforeinput="return NumericOnlyBeforeInput(event, this,'#dvErrorOutwardPrice')"
-                                                   oninput="sanitizeNumericOnly(this, '#dvErrorOutwardPrice')" />
+                                    <label class="labelup">Outward Price</label>
+                                </span>
 
-                                            <label class="labelup">Outward Price</label>
-                                        </span>
+                                <div class="clrdiv text-danger" id="dvErrorOutwardPrice"></div>
+                            </td>
+                        </tr>
 
-                                        <div class="clrdiv text-danger" id="dvErrorOutwardPrice"></div>
-                                    </td>
-                                </tr>
+                        <tr>
+                            <td class="border-0 text-start ps-2" colspan="2">
+                                <div class="form-check form-switch">
+                                    <label for="chkActive" class="form-check-label">Active</label>
+                                    <input tabindex="6" type="checkbox" role="switch" id="chkActive" class="form-check-input" checked disabled />
+                                    <div class="clrdiv text-danger" id="dvErrorActive"></div>
+                                </div>
 
-                                <tr>
-                                    <td class="border-0 text-start ps-2" colspan="2">
-                                        <label for="chkActive">Active :</label>
-                                        <input tabindex="6" type="checkbox" id="chkActive" checked disabled />
-                                        <div class="clrdiv text-danger" id="dvErrorActive"></div>
-                                    </td>
-                                </tr>
+                            </td>
+                        </tr>
 
-                            </table>
-
-                       
-                    </div>
+                    </table>
 
                 </div>
 
-                <!-- Modal footer -->
+                <!-- Modal footer : icons modernised to Font Awesome 6, button ids/handlers preserved -->
                 <div class="modal-footer">
-
-                    <div class="w-100 text-end">
-
-                        <button tabindex="8" type="button" class="btn btn-clear-style" id="btnClear" style="padding:5px 10px;font-size:13px;font-weight:600;color:white">
-                           X&ensp;Clear
+                    <div class="d-flex justify-content-end gap-2 w-100">
+                        <button tabindex="8" type="button" class="btn btn-clear-style" id="btnClear">
+                            <i class="fa-solid fa-arrows-rotate"></i> Clear
                         </button>
-
-                        <button tabindex="7" type="button" class="btn btn-save-style" id="btnSave" style="padding:5px 10px;font-size:13px;font-weight:600;color:white">
-                            <span class="glyphicon glyphicon-saved"> Save</span>
+                        <button tabindex="7" type="button" class="btn btn-save-style" id="btnSave">
+                            <i class="fa-solid fa-floppy-disk"></i> Save
                         </button>
-
-                        <button tabindex="9" type="button" class="btn btn-close-style" id="btnClose" style="padding:7px 10px;font-size:13px;font-weight:600;color:white">
-                            <i class="bi bi-x-circle"></i> Close
+                        <button tabindex="9" type="button" class="btn btn-close-style" id="btnClose">
+                            <i class="fa-solid fa-circle-xmark"></i> Close
                         </button>
                     </div>
                 </div>

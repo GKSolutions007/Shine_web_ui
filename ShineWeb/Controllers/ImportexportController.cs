@@ -17,7 +17,6 @@ using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 using WebGrease.Activities;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TreeView;
 
 namespace ShineWeb.Controllers
 {
@@ -63,8 +62,7 @@ namespace ShineWeb.Controllers
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
-                SingleMasterModel dam = new SingleMasterModel();
-                dam.FormName = Name;
+                SingleMasterModel dam = new SingleMasterModel() { FormName = Name};
                 return View(dam);
             }
         }
@@ -1968,21 +1966,17 @@ namespace ShineWeb.Controllers
         }
         public string POImpValiation(DataRow dr)
         { 
-            bool IsValid = true;
             string RowError = "";
             if (string.IsNullOrEmpty(dr.ItemArray[0].ToString()))
             {
-                IsValid = false;
                 RowError += "* Doc ID should not be empty\n";
             }
             if (string.IsNullOrEmpty(dr.ItemArray[1].ToString()))
             {
-                IsValid = false;
                 RowError += "* Doc Date should not be empty\n";
             }
             if (string.IsNullOrEmpty(dr.ItemArray[2].ToString()))
             {
-                IsValid = false;
                 RowError += "* Branch Name Should not be Empty\n";
             }
             else
@@ -1990,7 +1984,6 @@ namespace ShineWeb.Controllers
                 DataTable dt = objBL.BL_ExecuteParamSP("uspgetsetImportExport", 7, 3, dr.ItemArray[2].ToString());
                 if (dt.Rows.Count == 0)
                 {
-                    IsValid = false;
                     RowError += "* Enter valid Branch Name\n";
                 }
                 else
@@ -2000,7 +1993,6 @@ namespace ShineWeb.Controllers
             }
             if (string.IsNullOrEmpty(dr.ItemArray[3].ToString()))
             {
-                IsValid = false;
                 RowError += "* Vendor Name Should not be Empty\n";
             }
             else
@@ -2008,7 +2000,6 @@ namespace ShineWeb.Controllers
                 DataTable dt = objBL.BL_ExecuteParamSP("uspgetsetImportExport", 4, 3, dr.ItemArray[3].ToString());
                 if (dt.Rows.Count == 0)
                 {
-                    IsValid = false;
                     RowError += "* Enter valid Vendor Name\n";
                 }
                 else
@@ -2018,7 +2009,6 @@ namespace ShineWeb.Controllers
             }
             if (string.IsNullOrEmpty(dr.ItemArray[4].ToString()))
             {
-                IsValid = false;
                 RowError += "* Product Name Should not be Empty\n";
             }
             else
@@ -2026,7 +2016,6 @@ namespace ShineWeb.Controllers
                 DataTable dt = objBL.BL_ExecuteParamSP("uspgetsetImportExport", 5, 3, dr.ItemArray[4].ToString());
                 if (dt.Rows.Count == 0)
                 {
-                    IsValid = false;
                     RowError += "* Enter valid Product Name\n";
                 }
                 else
@@ -2037,33 +2026,28 @@ namespace ShineWeb.Controllers
             }
             if (string.IsNullOrEmpty(dr.ItemArray[5].ToString()))
             {
-                IsValid = false;
                 RowError += "* Price should not be empty\n";
             }
             else
             {
                 if (!objBL.NumberValidate(dr.ItemArray[5].ToString()))
                 {
-                    IsValid = false;
                     RowError += "* Invalid Format. Numeric only allowed\n";
                 }
             }
             if (string.IsNullOrEmpty(dr.ItemArray[6].ToString()))
             {
-                IsValid = false;
                 RowError += "* Qty should not be empty\n";
             }
             else
             {
                 if (!objBL.NumberValidate(dr.ItemArray[6].ToString()))
                 {
-                    IsValid = false;
                     RowError += "* Invalid Format. Numeric only allowed\n";
                 }
             }
             if (string.IsNullOrEmpty(dr.ItemArray[7].ToString()))
             {
-                IsValid = false;
                 RowError += "* Tax Should not be Empty\n";
             }
             else
@@ -2071,7 +2055,6 @@ namespace ShineWeb.Controllers
                 DataTable dt = objBL.BL_ExecuteParamSP("uspgetsetImportExport", 6, 3, dr.ItemArray[7].ToString());
                 if (dt.Rows.Count == 0)
                 {
-                    IsValid = false;
                     RowError += "* Enter valid Tax\n";
                 }
                 else
@@ -2184,7 +2167,6 @@ namespace ShineWeb.Controllers
                         }
                         // Added By Sriram G
                         // Excel Cell Value Decimal Should be RoundOff 6 Digits
-                        decimal dOutValue = 0.00M;
                         string strCellValue = GetValue(docSelected, cell);
                         //if (!string.IsNullOrEmpty(strCellValue))
                         //{
@@ -2212,7 +2194,6 @@ namespace ShineWeb.Controllers
                 if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
                 {
                     return doc.WorkbookPart.SharedStringTablePart.SharedStringTable.ChildElements[(int.Parse(cell.CellValue.InnerText))].InnerText;
-                    return null;
                 }
                 else
                 if (cell.StyleIndex != null)

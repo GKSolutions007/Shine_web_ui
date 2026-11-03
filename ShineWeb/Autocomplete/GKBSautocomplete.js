@@ -1,8 +1,22 @@
 ﻿//var autolistfilterwith = 0;//0- contains, 1 - startwitn
+// Name-only rows sorted A-Z. Used for list filters (e.g. Party Name) where the code column is
+// noise. Keeps `name` so existing onSelect handlers that read item.name still work, and drops
+// `code` so selectItem() puts the name (not the code) in the field.
+function ToNameOnlyAutolist(list) {
+    return (list || [])
+        .map(function (d) {
+            var n = d.name || d.label || "";
+            return { id: d.id, name: n, label: n };
+        })
+        .sort(function (a, b) { return String(a.label).localeCompare(String(b.label)); });
+}
+
 function PaginatedAutocomplete(options) {
 
     var inputId = options.inputId;
-    var fullData = options.data || [];
+    // Opt-in per field: <input data-al-nameonly ...> shows ToNameOnlyAutolist(data).
+    var nameOnly = $("#" + inputId).is("[data-al-nameonly]");
+    var fullData = nameOnly ? ToNameOnlyAutolist(options.data) : (options.data || []);
     var pageSize = 20;// options.pageSize || 50;
     var onSelect = options.onSelect || function () { };
     var startwithfieldname = options.startwitfieldname || "label";
@@ -106,7 +120,8 @@ function PaginatedAutocomplete(options) {
         loading: false,
         hasMore: true,
         activeIdx: -1,
-        mouseBlock: false
+        mouseBlock: false,
+        gen: 0          // bumped by reset(); loads queued before a reset are discarded
     };
 
     function $list() { return $("#" + listId); }
@@ -160,7 +175,11 @@ function PaginatedAutocomplete(options) {
         state.loading = true;
         $("#" + spinId).show();
 
+        var gen = state.gen;
         setTimeout(function () {
+            // A reset() happened after this load was queued (e.g. focus + ArrowDown in quick
+            // succession). Drop it, otherwise each stale load appends another page.
+            if (gen !== state.gen) return;
             var slice = state.filtered.slice(
                 state.page * pageSize,
                 (state.page + 1) * pageSize
@@ -205,6 +224,7 @@ function PaginatedAutocomplete(options) {
     }
 
     function reset(query) {
+        state.gen++;
         state.query = query;
         state.page = 0;
         state.loaded = 0;
@@ -392,7 +412,7 @@ function PaginatedAutocomplete(options) {
 
     return {
         updateData: function (newData) {
-            fullData = newData;
+            fullData = nameOnly ? ToNameOnlyAutolist(newData) : newData;
             reset($input.val().trim());
         },
         destroy: function () {

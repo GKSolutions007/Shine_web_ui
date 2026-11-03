@@ -69,9 +69,10 @@ namespace BuinessLayer
                 //    EMail = dtNames.Rows[0]["EMailID"].ToString();
                 //    Pwd = dtNames.Rows[0]["Password"].ToString();
                 //}
-                HostName = "smtp.gmail.com";
-                EMail = "gksolutions.work007@gmail.com";
-                Pwd = "ujrx zkfl kpfo dehr";
+                HostName = ConfigurationManager.AppSettings["smtphost"];
+                EMail = ConfigurationManager.AppSettings["email"];
+                string encryptedPwd = ConfigurationManager.AppSettings["passkey"];
+                Pwd = string.IsNullOrEmpty(encryptedPwd) ? "" : clsEncryptDecrypt.Decrypt(encryptedPwd);
                 if (!string.IsNullOrEmpty(HostName) && !string.IsNullOrEmpty(EMail) && !string.IsNullOrEmpty(Pwd))
                 {
                     //
@@ -87,8 +88,6 @@ namespace BuinessLayer
                     smtp.Host = HostName;// "smtp.gmail.com"; //for gmail host  
                     smtp.EnableSsl = true;
                     smtp.UseDefaultCredentials = false;
-                    //smtp.Credentials = new NetworkCredential("gks.helpdesk@gmail.com", "mkolocmylhzuuvdk");
-                    //smtp.Credentials = new NetworkCredential("vipassana.pveasllp@gmail.com", "eyilfwmebqgydnjg");//pveasllp@2021
                     smtp.Credentials = new NetworkCredential(EMail, Pwd);
                     smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
 
@@ -101,11 +100,11 @@ namespace BuinessLayer
                     //BL_WriteErrorMsginLog("BL", "Mail Send", "E-Mail config details are empty in App Config. You should give the details there.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 MailSend = false;
                 //BL_WriteErrorMsginLog("BL", "Mail Send - Exception", ex.Message);
-                throw ex;
+                throw; // preserve original stack trace
             }
             finally
             {

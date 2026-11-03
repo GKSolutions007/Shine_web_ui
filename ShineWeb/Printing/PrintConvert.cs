@@ -391,7 +391,7 @@ namespace ShineWeb.Printing
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //objmdi.ShowMessage("setFooterLabel", GKS_BL.ToolStripErrorMsg);
                 //GKS_BL.BL_ExceptionMsg("Print", "setFooterLabel", ex);
@@ -911,7 +911,7 @@ namespace ShineWeb.Printing
                     nFormHeight = lbl.Location.Y;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //GKS_BL.BL_ExceptionMsg("Print", "SetFontStyle", ex);
             }

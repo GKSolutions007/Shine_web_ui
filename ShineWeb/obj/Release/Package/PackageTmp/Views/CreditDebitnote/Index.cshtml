@@ -198,19 +198,165 @@
 
     <input hidden id="txtStatus" />
 
-    <div class="d-flex align-items-center gap-2">
-        <!-- Larger heading -->
-        <h4 class="mb-0" style="font-size:14px; padding-top:10px;" id="MainHeading">@ViewData["FormName"]</h4>
-    </div>
-    <hr />
+    <style>
+        /* ===== Accounts module redesign (header card + buttons + modal chrome) ===== */
+        .sm-header-card {
+            display: flex; align-items: center; gap: 14px; background: #ffffff;
+            border-radius: 14px; box-shadow: 0 4px 10px rgba(30,41,59,0.10);
+            padding: 12px 18px; margin: 4px 0 14px 0; position: relative; overflow: hidden;
+        }
+            .sm-header-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--header-bg, #2563eb); }
+        .sm-header-icon { width: 40px; height: 40px; min-width: 40px; border-radius: 10px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .sm-header-text #MainHeading { font-size: 18px; font-weight: 800; color: #0f172a; margin: 0; padding: 0; }
+        .sm-header-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+        #myModalfg .modal-content { border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 18px 44px rgba(15,23,42,0.28); }
+        #myModalfg .modal-header { background: var(--header-bg, #2563eb); color: #ffffff; border-bottom: none; }
+            #myModalfg .modal-header .modal-title { color: #ffffff; font-weight: 700; }
+            #myModalfg .modal-header .btn-close { filter: invert(1); opacity: 0.85; }
+        .btn-clear-style, .btn-save-style, .btn-close-style, .btn-filter-style, #myModalfg .modal-footer .btn {
+            border-radius: 9px !important; font-weight: 600; padding: 7px 18px; border: none; transition: transform .12s ease, box-shadow .12s ease;
+        }
+        .btn-clear-style { background: #e2e8f0; color: #475569; }
+            .btn-clear-style:hover { background: #cbd5e1; color: #334155; }
+        .btn-save-style { background: #16a34a; color: #ffffff; }
+            .btn-save-style:hover { background: #15803d; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,0.30); }
+        .btn-close-style { background: #64748b; color: #ffffff; }
+            .btn-close-style:hover { background: #475569; color: #fff; }
+
+        /* ===== Option 1: pill filter fields ===== */
+        .sm-filter-row .form-control,
+        .sm-filter-row .gdInput {
+            border-radius: 20px !important;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding-left: 30px;  /* room for leading icon */
+            height: 34px;
+        }
+            .sm-filter-row .form-control:focus {
+                background: #fff;
+                border-color: #2563eb;
+                box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+            }
+        /* leading icon inside each pill */
+        .sm-pill { position: relative; }
+        .sm-pill > .sm-pill-ico {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #94a3b8;
+            pointer-events: none;
+            z-index: 2;
+        }
+        /* keep the floating label clear of the icon */
+        .sm-pill .labelup { left: 1.6em; }
+
+        /* search-select pill: dropdown caret on the right */
+        .sm-selectpill .sm-pill-caret {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: #94a3b8;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .sm-searchselect { padding-right: 28px !important; cursor: pointer; }
+
+        /* On/Off status toggle */
+        .sm-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+        .sm-toggle input { display: none; }
+        .sm-toggle .sm-switch {
+            width: 36px; height: 20px; border-radius: 12px;
+            background: #cbd5e1; position: relative; transition: background .15s ease;
+            flex: 0 0 auto;
+        }
+        .sm-toggle .sm-switch::after {
+            content: ""; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px; border-radius: 50%; background: #fff;
+            transition: left .15s ease; box-shadow: 0 1px 2px rgba(0,0,0,.2);
+        }
+        .sm-toggle input:checked + .sm-switch { background: #2563eb; }
+        .sm-toggle input:checked + .sm-switch::after { left: 18px; }
+        .sm-toggle .sm-toggle-label { font-size: 13px; color: #475569; white-space: nowrap; }
+
+        /* Primary rounded Filter button */
+        .sm-filter-row #btnFilter.btn-filter-style {
+            border-radius: 20px !important;
+            padding: 7px 20px;
+        }
+
+        /* Single date-range field + popover */
+        .sm-daterange { position: relative; }
+        .sm-daterange-pop {
+            display: none;
+            position: absolute;
+            z-index: 1200;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 300px;
+            background: #fff;
+            border: 1px solid #d7dee8;
+            border-radius: 12px;
+            box-shadow: 0 18px 44px rgba(15,23,42,0.18);
+            padding: 12px;
+        }
+        .sm-daterange-pop.open { display: block; }
+        .sm-dr-presets { display: flex; gap: 8px; margin-bottom: 10px; }
+        .sm-dr-chip {
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #2563eb;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 12px;
+            cursor: pointer;
+        }
+            .sm-dr-chip:hover { background: #dbeafe; }
+        .sm-dr-period { margin-bottom: 12px; }
+        .sm-dr-fields { display: flex; gap: 10px; }
+            .sm-dr-fields .form-label { flex: 1; }
+        .sm-dr-actions { text-align: right; margin-top: 10px; }
+
+        /* Inline header + filters on one row */
+        .sm-inline-bar {
+            display: flex;
+            align-items: stretch;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .sm-header-inline {
+            margin: 0;
+            flex: 0 0 auto;
+            min-width: 180px;
+        }
+        .sm-inline-bar .row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        @@media (max-width: 991px) {
+            .sm-header-inline { width: 100%; }
+        }
+    </style>
     <div class="toastBox"></div>
     <div id="dvMainTable">
-        <div class="row text-end mb-3">
-            <!-- Blank -->
-            <div class="col-12 col-md-1"></div>  <!-- ← changed from col-md-3 to col-md-2 -->
+        <div class="sm-inline-bar">
+            <div class="sm-header-card sm-header-inline">
+                <div class="sm-header-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div class="sm-header-text">
+                    <div class="sm-header-sub">Accounts</div>
+                    <h4 id="MainHeading">@ViewData["FormName"]</h4>
+                </div>
+            </div>
+            <div class="row text-end mb-0 g-2 align-items-end flex-grow-1 sm-filter-row">
             <!-- Branch (NEW) -->
-            <div class="col-12 col-md-2">
-                <span class="form-label">
+            <div class="col-12 col-md-2 col-lg-2">
+                <span class="form-label sm-pill">
+                    <i class="fas fa-building sm-pill-ico"></i>
                     <select class="form-control FormfilterclrField" id="cmbFilterBranch">
                         <option value="0">Select Branch</option>
                     </select>
@@ -218,51 +364,73 @@
                 </span>
             </div>
             <!--Party Name -->
-            <div class="col-12 col-md-2">
-                <span class="form-label">
-                    <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterParty" placeholder="">
+            <div class="col-12 col-md-2 col-lg-2">
+                <span class="form-label sm-pill sm-selectpill">
+                    
+                    <input tabindex="1" autocomplete="off" class="form-control FormfilterclrField sm-searchselect" type="text" id="txtFilterParty" placeholder="">
                     <label class="labelup" for="txtCode"> Party Name</label>
+                    
                 </span>
                 <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFParty"></div>
             </div>
             <!--Account Name -->
-            <div class="col-12 col-md-2">
-                <span class="form-label">
-                    <input tabindex="1" class="form-control FormfilterclrField" type="text" id="txtFilterAccount" placeholder="">
+            <div class="col-12 col-md-2 col-lg-2">
+                <span class="form-label sm-pill sm-selectpill">
+                    
+                    <input tabindex="1" autocomplete="off" class="form-control FormfilterclrField sm-searchselect" type="text" id="txtFilterAccount" placeholder="">
                     <label class="labelup" for="txtCode"> Account Name</label>
+                    
                 </span>
                 <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFAccount"></div>
             </div>
-            <!-- Period -->
-            <div class="col-12 col-md-1">
-                <select class="gdInput" id="cmbFilterDatetype" onchange="SetFilterDate();"></select>
-            </div>
-            <!-- From Date -->
-            <div class="col-12 col-md-1">
-                <span class="form-label">
-                    <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
-                    <label class="labelup" for="txtCode"> From</label>
-                </span>
-                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFFrom"></div>
-            </div>
-            <!-- To Date -->
-            <div class="col-12 col-md-1">
-                <span class="form-label">
-                    <input tabindex="1" class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; }">
-                    <label class="labelup" for="txtCode"> To</label>
-                </span>
-                <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFTo"></div>
+            <!-- Date Range (single field -> popover with Period + From/To) -->
+            <div class="col-12 col-md-3 col-lg-3">
+                <div class="sm-daterange">
+                    <span class="form-label sm-pill">
+                        <i class="fas fa-calendar-days sm-pill-ico"></i>
+                        <input type="text" readonly class="form-control FormfilterclrField" id="txtDateRangeDisplay" placeholder="Select date range" style="cursor:pointer;">
+                        <label class="labelup">Date Range</label>
+                    </span>
+                    <div class="sm-daterange-pop" id="dvDateRangePop">
+                        <div class="sm-dr-presets">
+                            <button type="button" class="sm-dr-chip" data-range="today">Today</button>
+                            <button type="button" class="sm-dr-chip" data-range="month">This Month</button>
+                        </div>
+                        <div class="sm-dr-period">
+                            <select class="gdInput w-100" id="cmbFilterDatetype" onchange="SetFilterDate(); SyncDateRangeDisplay();"></select>
+                        </div>
+                        <div class="sm-dr-fields">
+                            <span class="form-label">
+                                <input class="form-control FormfilterclrField" type="date" id="dtpFFrom" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; } SyncDateRangeDisplay();">
+                                <label class="labelup">From</label>
+                            </span>
+                            <span class="form-label">
+                                <input class="form-control FormfilterclrField" type="date" id="dtpFTo" placeholder="" oninput="javascript: if (this.value > this.max) { this.value = this.max; } SyncDateRangeDisplay();">
+                                <label class="labelup">To</label>
+                            </span>
+                        </div>
+                        <div class="sm-dr-actions">
+                            <button type="button" class="btn btn-sm btn-filter-style" id="btnDateRangeDone">Done</button>
+                        </div>
+                        <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFFrom"></div>
+                        <div class="text-danger pt-1 ps-1 clrdivs" id="divErrFTo"></div>
+                    </div>
+                </div>
             </div>
             <!-- All Status-->
-            <div class="col-12 col-md-1">
-                <input tabindex="1" style="font-size:14px;" class="FormfilterclrField" type="checkbox" id="chkShowAll">
-                <label for="chkShowAll" style="font-size:14px;">All Status</label>
+            <div class="col-auto d-flex align-items-center mb-2">
+                <label class="sm-toggle">
+                    <input tabindex="1" class="FormfilterclrField" type="checkbox" id="chkShowAll">
+                    <span class="sm-switch"></span>
+                    <span class="sm-toggle-label">All Status</span>
+                </label>
             </div>
             <!--Filter-->
-            <div class="col-12 col-md-1">
+            <div class="col-auto">
 
                 <button id="btnFilter" class="btn btn-filter-style ps-2"><span class="glyphicon glyphicon-filter" style="color: white"></span>&#x2009;Filter</button>
 
+            </div>
             </div>
         </div>
             <div id="my-grid" style="width: 100%;"></div>
@@ -802,6 +970,44 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     setDate("dtpFFrom", 0);
     setDate("dtpFTo", 0);
 
+    // ===== Single Date-Range field behaviour =====
+    function fmtDMY(v) {
+        if (!v) return "";
+        var p = v.split("-"); // yyyy-mm-dd
+        return p.length === 3 ? (p[2] + "-" + p[1] + "-" + p[0]) : v;
+    }
+    function SyncDateRangeDisplay() {
+        var f = $("#dtpFFrom").val(), t = $("#dtpFTo").val();
+        var txt = (f || t) ? (fmtDMY(f) + "  \u2192  " + fmtDMY(t)) : "";
+        $("#txtDateRangeDisplay").val(txt);
+    }
+    window.SyncDateRangeDisplay = SyncDateRangeDisplay;
+    $("#txtDateRangeDisplay").on("click", function (e) {
+        e.stopPropagation();
+        $("#dvDateRangePop").toggleClass("open");
+    });
+    $("#dvDateRangePop").on("click", function (e) { e.stopPropagation(); });
+    $(document).on("click", function () { $("#dvDateRangePop").removeClass("open"); });
+    $("#btnDateRangeDone").on("click", function () { $("#dvDateRangePop").removeClass("open"); });
+    $(".sm-dr-chip").on("click", function () {
+        var r = $(this).data("range");
+        var now = new Date();
+        function iso(d) { return d.toISOString().slice(0, 10); }
+        if (r === "today") {
+            $("#dtpFFrom").val(iso(now));
+            $("#dtpFTo").val(iso(now));
+        } else if (r === "month") {
+            var first = new Date(now.getFullYear(), now.getMonth(), 1);
+            var last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            $("#dtpFFrom").val(iso(first));
+            $("#dtpFTo").val(iso(last));
+        }
+        SyncDateRangeDisplay();
+    });
+    SyncDateRangeDisplay();
+
+    // Search-select click-to-open (#txtFilterParty, #txtFilterAccount) is handled globally in Scripts/js/sm-daterange.js.
+
     setTimeout(function () { GetFilterData(); }, 800);
     GetData(1,"");
     //GetData(2,"");
@@ -1075,14 +1281,17 @@ function updateInputColumn(inputID, netValue) {
         if ($("#dtpFFrom").val() == "") {
             IsValid = false;
             $("#divErrFFrom").html("From date should not be empty");
+            $("#dvDateRangePop").addClass("open");
         }
         if ($("#dtpFTo").val() == "") {
             IsValid = false;
             $("#divErrFTo").html("To date should not be empty");
+            $("#dvDateRangePop").addClass("open");
         }
         if ($("#dtpFFrom").val() > $("#dtpFTo").val()) {
             IsValid = false;
             $("#divErrFFrom").html("From date should be lessthan To Date");
+            $("#dvDateRangePop").addClass("open");
         }
         if (IsValid) {
             var strBranch = $("#cmbFilterBranch").val(), strAcc = $("#txtFilterAccount").val().trim(), strParty = $("#txtFilterParty").val().trim(), dFrom = $("#dtpFFrom").val(),
