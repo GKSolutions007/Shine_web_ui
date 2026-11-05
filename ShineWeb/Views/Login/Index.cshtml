@@ -841,14 +841,27 @@
             if (!CheckValidation) {
                 IsValid = false;
             }
-            else {
-                if ($("#txtHDOTP").val() != $("#txtOTP").val()) {
-                    $("#dvErrorFGOTP").html("OTP Mismatched");
-                    IsValid = false;
-                }
-            }
             if (IsValid) {
-                $(".trSetPwds").show();
+                // The OTP is checked by the API (it is no longer sent to the browser).
+                $.ajax({
+                    url: Aurl + "forgotpassword/verifyotp",
+                    type: 'get',
+                    contentType: 'json',
+                    data: {
+                        UserName: $("#txtFGUserName").val(), Email: $("#txtFGEmail").val(), OTP: $("#txtOTP").val()
+                    },
+                    success: function (data) {
+                        if (data.length > 0 && data[0].MsgID == "0") {
+                            $(".trSetPwds").show();
+                        }
+                        else {
+                            $("#dvErrorFGOTP").html(data.length > 0 ? data[0].Message : "OTP Mismatched");
+                        }
+                    },
+                    error: function () {
+                        $("#dvErrorFGOTP").html("OTP could not be verified. Please try again.");
+                    }
+                });
             }
         });
 
@@ -874,17 +887,22 @@
                     var strpwd = $("#txtFGPassword").val();
                     $.ajax({
                         url: Aurl + "forgotpassword/setpassword",
-                        type: 'get',
-                        contentType: 'json',
-                        data: {
+                        type: 'POST',
+                        contentType: 'application/json; charset=utf-8',
+                        data: JSON.stringify({
                             UserName: strusername, Email: strEmail, Password: strpwd
-                        },
+                        }),
                         success: function (data) {
                             $("#loadingDiv").remove();
                             if (data.length > 0) {
                                 $.each(data, function (i, item) {
-                                    showSuccessSnackbar("Password changed successfully. You can login now.")
-                                    modal.style.display = "none";
+                                    if (item.MsgID == "0") {
+                                        showSuccessSnackbar("Password changed successfully. You can login now.")
+                                        modal.style.display = "none";
+                                    }
+                                    else {
+                                        showErrorSnackbar(item.Message);
+                                    }
                                 });
                             }
                             else {
@@ -995,19 +1013,13 @@
                     //
                     if (response != "") {
                         $.each(response, function (i, item) {
-                            if (item.Mode == "1") {//Valid Login
-                                if (item.RoleID > 0) {
-                                    localStorage.setItem("ThemeData", item.ThemeData);
-                                    localStorage.setItem("FilterDatelist", item.FilterDatelist);
-                                    localStorage.setItem("MenusData", item.Menuslist);
-                                    window.location.href = url + '/ValidatePermission?ID=' + item.ID;
-                                }
-                                else {
-                                    $("#loadingDiv").remove();
-                                    showErrorSnackbar("Role not assigned. Contact administrator.");
-                                }
+                            if (item.Mode == "1") {                               
+                                localStorage.setItem("ThemeData", item.ThemeData);
+                                localStorage.setItem("FilterDatelist", item.FilterDatelist);
+                                localStorage.setItem("MenusData", item.Menuslist);
+                                window.location.href = url + '/ValidatePermission?ID=' + item.ID;
                             }
-                            else if (item.Mode == "2") {//New Device Detect
+                            else if (item.Mode == "2") {
                                 $("#loadingDiv").remove();
                                 document.getElementById("myModalDeviceOTP").style.display = "flex";
                                 objOTPType = "device";
@@ -1019,15 +1031,15 @@
                                 $("#txtUserID").val(item.UserID);
                                 showSuccessSnackbar(item.ResponseMessage);
                             }
-                            else if (item.Mode == "3") {//E-Mail Failed
+                            else if (item.Mode == "3") {
                                 $("#loadingDiv").remove();
                                 showErrorSnackbar(item.ResponseMessage);
                             }
-                            else if (item.Mode == "4") {//Lisense Expired
+                            else if (item.Mode == "4") {
                                 $("#loadingDiv").remove();
                                 showErrorSnackbar(item.ResponseMessage);
                             }
-                            else if (item.Mode == "5") {//Duplicate Login
+                            else if (item.Mode == "5") {
                                 $("#loadingDiv").remove();
                                 //showErrorSnackbar(item.ResponseMessage);
                                 var cnf = confirm(item.ResponseMessage + ". Do you want to continue and terminate the existing session?");
@@ -1035,10 +1047,14 @@
                                     validateuser(item.ID);
                                 }
                             }
-                            else if (item.Mode == "6") {//Login Exceed
+                            else if (item.Mode == "6") {
                                 $("#loadingDiv").remove();
                                 //showErrorSnackbar(item.ResponseMessage);                                
                                 alert(item.ResponseMessage);
+                            }
+                            else if (item.Mode == "7") {
+                                $("#loadingDiv").remove();
+                                showErrorSnackbar(item.ResponseMessage);
                             }
                         });
                     }

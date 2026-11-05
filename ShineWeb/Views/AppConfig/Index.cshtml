@@ -271,7 +271,7 @@
     <div>
         @Html.HiddenFor(model => model.FormName, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtFormName" })
         @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
-
+        <div class="toastBox"></div>
         <div class="sm-inline-bar">
             <div class="sm-header-card sm-header-inline">
                 <div class="sm-header-icon"><i class="fas fa-tools"></i></div>
@@ -292,8 +292,8 @@
                 </div>
             </div>
         </div>
-       
-       
+
+
         <div id="dvGeneralSettings" class="tabcontent">
             <div class="row">
                 <!-- General Config Column -->
@@ -343,7 +343,7 @@
                                     </div>
 
                                 </div>
-                                </div>
+                            </div>
 
                             <div class="row mb-4 align-items-center">
                                 <label class="col-sm-4 col-form-label fs-5"><i class="bi bi-arrow-left-right me-2 text-primary fs-4"></i>Round Off</label>
@@ -543,7 +543,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
                 <!-- Confirm Column -->
                 <div class="col-md-4">
@@ -1150,7 +1150,8 @@
                         $("#txtRoundoffValue").val(items.RoundoffValue);
                         $("#txtSMTPHost").val(items.SMTPHost);
                         $("#txtEMail").val(items.EMail);
-                        $("#txtPassword").val(items.Password);
+                        // The saved SMTP password is never sent to the browser: blank keeps it, typing replaces it.
+                        $("#txtPassword").val("").attr("placeholder", "Unchanged (type to replace)").attr("autocomplete", "new-password");
                         $("#txtBackupPath").val(items.BackupPath);
 
                         $("#txtCTPAmount").val(items.CTPAmount);
@@ -1227,7 +1228,7 @@
                                     className: "dt-body-center",
                                     "mRender": function (data, type, value, meta) {
                                         var rowIndex = meta.row;
-                                        var _action = '<input type="password" id="txtpwd' + rowIndex + '" class="gdInput"  name="Password" value="' + value.Passwords + '"/>';
+                                        var _action = '<input type="password" id="txtpwd' + rowIndex + '" class="gdInput"  name="Password" value="" placeholder="Unchanged" autocomplete="new-password"/>';
                                         return _action;
                                     }
                                 },
@@ -1551,21 +1552,7 @@
                 }
             });
         }
-        var pwdhasvalue = true;
-        $("#tblPasswords tbody tr").each(function () {
-            $(this).find("input").each(function (index) {
-                $(this).css("border-color", "black");
-                if ($(this).val() == "") {
-                    IsValid = false;
-                    pwdhasvalue = false;
-                    $(this).css("border-color", "red");
-                }
-            });
-        });
-        if (!pwdhasvalue) {
-            IsValid = false;
-            showErrorSnackbar("Password should not be empty");
-        }
+        // Passwords are stored as one-way hashes and are not shown here: a blank field keeps the current password.
         if (IsValid) {
             if ($("#txtDefCustomer").val() != "") {
                 const exists = arrCustomer.filter(acc => acc.label == $("#txtDefCustomer").val().trim());
@@ -1760,8 +1747,10 @@
         $(".clrdiv").html("");
     }
 
-    function openallformsinmypage() {
-        const divs = document.querySelectorAll('#listContainer div');
+function openallformsinmypage() {
+    var results = document.getElementById("qsResults");
+    console.log("results ", results);
+    const divs = document.querySelectorAll('#qsResults');
         const links = [];
 
         // Collect all link hrefs

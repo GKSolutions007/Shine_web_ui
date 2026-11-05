@@ -170,9 +170,19 @@ namespace ShineWeb.DALHelper
             }
             else if (Action == 3)
             {
-                aSqlTransaction.Rollback();
+                SafeRollback(aSqlTransaction);
                 aSqlconnection.Close();
             }
+        }
+        // Rolls back only if the transaction is still alive. When a procedure runs with
+        // SET XACT_ABORT ON, SQL Server rolls the transaction back itself on error; the
+        // SqlTransaction is then "zombied" (Connection == null) and Rollback() would throw
+        // InvalidOperationException, hiding the real SqlException from the caller/log.
+        private static void SafeRollback(SqlTransaction tx)
+        {
+            if (tx == null || tx.Connection == null) return;
+            try { tx.Rollback(); }
+            catch (InvalidOperationException) { /* already completed on the server */ }
         }
         public DataTable dl_ManageTrans(string strStoredProc, params object[] obj)
         {
@@ -203,7 +213,7 @@ namespace ShineWeb.DALHelper
             }
             catch (Exception)
             {
-                aSqlTransaction.Rollback();
+                SafeRollback(aSqlTransaction);
                 throw; // preserve original stack trace
             }
         }

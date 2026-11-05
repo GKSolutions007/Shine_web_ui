@@ -9,44 +9,112 @@ let isRefreshing = false;
 let refreshQueue = [];
 const TOKEN_REFRESH_URL = baseURL + "token/refresh";
 
-function refreshAccessToken(callback) {
-
-    // Refresh already running
-    if (isRefreshing) {
-        refreshQueue.push(callback);
-        return;
+// --- Cross-tab coordination ---------------------------------------------------------------
+// The per-page queue above only serialises requests inside ONE tab. When several tabs are open
+// (or a tab reloads mid-refresh) each tab would otherwise fire its own POST token/refresh, and
+// those concurrent server-side refreshes are exactly the race we are guarding against. We use a
+// BroadcastChannel (with a localStorage fallback) so that when any tab finishes a refresh, the
+// others stop waiting and replay their queued requests against the freshly rotated cookies.
+let refreshChannel = null;
+try {
+    if (typeof BroadcastChannel !== "undefined") {
+        refreshChannel = new BroadcastChannel("shine-token-refresh");
+        refreshChannel.onmessage = function (e) {
+            if (e && e.data === "refreshed") {
+                onRefreshResolved(true);
+            } else if (e && e.data === "failed") {
+                onRefreshResolved(false);
+            }
+        };
     }
+} catch (ex) {
+    refreshChannel = null;
+}
 
-    isRefreshing = true;
+function broadcastRefresh(result) {
+    try {
+        if (refreshChannel) {
+            refreshChannel.postMessage(result ? "refreshed" : "failed");
+        } else {
+            // localStorage 'storage' event fires in OTHER tabs only.
+            localStorage.setItem("shine-token-refresh", result + ":" + Date.now());
+        }
+    } catch (ex) { /* best effort */ }
+}
+
+if (!("BroadcastChannel" in window)) {
+    window.addEventListener("storage", function (e) {
+        if (e.key === "shine-token-refresh" && e.newValue) {
+            onRefreshResolved(e.newValue.indexOf("true:") === 0);
+        }
+    });
+}
+
+// Drain the queue once a refresh (from this tab or another) has resolved.
+function onRefreshResolved(success) {
+    if (!isRefreshing && refreshQueue.length === 0) return;
+    isRefreshing = false;
+
+    if (success) {
+        while (refreshQueue.length > 0) {
+            let cb = refreshQueue.shift();
+            cb();
+        }
+    } else {
+        refreshQueue = [];
+        showUnauthorizedPopup({ redirectUrl: UIURL, seconds: 5 });
+    }
+}
+
+// Perform the refresh POST with a bounded one-time retry on HTTP 409 (Conflict). 409 means a
+// concurrent request already won the rotation on the server; the winning response has already
+// set the new cookies, so retrying once lets this tab pick them up. A hard failure (401/500)
+// means the session is really gone -> redirect to login.
+function doRefreshRequest(onDone, attempt) {
+    attempt = attempt || 0;
 
     $.ajax({
         url: TOKEN_REFRESH_URL,
         type: "POST",
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-        xhrFields: {
-            withCredentials: true
-        },
+        xhrFields: { withCredentials: true },
         success: function () {
+            onDone(true);
+        },
+        error: function (response) {
+            // 409: someone else rotated. Retry once after a short delay to let their Set-Cookie land.
+            if (response && response.status === 409 && attempt < 1) {
+                setTimeout(function () { doRefreshRequest(onDone, attempt + 1); }, 150);
+                return;
+            }
+            console.log(response);
+            onDone(false);
+        }
+    });
+}
 
-            isRefreshing = false;
+function refreshAccessToken(callback) {
 
-            // Retry current request
-            if (callback)
-                callback();
+    // A refresh (in this tab) is already running: just queue and wait.
+    if (isRefreshing) {
+        if (callback) refreshQueue.push(callback);
+        return;
+    }
 
-            // Retry queued requests
+    isRefreshing = true;
+    if (callback) refreshQueue.push(callback);
+
+    doRefreshRequest(function (success) {
+        isRefreshing = false;
+        broadcastRefresh(success);
+
+        if (success) {
             while (refreshQueue.length > 0) {
                 let cb = refreshQueue.shift();
                 cb();
             }
-        },
-        error: function (response) {
-
-            isRefreshing = false;
+        } else {
             refreshQueue = [];
-
-            console.log(response);
-
             showUnauthorizedPopup({
                 redirectUrl: UIURL,
                 seconds: 5

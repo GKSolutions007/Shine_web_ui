@@ -35,7 +35,7 @@
         vehiclemaster: 'fa-truck',
         taxmaster: 'fa-percent',
         taxmasternew: 'fa-percent',
-        taxcompgift: 'fa-gift',
+        taxcompgift: 'fa-percent',
         financialaccount: 'fa-book',
         financialaccountgroup: 'fa-folder-tree',
         faopening: 'fa-scale-balanced',
@@ -45,8 +45,8 @@
         updateproductlocation: 'fa-location-dot',
         updatelocationinproduct: 'fa-location-dot',
         documentseries: 'fa-list-ol',
-        discountscheme: 'fa-tags',
-        discountschemenew: 'fa-tags',
+        discountscheme: 'fa-gift',
+        discountschemenew: 'fa-gift',
         branchmapping: 'fa-sitemap',
         manufacturermapping: 'fa-industry',
         printprofileconfig: 'fa-print',
@@ -60,6 +60,13 @@
         [/categor/i, 'fa-sitemap'],
         [/\buom\b|unit/i, 'fa-ruler'],
         [/bank/i, 'fa-bank'],
+        [/mail/i, 'fa-envelope'],
+        [/period/i, 'fa-calendar'],
+        [/reason/i, 'fa-edit'],
+        [/return t/i, 'fa-reply-all'],
+        [/role/i, 'fa-user-circle'],
+        [/secondary/i, 'fa-tags'],
+        [/discount/i, 'fa-gift'],
         [/route|beat|area|zone|territor/i, 'fa-route'],
         [/state|city|countr|district|location/i, 'fa-location-dot'],
         [/colou?r/i, 'fa-palette'],
@@ -69,7 +76,6 @@
         [/manufactur|company/i, 'fa-industry'],
         [/rack|godown|warehouse|store/i, 'fa-warehouse'],
         [/expense/i, 'fa-wallet'],
-        [/reason/i, 'fa-circle-question']
         [/other/i, 'fa-money-bill-transfer']
     ];
 

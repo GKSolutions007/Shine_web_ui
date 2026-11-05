@@ -1133,7 +1133,7 @@ class GKBSDynamicGrid {
         const rect = headerCell.getBoundingClientRect();
         popup.style.top = `${rect.bottom + window.scrollY}px`;
         popup.style.left = `${rect.left + window.scrollX}px`;
-        popup.style.minWidth = '200px';
+        popup.style.minWidth = '230px';
 
         // 3. Build the content inside the popup
         const isSelected = (optionValue) => optionValue === savedOperator ? 'selected' : '';

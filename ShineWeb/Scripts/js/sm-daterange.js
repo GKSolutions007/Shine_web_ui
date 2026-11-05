@@ -90,7 +90,8 @@
         var fromCell = cellOf(from, root), toCell = cellOf(to, root);
         var period = document.getElementById('cmbFilterDatetype');
         var periodCell = (period && root.contains(period)) ? cellOf(period, root) : null;
-
+        var lbldaterangetext = "Date Range";
+       
         // ---- Build the pill + popover ----
         var uid = 'dvDateRangePop';
         var $wrap = $('<div class="sm-daterange"></div>');
@@ -100,7 +101,7 @@
             '  <input type="text" readonly class="form-control" id="txtDateRangeDisplay" ' +
             '         placeholder="Select date range" aria-haspopup="dialog" aria-expanded="false" ' +
             '         aria-controls="' + uid + '" />' +
-            '  <label class="labelup" for="txtDateRangeDisplay">Date Range</label>' +
+            '  <label class="labelup" for="txtDateRangeDisplay">' + lbldaterangetext +'</label>' +
             '</span>');
         var $pop = $('<div class="sm-daterange-pop" id="' + uid + '" role="dialog" aria-label="Select date range"></div>');
         var $presets = $(
