@@ -9,25 +9,23 @@
     <meta charset="UTF-8">
     <title> @ViewBag.Title</title>
     <link rel="SHORTCUT ICON" href="~/images/G_large_Transparent.png" />
-    @*<link href="https://fonts.googleapis.com/css?family=Roboto:400,100,300,500" rel="stylesheet">*@
     <link href="~/Content/gkbs_icon.css" rel="stylesheet" />
     <link href="~/Content/bootstrap-glyphicons.css" rel="stylesheet" />
     <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
     @* Phase 1 design foundation: tokens + safe component polish.
-       Loaded after Bootstrap so tokens are available, and before the
-       page inline styles + DB-driven theme variables so those still win. *@
+        Loaded after Bootstrap so tokens are available, and before the
+        page inline styles + DB-driven theme variables so those still win. *@
     <link href="~/Content/app-theme.css" rel="stylesheet" />
     <link href="~/Content/Snackbar.css" rel="stylesheet" />
     @* Phase 1 icon consolidation: a single Font Awesome (6) which is backward
-       compatible with the older .fa classes. The duplicate legacy
-       font-awesome.min.css (FA4) was removed. Bootstrap Icons stays on the CDN
-       (the self-hosted copy's font paths point at ~/fonts which doesn't resolve
-       in plain CSS, so the CDN is the reliable source for now). *@
-    @*<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">*@
+        compatible with the older .fa classes. The duplicate legacy
+        font-awesome.min.css (FA4) was removed. Bootstrap Icons stays on the CDN
+        (the self-hosted copy's font paths point at ~/fonts which doesn't resolve
+        in plain CSS, so the CDN is the reliable source for now). *@
     <link href="~/Content/fontawesome.6.0.0.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/Content/jquery-ui.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700&family=Epilogue:wght@400;500&display=swap" rel="stylesheet" />
+    @*<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700&family=Epilogue:wght@400;500&display=swap" rel="stylesheet" />*@
     <link href="~/Unauth/unauth.css" rel="stylesheet" />
     <link href="~/Content/gkbsbuttonstyle.css" rel="stylesheet" />
     <script src="~/Scripts/jquery-3.6.4.min.js"></script>
@@ -2556,6 +2554,12 @@
             --cfd-accent-ring: var(--CloseButton);
         }
 
+        #confirmModal.cfd-print .modal-content {
+            --cfd-accent: var(--PrintButton);
+            --cfd-accent-soft: #fff7ed;
+            --cfd-accent-ring: var(--PrintButton);
+        }
+
         .modern-header {
             position: relative;
             background: transparent;
@@ -2699,19 +2703,21 @@
     <div class="modal fade" id="confirmModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index:5002">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
-
+               
                 <!-- Modern Header -->
                 <div class="modern-header">
+                    <h4 class="modal-title">
+                        
+                    </h4>
                     <!-- Icon badge (one shows at a time, set by JS) -->
                     <div id="modalIcon">
                         <i class="fas fa-save" id="savecfdicon"></i>
                         <i class="fas fa-arrows-rotate" id="clearcfdicon"></i>
                         <i class="fas fa-close" id="closecfdicon"></i>
+                        <i class="fas fa-print" id="printcfdicon"></i>
                     </div>
-                    <h4 class="modal-title" id="confirmHeading">
-                        <i class="fas fa-close me-2"></i> Confirm
-                    </h4>
-                    <button type="button" class="btn-close modern-close"  data-bs-dismiss="modal" aria-label="Close"></button>
+
+                    <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body text-start">
@@ -2742,14 +2748,30 @@
         var autoDraftInterval = null;
         var autosavetimeinterval = (parseInt('@Session["DraftAutoSaveTimeInterval"]') * (60 * 1000));//
         var OneViewAlt1IsCustorVend = 0;
-        var OneViewAlt1PartyID = 0;
-        var Shortcutkeysformname = '';
+var OneViewAlt1PartyID = 0;
+var Shortcutkeysformname = '';
+        var TransRetaindate = "";
         function DraftAutosavetrigger() {
-            var currentItemCount = ProductTable.rows().count();
             var currentNetAmt = document.getElementById("lblRoundNet").getAttribute("lbltag");
+            var currentItemCount = 0;
+            if (typeof G !== "undefined" && G !== null) {
+                var ItemGridData = G.getData();
+                currentItemCount = ItemGridData.length;
+            }
+            else if (ProductTable !== "undefined" && ProductTable !== null) {
+                currentItemCount = ProductTable.rows().count();
+            }
+
             if ((currentItemCount != PreviousItemsCount) || (currentNetAmt != PreviousNetAmt)) {
                 if (nTransMode == 1 || nTransMode == 2) {
-                    PreviousItemsCount = ProductTable.rows().count();
+                    //PreviousItemsCount = ProductTable.rows().count();
+                    if (typeof G !== "undefined" && G !== null) {
+                        var ItemGridData1 = G.getData();
+                        PreviousItemsCount = ItemGridData1.length;
+                    }
+                    else if (ProductTable !== "undefined" && ProductTable !== null) {
+                        PreviousItemsCount = ProductTable.rows().count();
+                    }
                     PreviousNetAmt = document.getElementById("lblRoundNet").getAttribute("lbltag");
                     //$("#btnDraft").click();
                     nIsDraft = 1;
@@ -2799,7 +2821,7 @@
                         if (Threedoticon)
                             columns.push(OtherActions);
 
-                        console.log("Column Settings ", columns);
+                        //console.log("Column Settings ", columns);
                     } else {
                         showErrorSnackbar("No column data found");
                     }
@@ -2874,7 +2896,7 @@
                 //async: false,
                 success: function (data) {
                     if (data.length > 0) {
-                        console.log("data ", data);
+                        //console.log("data ", data);
                         var selchk = {
                             "field": "Select",
                             "header": "Select",
@@ -3339,7 +3361,7 @@
         document.querySelectorAll("#listContainer .qs-src").forEach(function (s) {
             qsAllItems.push({ name: s.dataset.n || "", module: s.dataset.m || "Other", href: s.dataset.h || "" });
         });
-        console.log("qsAllItems ", qsAllItems);
+        //console.log("qsAllItems ", qsAllItems);
         return qsAllItems;
     }
     function qsIconFor(module) {
@@ -3577,7 +3599,7 @@
     $('#btncloseprintapppwd').click(function (e) {
         $("#txtPrintAppPassword").val("");
         //modalPrintAppPassword.style.display = "none";
-        myPrintAppPasswordModal.hide();
+        modalPrintAppPassword.hide();
     });
     var modaliframe = new bootstrap.Modal(document.getElementById('myModalfgiframe'));//document.getElementById("myModalfgiframe");
     //var spaniframe = document.getElementsByClassName("closefgiframe")[0];
@@ -4178,7 +4200,9 @@
 
     var cfFocus = '@Session["ConfirmFocus"]';
     var ClearcfFocus = '@Session["ClearConfirmFocus"]';
-        var ClosecfFocus = '@Session["CloseConfirmFocus"]';
+    var ClosecfFocus = '@Session["CloseConfirmFocus"]';
+    var allowprint = '@Session["AllowPrint"]';
+
     function ConfirmDialogMsg_old(message) {
         //showErrorSnackbar("Save conf popup");
         var IsAccepted = false;
@@ -4237,14 +4261,16 @@
             });
 
     };
-    var ConfirmTriggeredfor = "";
+var ConfirmTriggeredfor = "";
+    var tempprinttriggID = 0, tempprinttriggTypeID = 0, tempprinttriggnConfigID = 0;
+
     //For Save Confirm Dialog
     function ConfirmDialogMsg(message) {
         $("#confirmMessage").text(message);
-        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close").addClass("cfd-save");
+        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close cfd-print").addClass("cfd-save");
         $("#confirmModal").modal("show");
         $("#savecfdicon").show();
-        $("#clearcfdicon,#closecfdicon").hide();
+        $("#clearcfdicon,#closecfdicon,#printcfdicon").hide();
         $("#confirmHeading").text("Save Confirmation");
         ConfirmTriggeredfor = "save";
         setTimeout(function () {
@@ -4261,10 +4287,10 @@
     //For Close Confirm Dialog
     function CloseConfirmDialogMsg(message) {
         $("#confirmMessage").text(message);
-        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close").addClass("cfd-close");
+        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close cfd-print").addClass("cfd-close");
         $("#confirmModal").modal("show");
         $("#closecfdicon").show();
-        $("#clearcfdicon,#savecfdicon").hide();
+        $("#clearcfdicon,#savecfdicon,#printcfdicon").hide();
         $("#confirmHeading").text("Close Confirmation");
         ConfirmTriggeredfor = "close";
         setTimeout(function () {
@@ -4278,10 +4304,10 @@
     //For Clear Confirm Dialog
     function ClearConfirmDialogMsg(message) {
         $("#confirmMessage").text(message);
-        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close").addClass("cfd-clear");
+        $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close cfd-print").addClass("cfd-clear");
         $("#confirmModal").modal("show");
         $("#clearcfdicon").show();
-        $("#closecfdicon,#savecfdicon").hide();
+        $("#closecfdicon,#savecfdicon,#printcfdicon").hide();
         $("#confirmHeading").text("Clear Confirmation");
         ConfirmTriggeredfor = "clear";
         setTimeout(function () {
@@ -4291,7 +4317,26 @@
                 $("#btnNo").trigger("focus");
             }
         }, 500);
-    }
+}
+//For Print Confirm Dialog
+function PrintDialogConfirmMsg(ID, TypeID, nConfigID, message) {
+    $("#confirmMessage").text(message);
+    $("#confirmModal").removeClass("cfd-save cfd-clear cfd-close cfd-print").addClass("cfd-print");
+    $("#confirmModal").modal("show");
+    $("#printcfdicon").show();
+    $("#closecfdicon,#savecfdicon,#clearcfdicon").hide();
+    $("#confirmHeading").text("Print Confirmation");
+    ConfirmTriggeredfor = "print";
+    tempprinttriggID = ID, tempprinttriggTypeID = TypeID, tempprinttriggnConfigID = nConfigID;
+    setTimeout(function () {
+        if (allowprint == 3) {
+        $("#btnYes").trigger("focus");
+           
+        } else {
+            $("#btnNo").trigger("focus");
+        }
+    }, 500);
+}
     // YES CLICK
     $("#btnYes").click(function () {
         $("#confirmModal").modal("hide");
@@ -4301,6 +4346,8 @@
             ClearForm();
         else if (ConfirmTriggeredfor == "close")
             CloseForm();
+        else if (ConfirmTriggeredfor == "print")
+            PrintDocument(tempprinttriggID, tempprinttriggTypeID, tempprinttriggnConfigID);
         else
             showErrorSnackbar("No Action for Yes");
     });
@@ -4432,10 +4479,12 @@ function CloseConfirmDialogMsg_old(message) {
     else {
         $(".clsNo").focus();
     }
-    };
-
-    var allowprint = '@Session["AllowPrint"]';
-    function PrintConfirmDialogMsg(ID, TypeID, nConfigID, message) {
+};
+function PrintConfirmDialogMsg(ID, TypeID, nConfigID, message) {
+    PrintDialogConfirmMsg(ID, TypeID, nConfigID, message);
+   
+    }
+    function PrintConfirmDialogMsg_old(ID, TypeID, nConfigID, message) {
         var IsAccepted = false;
         $(".ui-dialog-titlebar-close").hide();
         $('<div></div>').appendTo('body')
@@ -4703,6 +4752,11 @@ function checkFormPermission(formkey) {
             isValidStatus = true;
         }
         return isValidStatus;
+}
+//RefNoMandDocs
+    function checkRefNoMandatory(TransID) {
+        var perms = localStorage.getItem("RefNoMandDocs");
+        return JSON.parse(perms).filter(lk => lk.TransID == TransID && lk.RefNoMandatory == 1).length > 0
     }
     function ValidateCancelDraftData(nActionType, nTransID, nID, nStatus,nUserID = 0) {
         let result = false;
@@ -5411,7 +5465,9 @@ function checkFormPermission(formkey) {
                     document.body.appendChild(ifr);
                     //URL.revokeObjectURL(pdfURL);
 
-                }).catch(err => { console.log("Failed to load PDF:", err); console.error("Failed to load PDF:", err) });
+                }).catch(err => {
+                    console.log("Failed to load PDF:", err); console.error("Failed to load PDF:", err)
+                });
         }
         else {
             window.open(testlink, '_blank');
@@ -6617,6 +6673,19 @@ function checkFormPermission(formkey) {
             input.setAttribute("autocomplete", "off");
         });
     });
-    
 
+function ApplyRoundoff(dAmt) {
+        var tempround = '@Session["RoundoffValue"]';
+    var Value = 0;
+        if (ConfigRoundtype == 1) {//nearest
+            Value = Math.round(dAmt / tempround) * tempround;
+    }
+        else if (ConfigRoundtype == 2) {//lowest
+        Value = Math.floor(dAmt / tempround) * tempround;
+    }
+        else if (ConfigRoundtype == 3) {//highest
+        Value = Math.ceil(dAmt / tempround) * tempround;
+    }
+     return Value;
+ }
 </script>

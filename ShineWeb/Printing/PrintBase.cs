@@ -1,24 +1,22 @@
 ﻿using ShineWeb.BuisnessLayer;
+using Shinewebprint;
+using Spire.Pdf;
 using System;
 using System.Collections.Generic;
-using System.Drawing.Printing;
-using System.Drawing;
-using System.Linq;
-using System.Web;
-using System.Windows.Forms;
-using System.Data;
 using System.Configuration;
+using System.Data;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Drawing.Printing;
 using System.IO;
-using System.Net.Mail;
+using System.Linq;
 using System.Net;
+using System.Net.Mail;
+using System.Printing;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
-using System.Printing;
-using Spire.Pdf;
+using System.Windows.Forms;
 using Zen.Barcode;
-using System.Diagnostics;
-using Shinewebprint;
-using System.Drawing.Imaging;
 namespace ShineWeb.Printing
 {
     public class PrintBase
@@ -391,7 +389,7 @@ namespace ShineWeb.Printing
                         //load Transaction Data
                         //GetRecordFromDB();
                         //Get Printer Detail Based on Local Machine and Configuration ID 
-                        nCopies = 1;                       
+                        nCopies = 1;
                         GetRecordFromDB();
                         //Get Config and Print Paper Size
                         GetConfigDetail();
@@ -600,7 +598,7 @@ namespace ShineWeb.Printing
                     }
                     //string p = AppDomain.CurrentDomain.BaseDirectory + "\\PDF\\";
                     string pdfFilePath = System.Configuration.ConfigurationManager.AppSettings["SupportFilePath"] + "\\PDF\\";
-                    pdfFilePath= AppDomain.CurrentDomain.BaseDirectory + "\\PDF\\";
+                    pdfFilePath = AppDomain.CurrentDomain.BaseDirectory + "\\PDF\\";
 
                     string strFileName = Convert.ToString(dtMailData.Rows[5][0]) + "_" + DateTime.Now.ToString("yyyyMMddHHmmssffff");
 
@@ -623,7 +621,7 @@ namespace ShineWeb.Printing
                         printDoc.Print();
                     }
 
-                    
+
                     //old
                     //using (PdfDocument spirePdfCreater = new PdfDocument())
                     //{
@@ -640,7 +638,7 @@ namespace ShineWeb.Printing
                     string xpsfilename = pdfFilePath + strFileName + ".xps";
                     strFileName = strFileName + ".pdf";
                     FinalFileName = pdfFilePath + strFileName;
-                    if(System.IO.File.Exists(xpsfilename))
+                    if (System.IO.File.Exists(xpsfilename))
                     {
                         System.IO.File.Delete(xpsfilename);
                     }
@@ -743,14 +741,14 @@ namespace ShineWeb.Printing
             }
             catch (Exception)
             {
-                
+
             }
             finally
             {
                 if (IsFinished)
                 {
                     string[] filePaths = Directory.GetFiles(pdfTempPath, "*.pdf", SearchOption.TopDirectoryOnly);
-                    string opPth =  MergePDF.MergeAllPDF(pdfMainPath, filePaths);
+                    string opPth = MergePDF.MergeAllPDF(pdfMainPath, filePaths);
                     GroupPDFoutputPath = opPth;
                     DeleteDirectory(pdfTempPath, strFileName);
                     //ProcessStartInfo startInfo = new ProcessStartInfo(opPth);
@@ -2279,7 +2277,7 @@ namespace ShineWeb.Printing
                     }
                     else
                     {
-                        
+
                         if (printMode == 1)
                         {
                             if (dtGetBodyVal.Rows.Count > 0)
@@ -2321,7 +2319,7 @@ namespace ShineWeb.Printing
                                     .Insert(character, toWrite);
                     }
                 }
-                else if(Mode == "Box")
+                else if (Mode == "Box")
                 {
                     Rectangle rt = new Rectangle(int.Parse(row[12].ToString()),
                             int.Parse(row[13].ToString()),
@@ -2410,7 +2408,7 @@ namespace ShineWeb.Printing
                            int.Parse(row[13].ToString()),
                            int.Parse(row[10].ToString()),
                            int.Parse(row[11].ToString()));
-                        g.DrawImage(img, rt,0, 0, img.Width, img.Height, GraphicsUnit.Pixel, imgAttributes);
+                        g.DrawImage(img, rt, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, imgAttributes);
                     }
                     else
                     {

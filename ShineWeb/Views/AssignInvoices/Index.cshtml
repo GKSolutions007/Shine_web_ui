@@ -1864,7 +1864,12 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnClose,#btnDocFilter,#btnViewInvoices, #btnAddInvoices,#chkSelectAllInvoice").prop("disabled", false);
         GetData(1);
         $("#btnEmail,#btnWhatsapp").hide();
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         setDate("dtpDocTo", 0);
         SetFilterDate();
         nIsDraft = 0;
@@ -1873,7 +1878,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             $(".dvDocuments,#dvDocFilters").show();
         }
         CheckedInvoices = [];
-        $("#txtNoofCopies").val("1");
+        //$("#txtNoofCopies").val("1");
         InvoiceTable = $('#tblInvoiceData').DataTable();
         $('#chkSelectAllInvoice').prop("checked", false);
         $('#chkSelectAllInvoice').prop("disabled", false);
@@ -1891,6 +1896,13 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             //$("#txtBranchName").val(DefBranch);
             LoadBranchByRoles('#txtBranchName');
         }, 500);
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#txtBranchName").val();
+                GetDocumentID(DocDate, Branch, 21);
+            }, 1000);
+        }
     }
     var CheckedInvoices = [];
     //~Validation
@@ -1915,6 +1927,14 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             IsValid = false;
             $("#divErrDate").html("Party should not be empty");
             showErrorSnackbar("Party should not be empty");
+        }
+        if (checkRefNoMandatory(21) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
         }
         if (IsValid) {
             if (InvoiceTable.rows().count() > 0) {
@@ -1954,88 +1974,88 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     }
     function SaveData() {
 
-            $("#btnSave").prop("disabled", true);
-            //showErrorSnackbar("Validation success");
-            var listTrans = {
-                "ID": $("#txtID").val(),
-                "Date": $("#dtpDate").val(),
-                "TransMode": nTransMode,
-                "TransID": 21,
-                "DocID": $("#lblDocID").val(),
-                "SalesmanID": $("#cmbSalesman").val(),
-                "BranchID": $("#txtBranchName").val(),
-                "RefNo": $("#txtRefNo").val(),
-                "Remarks": $("#txtRemarks").val(),
-                "Narration": $("#txtNarration").val(),
-                "Status": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode == 2 ? 3 : $("#txtStatus").val(),
-                "CurrentStatus": $("#txtStatus").val(),
-                "CBy": UID,
-                "UDFId" : 0,
-                "lstAssignDetails": CheckedInvoices,
-            }
-            $.ajax({
-                url: Aurl + "assigninvoices/save",
-                type: 'POST',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(listTrans),
-                cache: false,
-                processData: false,
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function (data) {
-                    $("#btnSave").prop("disabled", false);
-                    $.each(data, function (i, items) {
-                        if (items.MsgID == 0) {
-                            showSuccessSnackbar(items.Message);
-                            //ClearForm();
-                            if (nTransMode != 4) {
-                                if (allowprint == 1) {
-                                    PrintDocument(items.ID, PrintTransID, PrintConfigID);
-                                } else if (allowprint == 3 || allowprint == 4) {
-                                    PrintConfirmDialogMsg(items.ID, PrintTransID, PrintConfigID, "Do you want to print ?");
-                                }
-                                //if (SendAutoMail == 1)
-                                {
-                                    //EmailDocument(items.ID, PrintTransID, PrintConfigID);
-                                    AutoEmailDocument(items.ID, PrintTransID);
-                                }
+        $("#btnSave").prop("disabled", true);
+        //showErrorSnackbar("Validation success");
+        TransRetaindate = $("#dtpDate").val();
+        var listTrans = {
+            "ID": $("#txtID").val(),
+            "Date": $("#dtpDate").val(),
+            "TransMode": nTransMode,
+            "TransID": 21,
+            "DocID": $("#lblDocID").val(),
+            "SalesmanID": $("#cmbSalesman").val(),
+            "BranchID": $("#txtBranchName").val(),
+            "RefNo": $("#txtRefNo").val(),
+            "Remarks": $("#txtRemarks").val(),
+            "Narration": $("#txtNarration").val(),
+            "Status": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode == 2 ? 3 : $("#txtStatus").val(),
+            "CurrentStatus": $("#txtStatus").val(),
+            "CBy": UID,
+            "UDFId": 0,
+            "lstAssignDetails": CheckedInvoices,
+        }
+        $.ajax({
+            url: Aurl + "assigninvoices/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(listTrans),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        showSuccessSnackbar(items.Message);
+                        //ClearForm();
+                        if (nTransMode != 4) {
+                            if (allowprint == 1) {
+                                PrintDocument(items.ID, PrintTransID, PrintConfigID);
+                            } else if (allowprint == 3 || allowprint == 4) {
+                                PrintConfirmDialogMsg(items.ID, PrintTransID, PrintConfigID, "Do you want to print ?");
                             }
-                            ClearForm();
-                            GetFilterData();
+                            //if (SendAutoMail == 1)
+                            {
+                                //EmailDocument(items.ID, PrintTransID, PrintConfigID);
+                                AutoEmailDocument(items.ID, PrintTransID);
+                            }
                         }
-                        else if (items.MsgID == 2) {
-                            showErrorSnackbar(items.Message);
-                            ViewaddedInvoices();
-                            setTimeout(() => {
-                                console.log("Color fill trigger");
-                                var errorinvoices = items.ID.split(',');
-                                $("#tblInvoiceDataView tbody tr").each(function () {
-                                    console.log("Row cell", $(this).find("p,label,input, select"));
-                                    var rowdata = InvoiceDataView.row($(this)).data();
-                                    InvID = rowdata.ID;
-                                    InvSts = rowdata.Status;
-                                    $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 100).css("background-color", "");
-                                    if (errorinvoices.includes(String(InvID))) {
-                                        $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 800).css("background-color", "pink").attr("title", items.Message);
-                                    }
-                                });
-                            }, 1500);
-                        }
-                        else {
-                            //$("#dvErrorName").html(items.Message);
-                            showErrorSnackbar(items.Message);                                                       
-                        }
-                    });
-                }, error: function (data) {
-                    $("#btnSave").prop("disabled", false);
-                    if (data.status == "401") {
-                        var msg = data.responseJSON.Message;
-                        ////showErrorSnackbar(msg + " Logout and Login again.");
+                        ClearForm();
+                        GetFilterData();
                     }
+                    else if (items.MsgID == 2) {
+                        showErrorSnackbar(items.Message);
+                        ViewaddedInvoices();
+                        setTimeout(() => {
+                            console.log("Color fill trigger");
+                            var errorinvoices = items.ID.split(',');
+                            $("#tblInvoiceDataView tbody tr").each(function () {
+                                console.log("Row cell", $(this).find("p,label,input, select"));
+                                var rowdata = InvoiceDataView.row($(this)).data();
+                                InvID = rowdata.ID;
+                                InvSts = rowdata.Status;
+                                $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 100).css("background-color", "");
+                                if (errorinvoices.includes(String(InvID))) {
+                                    $(this).find(" td,p,label,input, select").animate({ color: 'black' }, 800).css("background-color", "pink").attr("title", items.Message);
+                                }
+                            });
+                        }, 1500);
+                    }
+                    else {
+                        //$("#dvErrorName").html(items.Message);
+                        showErrorSnackbar(items.Message);
+                    }
+                });
+            }, error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    ////showErrorSnackbar(msg + " Logout and Login again.");
                 }
-            });
-
+            }
+        });
     }
     $("#btnSave").click(function () {
         if (SaveValidation()) {

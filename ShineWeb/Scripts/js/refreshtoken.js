@@ -87,7 +87,7 @@ function doRefreshRequest(onDone, attempt) {
                 setTimeout(function () { doRefreshRequest(onDone, attempt + 1); }, 150);
                 return;
             }
-            console.log(response);
+            //console.log(response);
             onDone(false);
         }
     });
@@ -189,7 +189,7 @@ $(document).ajaxStart(function () {
             String(now.getSeconds()).padStart(2, '0') + ":" +
             String(now.getMilliseconds()).padStart(3, '0');
 
-        console.log("Loader Start (Delayed)", timestamp);
+        //console.log("Loader Start (Delayed)", timestamp);
 
         $("#RepLoadersnackbar").addClass("show");
         $("#RepLoaderOverlay").addClass("show");
@@ -208,7 +208,7 @@ $(document).ajaxStop(function () {
         String(now.getSeconds()).padStart(2, '0') + ":" +
         String(now.getMilliseconds()).padStart(3, '0');
 
-    console.log("Loader Stop", timestamp);
+    //console.log("Loader Stop", timestamp);
 
     // ❌ If request finished before 3 sec → cancel showing loader
     if (ajaxLoaderTimer) {

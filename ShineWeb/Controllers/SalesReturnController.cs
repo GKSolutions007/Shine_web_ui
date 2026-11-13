@@ -1,10 +1,7 @@
 ﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -34,7 +31,7 @@ namespace ShineWeb.Controllers
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
 
-                ViewData["FormName"] = Name.Replace("Sales","Saleable");
+                ViewData["FormName"] = Name.Replace("Sales", "Saleable");
                 ViewData["FormID"] = decFormID;
                 string AddPerm = dtPermission.Select("MenuName = 'Create " + Name + "'", null).Length > 0 ? "1" : "0";
                 string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 ? "1" : "0";

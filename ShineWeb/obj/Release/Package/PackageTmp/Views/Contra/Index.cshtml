@@ -1989,9 +1989,15 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         LoadBranchByRoles('#txtBranchName,#cmbFilterBranch');
         //$("#lnkViewFromBank, #lnkViewToBank").hide();
         document.getElementById("amountWords").innerHTML = "";
-        GetData(1, "");
         inputTag = [];
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
+        GetData(1, "");
+
         SetFilterDate();
         SetTagZero();
         setTimeout(function () {
@@ -2005,6 +2011,15 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#btnSave,#btnClose,#btnDraft,#btnClear").show();
         if ($("#txtEnableBranch").val() == 1) {
             $("#txtBranchName").prop("disabled", true);
+        }
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#txtBranchName").val();
+                if (Branch > 0 && DocDate !== "") {
+                    GetDocumentID(DocDate, Branch, FID);
+                }
+            }, 1000);
         }
     }
     $("#btnSave").click(function () {
@@ -2035,6 +2050,14 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             IsValid = false;
             $("#divErrToAccount").html("Select Account *");
             showErrorSnackbar("Select  Account");
+        }
+        if (checkRefNoMandatory(FID) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
         }
         if ($("#cmbType").val() == 3 & ($("#cmbMode").val() == 3 || $("#cmbMode").val() == 4 || $("#cmbMode").val() == 5)) {
             if ($("#txtNEFT").val() == "") {
@@ -2413,7 +2436,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
         var nStatus = $("#txtStatus").val() !== "" ? $("#txtStatus").val() : 1;
-
+        TransRetaindate = $("#dtpDate").val();
         var lstMaster = {
             "TransID": FID,
             "TransMode": nTransMode,

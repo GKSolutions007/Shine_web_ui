@@ -1,10 +1,7 @@
 ﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -34,7 +31,7 @@ namespace ShineWeb.Controllers
                 string decFormID = !string.IsNullOrEmpty(strFormID) ? clsEncryptDecrypt.Decrypt(strFormID) : "";
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);
-                
+
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
                 SingleMasterModel dam = new SingleMasterModel();

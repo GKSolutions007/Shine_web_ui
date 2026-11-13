@@ -1785,9 +1785,15 @@ $("#chkShowAll").prop("checked", Showall == '1');
         $(".clrdivs").html("");
         
         $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnClose,.FormfilterclrField,#chkSelectAllInvoice,#btnApplyFilter").prop("disabled", false);
-        GetData(1);
+        
         $("#btnEmail,#btnWhatsapp").hide();
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
+        GetData(1);
         setDate("dtpInvFFrom", 0);
         setDate("dtpInvFTo", 0);
         SetFilterDate();
@@ -1796,7 +1802,7 @@ $("#chkShowAll").prop("checked", Showall == '1');
             $(".dvMain").hide();
             $(".dvDocuments,#dvDocFilters").show();
         }
-        $("#txtNoofCopies").val("1");
+        //$("#txtNoofCopies").val("1");
         ProductTable.draw().clear(); ProductTable.draw().clear();
         InvoiceTable.draw().clear(); InvoiceTable.draw().clear();
         
@@ -1817,6 +1823,13 @@ $("#chkShowAll").prop("checked", Showall == '1');
             var Branch = $("#txtBranchName").val();
             GetDocumentID(DocDate, Branch, 23);
         }, 500);
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#txtBranchName").val();
+                GetDocumentID(DocDate, Branch, 23);
+            }, 1000);
+        }
     }
     //~Validation
     var CheckedInvoiceIDs = "",CheckedInvoiceIDStatus = "";
@@ -1832,7 +1845,14 @@ $("#chkShowAll").prop("checked", Showall == '1');
             $("#divErrDate").html("Date should not be empty");
             showErrorSnackbar("Date should not be empty");
         }
-
+        if (checkRefNoMandatory(23) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
+        }
         if (ProductTable.rows().count() == 0) {
             IsValid = false;
             $("#dvErrorDocid").html("Add atleat one product in Grid");
@@ -1881,6 +1901,7 @@ $("#chkShowAll").prop("checked", Showall == '1');
     function SaveData() {
         if (SaveValidation()) {
             $("#btnSave").prop("disabled", true);
+            TransRetaindate = $("#dtpDate").val();
             var listTrans = {
                 "TransMode": nTransMode,
                 "ID": $("#txtID").val(),
@@ -1950,4 +1971,24 @@ $("#chkShowAll").prop("checked", Showall == '1');
             SaveData();
         }
     });
+   
+    //~View from another form(Home, Fin Rep Space click)
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
+        nTransMode = 5;
+        var ID = $("#txtID").val();
+        setTimeout(() => {
+            GetDeliveryData(3, ID);
+        }, 1000);
+       
+        $(".FormclrField,.FormclrcmbField,.FormfilterclrField").prop("disabled", true);
+        $("#btnSave,#btnClear,#btnDocFilter,#chkSelectAllInvoice").prop("disabled", true);
+        $("#btnSave,#btnClear,#btnDraft,#btnApplyFilter").prop("disabled", true);
+        $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
+        $("#btnPreview,#btnPDF,#btnPrint").show();
+        $("#btnSave,#btnClear,#btnDraft,#btnLoadProduct").hide();
+        $(".dvMain").show();
+        $(".dvDocuments,#dvDocFilters").hide();
+        $("#btnEmail,#btnWhatsapp").show();
+        $("#MainHeading").text("View Delivery");
+    }
 </script>

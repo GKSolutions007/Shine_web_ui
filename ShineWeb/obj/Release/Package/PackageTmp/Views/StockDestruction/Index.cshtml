@@ -1873,15 +1873,17 @@ function setDate1(FieldID,Type) {
         ProductTable.clear().draw();
         ProductTable.clear().draw();
         var qtyonly = 0;
-        setTimeout(() => {
-            var DocDate = $("#dtpDate").val();
-            var Branch = $("#cmbBranch").val();
-            GetDocumentID(DocDate, Branch, 26);
-        }, 1000);
+       
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         GetData(1);
-        setDate("dtpDate", 0);
+
         SetFilterDate();
         setTimeout(function () {
             GetData(2);
@@ -1893,7 +1895,7 @@ function setDate1(FieldID,Type) {
             $(".dvMain").hide();
             $(".dvDocuments,#dvDocFilters").show();
         }
-        $("#txtNoofCopies").val("1");
+        //$("#txtNoofCopies").val("1");
         SetTagZero();
         mind = document.getElementById("dtpDate").getAttribute("max");
         $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
@@ -1907,6 +1909,11 @@ function setDate1(FieldID,Type) {
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
         }
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 26);
+        }, 1000);
     }
 
 
@@ -2197,6 +2204,14 @@ function setDate1(FieldID,Type) {
             $("#divErrDate").html("Party should not be empty");
             showErrorSnackbar("");
         }
+        if (checkRefNoMandatory(26) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
+        }
         if ($("#lblPTAmt").text() == "") {
             IsValid = false;
             showErrorSnackbar("Net Amount should be greater than Zero")
@@ -2275,6 +2290,7 @@ function setDate1(FieldID,Type) {
         if (SaveValidation()) {
             $("#btnSave").prop("disabled", true);
             addProdinArray();
+            TransRetaindate = $("#dtpDate").val();
             var listTrans = {
                 "IsDraft": nIsDraft,
                 "ID": $("#txtID").val(),
@@ -2363,7 +2379,11 @@ function setDate1(FieldID,Type) {
         $(".dvMain").show();
         $(".dvDocuments,#dvDocFilters").hide();
         $("#btnEmail,#btnWhatsapp").show();
+        $("#dvItemselection").hide();
         $("#MainHeading").text("View " + $("#txtFormName").val());
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
     }
 
 </script>

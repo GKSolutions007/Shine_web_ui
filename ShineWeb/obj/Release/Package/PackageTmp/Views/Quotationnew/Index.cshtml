@@ -1501,7 +1501,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         }
     }
     var txtValuechanged = false;
-    function ApplyRoundoff(dAmt) {
+    function ApplyRoundoff_old(dAmt) {
         var Value = 0;
         if (ConfigRoundtype == 1) {//nearest
             Value = Math.round(dAmt)
@@ -2039,6 +2039,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     baseprice = parseFloat(ApplyPrice);
                     var PPrice = parseFloat(ApplyPrice * items.SalesCR);
                     var InclPPrice = dApponMRPCum > 0 ? PPrice + dMRPonTax : PPrice * TaxPern;
+                    startAutoDraftSave();
                     gridrow.patch(rowindex, {
                         itemName: items.Name, code: items.Code, productID: +items.ID || 0, mrp: +items.MRP || 0, stock: $("#lblTempABS").text() || "0.00",
                         ApponMRPCum: dApponMRPCum, MRPonTaxAmt: dMRPonTax, OrgPrice: +baseprice || 0,
@@ -2817,7 +2818,13 @@ function CloseForm() {
                 e.preventDefault();
                 const c = vis[+h.dataset.i], x0 = e.clientX, w0 = c.width, col = this.el.querySelectorAll('col')[h.dataset.i], t = this.el.querySelector('table');
                 const mv = m => { c.width = Math.max(50, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
-                const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up) };
+                const up = () => {
+                    removeEventListener('pointermove', mv);
+                    removeEventListener('pointerup', up);
+                    var field = c.id;
+                    var newWidth = c.width;
+                    UpdateColumnWidth(1, 1, 3, 0, field, newWidth)
+                };
                 addEventListener('pointermove', mv); addEventListener('pointerup', up)
             });
             if (this.cfg.onRender) this.cfg.onRender(this);               // e.g. bind autocomplete to every row's item field
@@ -3474,6 +3481,14 @@ function CloseForm() {
             $("#divErrDate").html("Party should not be empty");
             showErrorSnackbar("Party should not be empty");
         }
+        if (checkRefNoMandatory(14) && (nIsDraft == 0 && nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+    }
+}
         if ($("#lblPTNet").text() == "") {
             IsValid = false;
             //$("#divErrDate").html("Party should not be empty");
@@ -3534,6 +3549,7 @@ function CloseForm() {
             $("#btnSave").prop("disabled", true);
             //showErrorSnackbar("Validation success");
             addProdinArray();
+            TransRetaindate = $("#dtpDate").val();
             var listTrans = {
                 "IsDraft": nIsDraft,
                 "ID": $("#txtID").val(),
@@ -3606,7 +3622,11 @@ function CloseForm() {
                                         AutoEmailDocument(items.ID, PrintTransID);
                                     }
                                 }
-                                ClearForm();
+                                if ($("#txtTransType").val() == 1 || $("#txtTransType").val() == 2 || $("#txtTransType").val() == 3) {
+                                    window.close();
+                                } else {
+                                    ClearForm();
+                                }
                             }
                             else {
                                 $("#txtDraftID").val(items.ID);
@@ -3652,10 +3672,9 @@ function CloseForm() {
                     //$("#cmbCreditTerm").val(items.PaymentTermID),$("#cmbPaymode").val(items.PaymentModeID),
                     $("#txtCustomerID").val(items.CustomerID);
 
-                    $("#dtpDate").val(items.DocDate),
-                        $("#cmbBranch").val(items.BranchID);
+                    $("#dtpDate").val(items.DocDate), $("#cmbBranch").val(items.BranchID);
                     if (nTransMode != 3) {
-                        $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
+                        $("#lblDocID").text(items.DocId).attr("docprefix", items.DocPrefix);
                     }
                     $("#cmbPriceType").val(items.PriceID);
                     $("#cmbPriceType").prop("disabled", nTransMode == 4 || nTransMode == 5);
@@ -3755,7 +3774,7 @@ function CloseForm() {
                     $("#dtpDate").val(items.DocDate),
                         $("#cmbBranch").val(items.BranchID);
                     if ($("#txtTransType").val() != 3) {
-                        $("#lblDocID").text(items.DocID);
+                        $("#lblDocID").text(items.DocId);
                     }
                     $("#cmbPriceType").prop("disabled", false);
                     $("#cmbPriceType").val(items.PriceID);
@@ -3840,14 +3859,21 @@ function CloseForm() {
         $("#txtRoundOff").val("0.00"); $("#lblRoundNet").text("0.00");
         $("#lblPTCount").text("0");
         $("#lblCode,#lblProdCodeAS").text(""), $("#cmbRating").text(""), $("#lblMob1").text(""), $("#lblGSTIN").text("");
-        //$("#txtNoofCopies").val("1");
+        ////$("#txtNoofCopies").val("1");
         $("#btnEmail,#btnWhatsapp").hide();
         G.setLocked(false);
         G.clearAllRows();
+
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         GetData(1);
         //GetData(6);
         SetTagZero();
-        setDate("dtpDate", 0);
+        
         SetFilterDate();
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');

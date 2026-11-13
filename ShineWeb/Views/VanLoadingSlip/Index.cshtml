@@ -2440,7 +2440,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         var itemrow = ProductTable.rows().count();
         $("#cmbPriceType").prop("disabled", itemrow > 0);
     }
-    function ApplyRoundoff(dAmt) {
+    function ApplyRoundoff_old(dAmt) {
         var Value = 0;
         if (ConfigRoundtype == 1) {//nearest
             Value = Math.round(dAmt)
@@ -2953,11 +2953,17 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#btnSave,#btnClose,#btnDraft,#btnClear,#btnNewProd").show();
         ProductTable.draw().clear();
         ProductTable.draw().clear();
-        $("#txtNoofCopies").val("1");
-        GetData();
+        //$("#txtNoofCopies").val("1");
+       
         SetTagZero();
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         SetFilterDate();
+        GetData();
         LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
         GetFilterData();
 
@@ -2976,10 +2982,15 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
 
         setTimeout(() => {
             GetProductList();
-
             calculateProdGrid();
         }, 300);
-
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#cmbBranch").val();
+                GetDocumentID(DocDate, Branch, 24);
+            }, 1000);
+        }
     }
     //~Validation
     function SaveValidation() {
@@ -3007,6 +3018,14 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             $("#divErrDate").html("Party should not be empty");
             showErrorSnackbar("Party should not be empty");
         }
+        if (checkRefNoMandatory(24) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+    }
+}
         if ($("#lblPTQty").text() == "") {
             IsValid = false;
             //$("#divErrDate").html("Party should not be empty");
@@ -3077,106 +3096,106 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     }
     //~Save
     function SaveData() {
-
-            $("#btnSave").prop("disabled", true);
-            addProdinArray();
-            var listTrans = {
-                "IsDraft": 0,
-                "ID": $("#txtID").val(),
-                "DocDate": $("#dtpDate").val(),
-                "TransMode": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode,
-                "TransID": 24,
-                "BranchID": $("#cmbBranch").val(),
-                "DocID": $("#lblDocID").val(),
-                "SalesmanID": $("#cmbSalesman").val(),
-                "RefNo": $("#txtRefNo").val(),
-                "PriceID": $('#cmbPriceType').val(),
-                "RoundOffAmt": document.getElementById("txtRoundOff").getAttribute("txttag"),//$("#txtRoundOff").val(),
-                "GrossAmt": document.getElementById("lblPTGross").getAttribute("lbltag"),//$("#lblPTGross").text(),
-                "TaxAmt": document.getElementById("lblPTTax").getAttribute("lbltag"),//$("#lblPTTax").text(),
-                "NetAmt": document.getElementById("lblRoundNet").getAttribute("lbltag"),//$("#lblRoundNet").text(),
-                "Status": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode == 2 ? 3 : $("#txtStatus").val(),
-                "CurrentStatus": $("#txtStatus").val(),
-                "UserID": UID,
-                "Remarks": $("#txtRemarks").val(),
-                "Narration": $("#txtNarration").val(),
-                "VehicleNo": $("#cmbVehicleNo").val(),
-                "Distance": $("#txtDistance").val(),
-                "TransportType": $("#cmbTransportType option:selected").text(),
-                "TransportMode": $("#cmbTransportMode option:selected").text(),
-                "TransactionID": $("#txtTransportID").val(),
-                "TransactionName": $("#txtTransportName").val(),
-                "lstProdInfo": ProductArray,
-            }
-            $.ajax({
-                url: Aurl + "vanloadslip/save",
-                type: 'POST',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(listTrans),
-                cache: false,
-                processData: false,
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function (data) {
-                    $("#btnSave").prop("disabled", false);
-                    $.each(data, function (i, items) {
-                        if (items.MsgID == 0) {
-                            //alert(items.Message);
-                            showSuccessSnackbar(items.Message);
-                            if (nIsDraft == 0) {
-                                if (nTransMode != 4) {
-                                    if (allowprint == 1) {
-                                        PrintDocument(items.ID, PrintTransID, PrintConfigID);
-                                    } else if (allowprint == 3 || allowprint == 4) {
-                                        PrintConfirmDialogMsg(items.ID, PrintTransID, PrintConfigID, "Do you want to print ?");
-                                    }
-                                    //if (SendAutoMail == 1)
-                                    {
-                                        //EmailDocument(items.ID, PrintTransID, PrintConfigID);
-                                        AutoEmailDocument(items.ID, PrintTransID);
-                                    }
+        $("#btnSave").prop("disabled", true);
+        addProdinArray();
+        TransRetaindate = $("#dtpDate").val();
+        var listTrans = {
+            "IsDraft": 0,
+            "ID": $("#txtID").val(),
+            "DocDate": $("#dtpDate").val(),
+            "TransMode": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode,
+            "TransID": 24,
+            "BranchID": $("#cmbBranch").val(),
+            "DocID": $("#lblDocID").val(),
+            "SalesmanID": $("#cmbSalesman").val(),
+            "RefNo": $("#txtRefNo").val(),
+            "PriceID": $('#cmbPriceType').val(),
+            "RoundOffAmt": document.getElementById("txtRoundOff").getAttribute("txttag"),//$("#txtRoundOff").val(),
+            "GrossAmt": document.getElementById("lblPTGross").getAttribute("lbltag"),//$("#lblPTGross").text(),
+            "TaxAmt": document.getElementById("lblPTTax").getAttribute("lbltag"),//$("#lblPTTax").text(),
+            "NetAmt": document.getElementById("lblRoundNet").getAttribute("lbltag"),//$("#lblRoundNet").text(),
+            "Status": nTransMode == 1 || nTransMode == 3 ? 1 : nTransMode == 2 ? 3 : $("#txtStatus").val(),
+            "CurrentStatus": $("#txtStatus").val(),
+            "UserID": UID,
+            "Remarks": $("#txtRemarks").val(),
+            "Narration": $("#txtNarration").val(),
+            "VehicleNo": $("#cmbVehicleNo").val(),
+            "Distance": $("#txtDistance").val(),
+            "TransportType": $("#cmbTransportType option:selected").text(),
+            "TransportMode": $("#cmbTransportMode option:selected").text(),
+            "TransactionID": $("#txtTransportID").val(),
+            "TransactionName": $("#txtTransportName").val(),
+            "lstProdInfo": ProductArray,
+        }
+        $.ajax({
+            url: Aurl + "vanloadslip/save",
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(listTrans),
+            cache: false,
+            processData: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (data) {
+                $("#btnSave").prop("disabled", false);
+                $.each(data, function (i, items) {
+                    if (items.MsgID == 0) {
+                        //alert(items.Message);
+                        showSuccessSnackbar(items.Message);
+                        if (nIsDraft == 0) {
+                            if (nTransMode != 4) {
+                                if (allowprint == 1) {
+                                    PrintDocument(items.ID, PrintTransID, PrintConfigID);
+                                } else if (allowprint == 3 || allowprint == 4) {
+                                    PrintConfirmDialogMsg(items.ID, PrintTransID, PrintConfigID, "Do you want to print ?");
                                 }
-                                ClearForm();
-                                setTimeout(()=>{
-                                    Addprodgridline();
-                                }, 500);
-                            }
-                            else {
-                                $("#txtDraftID").val(items.ID);
-                            }
-                        }
-                        else if (items.ID == "0") {//Qty Mismatched
-                            showErrorSnackbar(items.Message);
-                        }
-                        else {//Qty Mismatched
-                            showErrorSnackbar(items.Message);
-                            var errorids = items.ID.split(',');
-                            console.log("errorids : ", errorids);
-                            $("#tblProductData tbody tr").each(function () {
-                                var rowdata = ProductTable.row($(this)).data();
-                                var ProdID = rowdata[0];
-                                var itemfield = $(rowdata[14]);
-                                var itemname = itemfield[0].value;
-                                var RIndex = (ProductTable.row($(this)).index()) + 1;
-                                $(this).css("color", "black");
-                                $(this).find("p,label,input, select").animate({ color: 'black' }, 100);
-                                if (errorids.includes(ProdID.toString())) {// ProdID == items.RowID
-                                    $(this).css("color", "red");
-                                    $(this).find("p,label,input, select").animate({ color: 'red' }, 1000);
-                                    //showErrorSnackbar("Error in Product : " + itemname);
+                                //if (SendAutoMail == 1)
+                                {
+                                    //EmailDocument(items.ID, PrintTransID, PrintConfigID);
+                                    AutoEmailDocument(items.ID, PrintTransID);
                                 }
-                            });
+                            }
+                            ClearForm();
+                            setTimeout(() => {
+                                Addprodgridline();
+                            }, 500);
                         }
-                    });
-                }, error: function (data) {
-                    $("#btnSave").prop("disabled", false);
-                    if (data.status == "401") {
-                        var msg = data.responseJSON.Message;
-                        //showErrorSnackbar(msg + " Logout and Login again.");
+                        else {
+                            $("#txtDraftID").val(items.ID);
+                        }
                     }
+                    else if (items.ID == "0") {//Qty Mismatched
+                        showErrorSnackbar(items.Message);
+                    }
+                    else {//Qty Mismatched
+                        showErrorSnackbar(items.Message);
+                        var errorids = items.ID.split(',');
+                        console.log("errorids : ", errorids);
+                        $("#tblProductData tbody tr").each(function () {
+                            var rowdata = ProductTable.row($(this)).data();
+                            var ProdID = rowdata[0];
+                            var itemfield = $(rowdata[14]);
+                            var itemname = itemfield[0].value;
+                            var RIndex = (ProductTable.row($(this)).index()) + 1;
+                            $(this).css("color", "black");
+                            $(this).find("p,label,input, select").animate({ color: 'black' }, 100);
+                            if (errorids.includes(ProdID.toString())) {// ProdID == items.RowID
+                                $(this).css("color", "red");
+                                $(this).find("p,label,input, select").animate({ color: 'red' }, 1000);
+                                //showErrorSnackbar("Error in Product : " + itemname);
+                            }
+                        });
+                    }
+                });
+            }, error: function (data) {
+                $("#btnSave").prop("disabled", false);
+                if (data.status == "401") {
+                    var msg = data.responseJSON.Message;
+                    //showErrorSnackbar(msg + " Logout and Login again.");
                 }
-            });
+            }
+        });
 
     }
     $("#btnSave").click(function () {
@@ -3206,17 +3225,21 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             GetDocumentID(DocDate, Branch, 24);
         }, 1000);
     }
-    //~View from another form(Home, Fin Rep Space click)
+//~View from another form(Home, Fin Rep Space click)
     if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
+        nTransMode = 5;
         var ID = $("#txtID").val();
-        GetProductViewData(7, ID);
-        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnClose").prop("disabled", false);
+        ViewActionButtonPermission();
+        GetProductViewData(ID, 1);
+        $(".FormclrField,.FormclrcmbField,#txtRemarks,#txtNarration").prop("disabled", true);
+        $("#btnSave,#btnClear,#btnDraft,#btnClear,#btnNewProd").hide();
+        $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp").show();
         $(".dvMain").show();
-        $("#btnEmail,#btnWhatsapp").show();
-        $(".dvDocuments,#dvDocFilters").hide();
+        $(".dvDocuments,#dvDocFilters,.dvclsforhdview").hide();
         $("#MainHeading").text("View " + $("#txtFormName").val());
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+        }
     }
         var Url = '@Session["url"].ToString()';
     $("#opensalesman").click(function (e) {

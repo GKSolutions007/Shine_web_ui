@@ -1,9 +1,4 @@
-﻿using ShineWeb.BuisnessLayer;
-using ShineWeb.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using ShineWeb.Models;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -23,7 +18,7 @@ namespace ShineWeb.Controllers
                 ViewData["FormID"] = strFormID;
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
-                dam.FormID = strFormID;                
+                dam.FormID = strFormID;
                 return View(dam);
             }
         }

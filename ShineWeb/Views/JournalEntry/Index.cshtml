@@ -679,7 +679,7 @@
             className: 'dg-action-view',
             // 💡 NEW TAG: This action will be rendered as a single icon
             displayType: 'single_icon',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             handler: (rowData) => {
                 $(".clrdivs").html("");
                 $("#txtAccountName,#txtRemarks,#txtValue").val("")
@@ -734,7 +734,7 @@
             icon: '📄',
             title: 'Variant',
             className: 'dg-action-variant',
-            visible: $("#txtVariantID").val() == 1,
+            visible: mapusersRole.canVariant,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdivs").html("");
@@ -755,7 +755,7 @@
             visible: (row) => {
                 var isVisible = false;
                 const isValidStatus = checkValidStatus(row.Status);
-                if (mapusersRole.canEdit && isValidStatus)
+                if (mapusersRole.canCancel && isValidStatus)
                     isVisible = true;
 
                 return isVisible;
@@ -779,7 +779,7 @@
             icon: '🖨️',
             title: 'Print',
             className: 'dg-action-print',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -802,7 +802,7 @@
             icon: '🖨️',
             title: 'Preview',
             className: 'dg-action-preview',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -825,7 +825,7 @@
             icon: "<i class='fa-regular fa-file-pdf' style='color:brown'></i>",
             title: '&ensp;PDF',
             className: 'dg-action-pdf',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -848,7 +848,7 @@
             icon: "<i class='fa-solid fa-envelope' style='color:brown'></i>",
             title: '&ensp;Mail',
             className: 'dg-action-mail',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -871,7 +871,7 @@
             icon: "<i class='fa-brands fa-whatsapp' style='color:green'></i>",
             title: '&ensp;WhatsApp',
             className: 'dg-action-whatsapp',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -1522,6 +1522,12 @@ function updateInputColumn(inputID, netValue) {
         $(".FormclrField,#txtID,#txtRefNo").val("");
         $(".clrdivs").html("");
         $(".lblPT").text("0.00");
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         GetData(1, "");
 
         SetFilterDate();
@@ -1539,7 +1545,15 @@ function updateInputColumn(inputID, netValue) {
         if ($("#txtEnableBranch").val() == 1) {
             $("#txtBranchName").prop("disabled", true);
         }
-        setDate("dtpDate", 0);
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#txtBranchName").val();
+                if (Branch > 0 && DocDate !== "") {
+                    GetDocumentID(DocDate, Branch, FID);
+                }
+            }, 1000);
+        }
     }
     var AccArray = [];
     function addAccinArray() {
@@ -1906,6 +1920,14 @@ function updateInputColumn(inputID, netValue) {
             $("#dvErrorDate").html("Date should not be empty");
             showErrorSnackbar("Date should not be empty");
         }
+        if (checkRefNoMandatory(FID) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
+        }
         if (parseFloat($("#lblTotCredit").text()) != $("#lblTotDebit").text()) {
             $("#lblTotCredit,#lblTotDebit").css("color", "red");
             IsValid = false;
@@ -1921,6 +1943,7 @@ function updateInputColumn(inputID, netValue) {
         addAccinArray()
         $(".clrdiv").html("");
         var nStatus = $("#txtStatus").val() !== "" ? $("#txtStatus").val() : 1;
+        TransRetaindate = $("#dtpDate").val();
         var lstMaster = {
             "TransID": FID,
             "TransMode": nTransMode,

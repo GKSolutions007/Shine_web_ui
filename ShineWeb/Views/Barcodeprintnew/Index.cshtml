@@ -891,7 +891,7 @@ var autolistfilterwith = EnableALStartWith;
             success: function (data) {
                 if (strForm == "taxtran") {
                     gsttax = data;
-                    console.log("gsttax function ", gsttax);
+                    //console.log("gsttax function ", gsttax);
                 }
             }
         });
@@ -965,7 +965,7 @@ var autolistfilterwith = EnableALStartWith;
             async: false,
             success: function (data) {
                 //~Assign Product Data to Grid
-                //console.log("item data", data);
+                ////console.log("item data", data);
                 var ProcuctData = data.ProductData;
                 var BatchData = data.BatchData;
                 arrSalesTaxDetails = [];
@@ -1128,7 +1128,7 @@ var autolistfilterwith = EnableALStartWith;
                 TableBatch.draw().clear(); TableBatch.draw().clear();
                 var trkbat = "False", trkpkd = "False";
                 //showErrorSnackbar("Track Inv : "+trkInv);
-                //console.log("dConvFact ", dConvFact);
+                ////console.log("dConvFact ", dConvFact);
                 $.each(data, function (i, items) {
                     TableBatch.row.add([
                         items.InventoryId,
@@ -1242,11 +1242,11 @@ var autolistfilterwith = EnableALStartWith;
         //showSuccessSnackbar(isModalshow);
         if (!isModalshow) return;
         let $selected = $('#tblBatch tbody tr.selected');
-        ////console.log("Batch Keydown Triggered", new Date().toISOString());
+        //////console.log("Batch Keydown Triggered", new Date().toISOString());
 
         // If no row selected → select first row
         if ($selected.length === 0) {
-            ////console.log("No Batch Selected", new Date().toISOString());
+            //////console.log("No Batch Selected", new Date().toISOString());
             let first = $('#tblBatch tbody tr:first');
             first.addClass('selected');
             return;
@@ -1284,7 +1284,7 @@ var autolistfilterwith = EnableALStartWith;
         else if (e.key === "Enter") {
             //showSuccessSnackbar("Batch row select enter");
             let rowData = TableBatch.row($('.selected')).data();
-            ////console.log("Selected Batch Row Data:", new Date().toISOString());
+            //////console.log("Selected Batch Row Data:", new Date().toISOString());
             if (!ItemALEnterClicked) {
                 applyBatchdatatoItemrow(rowData);
             } else { ItemALEnterClicked = false; }
@@ -1463,7 +1463,7 @@ var autolistfilterwith = EnableALStartWith;
         nTransMode = 3;
         //GetProductViewData(7, ID);
         setTimeout(() => {
-            GetProductViewData(ID,1);
+            GetProductViewData(ID, 1);
         }, 300);
         $("#txtStatus").val(1);
         $(".dvMain,#btnAddNewProduct").show();
@@ -1484,79 +1484,7 @@ var autolistfilterwith = EnableALStartWith;
             Gridautofocus();
         }, 1000);
     }
-    function GetProductViewData(nID,nStatus) {
-        let sb = document.getElementById("RepLoadersnackbar");
-        sb.classList.add("show");
-        $.ajax({
-            url: Aurl + "barcodeprint/bpdocumentdata",
-            type: 'get',
-            contentType: 'json',
-            data: { ID: nID, Status: nStatus },
-            xhrFields: {
-                withCredentials: true
-            },
-            //async: false,
-            success: function (data) {
-                var HeaderData = data.HeaderData;
-                var ProductData = data.ProductData;
-                G.clearAllRows();
-                G.setLocked(nTransMode == 4 || nTransMode == 5);
-                $.each(HeaderData, function (i, items) {
-                    $("#txtID").val(items.ID);
-                    $("#cmbBranch").val(items.BranchID);
-                    var dt = items.DocDate.substring(0, 10);//"2026-07-18T00:00:00"
-                    if (nTransMode == 3) {
-                        setDate("dtpDate", 0);
-                    } else {
-                        $("#dtpDate").val(dt);
-                    }
-                    $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
-                    $("#txtRefNo").val(items.RefNo);
-                    $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);
-                });
-                //GetProductList();
-                ProductRID = 0;
-                var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
-                var visbfields = nTransMode == 4 || nTransMode == 5 || nTransMode == 2 ? "hidden" : "";
-                var isvisb = nTransMode == 4 || nTransMode == 5 || nTransMode == 2 ? false : true;
-                var disbprod = nTransMode == 2 ? "disabled" : "";
-                //console.log("ProductData ", ProductData);
-                var dataSet = ProductData.map(function (itemsProd, nRowIndex) {
-                    const t = taxById(itemsProd.PurchaseTaxID) || taxOf(itemsProd.TaxPern);                // item tax (TaxID, else by GST %)
-                    var uomforselprod = [{
-                        ID: itemsProd.BarcodeUomId,
-                        Name: itemsProd.UomName,
-                        ConvRate: itemsProd.BarConRate
-                    }];
-                    G.addRow();
-                    G.patch(nRowIndex, {
-                        productID: +itemsProd.ProdID || 0, ApponMRPCum: itemsProd.CumTaxPern, MRPonTaxAmt: itemsProd.MRPonTax, itemName: itemsProd.Name, code: itemsProd.Code,
-                        stock: itemsProd.ActualQty, freestock: itemsProd.ActualFreeQty, InventoryID: itemsProd.BPInventory, PriceID: itemsProd.BarcodePriceId,
-                        TrkInvYN: itemsProd.TrackInventory, TrkBatchYN: itemsProd.TrackBatch, TrkPKDYN: itemsProd.TrackPKD, batchno: itemsProd.BatchNo, pkd: itemsProd.PKD, expiry: itemsProd.Expiry,
-                        mrp: +itemsProd.BPMRP || 0,
-                        qty: itemsProd.BPQty,
-                        priceExcl: +itemsProd.BPPrice || 0, priceIncl: +itemsProd.BPInclPrice || 0,
-                        _uoms: uomforselprod, uomID: +itemsProd.BarcodeUomId || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
-                        taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+itemsProd.TaxPern || 0), reasonID: itemsProd.BPReasonID
-                    }, 'items');
-                });
-                if (nTransMode == 1 || nTransMode == 2 || nTransMode == 3) {
-                    G.addRow();
-                }
-                G.setLocked(nTransMode == 4 || nTransMode == 5);
-                G.cfg.onRender(G);
-                sb.classList.remove("show");
-
-
-            }, error: function (data) {
-                sb.classList.remove("show");
-                if (data.status == "401") {
-                    var msg = data.responseJSON.Message;
-                    //showErrorSnackbar(msg + " Logout and Login again.");
-                }
-            }
-        });
-    }
+    
     var arrBaseProductBatchInfo = [];
 
     //~Close
@@ -1594,9 +1522,15 @@ var autolistfilterwith = EnableALStartWith;
         $("#btnSave,#btnClose,#btnDraft,#btnClear,#btnNewProd").show();
         G.setLocked(false);
         G.clearAllRows();
-        $("#txtNoofCopies").val("1");
+        //$("#txtNoofCopies").val("1");
         SetTagZero();
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
+
         SetFilterDate();
         LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
         GetFilterData();
@@ -1621,8 +1555,11 @@ var autolistfilterwith = EnableALStartWith;
         setTimeout(() => {
             if (nTransMode == 1) {
                 G.addRow();
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#cmbBranch").val();
+                GetDocumentID(DocDate, Branch, 25);
             }
-        }, 300);
+        }, 1000);
     }
     //~Validation
     function SaveValidation() {
@@ -1641,7 +1578,14 @@ var autolistfilterwith = EnableALStartWith;
             $("#divErrDate").html("Party should not be empty");
             showErrorSnackbar("Party should not be empty");
         }
-        
+        if (checkRefNoMandatory(25) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+    }
+}
         var griditems = G.getData();
         var items = griditems.filter(item => Number(item.productID) > 0).map(a => a.productID);
         if (items.length == 0) {
@@ -1696,7 +1640,8 @@ var autolistfilterwith = EnableALStartWith;
     function SaveData() {
 
             $("#btnSave").prop("disabled", true);
-            addProdinArray();
+        addProdinArray();
+        TransRetaindate = $("#dtpDate").val();
             var listTrans = {
                 "IsDraft": 0,
                 "ID": $("#txtID").val(),
@@ -1736,7 +1681,7 @@ var autolistfilterwith = EnableALStartWith;
                                 }
                                 catch(ex) {
                                     showErrorSnackbar("Printer not available")
-                                    console.log("Bar print trigger error : ", ex);
+                                    //console.log("Bar print trigger error : ", ex);
                                 }
                             },1500);
                             ClearForm();                          
@@ -1780,7 +1725,7 @@ var autolistfilterwith = EnableALStartWith;
                             }
                             catch (ex) {
                                 showErrorSnackbar("Printer not available");
-                                console.log("Bar print trigger error : ", ex);
+                                //console.log("Bar print trigger error : ", ex);
                             }
                         }, 1500);
                     }
@@ -1801,35 +1746,7 @@ var autolistfilterwith = EnableALStartWith;
             }
         }
     });
-    //~Home Draft
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to New PO
-        $("#txtDraftID").val($("#txtID").val())
-        var ID = $("#txtID").val();
-        GetProductViewData(10, ID);
-        nTransMode = 1;
-        $("#btnClear").prop("disabled", true);
-        $(".dvMain").show();
-        $(".dvDocuments").hide();
-        $("#btnPreview,#btnPDF,#btnBarcodePrint,#btnEmail,#btnWhatsapp").hide();
-        $("#MainHeading").text("Create " + $("#txtFormName").val());
-        setTimeout(() => {
-            var DocDate = $("#dtpDate").val();
-            var Branch = $("#cmbBranch").val();
-            GetDocumentID(DocDate, Branch, 25);
-        }, 1000);
-    }
-    //~View from another form(Home, Fin Rep Space click)
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
-        var ID = $("#txtID").val();
-        GetProductViewData(7, ID);
-        $(".FormclrField,.FormclrcmbField").prop("disabled", true);
-        $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
-        $("#btnPreview,#btnPDF,#btnClose").prop("disabled", false);
-        $(".dvMain").show();
-        $("#btnEmail,#btnWhatsapp").show();
-        $(".dvDocuments").hide();
-        $("#MainHeading").text("View " + $("#txtFormName").val());
-    }
+
         var Url = '@Session["url"].ToString()';
 
     document.addEventListener("keydown", function (event) {
@@ -1957,8 +1874,8 @@ var autolistfilterwith = EnableALStartWith;
             if (e.target.localName != "button") {
                 e.preventDefault(); // Prevent default behavior
                 var nextinp = $('input:not([type=hidden]):not([readonly]):not([disabled]),select:not([disabled]),button, textarea').eq($('input:not([type=hidden]):not([readonly]):not([disabled]),select,button, textarea').index(this) + 1);
-                //////console.log(nextinp);
-                ////console.log("Field ID ", $(this)[0].id);
+                ////////console.log(nextinp);
+                //////console.log("Field ID ", $(this)[0].id);
                 var Field = $(this)[0];
 
 
@@ -1971,7 +1888,7 @@ var autolistfilterwith = EnableALStartWith;
                 {
                     var lencls = $('.ui-menu-item').length;
                     var vbl = $('.ui-menu-item').is(":visible");
-                    //////console.log("Visble : ", vbl, " ui-menu-item Count : " + lencls);
+                    ////////console.log("Visble : ", vbl, " ui-menu-item Count : " + lencls);
                     if (!vbl) {
                         if (nextinp.length) {
                             var strType = nextinp[0].localName;
@@ -1996,7 +1913,7 @@ var autolistfilterwith = EnableALStartWith;
                 else {
                     if (nextinp.length) {
                         var strType = nextinp[0].localName;
-                        //console.log("nextinp", nextinp)
+                        ////console.log("nextinp", nextinp)
                         if (strType != "button") {
                             nextinp.focus();
                             nextinp.select();
@@ -2057,7 +1974,7 @@ var autolistfilterwith = EnableALStartWith;
         }
     });
     function selectDropdownByText(dropdownId, text) {
-        //console.log("text ", text);
+        ////console.log("text ", text);
         const dropdown = document.getElementById(dropdownId);
         for (let i = 0; i < dropdown.options.length; i++) {
             if (dropdown.options[i].text === text) {
@@ -2091,10 +2008,10 @@ var autolistfilterwith = EnableALStartWith;
     var colsettcols = [];
     async function LoadColumnSettings() {
         colsettcols = await TransactionColumnSettingsData(3, 3, 1, 3);
-        console.log("colsettcols ", colsettcols);
+        //console.log("colsettcols ", colsettcols);
     }
     // LoadColumnSettings() is NOT called here any more - InitInvoiceGrid() (app.js) awaits it before the grid is created
-    console.log("Running grid.js 1");
+    //console.log("Running grid.js 1");
 
 </script>
 <script title="grid.js">
@@ -2228,8 +2145,20 @@ var autolistfilterwith = EnableALStartWith;
             this.el.querySelectorAll('.rz').forEach(h => h.onpointerdown = e => {
                 e.preventDefault();
                 const c = vis[+h.dataset.i], x0 = e.clientX, w0 = c.width, col = this.el.querySelectorAll('col')[h.dataset.i], t = this.el.querySelector('table');
-                const mv = m => { c.width = Math.max(50, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
-                const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up) };
+                const mv = m => {
+                    c.width = Math.max(50, w0 + m.clientX - x0);
+                    col.style.width = c.width + 'px';
+                    t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px';
+                    
+                };
+                const up = () => {
+                    removeEventListener('pointermove', mv);
+                    removeEventListener('pointerup', up);
+                    //showSuccessSnackbar("Width : " + c.width);
+                    var field = c.id;
+                    var newWidth = c.width;
+                    UpdateColumnWidth(3, 1, 3, 0, field, newWidth)
+                };
                 addEventListener('pointermove', mv); addEventListener('pointerup', up)
             });
             if (this.cfg.onRender) this.cfg.onRender(this);               // e.g. bind autocomplete to every row's item field
@@ -2627,7 +2556,7 @@ var autolistfilterwith = EnableALStartWith;
             const payload = buildPayload();
             //byId('out').textContent = JSON.stringify(payload, null, 2);
             //log(`Saved ${payload.items.length} rows`);
-            console.log("Grid Row Data ", JSON.stringify(payload, null, 2));
+            //console.log("Grid Row Data ", JSON.stringify(payload, null, 2));
             /* fetch('/api/invoice/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); */
         }
 
@@ -2668,7 +2597,7 @@ var autolistfilterwith = EnableALStartWith;
         byId('bSave').onclick = saveInvoice;
         /* GET: read everything (header + summary + every row incl. hidden columns) and show it in the log (also in the browser console) */
         byId('bGet').onclick = () => {
-            const p = buildPayload(), { items, ...head } = p; console.log('GET', p);
+            const p = buildPayload(), { items, ...head } = p; //console.log('GET', p);
             log(`GET -> ${items.length} row(s)\n${JSON.stringify(head)}\n` + items.map(r => JSON.stringify(r)).join('\n'));
         };
         /* ================= COLUMN SETTINGS (header text / width / visible) ================= */
@@ -2740,7 +2669,7 @@ var autolistfilterwith = EnableALStartWith;
                     if (!shown) { alert('Select at least one column.'); return }
                     saveColumnSettingsToServer(out, () => {
                         db = out; colsettcols = out;                                             // keep the page-level settings array in sync
-                        console.log("colsettcols", out);
+                        //console.log("colsettcols", out);
                         apply(); close()                                                         // apply to the current grid
                     })
                 };
@@ -2760,4 +2689,111 @@ var autolistfilterwith = EnableALStartWith;
     function ReLoadProductAutolists() {
         G.cfg.onRender(G);
     }
+    //~Home Draft
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to New PO
+        $("#txtDraftID").val($("#txtID").val())
+        var ID = $("#txtID").val();
+        GetProductViewData(10, ID);
+        nTransMode = 1;
+        $("#btnClear").prop("disabled", true);
+        $(".dvMain").show();
+        $(".dvDocuments").hide();
+        $("#btnPreview,#btnPDF,#btnBarcodePrint,#btnEmail,#btnWhatsapp").hide();
+        $("#MainHeading").text("Create " + $("#txtFormName").val());
+        setTimeout(() => {
+            var DocDate = $("#dtpDate").val();
+            var Branch = $("#cmbBranch").val();
+            GetDocumentID(DocDate, Branch, 25);
+        }, 1000);
+    }
+    //~View from another form(Home, Fin Rep Space click)
+    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
+        nTransMode = 5;
+        var ID = $("#txtID").val();
+        setTimeout(() => {
+            GetProductViewData(ID, 1);
+        }, 1000);
+        $(".FormclrField,.FormclrcmbField,#txtRemarks,#txtNarration").prop("disabled", true);
+        $("#btnSave,#btnClear,#btnDraft,#btnClear,#btnNewProd").hide();
+        $("#btnPreview,#btnPDF,#btnBarcodePrint,#btnEmail,#btnWhatsapp").show();
+        $(".dvMain").show();
+        $(".dvDocuments,.dvclsforhdview").hide();
+        $("#MainHeading").text("View " + $("#txtFormName").val());
+        if ($("#txtEnableBranch").val() == 1) {
+            $("#cmbBranch").prop("disabled", true);
+    }
+}
+function GetProductViewData(nID, nStatus) {
+    let sb = document.getElementById("RepLoadersnackbar");
+    sb.classList.add("show");
+    $.ajax({
+        url: Aurl + "barcodeprint/bpdocumentdata",
+        type: 'get',
+        contentType: 'json',
+        data: { ID: nID, Status: nStatus },
+        xhrFields: {
+            withCredentials: true
+        },
+        //async: false,
+        success: function (data) {
+            var HeaderData = data.HeaderData;
+            var ProductData = data.ProductData;
+            G.clearAllRows();
+            G.setLocked(nTransMode == 4 || nTransMode == 5);
+            $.each(HeaderData, function (i, items) {
+                $("#txtID").val(items.ID);
+                $("#cmbBranch").val(items.BranchID);
+                var dt = items.DocDate.substring(0, 10);//"2026-07-18T00:00:00"
+                if (nTransMode == 3) {
+                    setDate("dtpDate", 0);
+                } else {
+                    $("#dtpDate").val(dt);
+                }
+                $("#lblDocID").text(items.DocID).attr("docprefix", items.DocPrefix);
+                $("#txtRefNo").val(items.RefNo);
+                $("#txtRemarks").val(items.Remarks), $("#txtNarration").val(items.Narration);
+            });
+            //GetProductList();
+            ProductRID = 0;
+            var disbfields = nTransMode == 4 || nTransMode == 5 ? "disabled" : "";
+            var visbfields = nTransMode == 4 || nTransMode == 5 || nTransMode == 2 ? "hidden" : "";
+            var isvisb = nTransMode == 4 || nTransMode == 5 || nTransMode == 2 ? false : true;
+            var disbprod = nTransMode == 2 ? "disabled" : "";
+            ////console.log("ProductData ", ProductData);
+            var dataSet = ProductData.map(function (itemsProd, nRowIndex) {
+                const t = taxById(itemsProd.PurchaseTaxID) || taxOf(itemsProd.TaxPern);                // item tax (TaxID, else by GST %)
+                var uomforselprod = [{
+                    ID: itemsProd.BarcodeUomId,
+                    Name: itemsProd.UomName,
+                    ConvRate: itemsProd.BarConRate
+                }];
+                G.addRow();
+                G.patch(nRowIndex, {
+                    productID: +itemsProd.ProdID || 0, ApponMRPCum: itemsProd.CumTaxPern, MRPonTaxAmt: itemsProd.MRPonTax, itemName: itemsProd.Name, code: itemsProd.Code,
+                    stock: itemsProd.ActualQty, freestock: itemsProd.ActualFreeQty, InventoryID: itemsProd.BPInventory, PriceID: itemsProd.BarcodePriceId,
+                    TrkInvYN: itemsProd.TrackInventory, TrkBatchYN: itemsProd.TrackBatch, TrkPKDYN: itemsProd.TrackPKD, batchno: itemsProd.BatchNo, pkd: itemsProd.PKD, expiry: itemsProd.Expiry,
+                    mrp: +itemsProd.BPMRP || 0,
+                    qty: itemsProd.BPQty,
+                    priceExcl: +itemsProd.BPPrice || 0, priceIncl: +itemsProd.BPInclPrice || 0,
+                    _uoms: uomforselprod, uomID: +itemsProd.BarcodeUomId || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
+                    taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+itemsProd.TaxPern || 0), reasonID: itemsProd.BPReasonID
+                }, 'items');
+            });
+            if (nTransMode == 1 || nTransMode == 2 || nTransMode == 3) {
+                G.addRow();
+            }
+            G.setLocked(nTransMode == 4 || nTransMode == 5);
+            G.cfg.onRender(G);
+            sb.classList.remove("show");
+
+
+        }, error: function (data) {
+            sb.classList.remove("show");
+            if (data.status == "401") {
+                var msg = data.responseJSON.Message;
+                //showErrorSnackbar(msg + " Logout and Login again.");
+            }
+        }
+    });
+}
 </script>

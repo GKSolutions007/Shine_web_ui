@@ -1,11 +1,7 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using ShineWeb.BuisnessLayer;
+﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -21,7 +17,7 @@ namespace ShineWeb.Controllers
             }
             else
             {
-                
+
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 TranID = clsEncryptDecrypt.Decrypt(TranID);

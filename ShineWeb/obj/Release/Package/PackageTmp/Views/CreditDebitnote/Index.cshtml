@@ -1459,7 +1459,12 @@ function updateInputColumn(inputID, netValue) {
         $(".clrdiv").html("");
         $("#btnEmail,#btnWhatsapp").hide();
         $("#txtPartyName").focus();
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         SetFilterDate();
         SetTagZero();
         //$("#txtBranchName").val(DefBranch);
@@ -1474,6 +1479,16 @@ function updateInputColumn(inputID, netValue) {
         if ($("#txtEnableBranch").val() == 1) {
             $("#txtBranchName").prop("disabled", true);
         }
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#txtBranchName").val();
+                if (Branch > 0 && DocDate !== "") {
+                    GetDocumentID(DocDate, Branch, FID);
+                }
+            }, 1000);
+        }
+
     }
     //~Save
     $("#btnSave").click(function () {
@@ -1511,6 +1526,14 @@ function updateInputColumn(inputID, netValue) {
                 showErrorSnackbar("Select Account Name from list");
             }
         }
+        if (checkRefNoMandatory(FID) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+    }
+}
         if ($("#txtValue").val() == "") {
             IsValid = false;
             $("#dvErrorValue").html("Value should not be empty");
@@ -1966,6 +1989,7 @@ function updateInputColumn(inputID, netValue) {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
         var nStatus = $("#txtStatus").val() !== "" ? $("#txtStatus").val() : 1;
+        TransRetaindate = $("#dtpDate").val();
         var lstMaster = {
             "TransID": FID,
             "TransMode": nTransMode,

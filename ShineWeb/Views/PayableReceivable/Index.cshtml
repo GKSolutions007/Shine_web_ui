@@ -1674,7 +1674,7 @@ function updateInputColumn(inputID, netValue) {
         updateInputColumn("txtRoundoffAmt", Roundoff);
         updateInputColumn("txtNetAmt", RoundNetAmt);
     }
-    function ApplyRoundoff(dAmt) {
+    function ApplyRoundoff_old(dAmt) {
         var Value = 0;
         if (ConfigRoundtype == 1) {//nearest
             Value = Math.round(dAmt)
@@ -1762,8 +1762,13 @@ function updateInputColumn(inputID, netValue) {
         $(".clrdiv").html("");
         $("#txtPartyName").focus();
         $("#btnEmail,#btnWhatsapp").hide();
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         GetData(1, "");
-        setDate("dtpDate", 0);
         SetFilterDate();
         SetTagZero();
         //$("#txtBranchName").val(DefBranch);
@@ -1779,6 +1784,15 @@ function updateInputColumn(inputID, netValue) {
             $("#txtBranchName").prop("disabled", true);
         }
         $("#txtGrossAmt,#txtTaxAmt,#txtNetAmt").prop("disabled", true);
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#txtBranchName").val();
+                if (Branch > 0 && DocDate !== "") {
+                    GetDocumentID(DocDate, Branch, FID);
+                }
+            }, 1000);
+        }
     }
 
     var returnField = null;
@@ -2311,6 +2325,15 @@ function updateInputColumn(inputID, netValue) {
             $("#dvErrorDate").html("Date should not be empty");
             showErrorSnackbar("Date should not be empty");
         }
+        if (checkRefNoMandatory(FID) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
+        }
+
         if ($('#cmbTax').val() == 0) {
             IsValid = false;
             $("#divErrTax").html("Select Tax");
@@ -2324,6 +2347,7 @@ function updateInputColumn(inputID, netValue) {
         $("#btnSave").prop("disabled", true);
         $(".clrdiv").html("");
         var nStatus = $("#txtStatus").val() !== "" ? $("#txtStatus").val() : 1;
+        TransRetaindate = $("#dtpDate").val();
         var lstMaster = {
             "TransID": FID,
             "TransMode": nTransMode,

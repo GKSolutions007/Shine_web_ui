@@ -2428,23 +2428,28 @@ function updateInputColumn(inputID, netValue) {
     $("#btnClear").click(function () {
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
-    function ClearForm()
-    {
+    function ClearForm() {
         $(".FormclrField").val("");
         $(".FormclrcmbField").val(0);
         $(".clrdivs").html("");
         $("#lblPTQty,#lblPTAmt,#lblPTFreeQty,#lblPTDmgQty").text("0.00");
         $("#lblPTCount").text("0");
         $("#lblName,#lblProdCodeAS").text(""),
-        $("#btnEmail,#btnWhatsapp").hide();
+            $("#btnEmail,#btnWhatsapp").hide();
         TableBatch.draw().clear(); TableBatch.draw().clear();
         ProductTable.draw().clear();
         ProductTable.draw().clear();
         var qtyonly = $("#chkQtyonly").is(":checked") ? 1 : 0;
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         GetData(1);
-        setDate("dtpDate", 0);
+
         SetFilterDate();
         setTimeout(function () {
             //GetFilterData();
@@ -2458,7 +2463,7 @@ function updateInputColumn(inputID, netValue) {
             $(".dvDocuments,#dvDocFilters").show();
         }
         SetTagZero();
-        $("#txtNoofCopies").val("1");
+        //$("#txtNoofCopies").val("1");
         mind = document.getElementById("dtpDate").getAttribute("max");
         $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
         $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", true);
@@ -2470,6 +2475,13 @@ function updateInputColumn(inputID, netValue) {
         $("#txtHProds").focus();
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
+        }
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#cmbBranch").val();
+                GetDocumentID(DocDate, Branch, 13);
+            }, 1000);
         }
     }
     //~Validation
@@ -2487,6 +2499,14 @@ function updateInputColumn(inputID, netValue) {
             IsValid = false;
             $("#divErrDate").html("Party should not be empty");
             showErrorSnackbar("");
+        }
+        if (checkRefNoMandatory(13) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
         }
         if ($("#lblPTAmt").text() == "") {
             IsValid = false;
@@ -2584,6 +2604,7 @@ function updateInputColumn(inputID, netValue) {
         if (SaveValidation()) {
             $("#btnSave").prop("disabled", true);
             addProdinArray();
+            TransRetaindate = $("#dtpDate").val();
             var listTrans = {
                 "IsDraft": nIsDraft,
                 "ID": $("#txtID").val(),

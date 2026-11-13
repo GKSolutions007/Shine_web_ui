@@ -398,8 +398,8 @@
                                         <td style="border:none;" colspan="2">
                                             <span class="form-label">
                                                 <input class="form-control FormclrField" type="text" id="txtRefNo"
-                                                       onbeforeinput="return AlphaNumericBeforeInput(event, this,'#dvErrorrefCode')"
-                                                       oninput="sanitizeAlphaNumeric(this, '#dvErrorrefCode')" />
+                                                       onbeforeinput="    return AlphaNumericBeforeInput(event, this,'#divErrRefNo')"
+                                                       oninput="sanitizeAlphaNumeric(this, '#divErrRefNo')" />
                                                 <label class="labelup">Ref No</label>
                                             </span>
                                             <div class="clrdiv" id="dvErrorrefCode" style="color:red"></div>
@@ -750,7 +750,7 @@
             title: 'View Data',
             className: 'dg-action-view',
             displayType: 'single_icon',
-            visible: $("#txtModifyID").val() == 1,
+            visible: mapusersRole.canView,
             handler: (rowData) => {
                 $(".clrdiv").html("");
                 var ID = rowData.ID;//[0];
@@ -774,7 +774,7 @@
             icon: '✏️',
             title: 'Edit',
             className: 'dg-action-edit',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canEdit,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdiv").html("");
@@ -793,7 +793,7 @@
             icon: '📄',
             title: 'Variant',
             className: 'dg-action-variant',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canVariant,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdiv").html("");
@@ -807,7 +807,7 @@
             icon: '❌',
             title: 'Cancel',
             className: 'dg-action-cancel',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canCancel,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 $(".clrdiv").html("");
@@ -825,7 +825,7 @@
             icon: '🖨️',
             title: 'Print',
             className: 'dg-action-print',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -848,7 +848,7 @@
             icon: '🖨️',
             title: 'Preview',
             className: 'dg-action-preview',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -871,7 +871,7 @@
             icon: "<i class='fa-regular fa-file-pdf' style='color:brown'></i>",
             title: '&ensp;PDF',
             className: 'dg-action-pdf',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -894,7 +894,7 @@
             icon: "<i class='fa-solid fa-envelope' style='color:brown'></i>",
             title: '&ensp;Mail',
             className: 'dg-action-mail',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -917,7 +917,7 @@
             icon: "<i class='fa-brands fa-whatsapp' style='color:green'></i>",
             title: '&ensp;WhatsApp',
             className: 'dg-action-whatsapp',
-            visible: $("#txtViewID").val() == 1,
+            visible: mapusersRole.canView,
             displayType: 'menu_item',
             handler: (rowData, gridInstance) => {
                 var ID = rowData.ID;//[0];
@@ -1809,7 +1809,12 @@ function updateInputColumn(inputID, netValue) {
         if (nTransMode != 1 && ClosePOPup)
             modal.hide();
         SetTagZero();
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         SetFilterDate();
         setTimeout(function () { GetFilterData(); }, 800);
         inputTag = [];
@@ -1828,6 +1833,15 @@ function updateInputColumn(inputID, netValue) {
         //    GetDocumentID(DocDate, DefBranch, FID, prefix, isedit, id);
         //    }
         //}, 1000);
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#txtBranchName").val();
+                if (Branch > 0 && DocDate !== "") {
+                    GetDocumentID(DocDate, Branch, FID);
+                }
+            }, 1000);
+        }
     }
 
     $("#btnSave").click(function () {
@@ -1934,6 +1948,14 @@ function updateInputColumn(inputID, netValue) {
             IsValid = false;
             $("#dvErrorDate").html("Date should not be empty");
             showErrorSnackbar("Date should not be empty");
+        }
+        if (checkRefNoMandatory(FID) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
         }
         var ifsc = IFSCValidation($("#txtIFSC"), $("#dvErrorIFSC"));
         if (!ifsc) {
@@ -2487,6 +2509,7 @@ function updateInputColumn(inputID, netValue) {
         var rdo2 = $("#rdoOCOPParty").is(":checked");
         $(".clrdiv").html("");
         var nStatus = $("#txtStatus").val() !== "" ? $("#txtStatus").val() : 1;
+        TransRetaindate = $("#dtpDate").val();
         //$("#txtIFSC,#txtBranch,#cmbBank").prop("disabled", false);
         var lstMaster = {
             "TransID": FID,

@@ -1,15 +1,11 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.InkML;
-using ShineWeb.BuisnessLayer;
+﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using ShineWeb.Printing;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -51,7 +47,7 @@ namespace ShineWeb.Controllers
             string FileLocationwithname = "";
 
             if (!string.IsNullOrEmpty(pdfFilePath))
-            {                
+            {
                 DataTable dtTName = objBL.BL_ExecuteSqlQuery("select TransName from tblTransName where Id = " + TransID);
 
                 PrintBase PB = new PrintBase { GKS_BL = objBL };
@@ -73,12 +69,12 @@ namespace ShineWeb.Controllers
                 {
                     return Json("", JsonRequestBehavior.AllowGet);
                 }
-            }            
+            }
             string pathwithFileName = FileLocationwithname;
             string exts = Path.GetExtension(pathwithFileName);
             string ctype = GetMimeType(exts);
-            string fileName = Path.GetFileName(pathwithFileName);            
-            return Json(fileName, JsonRequestBehavior.AllowGet);            
+            string fileName = Path.GetFileName(pathwithFileName);
+            return Json(fileName, JsonRequestBehavior.AllowGet);
         }
         public string GetMimeType(string extension)
         {

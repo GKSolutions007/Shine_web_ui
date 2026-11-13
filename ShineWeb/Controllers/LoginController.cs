@@ -4,14 +4,12 @@ using ShineWeb.BuisnessLayer;
 using ShineWeb.Helpers;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
+using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Web;
 using System.Web.Mvc;
-using static System.Net.WebRequestMethods;
 
 namespace ShineWeb.Controllers
 {
@@ -21,7 +19,7 @@ namespace ShineWeb.Controllers
         //ShineWeb.BuisnessLayer bl = new ShineWeb.BuisnessLayer();
         BuisnessLayer.clsBusinessLayer bl = new BuisnessLayer.clsBusinessLayer();
         // GET: Login
-        public ActionResult Index(string Msg=null)
+        public ActionResult Index(string Msg = null)
         {
             //string plain = "546,547";// "Van Loading Slip,Create Van Loading Slip,View Van Loading Slip";
             //string[] strplain = plain.Split(',');
@@ -31,58 +29,87 @@ namespace ShineWeb.Controllers
             //    string val = strplain[i].ToString();
             //    EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
             //}
-
-
-            string nv = Convert.ToString(Session["NavBarVisible"]);
-            string userAgent = Request.UserAgent;
-            //bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
-            string APIurl = ApiClient.ApiUrl; // decrypted once, cached
-            Session["APIurl"] = APIurl;
-            HttpContext.Session.Add("APIurl", APIurl);
-
-            string url = HttpContext.Request.Url.AbsoluteUri.ToString();
-            char IsSlash = url[url.Length - 1];
-            //string addslahinlast = IsSlash == '/' ? url : url + "/";
-            Session["url"] = IsSlash == '/' ? url : url + "/";
-            Session["DeviceType"] = Request.Browser.IsMobileDevice ? "0" : "1";
-            Session["DeviceOS"] = GetOperatingSystem(userAgent);
-            if (string.IsNullOrEmpty(nv))
+            string Pos = "1";
+            try
             {
-                Session["NavBarVisible"] = "LogOn";
-            }
-            DataTable dataTable = new DataTable();
-            HttpResponseMessage result = ApiClient.Shared.GetAsync("companyregistration").Result;
-            if (result.IsSuccessStatusCode)
-            {
-                var jsonString = result.Content.ReadAsStringAsync();
-                
-                string json = JsonConvert.DeserializeObject<string>(jsonString.Result);
-                DataTable dtResult = JsonConvert.DeserializeObject<DataTable>(json);                
-                if (dtResult.Rows.Count > 0)
+                string nv = Convert.ToString(Session["NavBarVisible"]);
+                Pos = "2";
+                string userAgent = Request.UserAgent;
+                Pos = "3";
+                //bl.BL_WriteErrorMsginLog("Login", "Browser Type", userAgent);
+                string APIurl = ApiClient.ApiUrl; // decrypted once, cached
+                Pos = "4";
+                Session["APIurl"] = APIurl;
+                HttpContext.Session.Add("APIurl", APIurl);
+                Pos = "5";
+                string url = HttpContext.Request.Url.AbsoluteUri.ToString();
+                char IsSlash = url[url.Length - 1];
+                //string addslahinlast = IsSlash == '/' ? url : url + "/";
+                Session["url"] = IsSlash == '/' ? url : url + "/";
+                Session["DeviceType"] = Request.Browser.IsMobileDevice ? "0" : "1";
+                Pos = "6";
+                Session["DeviceOS"] = GetOperatingSystem(userAgent);
+                Pos = "7";
+                if (string.IsNullOrEmpty(nv))
                 {
-                    dataTable = dtResult;
+                    Session["NavBarVisible"] = "LogOn";
                 }
-                //DataTable dtResult = JsonConvert.DeserializeObject<DataTable>(jsonString.Result);
-                //if(dtResult.Rows.Count > 0)
-                //{
-                //    dataTable = dtResult;
-                //}
-            }
+                Pos = "8 - Apiurl : "+ APIurl;
+                DataTable dataTable = new DataTable();
+                HttpResponseMessage result = ApiClient.Shared.GetAsync("companyregistration").Result;
+                Pos = "9";
+                if (result.IsSuccessStatusCode)
+                {
+                    Pos = "10 - api success";
+                    var jsonString = result.Content.ReadAsStringAsync();
 
+                    string json = JsonConvert.DeserializeObject<string>(jsonString.Result);
+                    DataTable dtResult = JsonConvert.DeserializeObject<DataTable>(json);
+                    if (dtResult.Rows.Count > 0)
+                    {
+                        dataTable = dtResult;
+                    }
+                    //DataTable dtResult = JsonConvert.DeserializeObject<DataTable>(jsonString.Result);
+                    //if(dtResult.Rows.Count > 0)
+                    //{
+                    //    dataTable = dtResult;
+                    //}
+                }
+                Pos = "11";
                 LoginModel model = new LoginModel();
-            //DataTable dataTable = bl.BL_ExecuteSqlQuery("select * from tblCompanyRegistration");            
-            string CompName = dataTable.Rows[0]["CompanyName"].ToString();
-            string FSDYEAR =  Convert.ToDateTime(dataTable.Rows[0]["F_SD"].ToString()).ToString("yyyy");
-            string FSDMONTH = Convert.ToDateTime(dataTable.Rows[0]["F_SD"].ToString()).ToString("MMM").ToUpper();
-            string CompCode = dataTable.Rows[0]["CompanyCode"].ToString() + "_" + FSDMONTH+ FSDYEAR;
-            model.CompanyCode = CompCode;
-            model.CompanyName = CompName;
-            model.CompanyFSD = FSDYEAR;
-            ViewData["companycode"] = CompCode;
-            ViewData["companyname"] = CompName;
-            Session["companyname"] = CompName;
-            ViewData["AlertMessage"] = Msg;
-            return View(model);
+                //DataTable dataTable = bl.BL_ExecuteSqlQuery("select * from tblCompanyRegistration");            
+                string CompName = dataTable.Rows[0]["CompanyName"].ToString();
+                Pos = "12";
+                string FSDYEAR = Convert.ToDateTime(dataTable.Rows[0]["F_SD"].ToString()).ToString("yyyy");
+                string FSDMONTH = Convert.ToDateTime(dataTable.Rows[0]["F_SD"].ToString()).ToString("MMM").ToUpper();
+                string CompCode = dataTable.Rows[0]["CompanyCode"].ToString() + "_" + FSDMONTH + FSDYEAR;
+                model.CompanyCode = CompCode;
+                model.CompanyName = CompName;
+                model.CompanyFSD = FSDYEAR;
+                ViewData["companycode"] = CompCode;
+                ViewData["companyname"] = CompName;
+                Session["companyname"] = CompName;
+                ViewData["AlertMessage"] = Msg;
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                var stackTrace = new StackTrace(ex, true);
+                var frame = stackTrace.GetFrames()?
+                                    .FirstOrDefault(f => f.GetFileLineNumber() > 0);
+
+                int lineNumber = frame?.GetFileLineNumber() ?? 0;
+                string fileName = frame?.GetFileName() ?? "";
+                string methodName = frame?.GetMethod()?.Name ?? "";
+
+                string errorDetails = "POS : "+ Pos+
+                    " , Error Msg : " + ex.Message +
+                    " , Line: " + lineNumber +
+                    " , File: " + fileName +
+                    " , Method: " + methodName +
+                    " , StackTrace: " + ex.StackTrace;
+                return RedirectToAction("Index", "Error", new { Msg = errorDetails });
+            }            
         }
         public ActionResult AAP()
         {
@@ -105,8 +132,8 @@ namespace ShineWeb.Controllers
             }
             return View();
         }
-            [HttpGet]
-        public JsonResult SendMail_old(string ToMail,string ID)
+        [HttpGet]
+        public JsonResult SendMail_old(string ToMail, string ID)
         {
             string url = Session["url"].ToString();
             char isslash = url[url.Length - 1];
@@ -236,7 +263,7 @@ namespace ShineWeb.Controllers
                 string msg = "";
                 if (!string.IsNullOrEmpty(AAlk))
                 {
-                    string uid =  clsEncryptDecrypt.Decrypt((AAlk));//HttpUtility.UrlDecode
+                    string uid = clsEncryptDecrypt.Decrypt((AAlk));//HttpUtility.UrlDecode
 
                     HttpResponseMessage result = ApiClient.Shared.GetAsync("activateaccount?UID=" + uid).Result;
                     if (result.IsSuccessStatusCode)
@@ -252,7 +279,7 @@ namespace ShineWeb.Controllers
                     {
                         msg = "Account not activated. Try again later.";
                     }
-                    return RedirectToAction("AAP", "Login",new { Msg = !result.IsSuccessStatusCode ? msg : null });//Index
+                    return RedirectToAction("AAP", "Login", new { Msg = !result.IsSuccessStatusCode ? msg : null });//Index
                 }
             }
             catch (Exception ex)
@@ -279,7 +306,7 @@ namespace ShineWeb.Controllers
                     if (Sessionidcookie != null)
                         req.Headers.Add("X-Session-Id", Sessionidcookie.Value);
                     HttpResponseMessage result = ApiClient.Shared.SendAsync(req).Result;
-                    if(result != null)
+                    if (result != null)
                     {
 
                     }

@@ -1,6 +1,6 @@
+using ShineWeb.DALHelper;
 using System;
 using System.Configuration;
-using ShineWeb.DALHelper;
 
 namespace ShineWeb.Helpers
 {

@@ -5,10 +5,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Mail;
 using System.Text.RegularExpressions;
-using System.Web;
 using System.Web.Mvc;
 using System.Windows.Forms;
 
@@ -28,7 +25,7 @@ namespace ShineWeb.BuisnessLayer
     public class clsBusinessLayer
     {
         DALHelper.clsDAL ObjDL = new DALHelper.clsDAL();
-        
+
         public DataTable BL_ExecuteParamSP(string strProcedure, params object[] objParams)
         {
             return ObjDL.dl_ExecuteParamSP(strProcedure, objParams);
@@ -85,7 +82,7 @@ namespace ShineWeb.BuisnessLayer
             DataTable dt = BL_ExecuteParamSP("uspCheckPermission", UID, FormName, RoleID);
             HasPermission = dt.Rows.Count > 0 ? true : false;
             return HasPermission;
-        }        
+        }
         public static CultureInfo SetSysCulture = new CultureInfo("es-ES");
         public DateTime? BL_DateFormatChange(string strdate)
         {
@@ -336,7 +333,7 @@ namespace ShineWeb.BuisnessLayer
             Regex re = new Regex(strRegex);
             if (re.IsMatch(txtvalue))
                 return (true);
-            else                
+            else
                 return (false);
 
         }

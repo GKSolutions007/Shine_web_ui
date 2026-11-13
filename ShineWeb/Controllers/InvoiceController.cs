@@ -1,15 +1,11 @@
-﻿using DocumentFormat.OpenXml.InkML;
-using ShineWeb.BuisnessLayer;
+﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using ShineWeb.Printing;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -18,7 +14,7 @@ namespace ShineWeb.Controllers
     {
         clsBusinessLayer objBL = new clsBusinessLayer();
         public IDictionary<string, string> _mappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-        
+
         public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string TransVariantID = "0", string PartyID = "0")
         {
             if (Session["LoginUserID"] == null)
@@ -95,7 +91,7 @@ namespace ShineWeb.Controllers
         [HttpGet]
         public JsonResult PDFGenerate(string DocID, string TransID = "", string ConfigID = "", string PrinterID = "", string TransName = "")
         {
-            string pdfFilePath = System.Configuration.ConfigurationManager.AppSettings["SupportFilePath"]+"\\PDF\\";
+            string pdfFilePath = System.Configuration.ConfigurationManager.AppSettings["SupportFilePath"] + "\\PDF\\";
             string FileLocationwithname = "";
 
             if (!string.IsNullOrEmpty(pdfFilePath))
@@ -130,7 +126,7 @@ namespace ShineWeb.Controllers
         public FileResult ExportData(string Fname)
         {
             var sDocument = Fname;
-            string pdfFilePath = AppDomain.CurrentDomain.BaseDirectory + @"\PDF\"+ Fname;          
+            string pdfFilePath = AppDomain.CurrentDomain.BaseDirectory + @"\PDF\" + Fname;
             byte[] fileBytes = System.IO.File.ReadAllBytes(pdfFilePath);
             string fileName = Path.GetFileName(Fname);
             if (System.IO.File.Exists(Fname))
@@ -145,7 +141,7 @@ namespace ShineWeb.Controllers
             byte[] fileBytes = System.IO.File.ReadAllBytes(pdfFilePath);
 
             Response.Clear();
-            Response.AddHeader("Content-Disposition", "attachment; filename="+ Fname);
+            Response.AddHeader("Content-Disposition", "attachment; filename=" + Fname);
             Response.AddHeader("Content-Length", fileBytes.Length.ToString());
             Response.ContentType = "application/octet-stream";
             Response.BinaryWrite(fileBytes);
@@ -158,7 +154,7 @@ namespace ShineWeb.Controllers
             var sDocument = Fname;
             byte[] fileBytes = System.IO.File.ReadAllBytes(sDocument);
             string fileName = Path.GetFileName(Fname);
-            if(System.IO.File.Exists(Fname))
+            if (System.IO.File.Exists(Fname))
             {
                 //System.IO.File.Delete(Fname);
             }

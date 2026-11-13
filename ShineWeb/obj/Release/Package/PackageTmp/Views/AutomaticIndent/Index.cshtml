@@ -1161,7 +1161,8 @@
     var itemorderby = '@Session["ItemOrderby"]';
 var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
 var autolistfilterwith = EnableALStartWith;
-var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
+    var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
+    
     GetColumnSettingsData(2, 23, 1, true);
            var enableBranch = '@(Model.EnableBranch ?? "0")';
     if ($("#txtEnableBranch").val() == 1) {
@@ -1372,6 +1373,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                 ],
                             });
                             ProductTable = $('#tblProductDataAI').DataTable();
+                            startAutoDraftSave();
                         } else {
                             showErrorSnackbar("No products mapped for this vendor");
                         }
@@ -1500,6 +1502,7 @@ setTimeout(function () { GetFilterData(); }, 800);
                                     $(".dvDocuments,#dvDocFilters").hide();
                                     $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
                                     ClearForm();
+                                    setDate("dtpDate", 0);
                                     setTimeout(() => {
                                         var DocDate = $("#dtpDate").val();
                                         var Branch = $("#cmbBranch").val();
@@ -1982,6 +1985,7 @@ setTimeout(function () { GetFilterData(); }, 800);
         if (cfFocus != 3) { ClearConfirmDialogMsg("Do you want to clear?"); } else { ClearForm(); }
     });
     function ClearForm() {
+        stopAutoDraftSave();
         $(".FormclrField").val("");
         $(".FormclrcmbField").val(0);
         $(".clrdivs").html("");
@@ -1994,9 +1998,15 @@ setTimeout(function () { GetFilterData(); }, 800);
         $("#btnPreview,#btnPDF,#btnPrint").hide();
         $("#btnSave,#btnClose,#btnDraft,#btnClear").show();
         $("#btnEmail,#btnWhatsapp").hide();
-        ProductTable.draw().clear();ProductTable.draw().clear();
+        ProductTable.draw().clear(); ProductTable.draw().clear();
         GetData(1, 1);
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
+
         SetFilterDate();
         nIsDraft = 0;
         if (nTransMode != 1) {
@@ -2006,7 +2016,7 @@ setTimeout(function () { GetFilterData(); }, 800);
         GetFilterData();
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
-        $("#txtNoofCopies").val("1");
+        ////$("#txtNoofCopies").val("1");
         $("#MainHeading").text("Automatic Indent");
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
@@ -2014,6 +2024,13 @@ setTimeout(function () { GetFilterData(); }, 800);
         $("#txtSearch").focus();
         if ($("#txtEnableBranch").val() == 1) {
             $("#cmbBranch").prop("disabled", true);
+        }
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#cmbBranch").val();
+                GetDocumentID(DocDate, Branch, 2);
+            }, 1000);
         }
     }
     //~Validation
@@ -2044,6 +2061,14 @@ setTimeout(function () { GetFilterData(); }, 800);
             IsValid = false;
             $("#divErrDate").html("Party should not be empty");
             showErrorSnackbar("Party should not be empty");
+        }
+        if (checkRefNoMandatory(2) && (nIsDraft == 0 && nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
         }
         if (parseFloat($("#lblPTQty").text()) <= 0) {
             IsValid = false;
@@ -2118,6 +2143,7 @@ setTimeout(function () { GetFilterData(); }, 800);
             $("#btnSave").prop("disabled", true);
             //showErrorSnackbar("Validation success");
             addProdinArray();
+            TransRetaindate = $("#dtpDate").val();
             var listTrans = {
                 "IsDraft": nIsDraft,
                 "ID": $("#txtID").val(),
@@ -2167,6 +2193,14 @@ setTimeout(function () { GetFilterData(); }, 800);
                                     }
                                 }
                                 ClearForm();
+                                if (window.opener && !window.opener.closed) {
+                                    window.opener.postMessage({
+                                        source: "AutomaticIndent",
+                                        id: items.ID,   // adjust to your actual field names                                            
+                                    }, "*");
+                                    window.close();
+                                }
+                                
                             }
                             else {
                                 $("#txtDraftID").val(items.ID);

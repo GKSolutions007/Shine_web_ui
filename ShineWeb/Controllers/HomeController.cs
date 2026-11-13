@@ -1,13 +1,9 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
-using ShineWeb.BuisnessLayer;
+﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace ShineWeb.Controllers
 {
@@ -68,7 +64,7 @@ namespace ShineWeb.Controllers
             dam.FormName = orgformname;
             return View(dam);
         }
-            
+
         [HttpGet]
         public JsonResult setdate(int TypeID)
         {
@@ -77,7 +73,7 @@ namespace ShineWeb.Controllers
             DateTime dtFinancialdate = Convert.ToDateTime(Session["F_SD"]).Date;
             DateTime dtpF_ED = Convert.ToDateTime(Session["F_ED"]).Date;
 
-            
+
             if (TypeID == 0)//set ServerDate
             {
                 dtMin = dtFinancialdate;
@@ -121,8 +117,8 @@ namespace ShineWeb.Controllers
                 dtMin = dtFinancialdate;// (dtFinancialdate > dtpF_ED ? dtFinancialdate : dtpF_ED);
                 dtMax = dtpF_ED > Date ? Date : dtpF_ED;
                 DateTime dtDate = dtpF_ED > Date ? Date : dtpF_ED;
-                DateTime MonFstDt = new DateTime(dtDate.Year , Math.Max(1,dtDate.Month - 1), 1);
-                if((dtDate.Month - 1) == 0)
+                DateTime MonFstDt = new DateTime(dtDate.Year, Math.Max(1, dtDate.Month - 1), 1);
+                if ((dtDate.Month - 1) == 0)
                 {
                     MonFstDt = MonFstDt.AddMonths(-1);
                 }
@@ -144,12 +140,12 @@ namespace ShineWeb.Controllers
                 DateTime MonFstDt = new DateTime(dtDate.Year, dtDate.Month, 1);
                 dtValue = dtMin > MonFstDt ? dtMin : MonFstDt;//  new DateTime(dtDate.Year, dtDate.Month, 1);
             }
-            else if(TypeID == 9)
+            else if (TypeID == 9)
             {
                 dtMin = dtFinancialdate;
                 dtMax = dtpF_ED > Date ? Date : dtpF_ED;
                 int thismonthno = dtMax.Month;
-                DateTime dtfsd= new DateTime(dtMax.Year, 1, 1);
+                DateTime dtfsd = new DateTime(dtMax.Year, 1, 1);
                 if (thismonthno >= 0 && thismonthno <= 3)
                 {
                     dtfsd = new DateTime(dtMax.Year, 1, 1);

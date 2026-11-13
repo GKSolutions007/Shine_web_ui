@@ -1,10 +1,7 @@
 ﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -12,7 +9,7 @@ namespace ShineWeb.Controllers
     public class TaxMasterController : Controller
     {
         // GET: TaxMaster
-        clsBusinessLayer objBL = new clsBusinessLayer();       
+        clsBusinessLayer objBL = new clsBusinessLayer();
         public ActionResult Index(string Name, string strFormID)
         {
             if (Session["LoginUserID"] == null)

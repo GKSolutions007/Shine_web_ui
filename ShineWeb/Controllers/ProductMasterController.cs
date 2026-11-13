@@ -1,20 +1,15 @@
-﻿using Newtonsoft.Json;
-using ShineWeb.BuisnessLayer;
+﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using System.Web.Script.Serialization;
 
 namespace ShineWeb.Controllers
 {
     public class ProductMasterController : Controller
     {
         clsBusinessLayer objBL = new clsBusinessLayer();
-        public ActionResult Index(string Name, string strFormID,string TypeID,string TranID,string ID = "0",string DepFrom = "0")
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string ID = "0", string DepFrom = "0")
         {
             if (Session["LoginUserID"] == null)
             {

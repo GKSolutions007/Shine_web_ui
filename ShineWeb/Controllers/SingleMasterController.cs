@@ -1,10 +1,7 @@
 ﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -13,7 +10,7 @@ namespace ShineWeb.Controllers
     {
         // GET: SingleMaster
         clsBusinessLayer objBL = new clsBusinessLayer();
-        public ActionResult Index(string Name,string strFormID,string TypeID,string TranID, string ID = "")//,string isDepend = "0", string ParMID = "", string ParFFID = ""
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string ID = "")//,string isDepend = "0", string ParMID = "", string ParFFID = ""
         {
             if (Session["LoginUserID"] == null)
             {
@@ -23,7 +20,7 @@ namespace ShineWeb.Controllers
             {
                 int UID = Convert.ToInt32(Session["LoginUserID"]);
                 DataTable dtPermission = (System.Data.DataTable)Session["dtPermission"];
-                bool Formhaveanypermission = dtPermission.Select("EncFormID = '"+ strFormID + "'", null).Length > 0;
+                bool Formhaveanypermission = dtPermission.Select("EncFormID = '" + strFormID + "'", null).Length > 0;
                 if (!Formhaveanypermission && UID != 1)
                 {
                     return RedirectToAction("nopermission", "Home",
@@ -34,7 +31,7 @@ namespace ShineWeb.Controllers
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
-                ViewData["TransType"] = TypeID;                               
+                ViewData["TransType"] = TypeID;
                 string AddPerm = dtPermission.Select("MenuName = 'Add " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
                 string ModPerm = dtPermission.Select("MenuName = 'Modify " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";
                 string ViewPerm = dtPermission.Select("MenuName = 'View " + Name + "'", null).Length > 0 || UID == 1 ? "1" : "0";

@@ -1,11 +1,6 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Drawing.Diagrams;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.VariantTypes;
-using DocumentFormat.OpenXml.Wordprocessing;
-using MessagingToolkit.QRCode.Crypt;
 using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
@@ -16,7 +11,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
-using WebGrease.Activities;
 
 namespace ShineWeb.Controllers
 {
@@ -62,7 +56,7 @@ namespace ShineWeb.Controllers
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
-                SingleMasterModel dam = new SingleMasterModel() { FormName = Name};
+                SingleMasterModel dam = new SingleMasterModel() { FormName = Name };
                 return View(dam);
             }
         }
@@ -597,7 +591,7 @@ namespace ShineWeb.Controllers
                                         DataTable DDT = objBL.BL_ExecuteParamSP("uspManageProductPricechangedata", 6, 0, 0, dtCorrectValues.Rows[i]["ID"].ToString(), 0,
                                         0, dtCorrectValues.Rows[i]["Batch No"].ToString(), pkd, exp, null, objBL.BL_dValidation(dtCorrectValues.Rows[i]["Sales Price"].ToString()),
                                         objBL.BL_dValidation(dtCorrectValues.Rows[i]["ECP"].ToString()), objBL.BL_dValidation(dtCorrectValues.Rows[i]["SPL Price"].ToString()),
-                                        objBL.BL_dValidation(dtCorrectValues.Rows[i]["MRP Incl"].ToString()), objBL.BL_dValidation(dtCorrectValues.Rows[i]["Return Price"].ToString()), 
+                                        objBL.BL_dValidation(dtCorrectValues.Rows[i]["MRP Incl"].ToString()), objBL.BL_dValidation(dtCorrectValues.Rows[i]["Return Price"].ToString()),
                                         objBL.BL_nValidation(Session["LoginUserID"]));
                                         if (DDT.Columns.Count == 3)
                                         {
@@ -663,7 +657,7 @@ namespace ShineWeb.Controllers
                         }
                         #endregion
                         #region Order Taken
-                        else if(TransID == "5")
+                        else if (TransID == "5")
                         {
                             if (dtData.Rows.Count > 0)
                             {
@@ -690,7 +684,7 @@ namespace ShineWeb.Controllers
                                         drC["Product Name"] = ProductID;
                                         drC["Price"] = objBL.BL_dValidation(item.ItemArray[10]);
                                         drC["Quantity"] = objBL.BL_dValidation(item.ItemArray[11]);
-                                        drC["Discount %"] = objBL.BL_dValidation(item.ItemArray[12]); ;                                        
+                                        drC["Discount %"] = objBL.BL_dValidation(item.ItemArray[12]); ;
                                         drC["Error"] = nIndex;
                                         dtCorrectValues.Rows.Add(drC);
                                         nIndex++;
@@ -1084,7 +1078,7 @@ namespace ShineWeb.Controllers
                 }
                 else
                 {
-                    if(objBL.BL_dValidation(dtCheck.Rows[0]["Discount %"].ToString()) > 100)
+                    if (objBL.BL_dValidation(dtCheck.Rows[0]["Discount %"].ToString()) > 100)
                     {
                         RowError += "Discount % : % should be less than 100\n";
                     }
@@ -1245,7 +1239,7 @@ namespace ShineWeb.Controllers
                 if (!objBL.BL_AlphaNumericSpl(dtCheck.Rows[0]["Base Uom *"].ToString()))
                 {
                     RowError += "Base Uom : Invalid character\n";
-                }                
+                }
             }
             if (string.IsNullOrEmpty(dtCheck.Rows[0]["Base CR *"].ToString()))
             {
@@ -1286,7 +1280,7 @@ namespace ShineWeb.Controllers
                 if (!objBL.BL_NumericWithDecimal(dtCheck.Rows[0]["Purchase CR *"].ToString()))
                 {
                     RowError += "Purchase CR : Invalid character\n";
-                }                
+                }
             }
 
             if (string.IsNullOrEmpty(dtCheck.Rows[0]["Sales Uom *"].ToString()))
@@ -1368,7 +1362,7 @@ namespace ShineWeb.Controllers
                 {
                     RowError += "Sales Tax : Invalid character\n";
                 }
-            }           
+            }
             if (string.IsNullOrEmpty(dtCheck.Rows[0]["Sale on MRP"].ToString()))
             {
                 RowError += "Sale on MRP : Sale on MRP should not be empty\n\n";
@@ -1660,7 +1654,7 @@ namespace ShineWeb.Controllers
                     RowError += "Order ID : Invalid character(Alpha Numeric Only)\n";
                 }
             }
-            
+
             if (!string.IsNullOrEmpty(dtCheck.Rows[0]["Doc Date"].ToString()))
             {
                 if (!objBL.BL_DateformatDMY(dtCheck.Rows[0]["Doc Date"].ToString()))
@@ -1695,7 +1689,7 @@ namespace ShineWeb.Controllers
             {
                 RowError += "Customer Name : Customer Name should not be empty\n";
             }
-            
+
             if (!string.IsNullOrEmpty(dtCheck.Rows[0]["Beat Name"].ToString()))
             {
                 if (!objBL.BL_AlphaNumericSpl(dtCheck.Rows[0]["Beat Name"].ToString()))
@@ -1766,7 +1760,7 @@ namespace ShineWeb.Controllers
                 }
                 else
                 {
-                    if(objBL.BL_dValidation(dtCheck.Rows[0]["Additional Discount %"].ToString()) > 100)
+                    if (objBL.BL_dValidation(dtCheck.Rows[0]["Additional Discount %"].ToString()) > 100)
                     {
                         RowError += "Additional Discount % : Discount % should be less than 100 only\n";
                     }
@@ -1891,7 +1885,7 @@ namespace ShineWeb.Controllers
                 if (!objBL.BL_AlphaNumericSpl(dtCheck.Rows[0]["Batch No"].ToString()))
                 {
                     RowError += "Batch No : Invalid Format(Alpha Numeric Only)\n";
-                }                
+                }
             }
             if (!string.IsNullOrEmpty(dtCheck.Rows[0]["PKD"].ToString()))
             {
@@ -1965,7 +1959,7 @@ namespace ShineWeb.Controllers
             return RowError;
         }
         public string POImpValiation(DataRow dr)
-        { 
+        {
             string RowError = "";
             if (string.IsNullOrEmpty(dr.ItemArray[0].ToString()))
             {
@@ -2064,7 +2058,7 @@ namespace ShineWeb.Controllers
                 }
             }
             return RowError;
-        }       
+        }
         public void ColumnValidation(List<string> lst, ref bool blResult)
         {
             try
@@ -2196,19 +2190,19 @@ namespace ShineWeb.Controllers
                     return doc.WorkbookPart.SharedStringTablePart.SharedStringTable.ChildElements[(int.Parse(cell.CellValue.InnerText))].InnerText;
                 }
                 else
-                if (cell.StyleIndex != null)
-                {
-                    CellFormat cf = doc.WorkbookPart.WorkbookStylesPart.Stylesheet.CellFormats.ChildElements[int.Parse(cell.StyleIndex.InnerText)] as CellFormat;
-                    if (cf.NumberFormatId == 14)
+                    if (cell.StyleIndex != null)
                     {
-                        return DateTime.FromOADate(double.Parse(cell.CellValue.InnerText)).ToString("dd/MM/yyyy");
+                        CellFormat cf = doc.WorkbookPart.WorkbookStylesPart.Stylesheet.CellFormats.ChildElements[int.Parse(cell.StyleIndex.InnerText)] as CellFormat;
+                        if (cf.NumberFormatId == 14)
+                        {
+                            return DateTime.FromOADate(double.Parse(cell.CellValue.InnerText)).ToString("dd/MM/yyyy");
+                        }
+                        return cell.InnerText;
                     }
-                    return cell.InnerText;
-                }
-                else
-                {
-                    return cell.InnerText;
-                }
+                    else
+                    {
+                        return cell.InnerText;
+                    }
             }
             catch (NullReferenceException)
             {
@@ -2230,11 +2224,11 @@ namespace ShineWeb.Controllers
             }
             return null;
         }
-        public FileResult GenerateTemplate(int TransID,string TransName)
+        public FileResult GenerateTemplate(int TransID, string TransName)
         {
             DataTable dt = new DataTable();
             List<string> strTemp = null;
-            if(TransID == 1)
+            if (TransID == 1)
             {
                 strTemp = CustomerMasterTemp();
             }
@@ -2299,7 +2293,7 @@ namespace ShineWeb.Controllers
             string FPt = System.Configuration.ConfigurationManager.AppSettings["SupportFilePath"];
             //strFilePath = AppDomain.CurrentDomain.BaseDirectory + "\\Export Data\\";
             strFilePath = FPt + "\\Export Data\\";
-            strFileName = TransName+(Type == 1 ? "_Import_" : "_Export_") + DateTime.Now.ToString("yyyyMMddHHmmss");
+            strFileName = TransName + (Type == 1 ? "_Import_" : "_Export_") + DateTime.Now.ToString("yyyyMMddHHmmss");
             if (Type == 1)
             {
                 foreach (string strHeaderName in str)
@@ -2308,10 +2302,10 @@ namespace ShineWeb.Controllers
                 }
                 DataTable dt1 = objBL.BL_ExecuteSqlQuery("SELECT TaxName '* Tax Name *'  FROM tblMasterTax where Active = 1 order by TaxName");
                 DataTable dt2 = objBL.BL_ExecuteSqlQuery("SELECT Name '* Branch *'  FROM tblMasterBranchOffice where Active = 1 order by Name");
-               
+
                 dtDefaultData = objBL.BL_ExecuteParamSP("uspgetsetImportExport", 2, TransID);
                 dtExampleData = objBL.BL_ExecuteParamSP("uspgetsetImportExport", 3, TransID);
-                
+
             }
             else if (Type == 2)
             {
@@ -2321,12 +2315,12 @@ namespace ShineWeb.Controllers
             }
             strSheetName = "Data";
             ExportToExcelThreeSheet(dt, "Data", dtDefaultData, "Default Data", dtExampleData, "Example");
-            
+
         }
         public void ExportToExcel(DataTable DtData)
         {
             try
-            {                
+            {
                 //Exporting to Excel
                 if (!Directory.Exists(strFilePath))
                 {
@@ -2349,7 +2343,7 @@ namespace ShineWeb.Controllers
                 throw;
             }
         }
-        public void ExportToExcelTwoSheet(DataTable DtDataSheet1,string Sheet1Name, DataTable DtDataSheet2, string Sheet2Name)
+        public void ExportToExcelTwoSheet(DataTable DtDataSheet1, string Sheet1Name, DataTable DtDataSheet2, string Sheet2Name)
         {
             try
             {
@@ -2360,7 +2354,7 @@ namespace ShineWeb.Controllers
                 }
                 using (XLWorkbook wb = new XLWorkbook())
                 {
-                    Int32 len = Sheet1Name.Length;                    
+                    Int32 len = Sheet1Name.Length;
                     wb.Worksheets.Add(DtDataSheet1, Sheet1Name.Substring(0, len).Trim());
                     len = Sheet2Name.Length;
                     wb.Worksheets.Add(DtDataSheet2, Sheet2Name.Substring(0, len).Trim());
@@ -2421,7 +2415,7 @@ namespace ShineWeb.Controllers
         }
         public static List<string> CustomerMasterTemp()
         {
-            return new List<string>() 
+            return new List<string>()
             {
                 "Code *","Name *","Customer Type","Price Type *","Owner Name","Contact Person","Email ID",
                 "Phone No 1","Phone No 2","Mobile No 1","Mobile No 2","Billing Address 1","Billing Address 2",
@@ -2487,7 +2481,7 @@ namespace ShineWeb.Controllers
         public static List<string> OrderTakenTempWithErrCol()
         {
             return new List<string>() {
-                "Order ID", "Doc Date","Branch Name","Beat Name","Salesman Name","Customer Name","Additional Discount %","Trade Discount %","Remarks","Product Name", 
+                "Order ID", "Doc Date","Branch Name","Beat Name","Salesman Name","Customer Name","Additional Discount %","Trade Discount %","Remarks","Product Name",
                 "Price","Quantity","Discount %","Error"
             };
         }

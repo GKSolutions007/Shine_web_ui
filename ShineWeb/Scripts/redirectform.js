@@ -207,7 +207,39 @@ function OpenTransactionDocument(dTransID, DocID) {
                             '_blank'
                         );
                     }
-
+                    if (dTransID == 23) {//Delivery
+                        var permsLocName = ReturnMenuLocationName(497);
+                        var RedirectLocName = permsLocName || "Delivery";
+                        window.open(
+                            RedirectLocName + '?name=KjM7nKzBk1nDNaClvrH2XVw%2BzrBwrG%2BHLzY8Ah2GcVc%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                            '_blank'
+                        );
+                    }
+                    if (dTransID == 24) {//Van Loading Slip
+                        var permsLocName = ReturnMenuLocationName(534);
+                        var RedirectLocName = permsLocName || "VanLoadingSlip";
+                        window.open(
+                            RedirectLocName + '?name=Q0Cv4BuvYD4zCrDsSye9n%2FuNOy%2BkzwrXsr8e%2FvHCi%2BsWOHNVNN4O4ndU%2FTyhewWA&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                            '_blank'
+                        );
+                    }
+                    if (dTransID == 25) {//Barcode Print
+                        var permsLocName = ReturnMenuLocationName(571);
+                        var RedirectLocName = permsLocName || "Barcodeprint";
+                        window.open(
+                            RedirectLocName + '?name=gYNqw95gD6yxD1%2F0iKRh462Kyyg%2BTjHXf8IaxBJBTho%3D&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                            '_blank'
+                        );
+                    }
+                    if (dTransID == 26) {//Stock Destruction
+                        var permsLocName = ReturnMenuLocationName(575);
+                        var RedirectLocName = permsLocName || "StockDestruction";
+                        window.open(
+                            RedirectLocName + '?name=NKFuch12W17bHSJaGEgu2UD4dc%2BKkt8zmWR0CpERumo5Oy%2B6KrlTdB73%2Fpxxzpy6&strFormID=jJOtHsRVwYECOhoiBc69dA%3D%3D&TypeID=BOII5FUynjpl5RZJJ8nW1g%3d%3d&TranID=' + items.ID,
+                            '_blank'
+                        );
+                    }
+                    //25
                 } else {
                     showErrorSnackbar("Doc ID not matched. Enter correct Doc ID");
                 }

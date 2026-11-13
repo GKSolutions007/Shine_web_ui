@@ -1,9 +1,5 @@
 ﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -19,7 +15,7 @@ namespace ShineWeb.Controllers
             }
             else
             {
-                
+
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 ViewData["FormName"] = Name;
                 SingleMasterModel dam = new SingleMasterModel();

@@ -1827,9 +1827,10 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     var BatchMode = 0; // 0 - New product, 1 - Edit Product
     var nTransMode = 1, nIsDraft = 0;
     var PrintTransID = nDocPrefix == 19 ? 8 : 9, PrintConfigID = 0;
-    var grid, CollectionPayment;
-    Shortcutkeysformname = 'CollectionPayment';
-
+var grid, CollectionPayment;
+Shortcutkeysformname = 'CollectionPayment';
+var RememberBSM = '@Session["RBSCollection"]';
+var RemBeatID = 0, RemSalesmanID = 0;
     GetColumnSettingsData(2, 27, 1,true);
     setDate("dtpDate", 0);
     setDate("dtpFFrom", 0);
@@ -5313,6 +5314,7 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#lblBalance").text("0.00");
         $(".clrdivs").html("");
         $(".lblPT").text("0.00");
+        $("#txtVendorID").val("0");
         // ceil - always Up value, floor - always down value
         $("#txtRoundOff").val("0.00"); $("#lblRoundNet").text("0.00");
         $("#lblPTCount").text("0");
@@ -5321,11 +5323,18 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#btnEmail,#btnWhatsapp").hide();
         TableGrid1Data.draw().clear(); TableGrid1Data.draw().clear();
         TableGridtwoData.draw().clear(); TableGridtwoData.draw().clear();
-        GetData(1);
+        
         //GetData(6);
         SetTagZero();
-        setDate("dtpDate", 0);
-        $("#txtNoofCopies").val("1");
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
+
+        GetData(1);
+        //$("#txtNoofCopies").val("1");
         SetFilterDate();
         SyncDateRangeDisplay();
         //$("#cmbBranch").val(DefBranch);
@@ -5357,6 +5366,26 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
         $("#txtClosingBalance,#txtTotAdjustmentAmount,#txtRemainingAmount,#txtAdjustedAmount,#txtBalance,#txtTotDiscountAmount").prop("disabled", true);
         $("#MainHeading").text($("#txtFormName").val());
         $("#txtSearch").focus();
+        if (RememberBSM == "1" && nDocPrefix == 19) {
+            var tbid = RemBeatID;
+            var tsmid = RemSalesmanID;
+
+            setTimeout(() => {
+                $("#cmbBeat").val(tbid);
+                $("#cmbSalesman").val(tsmid);
+                var BeatID = $("#cmbBeat").val();
+                var SalesmanID = $("#cmbSalesman").val();
+                GetData(33, tbid, tsmid);
+            }, 1000);
+        }
+        RemBeatID = 0, RemSalesmanID = 0;
+        if (nTransMode == 1) {
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#cmbBranch").val();
+                GetDocumentID(DocDate, Branch, nDocPrefix);
+            }, 1000);
+        }
     }
     function displayResult(item) {
         $('.alert').show().html('You selected <strong>' + item.value + '</strong>: <strong>' + item.text + '</strong>');
@@ -5507,7 +5536,14 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
             $("#divErrDate").html("Date should not be empty");
             showErrorSnackbar("Date should not be empty");
         }
-
+        if (checkRefNoMandatory(nDocPrefix) && (nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
+        }
         if ($("#cmbPaymode").val() == 0 || $("#cmbPaymode").val() == "" || $("#cmbPaymode").val() == null) {
             IsValid = false;
             $("#divErrPaymode").html("Select Payment mode");
@@ -5739,6 +5775,9 @@ var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" :
     function SaveData() {
         $("#btnSave").prop("disabled", true);
         AddDocstoSave();
+        TransRetaindate = $("#dtpDate").val();
+        RemBeatID = $("#cmbBeat").val();
+ RemSalesmanID = $("#cmbSalesman").val();
         var listTrans = {
             "IsDraft": nIsDraft,
             "ID": $("#txtID").val(),

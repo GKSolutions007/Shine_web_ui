@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Optimization;
@@ -34,8 +32,8 @@ namespace ShineWeb
             }
 
             Server.ClearError();
-            Response.Redirect("~/Error/Index?Msg=" +
-                HttpUtility.UrlEncode("An unexpected error occurred. Please try again or contact support."));
+            //Response.Redirect("~/Error/Index?Msg=" +
+            //    HttpUtility.UrlEncode("An unexpected error occurred. Please try again or contact support."));
         }
     }
 }

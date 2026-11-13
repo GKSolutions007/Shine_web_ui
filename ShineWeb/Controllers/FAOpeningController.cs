@@ -1,11 +1,7 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
-using ShineWeb.BuisnessLayer;
+﻿using ShineWeb.BuisnessLayer;
 using ShineWeb.Models;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace ShineWeb.Controllers
@@ -31,10 +27,16 @@ namespace ShineWeb.Controllers
                 }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
+                string AddPerm = dtPermission.Select("MenuID = 458", null).Length > 0 || UID == 1 ? "1" : "0";
+                string EditPerm = dtPermission.Select("MenuID = 459", null).Length > 0 || UID == 1 ? "1" : "0";
+                string ViewPerm = dtPermission.Select("MenuID = 460", null).Length > 0 || UID == 1 ? "1" : "0";
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
                 SingleMasterModel dam = new SingleMasterModel();
                 dam.FormName = Name;
+                dam.Add = AddPerm;
+                dam.Modify = EditPerm;
+                dam.View = ViewPerm;
                 return View(dam);
             }
         }

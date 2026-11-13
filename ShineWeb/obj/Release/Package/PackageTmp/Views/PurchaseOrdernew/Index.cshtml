@@ -1743,6 +1743,7 @@
                         _uoms: uomforselprod, uomID: +UOMID || 0,          // item's own UOM list + its default UOM -> dropdown is rebound in the row
                         taxID: t ? +t.ID : 0, taxPct: t ? +t.TaxPern : (+items.GSTPern || 0)
                     }, 'items'); // fills row, recalculates, refreshes totals
+                    startAutoDraftSave();
                 });
 
             }
@@ -2040,7 +2041,7 @@
         window.scrollTo({ left: 0, top: document.body.scrollHeight, behavior: "smooth" });
     }
     
-    function ApplyRoundoff(dAmt) {
+    function ApplyRoundoff_old(dAmt) {
         var Value = 0;
         if (ConfigRoundtype == 1) {//nearest
             Value = Math.round(dAmt)
@@ -2467,7 +2468,7 @@
         G.clearAllRows();
         $("#cmbUOMType").prop("disabled", false);
         $("#cmbUOMType").val(1);
-        $("#txtNoofCopies").val("1");
+        //$("#txtNoofCopies").val("1");
         stopAutoDraftSave();
         GetData(1);
         GetFilterData();
@@ -2478,7 +2479,12 @@
             $(".dvDocuments").show();
         }
         SetTagZero();
-        setDate("dtpDate", 0);
+        if (RetainDate == 1 && nTransMode == 1 && TransRetaindate != "") {
+            $("#dtpDate").val(TransRetaindate);
+        } else {
+            setDate("dtpDate", 0);
+        }
+        TransRetaindate = "";
         SetFilterDate();
         //$("#cmbBranch").val(DefBranch);
         LoadBranchByRoles('#cmbBranch,#cmbFilterBranch');
@@ -2488,6 +2494,14 @@
             $("#cmbBranch").prop("disabled", true);
         }
         $("#tblProductData tbody tr").find("label[name='TaxAmt']").attr("lbltag", 0).text("0.00");
+
+        if (nTransMode == 1) {           
+            setTimeout(() => {
+                var DocDate = $("#dtpDate").val();
+                var Branch = $("#cmbBranch").val();
+                GetDocumentID(DocDate, Branch, 3);
+            }, 1000);
+        }
     }
     //~Validation
     function SaveValidation() {
@@ -2519,6 +2533,14 @@
             IsValid = false;
             $("#divErrDate").html("Party should not be empty");
             showErrorSnackbar("Party should not be empty");
+        }
+        if (checkRefNoMandatory(2) && (nIsDraft == 0 && nTransMode != 4)) {
+            if ($("#txtRefNo").val() == "") {
+                IsValid = false;
+                $("#divErrRefNo").html("Ref No should not be empty");
+                showErrorSnackbar("Ref No should not be empty");
+                $("#txtRefNo").focus();
+            }
         }
         if ($("#lblPTQty").text() == "") {
             IsValid = false;
@@ -2590,6 +2612,7 @@
         if (SaveValidation()) {
             $("#btnSave").prop("disabled", true);
             addProdinArray();
+            TransRetaindate = $("#dtpDate").val();
             var listTrans = {
                 "IsDraft": nIsDraft,
                 "ID": $("#txtID").val(),
@@ -2644,6 +2667,14 @@
                                     }
                                 }
                                 ClearForm();
+
+                                if (window.opener && !window.opener.closed) {
+                                    window.opener.postMessage({
+                                        source: "PurchaseOrder",
+                                        id: items.ID,   // adjust to your actual field names                                            
+                                    }, "*");
+                                    window.close();
+                                }
                             }
                             else {
                                 $("#txtDraftID").val(items.ID);
@@ -2906,7 +2937,13 @@ $("#openproduct").click(function (e) {
                 e.preventDefault();
                 const c = vis[+h.dataset.i], x0 = e.clientX, w0 = c.width, col = this.el.querySelectorAll('col')[h.dataset.i], t = this.el.querySelector('table');
                 const mv = m => { c.width = Math.max(50, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
-                const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up) };
+                const up = () => {
+                    removeEventListener('pointermove', mv);
+                    removeEventListener('pointerup', up);
+                    var field = c.id;
+                    var newWidth = c.width;
+                    UpdateColumnWidth(2, 1, 3, 0, field, newWidth)
+                };
                 addEventListener('pointermove', mv); addEventListener('pointerup', up)
             });
             if (this.cfg.onRender) this.cfg.onRender(this);               // e.g. bind autocomplete to every row's item field
@@ -3717,8 +3754,9 @@ $("#openproduct").click(function (e) {
             GetDocumentID(DocDate, Branch, 3);
         }, 1000);
     }
-    //~View from another form(Home, Fin Rep Space click)
-    if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
+//~View from another form(Home, Fin Rep Space click)
+if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Quick Access View
+        nTransMode = 5;
         var ID = $("#txtID").val();
         GetProductViewData(7, ID);
         $(".FormclrField,.FormclrcmbField").prop("disabled", true);
