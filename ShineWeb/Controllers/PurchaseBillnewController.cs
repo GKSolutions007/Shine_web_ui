@@ -10,7 +10,7 @@ namespace ShineWeb.Controllers
     {
         // GET: PurchaseBillnew
         clsBusinessLayer objBL = new clsBusinessLayer();
-        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID)
+        public ActionResult Index(string Name, string strFormID, string TypeID, string TranID, string TransVariantID = "0", string PartyID = "0")
         {
             if (Session["LoginUserID"] == null)
             {
@@ -61,6 +61,8 @@ namespace ShineWeb.Controllers
                 dam.DraftCancel = DrftCan;
                 dam.EnablePaid = EnbPaid;
                 dam.CrossTran1 = POPerm;
+                dam.TransVariantID = TransVariantID;
+                dam.PartyID = PartyID;
                 return View(dam);
             }
         }

@@ -3,25 +3,18 @@
     ViewBag.Title = ViewData["FormName"];
     Layout = "~/Views/Shared/_LayoutBT5.cshtml";
 }
-@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
 <link href="~/Content/5.3.8/bootstrap.min.css" rel="stylesheet" />
 <link href="~/Content/navbar.css" rel="stylesheet" />
 <link href="~/Content/buttonTop.css" rel="stylesheet" />
 <link href="~/Content/Snackbar.css" rel="stylesheet" />
-@*<link rel="stylesheet" href="~/Content/jquery-ui.css">*@
-@*<link href="~/Content/dataTables.dataTables.2.2.2.css" rel="stylesheet" />*@
 <link href="~/datatable/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet" />
 
 <link href="~/GKBS_Grid/css/gridui.css" rel="stylesheet" />
-
-@*<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">*@
 <link href="~/Content/fontawesome.6.0.0.css" rel="stylesheet" />
-@*<script src="~/Scripts/bootstrap.min.js"></script>*@
 <script src="~/Scripts/5.3.8/bootstrap.min.js"></script>
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
 <script src="~/Scripts/jquery-3.7.1.js"></script>
 <script src="~/Scripts/jquery-ui.js"></script>
-@*<script src="~/Scripts/dataTables.2.2.2.js"></script>*@
 <script src="~/datatable/1.13.6/jquery.dataTables.min.js"></script>
 <script src="~/datatable/1.13.6/dataTables.bootstrap5.min.js"></script>
 <script src="~/Scripts/js/refreshtoken.js"></script>
@@ -192,7 +185,7 @@
     /* Grid Layout for Header Fields */
     .modal-fields-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 5px;
         /* margin-bottom: 20px;*/
     }
@@ -307,6 +300,78 @@
             height: 10px;
         }
 
+    /* Find & Replace popup (overlay inside myModalfg) */
+    .fr-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 4px;
+    }
+
+    .fr-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        background: rgba(0,0,0,.45);
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+    }
+
+        .fr-overlay.show {
+            display: flex;
+        }
+
+    .fr-card {
+        width: 100%;
+        max-width: 420px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.3);
+        overflow: hidden;
+    }
+
+    .fr-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .fr-card-body {
+        padding: 14px;
+    }
+
+        .fr-card-body label {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .fr-card-body .form-control {
+            height: 34px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+    .fr-card-foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 10px 14px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .fr-msg {
+        font-size: 12px;
+        min-height: 16px;
+        margin-top: 6px;
+    }
+
     .dupError {
         border: 2px solid red;
         background: #ffe6e6;
@@ -324,92 +389,125 @@
             </div>
         </div>
     </div>
-      
-        <hr />
-        <div class="toastBox"></div>
-        <div>
-            <div id="dvMainTable">
-                <div id="my-grid" style="width: 100%;"></div>
-            </div>
+
+    <hr />
+    <div class="toastBox"></div>
+    <div>
+        <div id="dvMainTable">
+            <div id="my-grid" style="width: 100%;"></div>
         </div>
-        <div class="modal fade" id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
+    </div>
+    <div class="modal fade" id="myModalfg" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
 
-                    <!-- Modal Header -->
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="lblPopupheading">
-                            <b>Add @ViewData["FormName"]</b>
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" id="btnBatchClose" style="filter:invert(1)"></button>
-
-                    </div>
-
-                    <!-- Modal body -->
-                    <div class="modal-body">
-                        <div id="dvAssign">
-
-                            <!-- Top Fields -->
-                            <div class="modal-fields-grid">
-                                <div class="form-group-compact">
-                                    <label>Branch *</label>
-                                    <select class="form-select FormclrcmbField" id="cmbBranch">
-                                        <option value="0">Select Branch</option>
-                                    </select>
-                                    <div id="divErrBranch" class="error-msg clrdiv"></div>
-                                </div>
-
-                                <div class="form-group-compact">
-                                    <label>From Date *</label>
-                                    <input type="text" id="txtID" hidden />
-                                    <input type="text" id="txtOrgFromDate" hidden />
-                                    <input type="text" id="txtOrgToDate" hidden />
-                                    <input type="text" id="txtOrgBranchID" hidden />
-
-                                    <input type="date" id="txtFromDate" class="form-control clsdtpfieldfull" />
-                                    <div id="dvErrorFromDate" class="error-msg clrdiv"></div>
-                                </div>
-
-                                <div class="form-group-compact">
-                                    <label>To Date *</label>
-                                    <input type="date" id="txtToDate" class="form-control clsdtpfieldfull" />
-                                    <div id="dvErrorToDate" class="error-msg clrdiv"></div>
-                                </div>
-                            </div>
-
-                            <!-- Table -->
-                            <div class="pt-2">
-                                <table class="table table-striped" id="tblMasterData">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:0%;" class="trclrforcolheader">ID</th>
-                                            <th style="width:3%;" class="trclrforcolheader">#</th>
-                                            <th style="width:50%;" class="trclrforcolheader">Transaction</th>
-                                            <th style="width:30%;" class="trclrforcolheader">Prefix</th>
-                                            <th style="width:17%;" class="trclrforcolheader">Doc Value</th>
-                                        </tr>
-                                    </thead>
-                                </table>
-                            </div>
-
+                <!-- Find & Replace popup -->
+                <div class="fr-overlay" id="dvFRPopup">
+                    <div class="fr-card">
+                        <div class="fr-card-head">
+                            <span><i class="bi bi-search"></i> Find &amp; Replace (Prefix)</span>
+                            <button type="button" class="btn-close" id="btnFRClose" title="Close"></button>
+                        </div>
+                        <div class="fr-card-body">
+                            <label for="txtFindPrefix">Find</label>
+                            <input type="text" id="txtFindPrefix" class="form-control" placeholder="e.g. 2526" autocomplete="off" />
+                            <label for="txtReplacePrefix">Replace with</label>
+                            <input type="text" id="txtReplacePrefix" class="form-control" placeholder="e.g. 2627" autocomplete="off" />
+                            <label style="font-weight:normal;cursor:pointer"><input type="checkbox" id="chkMatchCase" /> Match case</label>
+                            <div class="fr-msg" id="dvReplaceMsg"></div>
+                        </div>
+                        <div class="fr-card-foot">
+                            <button type="button" class="btn btn-clear-style" id="btnResetPrefix">Reset</button>
+                            <button type="button" class="btn btn-save-style" id="btnReplacePrefix">Replace</button>
+                            <button type="button" class="btn btn-close-style" id="btnFRDone">Close</button>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Modal footer -->
-                    <div class="modal-footer">
-                        <button tabindex="4" type="button" class="btn btn-clear-style" id="btnClear">
-                            <span class="glyphicon glyphicon-refresh"> Clear</span>
-                        </button>
-                        <button tabindex="3" type="button" class="btn btn-save-style" id="btnSave">
-                            <span class="glyphicon glyphicon-saved"> Save</span>
-                        </button>
-                        <button tabindex="5" type="button" class="btn btn-close-style" id="btnClose">
-                            <i class="bi bi-x-circle"></i> Close
-                        </button>
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lblPopupheading">
+                        <b>Add @ViewData["FormName"]</b>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" id="btnBatchClose" style="filter:invert(1)"></button>
+
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div id="dvAssign">
+
+                        <!-- Top Fields -->
+                        <div class="modal-fields-grid">
+                            <div class="form-group-compact">
+                                <label>Branch *</label>
+                                <select class="form-select FormclrcmbField" id="cmbBranch">
+                                    <option value="0">Select Branch</option>
+                                </select>
+                                <div id="divErrBranch" class="error-msg clrdiv"></div>
+                            </div>
+
+                            <div class="form-group-compact">
+                                <label>From Date *</label>
+                                <input type="text" id="txtID" hidden />
+                                <input type="text" id="txtOrgFromDate" hidden />
+                                <input type="text" id="txtOrgToDate" hidden />
+                                <input type="text" id="txtOrgBranchID" hidden />
+
+                                <input type="date" id="txtFromDate" class="form-control clsdtpfieldfull" />
+                                <div id="dvErrorFromDate" class="error-msg clrdiv"></div>
+                            </div>
+
+                            <div class="form-group-compact">
+                                <label>To Date *</label>
+                                <input type="date" id="txtToDate" class="form-control clsdtpfieldfull" />
+                                <div id="dvErrorToDate" class="error-msg clrdiv"></div>
+                            </div>
+                            <div class="form-group-compact mt-4 d-flex justify-content-end">
+                                <!-- Find & Replace icon -->
+                                <div>
+                                    <button type="button" class="btn btn-filter-style" id="btnOpenFindReplace" title="Find & Replace Prefix">
+                                        <i class="bi bi-search"></i> Find &amp; Replace
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                       
+
+                        <!-- Table -->
+                        <div class="pt-2">
+                            <table class="table table-striped" id="tblMasterData">
+                                <thead>
+                                    <tr>
+                                        <th style="width:0%;" class="trclrforcolheader">ID</th>
+                                        <th style="width:3%;" class="trclrforcolheader">#</th>
+                                        <th style="width:50%;" class="trclrforcolheader">Transaction</th>
+                                        <th style="width:30%;" class="trclrforcolheader">Prefix</th>
+                                        <th style="width:17%;" class="trclrforcolheader">Doc Value</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+
                     </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button tabindex="4" type="button" class="btn btn-clear-style" id="btnClear">
+                        <span class="glyphicon glyphicon-refresh"> Clear</span>
+                    </button>
+                    <button tabindex="3" type="button" class="btn btn-save-style" id="btnSave">
+                        <span class="glyphicon glyphicon-saved"> Save</span>
+                    </button>
+                    <button tabindex="5" type="button" class="btn btn-close-style" id="btnClose">
+                        <i class="bi bi-x-circle"></i> Close
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 </body>
 
 <script>
@@ -432,7 +530,7 @@
                 $(".clrdiv").html("");
                 $("#btnSave,#txtFromDate,#txtToDate,#btnClear,#cmbBranch").prop("disabled", true);
                 modal.show();
-                
+
             }
         },
         {
@@ -454,7 +552,7 @@
                 $("#btnClear").prop("disabled", true);
                 $(".clrdiv").html("");
                 modal.show();
-                
+
             }
         }]
     var columns = [
@@ -670,7 +768,7 @@
                                     $("#btnSave,#txtFromDate,#txtToDate,#btnClear,#cmbBranch").prop("disabled", false);
                                     $(".modal-title#lblPopupheading").text("Add " + $("#MainHeading").text());
                                     modal.show();
-                                    
+
                                     ClearForm();
                                 }
                             },
@@ -725,6 +823,111 @@
             e.target.focus();
         }
     });
+
+    // ---------- Find & Replace popup on Prefix column ----------
+    var frSnapshot = [];   // prefix values when the popup was opened (used by Reset)
+
+    function escapeRegExp(t) {
+        return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    function frInputs() {
+        return $(Table.rows().nodes()).find("input.clsPrefix");
+    }
+    function frClearFields() {
+        $("#txtFindPrefix,#txtReplacePrefix").val("");
+        $("#chkMatchCase").prop("checked", false);
+        $("#dvReplaceMsg").text("").css("color", "");
+    }
+    function frMsg(text, ok) {
+        $("#dvReplaceMsg").text(text).css("color", ok ? "#16a34a" : "#dc2626");
+    }
+    function frCheckDuplicates() {
+        var seen = {}, dup = false;
+        frInputs().removeClass("dupError").each(function () {
+            var v = $(this).val().trim().toLowerCase();
+            if (v === "") return;
+            (seen[v] = seen[v] || []).push(this);
+        });
+        $.each(seen, function (k, list) {
+            if (list.length > 1) { dup = true; $(list).addClass("dupError"); }
+        });
+        return dup;
+    }
+
+    // open popup
+    $("#btnOpenFindReplace").click(function () {
+        if (nMode == 3) return;                       // view mode: read only
+        frSnapshot = frInputs().map(function () { return $(this).val(); }).get();
+        frClearFields();
+        $("#dvFRPopup").addClass("show");
+        $("#txtFindPrefix").focus();
+    });
+    // close popup (keeps the replaced values)
+    function frClosePopup() { $("#dvFRPopup").removeClass("show"); }
+    $("#btnFRClose,#btnFRDone").click(frClosePopup);
+    // make sure popup is hidden and button state is right whenever the main modal opens
+    document.getElementById('myModalfg').addEventListener('shown.bs.modal', function () {
+        frClosePopup();
+        frClearFields();
+        $("#btnOpenFindReplace").prop("disabled", nMode == 3);
+    });
+
+    // Replace
+    $("#btnReplacePrefix").click(function () {
+        var findText = $("#txtFindPrefix").val();
+        var replaceText = $("#txtReplacePrefix").val();
+        if (findText === "") {
+            frMsg("Enter the text to find.", false);
+            $("#txtFindPrefix").focus();
+            return;
+        }
+        var regex = new RegExp(escapeRegExp(findText), $("#chkMatchCase").is(":checked") ? "g" : "gi");
+        var changed = 0;
+        frInputs().not(":disabled").each(function () {
+            var oldVal = $(this).val();
+            var newVal = oldVal.replace(regex, function () { return replaceText; });
+            if (newVal !== oldVal) {
+                $(this).val(newVal);
+                var rd = Table.row($(this).closest("tr")).data();
+                if (rd) { rd.DocPrefix = newVal; }
+                changed++;
+            }
+        });
+        if (changed === 0) { frMsg("'" + findText + "' not found in any Prefix.", false); return; }
+        if (frCheckDuplicates()) {
+            frMsg(changed + " prefix(es) replaced, but some are now duplicates (highlighted). Fix before saving.", false);
+            showErrorSnackbar("Duplicate Prefix not allowed");
+        } else {
+            frMsg(changed + " prefix(es) replaced. Close this popup and click Save to apply.", true);
+            var msg = changed + " prefix(es) replaced.";
+            showSuccessSnackbar(msg);
+            setTimeout(() => {
+                frClosePopup();;
+            }, 1500);
+        }
+    });
+
+    // Reset: clear Find/Replace boxes and restore prefixes to how they were when popup opened
+    $("#btnResetPrefix").click(function () {
+        frInputs().each(function (i) {
+            if (frSnapshot[i] !== undefined) {
+                $(this).val(frSnapshot[i]);
+                var rd = Table.row($(this).closest("tr")).data();
+                if (rd) { rd.DocPrefix = frSnapshot[i]; }
+            }
+        });
+        frCheckDuplicates();
+        frClearFields();
+        //frMsg("Reset done.", true);
+        $("#txtFindPrefix").focus();
+    });
+
+    // Enter key = Replace, Esc = close popup
+    $("#txtFindPrefix,#txtReplacePrefix").on("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); $("#btnReplacePrefix").click(); }
+        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); frClosePopup(); }
+    });
+    // ---------- end Find & Replace ----------
 
     //Prefix
     var modal = new bootstrap.Modal(document.getElementById('myModalfg'));// document.getElementById("myModalfg");
@@ -923,7 +1126,6 @@
     function GetColumnSettingsData(nMode, nFormID, nTableID) {
         $.ajax({
             url: Aurl + "columnsettings/getcolumnsettings",
-            /*url: "http://localhost:44396/api/singlemaster/get",*/
             type: 'get',
             contentType: 'json',
             data: { Mode: nMode, FormID: nFormID, TableID: nTableID, FormorReport: 0 },
@@ -941,5 +1143,5 @@
             }
         });
     }
-    
+
 </script>

@@ -29,7 +29,7 @@ namespace ShineWeb.Controllers
             //    string val = strplain[i].ToString();
             //    EncVal += clsEncryptDecrypt.Encrypt(val) + "\n";
             //}
-            string Pos = "1";
+            string Pos = "1", json = "";
             try
             {
                 string nv = Convert.ToString(Session["NavBarVisible"]);
@@ -63,7 +63,7 @@ namespace ShineWeb.Controllers
                     Pos = "10 - api success";
                     var jsonString = result.Content.ReadAsStringAsync();
 
-                    string json = JsonConvert.DeserializeObject<string>(jsonString.Result);
+                    json = JsonConvert.DeserializeObject<string>(jsonString.Result);
                     DataTable dtResult = JsonConvert.DeserializeObject<DataTable>(json);
                     if (dtResult.Rows.Count > 0)
                     {
@@ -75,7 +75,7 @@ namespace ShineWeb.Controllers
                     //    dataTable = dtResult;
                     //}
                 }
-                Pos = "11";
+                Pos = "11 - dataTable count : " + dataTable.Rows.Count;
                 LoginModel model = new LoginModel();
                 //DataTable dataTable = bl.BL_ExecuteSqlQuery("select * from tblCompanyRegistration");            
                 string CompName = dataTable.Rows[0]["CompanyName"].ToString();
@@ -104,6 +104,7 @@ namespace ShineWeb.Controllers
 
                 string errorDetails = "POS : "+ Pos+
                     " , Error Msg : " + ex.Message +
+                    " , Response Data : " + json +
                     " , Line: " + lineNumber +
                     " , File: " + fileName +
                     " , Method: " + methodName +

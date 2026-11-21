@@ -4241,10 +4241,17 @@ if ($("#txtReurnPricePerm").val() == 0) {
         var GridNet = parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) || 0;
         var FrAmt = getTag('txtFright');
         var WOAmt = getTag('txtWriteoff');
+        var isApplyTCS = $("#lblTCSApply").text() || 0;
+        
         var TCSAmt = getTag('txtTCS');
         var Base = GridNet + FrAmt + WOAmt + TCSAmt;
-
+        if (isApplyTCS == 1) {
+            TCSAmt = (((GridNet + FrAmt + WOAmt) * TCSPercentage) / 100);
+            updateInputColumn('txtTCS', TCSAmt);
+            Base = (GridNet + FrAmt + WOAmt) + TCSAmt;    
+        }
         var OCAmt, OCPern;
+
         if (OCMode === 'pct') {
             OCPern = getTag('txtOtherChargPern');
             OCAmt = (Base * OCPern) / 100;
@@ -4266,7 +4273,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
         updateInputColumn("txtRoundOff", Roundoff);
         updateLabelColumn("lblRoundNet", RoundNetAmt);
         updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
-
+        
         var ro = document.getElementById('txtRoundOff');
         if (ro) ro.style.color = Roundoff > 0 ? 'var(--pos)' : Roundoff < 0 ? 'var(--neg)' : '';
         var Diff = 0, incldiff = 0;
@@ -4280,11 +4287,45 @@ if ($("#txtReurnPricePerm").val() == 0) {
         $("#txtDiffIncl").css("color", incldiff >= 0 ? "green" : "red");
         ApplyMultimodeAmount(RoundNetAmt);
     }
-    $("#txtFright, #txtWriteoff, #txtTCS").change(function (e) {
+    $("#txtFright, #txtWriteoff").change(function (e) {
         txtValuechanged = true;
         var v = e.target.value != "" ? parseFloat(e.target.value) : 0;
         updateInputColumn(e.target.id, v);
         RecalcFooterTotals();
+    });
+    $("#txtTCS").change(function (e) {
+        txtValuechanged = true;
+        var v = e.target.value != "" ? parseFloat(e.target.value) : 0;
+        updateInputColumn(e.target.id, v);
+
+        var isApplyTCS = $("#lblTCSApply").text() || 0;
+
+        var GridNet = parseFloat(document.getElementById('lblPTNet').getAttribute('lbltag')) || 0;
+        var FrAmt = getTag('txtFright');
+        var WOAmt = getTag('txtWriteoff');
+        var OCAmt = getTag('txtOtherChargAmt');
+
+        var Base = GridNet + FrAmt + WOAmt + OCAmt + v; //TCSAmt;      
+
+        RoundNetAmt = ApplyRoundoff(Base);
+        Roundoff = RoundNetAmt - Base;
+
+        updateInputColumn("txtRoundOff", Roundoff);
+        updateLabelColumn("lblRoundNet", RoundNetAmt);
+        updateLabelColumn("lblRoundNetFooter", RoundNetAmt);
+
+        var ro = document.getElementById('txtRoundOff');
+        if (ro) ro.style.color = Roundoff > 0 ? 'var(--pos)' : Roundoff < 0 ? 'var(--neg)' : '';
+        var Diff = 0, incldiff = 0;
+        var rowdatas = G.getData();
+        if (rowdatas.length > 0) {
+            Diff = rowdatas.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number((a.diff * (a.qty)) || 0), 0);
+            incldiff = rowdatas.filter(item => Number(item.productID) > 0).reduce((sum, a) => sum + Number((a.Incldiff * (a.qty)) || 0), 0);
+        }
+        updateInputColumn("txtDiffExcl", Diff); updateInputColumn("txtDiffIncl", incldiff);
+        $("#txtDiffExcl").css("color", incldiff >= 0 ? "green" : "red");
+        $("#txtDiffIncl").css("color", incldiff >= 0 ? "green" : "red");
+        ApplyMultimodeAmount(RoundNetAmt);
     });
     $("#txtOtherChargAmt").change(function (e) {
         txtValuechanged = true;
@@ -5458,7 +5499,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#lblGSTIN").text(items.GSTIN),
                             $("#cmbCreditTerm").val(items.CreditTermID),
                             $("#cmbPaymode").val(items.PaymentModeID);
-                        $("#lblTCSApply").val(items.TCSTax);
+                        $("#lblTCSApply").text(items.TCSTax);
                         //lblTCSApplyfield
                         if (items.TCSTax == 1)
                             $("#lblTCSApplyfield").show();
@@ -6336,7 +6377,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     $("#txtNarration").val(items.Narration);
                     $("#cmbBeat").val(items.BeatID);
                     $("#cmbSalesman").val(items.SalesmanID);
-
+                   
                     updateInputColumn("txtFright", items.FrightAmt);
                     updateInputColumn("txtOtherChargPern", items.OtherChargePern);
                     updateInputColumn("txtOtherChargAmt", items.OtherChargeAmt);
@@ -6403,7 +6444,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         } else {
                             $("#lblPartyCloseBal,#lblPartyACDRating").hide();
                         }
-
+                        $("#lblTCSApply").text(itemsParty.TCSTax);
+                        if (itemsParty.TCSTax == 1)
+                            $("#lblTCSApplyfield").show();
+                        else
+                            $("#lblTCSApplyfield").hide();
                         // build remarks string with array.join instead of += in a loop
                         var custRemArr = [];
                         $.each(itemsParty.lstCustRemark, function (j, itemsRemarks) {
@@ -6420,6 +6465,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
                     // if (items.DeliveryCount == 1 || items.AssignInvoiceCount == 1) {
                     //     $("#btnTEdit,#btnTCancel").hide();
                     // }
+                    
                     GetProductList();
                     ProductRID = 0;
 
@@ -6583,6 +6629,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                             $("#lblCustomerScheme").show();
                         else
                             $("#lblCustomerScheme").hide();
+                        $("#lblTCSApply").text(itemsParty.TCSTax);
+                        if (itemsParty.TCSTax == 1)
+                            $("#lblTCSApplyfield").show();
+                        else
+                            $("#lblTCSApplyfield").hide();
                         if (itemsParty.CloseBal > 0) {
                             $("#lblPartyCloseBal,#lblPartyACDRating").show();
                             if (itemsParty.OSType == 'Cr') {
@@ -8895,7 +8946,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             this.el.querySelectorAll('.rz').forEach(h => h.onpointerdown = e => {
                 e.preventDefault();
                 const c = vis[+h.dataset.i], x0 = e.clientX, w0 = c.width, col = this.el.querySelectorAll('col')[h.dataset.i], t = this.el.querySelector('table');
-                const mv = m => { c.width = Math.max(50, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
+                const mv = m => { c.width = Math.max(30, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
                 const up = () => {
                     removeEventListener('pointermove', mv);
                     removeEventListener('pointerup', up);
@@ -9521,10 +9572,13 @@ if ($("#txtReurnPricePerm").val() == 0) {
     G.cfg.onRender(G);
 }
 if ($("#txtID").val() > 0 && $("#txtTransType").val() == 1) {//Home Draft to Invoice
+    GetData(1, RoleID);
     $("#txtDraftID").val($("#txtID").val())
     var ID = $("#txtID").val();
     nTransMode = 1;
-    GetProductViewData(11, ID);
+    setTimeout(() => {
+        GetProductViewData(11, ID);
+    }, 2000);
     //$(".FormclrField,.FormclrcmbField").prop("disabled", true);
     $("#btnTEdit,#btnTCancel,#btnTVariant").hide();
     $("#btnPreview,#btnPDF,#btnPrint,#btnEmail,#btnWhatsapp,#btnClear").hide();
@@ -9546,7 +9600,7 @@ if ($("#txtID").val() > 0 && $("#txtTransType").val() == 2) {//Home Quick Access
     var ID = $("#txtID").val();
     setTimeout(() => {
         GetProductViewData(7, ID);
-    }, 1000);
+    }, 2000);
     $(".FormclrField,.FormclrcmbField,#btnNewProd").prop("disabled", true);
     $("#btnSave,#btnClear,#btnDraft").prop("disabled", true);
     $("#btnPreview,#btnPDF,#btnPrint").prop("disabled", false);
@@ -9562,7 +9616,9 @@ if ($("#txtID").val() > 0 && $("#txtTransType").val() == 3) {//Bill to Invoice(T
     var ID = $("#txtID").val();
     var PartyID = $("#txtTransVariantPartyID").val();
     nTransMode = 1;
-    LoadInvoiceVariantData(4, ID, PartyID);
+    setTimeout(() => {
+        LoadInvoiceVariantData(4, ID, PartyID);
+    }, 2000);
     $("#txtID").val("");
     $(".FormclrField,.FormclrcmbField,#btnNewProd").prop("disabled", false);
     $("#btnPreview,#btnPDF,#btnClear,#btnPrint").prop("disabled", true);
