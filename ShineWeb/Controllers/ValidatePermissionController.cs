@@ -108,6 +108,7 @@ namespace ShineWeb.Controllers
                     Session["RBSInvoice"] = dtAppconfig.Rows[0]["RBSInvoice"].ToString();
                     Session["RBSSalesReturn"] = dtAppconfig.Rows[0]["RBSSalesReturn"].ToString();
                     Session["RBSCollection"] = dtAppconfig.Rows[0]["RBSCollection"].ToString();
+                    Session["TaxEditable"] = dtAppconfig.Rows[0]["TaxEditable"].ToString();
 
                     Session["F_SD"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_SD"].ToString()).ToString("yyyy-MM-dd");//,dtCompReg.Rows[0]["F_SD"].ToString();
                     Session["F_ED"] = Convert.ToDateTime(dtCompReg.Rows[0]["F_ED"].ToString()).ToString("yyyy-MM-dd");//dtCompReg.Rows[0]["F_ED"].ToString();

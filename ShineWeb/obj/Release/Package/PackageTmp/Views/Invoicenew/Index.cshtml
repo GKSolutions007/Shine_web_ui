@@ -957,7 +957,7 @@
     @Html.HiddenFor(model => model.EnableBranch, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableBranch" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
-    @Html.HiddenFor(model => model.EnablePriceEditInTransaction, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtPriceEditInTransaction" })
+    @Html.HiddenFor(model => model.EnablePriceEditInTransaction, new { @autocomplete = "off", @class = "form-control", @id = "txtPriceEditInTransaction" })
     @Html.HiddenFor(model => model.TransVariantID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransVariantID" })
     @Html.HiddenFor(model => model.PartyID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransVariantPartyID" })
     @Html.HiddenFor(model => model.DraftModify, new { @autocomplete = "off", @class = "form-control", @id = "txtDraftModifyID" })
@@ -2549,7 +2549,8 @@ var SaleTrdDiscb4Prod = '@Session["SalesTradeDiscbeforeProdDisc"]' == '1';
 var TCSPercentage = '@Session["TCSPercentage"]';
     var TCSApplyinGrossorNet = '@Session["TCSApply"]';
 var isEnable = InvoicePriceEdit == 0 ? "disabled" : "";
-    var RememberBSM = '@Session["RBSInvoice"]';
+var RememberBSM = '@Session["RBSInvoice"]';
+    var isTaxEditable = '@Session["TaxEditable"]';
     var RemBeatID = 0, RemSalesmanID = 0;
     var PrintTransID = 4, PrintConfigID = 0;
  var DefCustCode = "";
@@ -8104,16 +8105,22 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         //EmailDocument(items.ID, PrintTransID, PrintConfigID);
                                         AutoEmailDocument(items.ID, PrintTransID);
                                     }
+                                }                                
+                                if ($("#txtTransType").val() != 0) {
+                                    if (window.opener && !window.opener.closed) {
+                                        window.opener.postMessage({
+                                            source: "Invoice",
+                                            id: items.ID,   // adjust to your actual field names      
+                                            printinfo: {
+                                                "DocumentID": items.ID,
+                                                "TransID": PrintTransID,
+                                                "ConfigID": PrintConfigID, "Copies": $("#txtNoofCopies").val()
+                                            }
+                                        }, "*");
+                                        window.close();
+                                    }
                                 }
-                                ClearForm();
-                                if (window.opener && !window.opener.closed)
-                                {
-                                    window.opener.postMessage({
-                                        source: "Invoice",
-                                        id: items.ID,   // adjust to your actual field names                                            
-                                    }, "*");
-                                    window.close();
-                                }
+                                ClearForm();//Invoice
                             }
                             else {
                                 $("#txtDraftID").val(items.ID);
@@ -8946,7 +8953,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             this.el.querySelectorAll('.rz').forEach(h => h.onpointerdown = e => {
                 e.preventDefault();
                 const c = vis[+h.dataset.i], x0 = e.clientX, w0 = c.width, col = this.el.querySelectorAll('col')[h.dataset.i], t = this.el.querySelector('table');
-                const mv = m => { c.width = Math.max(50, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
+                const mv = m => { c.width = Math.max(30, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
                 const up = () => {
                     removeEventListener('pointermove', mv);
                     removeEventListener('pointerup', up);
@@ -8987,6 +8994,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
             tr.querySelectorAll('input,select,textarea').forEach(x => x.disabled = L);
             tr.querySelectorAll('.gc-drag,[id^="act_del_"],[id^="act_edit_"]').forEach(x => { x.style.pointerEvents = L ? 'none' : ''; x.style.opacity = L ? '.4' : '' });
             if (L) tr.draggable = false;
+            if (!this.locked) {
+                if (isTaxEditable == 0) {
+                    tr.querySelectorAll('select[id^="taxID_"]').forEach(x => x.disabled = true);
+                }
+            }
         }
         setLocked(v) {
             this.locked = !!v;
@@ -9009,7 +9021,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         const i = document.createElement('i'); i.className = 'gi ' + (ic.cls || ''); i.id = `${key}_${ic.name}_${ri}`; i.title = ic.title || ic.name;
                         i.innerHTML = ic.html || ''; i.onclick = e => ic.onClick(r, this.rows.indexOf(r), e); el.append(i)
                     }); return el;
-                case 'select': el = document.createElement('select'); this.fillSelect(el, s, r); break;
+                case 'select': el = document.createElement('select'); this.fillSelect(el, s, r);
+                    if (s.key == "taxID" && isTaxEditable == "0") {
+                        el.disabled = true;
+                    }
+                    break;
                 default: el = document.createElement('input'); el.type = s.type;
             }
             el.id = id; el.setAttribute('name', name);

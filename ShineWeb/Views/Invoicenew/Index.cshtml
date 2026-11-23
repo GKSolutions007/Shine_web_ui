@@ -957,7 +957,7 @@
     @Html.HiddenFor(model => model.EnableBranch, new { @autocomplete = "off", @class = "form-control", @id = "txtEnableBranch" })
     @Html.HiddenFor(model => model.ID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtID" })
     @Html.HiddenFor(model => model.TransType, new { @autocomplete = "off", @class = "form-control", @id = "txtTransType" })
-    @Html.HiddenFor(model => model.EnablePriceEditInTransaction, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtPriceEditInTransaction" })
+    @Html.HiddenFor(model => model.EnablePriceEditInTransaction, new { @autocomplete = "off", @class = "form-control", @id = "txtPriceEditInTransaction" })
     @Html.HiddenFor(model => model.TransVariantID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransVariantID" })
     @Html.HiddenFor(model => model.PartyID, new { @autocomplete = "off", @class = "form-control FormclrField", @id = "txtTransVariantPartyID" })
     @Html.HiddenFor(model => model.DraftModify, new { @autocomplete = "off", @class = "form-control", @id = "txtDraftModifyID" })
@@ -2549,7 +2549,8 @@ var SaleTrdDiscb4Prod = '@Session["SalesTradeDiscbeforeProdDisc"]' == '1';
 var TCSPercentage = '@Session["TCSPercentage"]';
     var TCSApplyinGrossorNet = '@Session["TCSApply"]';
 var isEnable = InvoicePriceEdit == 0 ? "disabled" : "";
-    var RememberBSM = '@Session["RBSInvoice"]';
+var RememberBSM = '@Session["RBSInvoice"]';
+    var isTaxEditable = '@Session["TaxEditable"]';
     var RemBeatID = 0, RemSalesmanID = 0;
     var PrintTransID = 4, PrintConfigID = 0;
  var DefCustCode = "";
@@ -8104,16 +8105,22 @@ if ($("#txtReurnPricePerm").val() == 0) {
                                         //EmailDocument(items.ID, PrintTransID, PrintConfigID);
                                         AutoEmailDocument(items.ID, PrintTransID);
                                     }
+                                }                                
+                                if ($("#txtTransType").val() != 0) {
+                                    if (window.opener && !window.opener.closed) {
+                                        window.opener.postMessage({
+                                            source: "Invoice",
+                                            id: items.ID,   // adjust to your actual field names      
+                                            printinfo: {
+                                                "DocumentID": items.ID,
+                                                "TransID": PrintTransID,
+                                                "ConfigID": PrintConfigID, "Copies": $("#txtNoofCopies").val()
+                                            }
+                                        }, "*");
+                                        window.close();
+                                    }
                                 }
-                                ClearForm();
-                                if (window.opener && !window.opener.closed)
-                                {
-                                    window.opener.postMessage({
-                                        source: "Invoice",
-                                        id: items.ID,   // adjust to your actual field names                                            
-                                    }, "*");
-                                    window.close();
-                                }
+                                ClearForm();//Invoice
                             }
                             else {
                                 $("#txtDraftID").val(items.ID);
@@ -8987,6 +8994,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
             tr.querySelectorAll('input,select,textarea').forEach(x => x.disabled = L);
             tr.querySelectorAll('.gc-drag,[id^="act_del_"],[id^="act_edit_"]').forEach(x => { x.style.pointerEvents = L ? 'none' : ''; x.style.opacity = L ? '.4' : '' });
             if (L) tr.draggable = false;
+            if (!this.locked) {
+                if (isTaxEditable == 0) {
+                    tr.querySelectorAll('select[id^="taxID_"]').forEach(x => x.disabled = true);
+                }
+            }
         }
         setLocked(v) {
             this.locked = !!v;
@@ -9009,7 +9021,11 @@ if ($("#txtReurnPricePerm").val() == 0) {
                         const i = document.createElement('i'); i.className = 'gi ' + (ic.cls || ''); i.id = `${key}_${ic.name}_${ri}`; i.title = ic.title || ic.name;
                         i.innerHTML = ic.html || ''; i.onclick = e => ic.onClick(r, this.rows.indexOf(r), e); el.append(i)
                     }); return el;
-                case 'select': el = document.createElement('select'); this.fillSelect(el, s, r); break;
+                case 'select': el = document.createElement('select'); this.fillSelect(el, s, r);
+                    if (s.key == "taxID" && isTaxEditable == "0") {
+                        el.disabled = true;
+                    }
+                    break;
                 default: el = document.createElement('input'); el.type = s.type;
             }
             el.id = id; el.setAttribute('name', name);
@@ -9108,14 +9124,14 @@ if ($("#txtReurnPricePerm").val() == 0) {
             so they must stay OUTSIDE InitInvoiceGrid(). They only read master lists at call time. ---- */
     /* ---- master lists lookups ---- */
     const itemOf = id => TempAL.find(x => +x.id === +id);                                             // productID -> item (with its own uomlist)
-    const uomsOf = r => r._uoms || (itemOf(r.productID) || {}).uomlist || uomlist;                        // UOM list of THIS row (item list, else master list)
-    const cfOf = r => { const u = uomsOf(r).find(x => +x.ID === +r.uomID); return u ? (+u.CF || 1) : 1 };          // CF of the row's selected UOM (same value as the option's data-cf)
+const uomsOf = r => r._uoms || (itemOf(r.productID) || {}).uomlist || uomlist;                        // UOM list of THIS row (item list, else master list)
+    const cfOf = r => { const u = uomsOf(r).find(x => +x.ID === +r.uomID); return u ? (+u.ConvRate || 1) : 1 };          // CF of the row's selected UOM (same value as the option's data-cf)
     const taxById = id => gsttax.find(x => +x.ID === +id);                                              // tax ID    -> tax row
     const taxOf = pct => gsttax.find(x => +x.TaxPern === (+pct || 0));                                    // TaxPern   -> tax row (fallback for saved rows without taxID)
     /* make uomID / uom (name) / uomCF consistent with the row's UOM list */
     function syncUom(r) {
         const l = uomsOf(r), u = l.find(x => +x.ID === +r.uomID) || l.find(x => x.Name === r.uom) || l[0];
-        if (u) { r.uomID = +u.ID; r.uom = u.Name; r.uomCF = +u.CF || 1 }
+        if (u) { r.uomID = +u.ID; r.uom = u.Name; r.uomCF = +u.ConvRate || 1 }
     }
 
     var G;          // global grid instance (used by the other scripts) - created in InitInvoiceGrid() AFTER the column settings are loaded
@@ -9137,7 +9153,7 @@ if ($("#txtReurnPricePerm").val() == 0) {
             if (ch === 'item') syncUom(r);                                    // item picked: _uoms + uomID were patched in -> select item's default UOM
             if (ch === 'uomID') {                                             // UOM changed: qty x CF, priceExcl / CF
                 const cf = cfOf(r), k = cf / (n(r.uomCF) || 1);                      // k = new CF relative to the previous UOM's CF
-                r.qty = rnd(n(r.qty) * k); r.priceExcl = rnd(n(r.priceExcl) / k); syncUom(r);
+                r.qty = rnd(n(r.qty) * k); r.priceExcl = rnd(n(r.priceExcl) * k); syncUom(r);
             }
             /* ---- TAX: dropdown value = gsttax.ID, percentage used in ALL calculations = TaxPern ---- */
             if (ch === 'load' || ch === 'taxID' || ch === 'item') {

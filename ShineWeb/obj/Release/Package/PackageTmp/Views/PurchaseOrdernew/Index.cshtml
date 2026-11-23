@@ -1370,7 +1370,8 @@
     var ConfigRoundvalue = '@Session["RoundoffValue"]';
     //Autolist search property
     var itemorderby = '@Session["ItemOrderby"]';
-    var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+var EnableALStartWith = '@Session["ALSearchstartwith"]' == "1";
+    var isTaxEditable = '@Session["TaxEditable"]';
     var autolistfilterwith = EnableALStartWith;
     var startwithfield = itemorderby == "1" ? "code" : itemorderby == "2" ? "name" : "search";
     var F8RowIndex = -1, F8ItemID = '';
@@ -2434,7 +2435,7 @@
         if (ClosecfFocus != 3) { CloseConfirmDialogMsg("Do you want to close?"); } else { CloseForm(); }
     });
     function CloseForm() {
-        if ($("#txtTransType").val() == 1 || $("#txtTransType").val() == 2) {
+        if ($("#txtTransType").val() == 1 || $("#txtTransType").val() == 2 || $("#txtTransType").val() == 3) {
             this.close();
         } else {
             $(".dvMain").hide();
@@ -2456,6 +2457,7 @@
         $(".FormclrcmbField").val(0);
         $(".clrdivs").html("");
         $("#lblRoundNet,#lblPTQty").text("0.00");
+        $("#txtVendorID").val("");
         $("#lblPTCount,#lblOpenAICount,#lblOpenPOCount").text("0");
         $("#lblName").text(""), $("#cmbRating").text(""), $("#lblMob1").text(""), $("#lblGSTIN").text("");
         $(".FormclrField,.FormclrcmbField,#btnSave,#btnClear,#btnDraft,#btnClose").prop("disabled", false);
@@ -2474,7 +2476,7 @@
         GetFilterData();
         //GetData(4);
         nIsDraft = 0;
-        if (nTransMode != 1) {
+        if (nTransMode != 1 || !$("#rdoMainTableData").is(":checked")) {
             $(".dvMain").hide();
             $(".dvDocuments").show();
         }
@@ -2667,13 +2669,19 @@
                                     }
                                 }
                                 ClearForm();
-
-                                if (window.opener && !window.opener.closed) {
-                                    window.opener.postMessage({
-                                        source: "PurchaseOrder",
-                                        id: items.ID,   // adjust to your actual field names                                            
-                                    }, "*");
-                                    window.close();
+                                if ($("#txtTransType").val() != 0) {
+                                    if (window.opener && !window.opener.closed) {
+                                        window.opener.postMessage({
+                                            source: "PurchaseOrder",
+                                            id: items.ID,   // adjust to your actual field names      
+                                            printinfo: {
+                                                "DocumentID": items.ID,
+                                                "TransID": PrintTransID,
+                                                "ConfigID": PrintConfigID, "Copies": $("#txtNoofCopies").val()
+                                            }
+                                        }, "*");
+                                        window.close();
+                                    }
                                 }
                             }
                             else {
@@ -2936,7 +2944,7 @@ $("#openproduct").click(function (e) {
             this.el.querySelectorAll('.rz').forEach(h => h.onpointerdown = e => {
                 e.preventDefault();
                 const c = vis[+h.dataset.i], x0 = e.clientX, w0 = c.width, col = this.el.querySelectorAll('col')[h.dataset.i], t = this.el.querySelector('table');
-                const mv = m => { c.width = Math.max(50, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
+                const mv = m => { c.width = Math.max(30, w0 + m.clientX - x0); col.style.width = c.width + 'px'; t.style.width = vis.reduce((s, k) => s + k.width, 0) + 'px' };
                 const up = () => {
                     removeEventListener('pointermove', mv);
                     removeEventListener('pointerup', up);
@@ -2977,16 +2985,25 @@ $("#openproduct").click(function (e) {
             tr.querySelectorAll('input,select,textarea').forEach(x => x.disabled = L);
             tr.querySelectorAll('.gc-drag,[id^="act_del_"]').forEach(x => { x.style.pointerEvents = L ? 'none' : ''; x.style.opacity = L ? '.4' : '' });
             if (L) tr.draggable = false;
+            // if (!this.locked) {
+            //     if (isTaxEditable == 0) {
+            //         tr.querySelectorAll('select[id^="taxID_"]').forEach(x => x.disabled = true);
+            //     }
+            // }
         }
-        setLocked(v) {
-            this.locked = !!v;
-            if (this.tb) [...this.tb.children].forEach(tr => this.applyLock(tr));
+        setLocked(v) {            
+            this.locked = !!v;            
+            if (this.tb) [...this.tb.children].forEach(tr => {
+                this.applyLock(tr);                
+            });
+
             if (this.cfg.onLock) this.cfg.onLock(this.locked)
         }
         clearDrop() { this.tb.querySelectorAll('.drop-before,.drop-after').forEach(x => x.classList.remove('drop-before', 'drop-after')) }
 
         /* every control gets id=key_rowIndex  name=key[rowIndex]  class="gc gc-type gc-key" */
         control(s, r, ri) {
+            console.log("control info ", s, r, ri);
             const key = s.key || s.type, id = `${key}_${ri}`, name = `${key}[${ri}]`, cls = `gc gc-${s.type} gc-${key} ${s.cls || ''}`; let el;
             switch (s.type) {
                 case 'index': case 'label': el = document.createElement('span'); break;
@@ -2999,7 +3016,11 @@ $("#openproduct").click(function (e) {
                         const i = document.createElement('i'); i.className = 'gi ' + (ic.cls || ''); i.id = `${key}_${ic.name}_${ri}`; i.title = ic.title || ic.name;
                         i.innerHTML = ic.html || ''; i.onclick = e => ic.onClick(r, this.rows.indexOf(r), e); el.append(i)
                     }); return el;
-                case 'select': el = document.createElement('select'); this.fillSelect(el, s, r); break;
+                case 'select': el = document.createElement('select'); this.fillSelect(el, s, r);
+                    // if (s.key == "taxID" && isTaxEditable == "0") {
+                    //     el.disabled = true;
+                    // }
+                    break;
                 default: el = document.createElement('input'); el.type = s.type;
             }
             el.id = id; el.setAttribute('name', name);
