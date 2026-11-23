@@ -27,6 +27,7 @@ namespace ShineWeb.Controllers
                 }
                 Name = clsEncryptDecrypt.Decrypt(Name);
                 string decFormID = clsEncryptDecrypt.Decrypt(strFormID);
+                TypeID = clsEncryptDecrypt.Decrypt(TypeID);
                 ViewData["FormName"] = Name;
                 ViewData["FormID"] = decFormID;
                 ViewData["TransType"] = TypeID;
