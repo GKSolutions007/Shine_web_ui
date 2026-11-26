@@ -934,6 +934,7 @@
                     GetColumnSettingsData(2, FID, 1);
                     $("#MainHeading,#RepMainHeading").html(li.dataset.menuName);
                     $("#txtFormName").val(li.dataset.menuName);
+                    document.title = "Reports - " + li.dataset.menuName;
                     if (FID != 0) {
                         $("#btnFilters,#btnGenerate,#btnExport,#dvAssign").show();
                         openTabs(null, 'FilterDetails', 1);
@@ -988,7 +989,8 @@
                         //console.log("Detail Columns : ", detailcolumnsettings);
                     }
                 } else {
-                    showErrorSnackbar("No column data found");
+                    if (IsDynamicReport != 1)
+                        showErrorSnackbar("No column data found");
                 }
             }
         });
@@ -1447,7 +1449,7 @@ function setDate(FieldID,Type) {
     var arrParams = [], ParamIndex = 1;
 
     //$('#btnPopupGenerate,#btnGenerate').click(function (e) {
-    $('#btnPopupGenerate,#btnGenerate').on("click",function (e) {
+$('#btnPopupGenerate,#btnGenerate').on("click", function () {
         if (CheckMandatory()) {
             arrParams = [], ParamIndex = 1;
             $('#tblFilterData tr td').each(function (i, items) {
@@ -1715,7 +1717,7 @@ function setDate(FieldID,Type) {
                 //alert(message);
                 navigator.clipboard.writeText(cellValue);
 
-                showSuccessSnackbar("Value Copied.");
+                //showSuccessSnackbar("Value Copied.");
             },
             onColumnResize: (colIndex, field, header, newWidth) => {
                 //alert(`Column Resized via Callback:\nIndex: ${colIndex}\nName: ${header}\nNew Width: ${newWidth}`);
@@ -1832,15 +1834,15 @@ function setDate(FieldID,Type) {
         // Get non-matching values
         var columns = [];
         
-        if(FID == 14){
+        if (FID == 14 ){
             columnsettings = [];
             //columns = allcolumns.filter(
             //    item => obj1Fields.includes(item)
             //);
             columns = allcolumns
         }
-        else if (FID == 96) {
-
+        else if (FID == 96 || FID == 86) {
+            columnsettings = [];
             columnsettings =[... ActualColumns];
             const obj2Fields = columnsettings.map(item => item.field);
             columns = allcolumns.filter(
@@ -3442,7 +3444,13 @@ function setDate(FieldID,Type) {
             var rowIndex = $(this).attr("id").match(/\d+/)[0];
             validateSelections(rowIndex, event);
         }
-    );
+);
 
+    document.addEventListener("keydown", function (event) {
+        if (event.ctrlKey && ((event.key == 'G') || (event.key == 'g'))) {
+            event.preventDefault();
+            $("#btnPopupGenerate").trigger("click");
 
+        }
+    });
 </script>
